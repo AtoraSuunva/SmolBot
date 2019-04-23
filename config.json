@@ -1,0 +1,10 @@
+{
+    "owner": null,
+    "moduleDir": "../modules",
+    "invokers": [
+        "s!",
+        "s?"
+    ],
+    "botbans": [],
+    "debug": true
+}
