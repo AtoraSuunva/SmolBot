@@ -32,7 +32,7 @@ const activeRules = new Map()
  * (Well, kinda. This loads all the rules and config settings from the database but automod *will* work without calling this)
  * (You just won't have any persistence from the last session)
  *
- * @param {Database} db The database to use to make queries, should be `bot.db` usually
+ * @param {Database} db The database to use to make queries, should be `bot.sleet.db` usually
  */
 async function setupAutomodFromDatabase(db) {
   const dbConfig = await db.many('SELECT * FROM automod')
@@ -82,11 +82,11 @@ function deleteRuleFromDatabase(db, id) {
 
 const { roleban } = require('../mod/roleban.js')
 
-module.exports.events = {}
-module.exports.events.ready = async bot => {
-  setupAutomodFromDatabase(bot.db)
+module.exports.init = sleet => {
+  setupAutomodFromDatabase(sleet.db)
 }
 
+module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   if (!message.guild) return
 
@@ -149,7 +149,7 @@ async function addRule(bot, message, params) {
   return message.channel.send(`\`${punishment} ${limit} ${timeout} ['${ruleParams.join("', '")}']\``)
 
   try {
-    const id = await addRuleToDatabase(bot.db, name, punishment, limit, timeout, ruleParams)
+    const id = await addRuleToDatabase(bot.sleet.db, name, punishment, limit, timeout, ruleParams)
     const newRule = new Rules[name](id, punishment, limit, timeout, ruleParams)
     activeRules.get(message.guild.id).push(newRule)
     message.channel.send('**New rule created:**\n' + newRule.name)
@@ -177,7 +177,7 @@ async function removeRule(bot, message, params) {
   const r = rules.splice(index, 1)[0]
 
   if (r) {
-    await removeRuleFromDatabase(bot.db, id)
+    await removeRuleFromDatabase(bot.sleet.db, id)
     message.channel.send('Removed: \n```py\n' + `[${r.id}] ${r.name} {${r.timeout} s} -> # ${r.punishment}` + '\n```')
   } else {
     message.channel.send('Did not remove anything.')
@@ -221,14 +221,15 @@ module.exports.events.everyMessage = async (bot, message) => {
         break
 
       case 'roleban':
-        if (message.member.roles.has(rolebanR[message.guild.id])) {
+        const rolebanRole = automodConfig.get(message.guild.id).roleban_role
+        if (message.member.roles.has(rolebanRole)) {
           // fuck them tbh
           message.channel.overwritePermissions(message.author, {SEND_MESSAGES: false})
           msg = `${bot.sleet.formatUser(message.author)} was silenced: *${r.name}*`
           prefix = false
         } else {
           // lmao constructing my own message
-          roleban(bot, {channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild}, [message.member], rolebanR[message.guild.id], {silent: true})
+          roleban(bot, {channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild}, [message.member], rolebanRole, {silent: true})
 
           msg = `${bot.sleet.formatUser(message.author)} was rolebanned: *${r.name}*`
         }

@@ -113,7 +113,6 @@ function createLog(guild, setting, emoji, type, message, {embed = null} = {}) {
 module.exports.createLog = createLog
 
 module.exports.events = {}
-
 module.exports.events.ready = async (bot) => {
   for (let [id, guild] of bot.guilds) {
     let config = getConfig(guild)
@@ -122,6 +121,13 @@ module.exports.events.ready = async (bot) => {
     if (config.member_add_invite && guild.me.permissions.has('MANAGE_GUILD')) {
       invites.set(guild.id, await guild.fetchInvites())
     }
+  }
+}
+
+module.exports.events.init = (sleet, bot) => {
+  // If we're reloading bot is not undefined
+  if (bot) {
+    module.exports.events.ready(bot)
   }
 }
 

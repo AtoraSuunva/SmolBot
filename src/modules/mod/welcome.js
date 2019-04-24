@@ -56,7 +56,7 @@ const joinSettings = createDefaultValueProxy({}, {})
 module.exports.events = {}
 module.exports.events.guildMemberAdd = async (bot, member) => {
   const guild = member.guild
-  const joinInfo = await fetchJoinInfo(bot.db, guild.id, member.id)
+  const joinInfo = await fetchJoinInfo(bot.sleet.db, guild.id, member.id)
 
   if (joinInfo === null) {
     // No join settings for this guild...

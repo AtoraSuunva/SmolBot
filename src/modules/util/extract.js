@@ -52,7 +52,7 @@ module.exports.events.message = async (bot, message) => {
 
       splitSend(message, stuff, {code: true})
 
-    }).catch(e => {bot.logger.error(e); message.channel.send('Something went wrong, maybe your url isn\'t valid/it wasn\'t text?')})
+    }).catch(e => {bot.sleet.logger.error(e); message.channel.send('Something went wrong, maybe your url isn\'t valid/it wasn\'t text?')})
 }
 
 

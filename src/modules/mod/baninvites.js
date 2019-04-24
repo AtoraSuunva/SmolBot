@@ -52,7 +52,7 @@ module.exports.events.message = async (bot, message) => {
 }
 
 module.exports.events.guildBanAdd = async (bot, guild, user) => {
-  const logChannel = await fetchLogChannel(bot.db, guild.id)
+  const logChannel = await fetchLogChannel(bot.sleet.db, guild.id)
 
   if (logChannel === null) return
   if (!guild.me.permissions.has('MANAGE_GUILD')) return
