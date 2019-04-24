@@ -1,9 +1,11 @@
 {
     "owner": null,
-    "moduleDir": "../modules",
+    "moduleDir": "modules",
     "invokers": [
         "s!",
-        "s?"
+        "s?",
+        "hey smol",
+        "sbot"
     ],
     "botbans": [],
     "debug": true

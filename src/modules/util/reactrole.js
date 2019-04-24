@@ -18,14 +18,14 @@ module.exports.config = {
   expandedHelp: `React to a message with ${REACT_EMOJI} to have it parsed & reactions added!\nUse the command for more info`
 }
 
-module.exports.events = {}
-module.exports.events.ready = async (bot) => {
+module.exports.init = async sleet => {
   // Load stuff from db yea boi
-  for (let row of await bot.db.manyOrNone('SELECT * FROM rolereact;')) {
+  for (let row of await sleet.db.manyOrNone('SELECT * FROM rolereact;')) {
     reactMessages.set(row.message, row.roles)
   }
 }
 
+module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   message.channel.send(`You can make any message be a "role giving" message (if you have manage roles & only give out roles under yours), you just need to format a message that has \`(emoji or discord emote) (some separator) (role name or role mention) [optional separator] [optional description]\`\nYou can use an emoji like :red_circle: or a discord emote like <:deletThis:318296455280459777>\nYou can use the following as separators: \`:\` \`for\` \`->\` \`=>\` \`|\` \`>\` \`=\` or just a space\nPut together, you get:\n\nSelect a reaction to get a role\n\n🔴: red\n |\\🔵 for blue\n⚫ -> black\n:soulgreen: green\n💛 => yellow\n💜 | purple\n💔 > dead\n:nom_cat: = ca\n\nThis message would be valid for giving out roles`)
 }
@@ -38,7 +38,7 @@ module.exports.events.raw = async (bot, packet) => {
   if (packet.t === 'MESSAGE_DELETE') {
     if (reactMessages.has(packet.d.id)) {
       reactMessages.delete(packet.d.id)
-      bot.db.none('DELETE FROM rolereact WHERE message = $1', [packet.d.id])
+      bot.sleet.db.none('DELETE FROM rolereact WHERE message = $1', [packet.d.id])
     }
     return
   }
@@ -151,10 +151,10 @@ async function parseMessage(bot, message, react, member) {
     reactMessages.set(message.id, {roles: giveRoles, settings: giveSettings})
 
     // Check if we should just update it instead
-    if (await bot.db.oneOrNone('SELECT message FROM rolereact WHERE message = $1', [message.id]))
-      bot.db.none('UPDATE rolereact SET roles = $2 WHERE message = $1', [message.id, reactMessages.get(message.id)])
+    if (await bot.sleet.db.oneOrNone('SELECT message FROM rolereact WHERE message = $1', [message.id]))
+      bot.sleet.db.none('UPDATE rolereact SET roles = $2 WHERE message = $1', [message.id, reactMessages.get(message.id)])
     else
-      bot.db.none('INSERT INTO rolereact (message, roles) VALUES ($1, $2)', [message.id, reactMessages.get(message.id)])
+      bot.sleet.db.none('INSERT INTO rolereact (message, roles) VALUES ($1, $2)', [message.id, reactMessages.get(message.id)])
 
     addReactions(message, giveRoles)
   } else {

@@ -89,7 +89,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
 
         if (!options.silent) message.channel.send(msg)
 
-        const logChannelId = await fetchLogChannel(bot.db, m.guild.id)
+        const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         if (logChannelId && message.channel.id !== logChannelId) {
           message.guild.channels.get(logChannelId).send(`In ${message.channel} ` + msg)
         }
@@ -125,7 +125,7 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
 
         if (message) message.channel.send(msg)
 
-        const logChannelId = await fetchLogChannel(bot.db, m.guild.id)
+        const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         if (logChannelId && (message ? message.channel.id !== logChannelId : true)) {
           m.guild.channels.get(logChannelId).send((message ? `In ${message.channel} ` : 'By manual role removal ') + msg)
         }

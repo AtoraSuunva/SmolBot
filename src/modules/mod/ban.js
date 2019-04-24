@@ -65,5 +65,5 @@ module.exports.events.message = async (bot, message) => {
         bot.channels.get(logs[message.guild.id]).send({embed})
       }
     })
-    .catch(e => message.channel.send('There was an error while trying to ban that user.\n`' + e + '`').then(m => bot.logger.warn(e)))
+    .catch(e => message.channel.send('There was an error while trying to ban that user.\n`' + e + '`').then(m => bot.sleet.logger.warn(e)))
 }

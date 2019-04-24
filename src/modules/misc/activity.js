@@ -27,8 +27,13 @@ module.exports.events = {}
 
 module.exports.events.ready = bot => {
   bot.user.setActivity(...getPlaying())
-
   interv = setInterval(() => bot.user.setActivity(...getPlaying()), interval * 1000)
+}
+
+module.exports.events.init = (sleet, bot) => {
+  if (bot) {
+    module.exports.events.ready(bot)
+  }
 }
 
 module.exports.events.message = (bot, message) => {

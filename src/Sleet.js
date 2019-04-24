@@ -35,6 +35,7 @@ let config = module.exports.config = require(configPath)
 const rootDir = path.join(__dirname)
 let logger = module.exports.logger = new Logger('../err.log', reportError, config.debug)
 let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
+let bot
 
 const dbSettings = {
   host: process.env.DB_HOST,
@@ -47,21 +48,8 @@ const dbSettings = {
 const pgp = require('pg-promise')({ capSQL: true })
 const db = pgp(dbSettings)
 
-const bot = new Discord.Client()
-let modules = {}
-let moduleErrors = []
-loadModules()
-
-// Actually starts listening to events
-let events = getAllEvents()
-// We do this to avoid listening to events that no modules use
-// Unfortunately, this prevents adding a module that listens to a new event/adding a new event without restarting the bot
-// one day I might find a fix for this
-
-// let unusedEvents = getAllEvents({getUnused: true})
-// Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
-
-// logger.log(unusedEvents)
+module.exports.pgp = pgp
+module.exports.db = db
 
 /**
  * Load the listeners for all the events
@@ -482,11 +470,12 @@ function loadModules() {
 
       logger.debug(`Loading ${rName}`)
       modules[rFile.config.name] = require(file)
-      succ.push(rFile.config.name)
 
-      if (bot.readyAt && modules[moduleName].events.ready) {
-        modules[moduleName].events.ready(bot)
+      if (typeof modules[rFile.config.name].init === 'function') {
+        modules[rFile.config.name].init(module.exports, bot)
       }
+
+      succ.push(rFile.config.name)
     } catch (e) {
       logger.warn(`Failed to load ${rName}: \n${e}`)
       fails.push(rName)
@@ -525,8 +514,8 @@ function loadModule(moduleName) {
         modules[moduleName] = require(file)
         return `Loaded ${moduleName} successfully`
 
-        if (bot.readyAt && modules[moduleName].events.ready) {
-          modules[moduleName].events.ready(bot)
+        if (typeof modules[moduleName].init === 'function') {
+          modules[moduleName].init(module.exports, bot)
         }
       }
     }
@@ -556,6 +545,11 @@ function unloadModule(moduleName) {
       if (rFile.config && moduleName === rFile.config.name) {
         logger.debug(`Unloading ${file.replace(path.join(rootDir, config.moduleDir), '')}`)
         purgeCache(`${file}`)
+
+        if (typeof modules[moduleName].destroy === 'function') {
+          modules[moduleName].destroy(module.exports, bot)
+        }
+
         delete modules[moduleName]
         return `Successfully unloaded ${moduleName}`
       }
@@ -618,8 +612,12 @@ function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
-  if (!config.selfbot)
+  if (!config.selfbot && config.owner) {
     bot.users.get(config.owner.id).send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
+  }
+
+  logger.error(errType, err)
+
   return errID
 }
 module.exports.reportError = reportError
@@ -675,7 +673,27 @@ function formatUser(user, {id = true, plain = false} = {}) {
 }
 module.exports.formatUser = formatUser
 
+/**
+ * Saves then exits
+ */
+function saveAndExit() {
+  process.exit()
+}
+module.exports.saveAndExit = saveAndExit
+
+bot = new Discord.Client()
+bot.sleet = module.exports
+let modules = {}
+let moduleErrors = []
+loadModules()
+let events = getAllEvents()
 startEvents()
+
+/**
+ * An array of all the modules that are loaded
+ * @type {Object[]}
+ */
+module.exports.modules = modules
 
 logger.info('Starting Login...')
 
@@ -684,7 +702,7 @@ if (!process.env.BOT_TOKEN) {
   process.exit(1)
 }
 
-bot.login(process.env.BOT_TOKEN).then( async () => {
+bot.login(process.env.BOT_TOKEN).then(async () => {
   logger.info('Logged in!')
 
   if (config.owner === null) {
@@ -717,25 +735,3 @@ process.on('unhandledRejection', (reason, p) => {
   logger.error(`Uncaught Promise Error: \n${reason}\nStack:\n${reason.stack}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
   fs.appendFile('err.log', p, console.err)
 })
-
-/**
- * Saves then exits
- */
-function saveAndExit() {
-  process.exit()
-}
-module.exports.saveAndExit = saveAndExit
-
-/**
- * An array of all the modules that are loaded
- * @type {Object[]}
- */
-module.exports.modules = modules
-
-bot.logger = logger
-bot.sleet = module.exports
-bot.db = db
-bot.pgp = pgp
-
-// *cries in js*
-

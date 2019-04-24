@@ -45,7 +45,7 @@ module.exports.events.message = (bot, message) => {
   if (!channel.permissionsFor(bot.user).has('SEND_MESSAGES'))
     return message.channel.send("I can't send messages there myself...")
 
-  bot.logger.info(`b!say: ${message.author.username}#${message.author.discriminator} (${message.author.id}) -> ${channel.name}: ${args.slice(2).join(' ')}`)
+  bot.sleet.logger.info(`b!say: ${message.author.username}#${message.author.discriminator} (${message.author.id}) -> ${channel.name}: ${args.slice(2).join(' ')}`)
 
   channel.send(args.slice(2).join(' ') || 'aaa', {disableEveryone: true}).then(c => message.channel.send(`${message.author.username}: Sent "${args.slice(2).join(' ')}" to ${channel.toString()}`))
 }
