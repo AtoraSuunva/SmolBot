@@ -30,10 +30,10 @@ const metrics = {
 
 setInterval(() => metrics.ping.update(bot.ping), 3000)
 
-const configPath = '../config.json'
-let config = module.exports.config = require(configPath)
 const rootDir = path.join(__dirname)
-let logger = module.exports.logger = new Logger('../err.log', reportError, config.debug)
+const configPath = path.join(rootDir, '../config.json')
+let config = module.exports.config = require(configPath)
+let logger = module.exports.logger = new Logger(path.join(rootDir, '../err.log'), reportError, config.debug)
 let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
 let bot
 
@@ -433,6 +433,8 @@ module.exports.reloadConfig = reloadConfig
  * @return {Promise} A promise that resolves when config is saved
  */
 function saveConfig() {
+  // Avoid circular JSON from having a User object as the owner
+  config.owner = (config.owner ? extractOwner(config.owner) : null)
   return writeFile(configPath, config)
 }
 module.exports.saveConfig = saveConfig
@@ -616,7 +618,7 @@ function reportError(err, errType) {
     bot.users.get(config.owner.id).send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
   }
 
-  logger.error(errType, err)
+  console.error(errType, err)
 
   return errID
 }
@@ -695,6 +697,10 @@ startEvents()
  */
 module.exports.modules = modules
 
+function extractOwner({id, username, discriminator, avatar}) {
+  return {id, username, discriminator, avatar}
+}
+
 logger.info('Starting Login...')
 
 if (!process.env.BOT_TOKEN) {
@@ -709,7 +715,7 @@ bot.login(process.env.BOT_TOKEN).then(async () => {
     logger.info('Fetching Owner info...')
 
     const OAuth = await bot.fetchApplication()
-    config.owner = OAuth.owner
+    config.owner = extractOwner(OAuth.owner)
 
     fs.writeFile(configPath, JSON.stringify(config, null, 2), (err) => {
       logger.info((err) ? err : 'Saved Owner info!')
