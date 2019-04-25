@@ -16,7 +16,7 @@ const mentionRegex = /<@!?[0-9]+>/
 const rolebanned = new Map()
 
 async function fetchLogChannel(db, guild_id) {
-  await db.oneOrNone('SELECT settings->\'logChannel\' AS log_channel FROM settings WHERE guild_id = $1', [guild_id])
+  const res = await db.oneOrNone('SELECT settings->\'logChannel\' AS log_channel FROM settings WHERE guild_id = $1', [guild_id])
   return res ? res.log_channel : null
 }
 
