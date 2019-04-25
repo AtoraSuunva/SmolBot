@@ -42,11 +42,9 @@ module.exports.events.message = (bot, message) => {
     break
 
     case 'save':
-      require('fs').writeFile('./config.json', JSON.stringify(config, null, 4), (err) => {
-        if (err) throw err;
-        bot.sleet.logger.log('Updated Config.json!')
-        message.channel.send(`Saved config!`)
-      })
+      bot.sleet.saveConfig(config)
+        .then(_ => message.channel.send('Saved config!'))
+        .catch(e => message.channel.send(`Failed to save config!\n${e}`))
       return
     break
   }
