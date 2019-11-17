@@ -7,11 +7,14 @@ module.exports.config = {
 }
 
 const Discord = require('discord.js')
-const msgReg = /(.*)https:\/\/(?:canary\.)?discordapp\.com\/channels\/\d+\/(\d+)\/(\d+)(.*)/
+const msgReg = /(.*?)(<?)https:\/\/(?:canary\.)?discordapp\.com\/channels\/\d+\/(\d+)\/(\d+)(>?)(.*)/
 
 module.exports.events = {}
 module.exports.events.everyMessage = async (bot, message) => {
   if (message.author.bot)
+    return
+
+  if (message.edits.length > 1)
     return
 
   // No url -> null
@@ -21,13 +24,21 @@ module.exports.events.everyMessage = async (bot, message) => {
   if (match === null)
     return
 
+  // escaped
+  if (match[2] === '<' && match[5] === '>')
+    return
+
   if (!message.guild)
     return message.channel.send('I only send quotes in guilds.')
 
-  const channel = (message.author.id === bot.sleet.config.owner.id) ? bot.channels.get(match[2]) : message.guild.channels.get(match[2])
+  // const channel = (message.author.id === bot.sleet.config.owner.id) ? bot.channels.get(match[2]) : message.guild.channels.get(match[2])
+  const channel = bot.channels.get(match[3])
 
   if (!channel)
-    return message.channel.send('I only quote messages from the same guild.')
+    return
+
+  // if (!channel)
+    // return message.channel.send('I only quote messages from the same guild.')
 
   if (!channel.permissionsFor(message.author).has('VIEW_CHANNEL'))
     return message.channel.send('I only quotes messages from channels you can see')
@@ -35,7 +46,7 @@ module.exports.events.everyMessage = async (bot, message) => {
   let quoted
 
   try {
-    quoted = await fetchMessage(bot, channel, match[3])
+    quoted = await fetchMessage(bot, channel, match[4])
   } catch (e) {
     return
   }
@@ -64,7 +75,7 @@ function createEmbed(message, origMessage) {
   if (message.member)
     embed.setColor(message.member.displayColor)
 
-  const imgEmbed = message.embeds.find(e => e.type === 'image')
+  const imgEmbed = message.attachments.find(e => e.height && e.width) || message.embeds.find(e => e.type === 'image')
 
   if (imgEmbed)
     embed.setImage(imgEmbed.url)

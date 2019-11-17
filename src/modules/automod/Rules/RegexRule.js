@@ -1,5 +1,8 @@
 const AutoProp = require('./AutoProp')
 const Rule = require('./Rule')
+// Meta
+// Used to parse /regex/gi into ['regex', 'gi']
+const regexRegex = /\/(.*)\/([a-z]+)?/i
 
  /**
  * Matches messages against a regex, matching messages then get a punishment >:(
@@ -10,7 +13,8 @@ module.exports = class RegexRule extends Rule {
    * @param {String} punishment The punishment to apply after violating too regex matches
    * @param {Number} maxChars The max amount a user can match against a regex (can match multiple times/message)
    * @param {Number} timeout The timeout (in seconds) before a violation expires
-   * @param {String[]|Regex[]} regex The regex to match against. Only the first element is taken
+   * @param {String[]} regex The regex to match against, should be an array of [regex, flags], flags optional
+   *  regex can also be a string of the form `'/regexp/gi'` and it will be parsed into regex + flags
    */
   constructor(id, punishment, maxCount, timeout, regex) {
     super(id, 'regex', punishment, maxCount, timeout, regex)
@@ -19,7 +23,9 @@ module.exports = class RegexRule extends Rule {
     this.timeout = timeout * 1000
     this.parameters = regex
 
-    this.regex = regex[0] instanceof RegExp ? regex[0] : new RegExp(regex[0], 'g')
+    const [, regExp, flags] = regexRegex.exec(regex[0]) || [, regex[0], regex[1] || '']
+
+    this.regex = regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
     this.lastMessage = {}
     this.violations = AutoProp({})
     this.vioMessages = {}

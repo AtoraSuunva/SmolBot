@@ -473,8 +473,8 @@ function loadModules() {
       logger.debug(`Loading ${rName}`)
       modules[rFile.config.name] = require(file)
 
-      if (typeof modules[rFile.config.name].init === 'function') {
-        modules[rFile.config.name].init(module.exports, bot)
+      if (typeof modules[rFile.config.name].events.init === 'function') {
+        modules[rFile.config.name].events.init(module.exports, bot)
       }
 
       succ.push(rFile.config.name)
@@ -514,11 +514,12 @@ function loadModule(moduleName) {
         logger.debug(`Loading ${rName}`)
         purgeCache(file)
         modules[moduleName] = require(file)
-        return `Loaded ${moduleName} successfully`
 
-        if (typeof modules[moduleName].init === 'function') {
-          modules[moduleName].init(module.exports, bot)
+        if (typeof modules[moduleName].events.init === 'function') {
+          modules[moduleName].events.init(module.exports, bot)
         }
+
+        return `Loaded ${moduleName} successfully`
       }
     }
 
@@ -739,5 +740,5 @@ process.on('exit', code => {
 
 process.on('unhandledRejection', (reason, p) => {
   logger.error(`Uncaught Promise Error: \n${reason}\nStack:\n${reason.stack}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
-  fs.appendFile('err.log', p, console.err)
+  fs.appendFile('err.log', p, 'utf8', console.error)
 })

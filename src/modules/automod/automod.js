@@ -3,7 +3,7 @@ module.exports.config = {
   invokers: ['automod'],
   help: 'automod',
   expandedHelp: 'An automoderation module, allows for chat filtering using a set of "rules"\n`everyone` => @everyone/here (or roles named everyone/here) mentions\n`forbidden` => List of forbidden characters to post\n`repeats` => Repeated messages\n`ad` => Discord invites (excluding the current server)\n`blacklist` => Blacklisted words\n`embeds` => Repeated embeds\n`regex` => Messages matching a regex\nRules have a max strikes, time before strikes expire, and (optionally) parameters',
-  usage: ['View rules', 'automod view', 'Create a rule', 'automod add blacklist 3 15 butt nya', 'Remove a rule', 'automod remove 3']
+  usage: ['View rules', 'automod view', 'Create a rule', 'automod add blacklist roleban 3 15 "some words" nya', 'Delete a rule', 'automod delete 3']
 }
 
 const EveryoneRule = require('./Rules/EveryoneRule.js')
@@ -13,6 +13,7 @@ const AdRule = require('./Rules/AdRule.js')
 const BlacklistRule = require('./Rules/BlacklistRule.js')
 const EmbedsRule = require('./Rules/EmbedsRule.js')
 const RegexRule = require('./Rules/RegexRule.js')
+const EmojiOnlyRule = require('./Rules/EmojiOnlyRule.js')
 
 const Rules = {
   'everyone': EveryoneRule,
@@ -22,10 +23,32 @@ const Rules = {
   'blacklist': BlacklistRule,
   'embeds': EmbedsRule,
   'regex': RegexRule,
+  'emojionly': EmojiOnlyRule,
 }
 
+/** Map of guild_id => config */
 const automodConfig = new Map()
+/** Map of guild_id => automod_rules */
 const activeRules = new Map()
+const silentChannelsCounts = new Map()
+/** Map of channel_id => silence_counter */
+const silentChannels = {
+  change(channelId, delta) {
+    silentChannelsCounts.set(channelId, this.get(channelId) + delta)
+  },
+  increment(channelId) {
+    this.change(channelId, 1)
+  },
+  decrement(channelId) {
+    this.change(channelId, -1)
+  },
+  get(channelId) {
+    return silentChannelsCounts.get(channelId) || 0
+  },
+  set(channelId, val) {
+    return silentChannelsCounts.set(channelId, val)
+  },
+}
 
 /**
  * Must absolutely be called before anything happens
@@ -82,11 +105,11 @@ function deleteRuleFromDatabase(db, id) {
 
 const { roleban } = require('../mod/roleban.js')
 
-module.exports.init = sleet => {
+module.exports.events = {}
+module.exports.events.init = sleet => {
   setupAutomodFromDatabase(sleet.db)
 }
 
-module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   if (!message.guild) return
 
@@ -107,32 +130,45 @@ module.exports.events.message = (bot, message) => {
 
     case 'remove':
     case 'rm':
-      removeRule(bot, message, params)
+    case 'delete':
+    case 'del':
+      deleteRule(bot, message, params)
+      break
+
+    case 'silent':
+      message.channel.send(`Counts for ${params[0]}: ${silentChannels.get(params[0])}`)
+      break
+
+    case 'clearsilent':
+      silentChannels.set(params[0], 0)
+      message.channel.send(`Counts for ${params[0]} cleared`)
       break
 
     default:
-      message.channel.send('What do you want to do?\n`view`, `add`, `remove`')
+      message.channel.send('What do you want to do?\n`view`, `add`, `delete`')
   }
 }
 
 function viewRules(bot, message) {
   const rules = activeRules.get(message.guild.id)
 
-  if (!rules) {
+  if (!rules || rules.length === 0) {
     message.channel.send('No rules are active on this server.')
   } else {
     message.channel.send('Active rules are:\n```py\n' +
       rules.map(r =>
-        `[${r.id}] ${r.name} {${r.timeout / 1000} s}${r.parameters && r.parameters.length > 0 ? ' [' + r.parameters.join(', ') + ']' : ''} -> # ${r.punishment}`
+        `[${r.id}] ${r.name} {${r.timeout / 1000} s}${r.parameters && r.parameters.length > 0 ? ' [' + r.parameters.join(', ').replace(/nigger/, 'ni---r') + ']' : ''} -> # ${r.punishment}`
       ).join('\n') + '\n```'
     )
   }
 }
 
 async function addRule(bot, message, params) {
-  const rules = activeRules.get(message.guild.id)
+  if (!activeRules.has(message.guild.id)) {
+    activeRules.set(message.guild.id, [])
+  }
 
-  if (!rules) return
+  const rules = activeRules.get(message.guild.id)
 
   let [name, punishment, limit, timeout, ...ruleParams] = params
 
@@ -140,29 +176,30 @@ async function addRule(bot, message, params) {
     return message.channel.send('Missing parameters...\n`<name> <punishment> <limit> <timeout> [param1 param2 ... paramN]`')
   }
 
+  ruleParams = ruleParams.filter(v => !!v)
   name = name.toLowerCase()
 
   if (!Rules[name]) {
     return message.channel.send(`Invalid rule.\n\`${Object.keys(Rules).join(', ')}\``)
   }
 
-  return message.channel.send(`\`${punishment} ${limit} ${timeout} ['${ruleParams.join("', '")}']\``)
+  // return message.channel.send(`\`${punishment} ${limit} ${timeout} ['${ruleParams.join("', '")}']\``)
 
   try {
-    const id = await addRuleToDatabase(bot.sleet.db, name, punishment, limit, timeout, ruleParams)
+    const id = await addRuleToDatabase(bot.sleet.db, message.guild.id, name, punishment, limit, timeout, ruleParams)
     const newRule = new Rules[name](id, punishment, limit, timeout, ruleParams)
     activeRules.get(message.guild.id).push(newRule)
-    message.channel.send('**New rule created:**\n' + newRule.name)
+    message.channel.send(`**New rule created:**\n\`\`\`py\n[${id}] ${newRule.name} {${timeout} s}${ruleParams.length > 0 ? ' [' + ruleParams.join(', ') + ']' : ''} -> #${punishment}\n\`\`\``)
   } catch (e) {
     message.channel.send('**An error occured:**\n' + e.message)
   }
 }
 
-async function removeRule(bot, message, params) {
+async function deleteRule(bot, message, params) {
   const rules = activeRules.get(message.guild.id)
 
   if (!rules)
-    return message.channel.send('There are no rules for you to remove.')
+    return message.channel.send('There are no rules for you to delete.')
 
   const id = parseInt(params[0])
 
@@ -177,10 +214,10 @@ async function removeRule(bot, message, params) {
   const r = rules.splice(index, 1)[0]
 
   if (r) {
-    await removeRuleFromDatabase(bot.sleet.db, id)
-    message.channel.send('Removed: \n```py\n' + `[${r.id}] ${r.name} {${r.timeout} s} -> # ${r.punishment}` + '\n```')
+    await deleteRuleFromDatabase(bot.sleet.db, id)
+    message.channel.send('Deleted: \n```py\n' + `[${r.id}] ${r.name} {${r.timeout} s} -> # ${r.punishment}` + '\n```')
   } else {
-    message.channel.send('Did not remove anything.')
+    message.channel.send('Did not delete anything.')
   }
 }
 
@@ -202,6 +239,13 @@ module.exports.events.everyMessage = async (bot, message) => {
       || message.member.highestRole.position >= message.guild.me.highestRole.position
      )
     return
+
+  const { prepend, silence_prepend } = automodConfig.get(message.guild.id)
+
+  if (silence_prepend.some(v => message.content.includes(v))) {
+    silentChannels.increment(message.channel.id)
+    setTimeout(cid => silentChannels.decrement(cid), 3000, message.channel.id)
+  }
 
   for (let r of rules) {
     let punishment = await r.filter(message), deletes, msg
@@ -276,7 +320,7 @@ module.exports.events.everyMessage = async (bot, message) => {
               perms.delete('Hide whisper')
 
             if (original)
-              channel.overwritePermissions(member, original.serialize(), 'Hide whisper')
+              channel.overwritePermissions(member, original.serialize ? original.serialize() : {}, 'Hide whisper')
           })
 
         break
@@ -291,7 +335,8 @@ module.exports.events.everyMessage = async (bot, message) => {
     }
 
     if (msg) {
-      message.channel.send(((prefix ? prepend[message.guild.id] : '') || '') + msg, {autoDelete: false})
+      prefix = prefix && (silentChannels.get(message.channel.id) < 1)
+      message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
     }
 
   }

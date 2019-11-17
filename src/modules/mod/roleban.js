@@ -1,4 +1,4 @@
-const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!']
+const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!', 'fuck up']
 const unRolebanCmds = ['unroleban', 'unforebode', 'untoss', 'refenestrate']
 
 module.exports.config = {
@@ -13,11 +13,29 @@ const roleNames = ['roleban', 'rolebanned', 'tossed', 'muted', 'foreboden', 'sil
 const roleIds   = ['122150407806910464', '303723450747322388', '367873664118685697', '382658296504385537']
 // r/ut, atlas yt, perfect, ut rp
 const mentionRegex = /<@!?[0-9]+>/
-const rolebanned = new Map()
 
 async function fetchLogChannel(db, guild_id) {
-  const res = await db.oneOrNone('SELECT settings->\'logChannel\' AS log_channel FROM settings WHERE guild_id = $1', [guild_id])
+  const res = await db.oneOrNone('SELECT settings->\'logChannel\' AS log_channel FROM settings WHERE guild_id = $<guild_id>', { guild_id })
   return res ? res.log_channel : null
+}
+
+async function fetchPreviousRoles(db, user_id) {
+  const res = await db.oneOrNone('SELECT * FROM rolebanned WHERE user_id = $<user_id>', { user_id })
+  return res ? res.roles : null
+}
+
+async function storePreviousRoles(db, user_id, roles) {
+  const prev = await fetchPreviousRoles(db, user_id)
+
+  if (prev === null) {
+    await db.none('INSERT INTO rolebanned (user_id, roles) VALUES ($<user_id>, $<roles>)', { user_id, roles })
+  } else {
+    await db.none('UPDATE rolebanned SET roles = $<roles> WHERE user_id = $<user_id>', { user_id, roles })
+  }
+}
+
+async function deletePreviousRoles(db, user_id) {
+  await db.none('DELETE FROM rolebanned WHERE user_id = $<user_id>', { user_id })
 }
 
 const Discord = require('discord.js')
@@ -78,23 +96,31 @@ async function roleban(bot, message, members, rbRole, options = {}) {
       continue
     }
 
-    let prevRoles = m.roles.filter(r => r.id !== m.guild.id)
+    // We can't touch managed roles, so we need to keep them
+    // Good to handle cases like nitro boosters who you need to roleban
+    const prevRoles = m.roles.filter(r => r.id !== m.guild.id && !r.managed)
+    const keepRoles = m.roles.filter(r => r.managed).array()
 
-    m.setRoles([rbRole], `[ Roleban by ${message.author.tag} (${message.author.id}) ]`)
+    m.setRoles([rbRole, ...keepRoles], `[ Roleban by ${message.author.tag} (${message.author.id}) ]`)
       .then(async _ => {
-        let msg = `${bot.sleet.formatUser(m.user)} has been rolebanned ` +
-                  `by ${bot.sleet.formatUser(message ? message.author : bot.user)}` +
-                  '\n**Previous roles:** ' + (prevRoles.size === 0 ? 'None.' :
-                    '`' + prevRoles.array().map(r=>r.name).join('\`, \`') + '`')
-
-        if (!options.silent) message.channel.send(msg)
-
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
-        if (logChannelId && message.channel.id !== logChannelId) {
-          message.guild.channels.get(logChannelId).send(`In ${message.channel} ` + msg)
+        const logToChannel = logChannelId && (message ? message.channel.id !== logChannelId : true)
+        const by = bot.sleet.formatUser(message ? message.author : bot.user)
+        const baseMsg = `${bot.sleet.formatUser(m.user)} has been rolebanned by ${by}`
+        const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
+        const rolesMsg = (prevRoles.size === 0
+                          ? 'No previous roles'
+                          : `**Previous roles:** ${displayRoles(m.guild, prevRoles)}`)
+
+        if (!options.silent) {
+          message.channel.send(baseMsg + '\n' + rolesMsg)
         }
 
-        rolebanned.set(m.id, prevRoles)
+        if (logToChannel) {
+          m.guild.channels.get(logChannelId).send(baseMsg + chanMsg + '\n' + rolesMsg)
+        }
+
+        storePreviousRoles(bot.sleet.db, m.id, prevRoles.array().map(r => r.id))
       }).catch(_ => {
         message.channel.send(`Failed to roleban ${m.user.tag}. Check my perms?\n${_}`)
       })
@@ -110,31 +136,43 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
       continue
     }
 
-    const prevRoles = (rolebanned.get(m.id) || m.roles).filter(r => r.id !== rbRole.id && r.id !== m.guild.id)
+    const prevRoles = (await fetchPreviousRoles(bot.sleet.db, m.id) || m.roles.map(r => r.id)).filter(r => r !== rbRole.id && r !== m.guild.id)
     const by = getBy(bot, message, executor)
     botUnrolebanned.push(m.id)
 
     m.setRoles(prevRoles, `[ Unroleban by ${by} ]`)
       .then(async _ => {
-        const msg = `${bot.sleet.formatUser(m.user)} has been unrolebanned ` +
-                  `by ${by}\n` +
-                  (rolebanned.delete(m.id) ?
-                    '**Roles restored:** ' + (prevRoles.size === 0 ? 'None.' :
-                      '`' + prevRoles.array().map(r=>r.name).join('\`, \`') + '`')
-                  : 'No roles restored.')
-
-        if (message) message.channel.send(msg)
-
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
-        if (logChannelId && (message ? message.channel.id !== logChannelId : true)) {
-          m.guild.channels.get(logChannelId).send((message ? `In ${message.channel} ` : 'By manual role removal ') + msg)
+        const logToChannel = logChannelId && (message ? message.channel.id !== logChannelId : true)
+        const baseMsg = `${bot.sleet.formatUser(m.user)} has been unrolebanned by ${by}`
+        const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
+        const rolesMsg = (prevRoles.size === 0
+                          ? 'No roles restored'
+                          : `**Roles restored:** ${displayRoles(m.guild, prevRoles)}`)
+
+        if (message) {
+          message.channel.send(baseMsg + '\n' + rolesMsg)
         }
+
+        if (logToChannel) {
+          m.guild.channels.get(logChannelId).send(baseMsg + chanMsg + '\n' + rolesMsg)
+        }
+
+        deletePreviousRoles(bot.sleet.db, m.id)
       }).catch(_ =>
         message.channel.send(`Failed to unroleban ${bot.sleet.formatUser(m.user)}. Check my perms?\n${_}`)
       )
   }
 }
 module.exports.unroleban = unroleban
+
+function displayRoles(guild, prevRoles) {
+  return '`' + prevRoles.map(r => roleName(guild, r)).join('`, `') + '`'
+}
+
+function roleName(guild, role) {
+  return role.name || guild.roles.get(role).name
+}
 
 function getBy(bot, message, executor) {
   return (executor === null ? null : (executor instanceof Discord.User ? bot.sleet.formatUser(executor) : executor)) || (message ? bot.sleet.formatUser(message.author) : 'Me')
@@ -149,7 +187,7 @@ module.exports.events.guildMemberUpdate = async (bot, oldM, newM) => {
   const rbRole = getRolebanRole(oldM.guild)
 
   // Wasn't rolebanned before
-  if (!rbRole || !oldM.roles.has(rbRole.id) || !rolebanned.get(oldM.id)) {
+  if (!rbRole || !oldM.roles.has(rbRole.id) || !await fetchPreviousRoles(bot.sleet.db, oldM.id)) {
     return
   }
 
@@ -160,6 +198,9 @@ module.exports.events.guildMemberUpdate = async (bot, oldM, newM) => {
     const e = auditLogs.first()
     if (e.target.id === oldM.id && e.changes[0] && e.changes[0].key === '$remove' && e.changes[0]['new'].length === 1 && e.changes[0]['new'][0].id === rbRole.id) {
       executor = e.executor
+    } else {
+      // just give up apparantly there's a bug with this
+      return
     }
   }
 
