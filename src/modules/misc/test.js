@@ -37,11 +37,14 @@ module.exports.config = {
   autoLoad: true
 }
 
+//I need to do this or else js complains that events is undefined
+module.exports.events = {}
+
 // init is called when:
 //  1. Before logging in the bot, only sleet is defined
 //  2. Whenever you reload/load a module, sleet and bot are both defined
 // (Optional, with no init the system just won't call it)
-module.exports.init = (sleet, bot) => {
+module.exports.events.init = (sleet, bot) => {
   // Do something like load from the database using sleet.db...
 
   // If the module is being reloaded and the client is logged in, then bot is defined
@@ -51,9 +54,6 @@ module.exports.init = (sleet, bot) => {
     sleet.logger.log('I have been reloaded!')
   }
 }
-
-//I need to do this or else js complains that events is undefined
-module.exports.events = {}
 
 // Adding an event is simple
 // Simply add your function to

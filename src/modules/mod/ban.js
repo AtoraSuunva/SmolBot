@@ -1,6 +1,6 @@
 module.exports.config = {
   name: 'ban',
-  invokers: ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet'],
+  invokers: ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet', 'snap'],
   help: 'Bans people',
   expandedHelp: 'does the bann',
   usage: ['Ban someone', 'ban [@user]', 'Ban another person', 'ban [user id]', 'Ban, but with reason', 'ban @user u suck']
@@ -47,6 +47,11 @@ module.exports.events.message = async (bot, message) => {
 
   if ((await message.guild.fetchBans()).get(id))
     return message.channel.send('That user is already banned.')
+
+  if (message.guild.id === '211956704798048256') {
+    if (cmd.toLowerCase() === 'yeet' && (!reason || reason.split(/dab/i).length < 5))
+      return message.channel.send('You did not dab on them enough.')
+  }
 
   message.guild.ban(id, {reason: (reason ? reason + ' ' : '') + `[Ban by ${bot.sleet.formatUser(message.author)}]`})
     .then(async u => {

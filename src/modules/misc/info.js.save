@@ -17,11 +17,13 @@ module.exports.events.message = (bot, message) => {
     const freeMem = os.freemem()
 
     let fields = new Map()
-    .set('Links:'   , '[Github](https://github.com/AtlasTheBot/Booru-Discord)\nBot Invite/Sever: `b!invite`')
-    .set('Owner:'   , `${bot.sleet.config.owner.username}#${bot.sleet.config.owner.discriminator}`)
-    .set('Using:'   , `Node ${process.version}\ndiscord.js v${require('discord.js').version}`)
-    .set('CPU:'     , `${(100 - (cpu * 100)).toFixed(2)}%`)
-    .set('RAM:'     , `Me: ${formatBytes(process.memoryUsage().rss, 1)}\n${formatBytes(totalMem - freeMem, 1)}/${formatBytes(totalMem, 1)} - ${((totalMem - freeMem) / totalMem * 100).toFixed(2)}%`)
+      .set('Links'   , '[Github](https://github.com/AtlasTheBot/Booru-Discord)\nBot Invite/Sever: `b!invite`')
+      .set('Owner'   , `${bot.sleet.config.owner.username}#${bot.sleet.config.owner.discriminator}`)
+      .set('Using'   , `Node ${process.version}\ndiscord.js v${require('discord.js').version}`)
+      .set('CPU'     , ``)
+      .set('RAM'     , `${formatBytes(process.memoryUsage().rss, 1)}`)
+      .set('CPU (System)', `${(100 - (cpu * 100)).toFixed(2)}%`)
+      .set('RAM (System)', `${formatBytes(totalMem - freeMem, 1)}/${formatBytes(totalMem, 1)} - ${((totalMem - freeMem) / totalMem * 100).toFixed(2)}%`)
 
     if (message.guild !== null && message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')) {
       let Discord = require('discord.js')
@@ -64,13 +66,13 @@ function formatBytes(bytes, decimals) {
 //returns the cpu usage in %
 function getCPUUsage() {
   return new Promise((resolve, reject) => {
-    let stats1 = getCPUInfo()
+    let sysStats1 = getCPUInfo()
 
     setTimeout(() => {
-      let stats2 = getCPUInfo()
+      let sysStats2 = getCPUInfo()
 
-      let idle  = stats2.idle - stats1.idle
-      let total = stats2.total - stats1.total
+      let idle  = sysStats2.idle - sysStats1.idle
+      let total = sysStats2.total - sysStats1.total
 
       resolve(idle / total)
     }, 1000)

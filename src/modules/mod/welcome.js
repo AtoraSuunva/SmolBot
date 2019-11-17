@@ -10,32 +10,33 @@ const Discord = require('discord.js')
 const modlog = weakRequire('./modlog.js') || {createLog() {}}
 const pgp = require('pg-promise')({ capSQL: true })
 
-const welcomeColumnSet = new pgp.helpers.ColumnSet([
+const welcomeColumnSet = new pgp.helpers.ColumnSet(
+  [
     { name: 'guild_id', cast: 'int' },
     'message',
     { name: 'channel', cast: 'int' },
     { name: 'rejoins', def: false },
     { name: 'instant', def: false },
-    { name: 'ignore_roles', cast: 'int[]' },
+    { name: 'ignore_roles', cast: 'BigInt[]' },
     'react_with',
   ],
   { table: 'welcome' },
 )
 
 async function previouslyJoined(db, guild_id, user_id) {
-  return (await db.one('SELECT COUNT(*) FROM welcome WHERE guild_id = $(guild_id) AND $(user_id) = ANY (joins)', {guild_id, user_id})).count === '1'
+  return (await db.one('SELECT COUNT(*) FROM welcome WHERE guild_id = $<guild_id>::BigInt AND $<user_id>::BigInt = ANY (joins)', { guild_id, user_id })).count === '1'
 }
 
 async function fetchJoinInfo(db, guild_id, user_id) {
   return (
-    await db.oneOrNone('SELECT message, channel, rejoins, instant, ignore_roles, react_with, $(user_id) = ANY (joins) AS previously_joined FROM welcome WHERE guild_id = $(guild_id)',
-      {guild_id, user_id})
+    await db.oneOrNone('SELECT message, channel, rejoins, instant, ignore_roles, react_with, $<user_id>::BigInt = ANY (joins) AS previously_joined FROM welcome WHERE guild_id = $<guild_id>::BigInt',
+      { guild_id, user_id })
   )
 }
 
 async function addJoin(db, guild_id, user_id) {
   return (
-    await db.none('UPDATE welcome SET joins = joins || $(user_id) WHERE guild_id = $(guild_id)')
+    await db.none('UPDATE welcome SET joins = array_append(joins, $<user_id>::BigInt) WHERE guild_id = $<guild_id>::BigInt', { guild_id, user_id })
   )
 }
 
@@ -86,7 +87,7 @@ module.exports.events.everyMessage = async (bot, message) => {
   const joinSet = joinSettings[message.guild.id]
   let channel = message.channel
 
-  if (joinSet.ignoreRoles && joinSet.ignore_roles.some(r => message.member.roles.has(r))) {
+  if (joinSet.ignore_roles && joinSet.ignore_roles.some(r => message.member.roles.has(r))) {
     // Ignore some "special" users ie. rolebanned ones
     return
   }
@@ -105,6 +106,8 @@ module.exports.events.everyMessage = async (bot, message) => {
 
 function sendWelcome(bot, channel, data = {user: null, channel: null}, msg) {
   if (channel === null) return
+
+  addJoin(bot.sleet.db, channel.guild.id, data.user.id)
 
   modlog.createLog(channel.guild, 'member_welcome', '\u{1F44B}', 'Member Welcome', `${bot.sleet.formatUser(data.user)} in ${data.channel}`)
 

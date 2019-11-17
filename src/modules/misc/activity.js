@@ -31,7 +31,7 @@ module.exports.events.ready = bot => {
 }
 
 module.exports.events.init = (sleet, bot) => {
-  if (bot) {
+  if (bot && bot.readyAt) {
     module.exports.events.ready(bot)
   }
 }

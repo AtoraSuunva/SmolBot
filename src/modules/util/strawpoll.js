@@ -6,38 +6,37 @@ module.exports.config = {
   usage: ['Get results', 'strawpoll 1234']
 }
 
-const request = require('request')
+const fetch = require('node-fetch')
 const endOfLine = require('os').EOL
 
 module.exports.events = {}
-module.exports.events.message = (bot, message) => {
-  let args = bot.sleet.shlex(message.content)
+module.exports.events.message = async (bot, message) => {
+  let [pollId] = bot.sleet.shlex(message.content)
 
-  if (args[1] === undefined)
+  if (pollId === undefined)
     return message.channel.send('I need a poll ID to work with.')
 
-  if (Number.isNaN(+args[1]))
+  if (Number.isNaN(parseInt(pollId, 10)))
     return message.channel.send('Poll IDs are usually only numbers.')
 
-  let header = {
-    url: 'http:\/\/www.strawpoll.me/api/v2/polls/' + args[1],
-    headers: {
-      'User-Agent': 'Strawpoll for Terminal (By AtlasTheBot)'
-    }
+  const url = `http://www.strawpoll.me/api/v2/polls/${pollId}`
+
+  const headers = {
+    'User-Agent': 'Strawpoll for Terminal (By AtlasTheBot)'
   }
 
-  request(header, (error, response, body) => {
-    if (!error && response.statusCode == 200) {
-      let data = JSON.parse(body)
-      message.channel.send(sortVotes(data))
-    } else {
-      if (response.statusCode == 404)
-        return message.channel.send('There\'s no strawpoll for that ID.')
+  const res = await fetch(url, { headers })
 
-      bot.sleet.logger.error(response)
-      message.channel.send('Something went wrong while trying to get that poll...')
-    }
-  })
+  if (res.statusCode === 404) {
+    return message.channel.send('There is no strawpoll for that ID')
+  }
+
+  if (!res.ok) {
+    bot.sleet.logger.error(await res.text())
+    return message.channel.send('Strawpoll returned an error while trying to fetch that')
+  }
+
+  message.channel.send(sortVotes(await res.json()))
 }
 
 function sortVotes(data) {

@@ -24,7 +24,7 @@ function messageToLog(message) {
   const embed = message.embeds.find(e => e.type === 'rich')
   const richEmbed = !embed ? null : JSON.stringify(new Discord.RichEmbed(embed)._apiTransform())
 
-  return `[${curTime()}] (${message.id}) `
+  return `[${curTime(message.createdAt)}] (${message.id}) `
          + `${message.author.tag} : ${message.content}`
          + ' | Attach: ' + message.attachments.array().map(a=>a.url).join(' ; ')
          + ' | RichEmbed: ' + richEmbed
@@ -32,8 +32,8 @@ function messageToLog(message) {
 }
 
 function curTime(date) {
-  date = date || new Date()
-  return `${date.getUTCFullYear()}-${timePad(date.getUTCDate())}-${timePad(date.getUTCMonth()+1)} ${timePad(date.getUTCHours())}:${timePad(date.getUTCMinutes())}:${timePad(date.getUTCSeconds())}`
+  date = date || new Date(0)
+  return `${date.getUTCFullYear()}-${timePad(date.getUTCMonth()+1)}-${timePad(date.getUTCDate())} ${timePad(date.getUTCHours())}:${timePad(date.getUTCMinutes())}:${timePad(date.getUTCSeconds())}`
 }
 
 function timePad(msg) {

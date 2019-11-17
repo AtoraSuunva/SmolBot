@@ -8,7 +8,7 @@ module.exports.config = {
   autoload: false
 }
 
-const request = require('request')
+const fetch = require('node-fetch')
 const fs = require('fs')
 const util = require('util')
 const execFile = util.promisify(require('child_process').execFile)
@@ -39,10 +39,13 @@ async function getFileToIdentify(message, url) {
   url = await (url || (message.attachments.first() ? message.attachments.first().url : getLatestFile(message)))
 
     if (url) {
-      request(url)
-        .on('error', reject)
-        .pipe(fs.createWriteStream(__dirname + `/trid-tmp/tmp-${message.id}`))
-        .on('close', () => resolve({file: __dirname + `/trid-tmp/tmp-${message.id}`, url}))
+      fetch(url)
+        .then(res => {
+          const file = `${__dirname}/trid-tmp/tmp-${message.id}`
+          const dest = fs.createWriteStream(file)
+          res.body.pipe(dest)
+          dest.on('end', () => resolve({ file, url }))
+        })
     } else {
       reject('No file found.')
     }

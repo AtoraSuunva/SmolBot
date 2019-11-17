@@ -1,14 +1,19 @@
-
 //Extracts stuff from a url
 module.exports.config = {
   name: 'extract',
   invokers: ['extract'],
   help: 'Extracts stuff',
-  expandedHelp: 'b!extract https:\/\/whoa.some/url.txt\nLocked to GMs'
+  expandedHelp: 's!extract https:\/\/whoa.some/url.txt\nLocked to GMs'
 }
 
 const Discord = require('discord.js')
-const Snekfetch = require('snekfetch')
+const fetch = require('node-fetch')
+
+const limits = {
+  '363821920854081539': 10000,
+  '589650203498381314': 10000,
+  '363821745590763520': 4000,
+}
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
@@ -17,8 +22,10 @@ module.exports.events.message = async (bot, message) => {
   if (!message.guild)
     return message.channel.send('Just read it yourself smh')
 
-  if (!message.member.roles.has('363821920854081539') && message.author.id !== bot.sleet.config.owner.id)
-    return message.channel.send('You are not a GM')
+  const limit = message.author.id === bot.sleet.config.owner.id ? 10000 : getMemberLimit(message.member)
+
+  if (limit === undefined)
+    return message.channel.send('You are not allowed to extract.')
 
   // Fetch url arg, then message attachment, then last attachment in the last 100 messages
   url = await (url || (message.attachments.first() ? message.attachments.first().url : getLatestFile(message)))
@@ -29,14 +36,14 @@ module.exports.events.message = async (bot, message) => {
   if (!url.startsWith('https:\/\/') && !url.startsWith('http:\/\/'))
     return message.channel.send('That does not look like a url')
 
-  Snekfetch.get(rawify(url))
-    .then(r => {
-      d = r.text
-      if (typeof d !== 'string')
-        return message.channel.send('That does not look like text...')
+  fetch(rawify(url))
+    .then(r => r.text())
+    .then(d => {
+      if (d.trim().length === 0)
+        return message.channel.send('There was no text to extract.')
 
-      if (d.length > 6000)
-        return message.channel.send(`I am not dumping more than 6k characters (${d.length} chars)`)
+      if (d.length > limit)
+        return message.channel.send(`I am not dumping more than ${limit} characters (${d.length} chars)`)
 
       let stuff = d.replace(/<@(\d+)>/g,
           (m, p1) => {
@@ -55,6 +62,9 @@ module.exports.events.message = async (bot, message) => {
     }).catch(e => {bot.sleet.logger.error(e); message.channel.send('Something went wrong, maybe your url isn\'t valid/it wasn\'t text?')})
 }
 
+function getMemberLimit(member) {
+  return Object.entries(limits).filter(v => member.roles.has(v[0])).map(v => v[1]).sort((a, b) => a - b).reverse()[0]
+}
 
 //ahn
 function rawify(url) {
@@ -70,7 +80,7 @@ function rawify(url) {
   return url
 }
 
-function splitSend(message, content, {code = false} = {}) {
+async function splitSend(message, content, { code = false } = {}) {
   let splits = []
 
   content.match(/[\S\s]{1,1800}\S{0,50}/g).forEach(v => splits.push(v))
@@ -78,11 +88,12 @@ function splitSend(message, content, {code = false} = {}) {
   if (splits[0] === undefined) message.channel.send('`[Empty Message]`')
 
   for (let split of splits) {
-
-    if (code)
-      message.channel.send(Discord.Util.escapeMarkdown(split, true), {code})
-    else
-      message.channel.send(split)
+    if (code) {
+      await message.channel.send(Discord.Util.escapeMarkdown(split, true), { code })
+    } else {
+      await message.channel.send(split)
+    }
+    await sleep(500)
   }
 }
 
@@ -97,4 +108,8 @@ function getLatestFile(message) {
         resolve(null)
      })
   })
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
 }

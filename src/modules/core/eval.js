@@ -42,7 +42,7 @@ module.exports.events.message = async (bot, message) => {
       output = await output
     }
 
-    if (args[0] === 'eval?') bot.sleet.logger.log(msg)
+    if (args[0] === 'eval?') bot.sleet.logger.dir(output, { depth: 5 })
     let inspect = require('util').inspect(output, { depth: 2 })
 
     if (inspect.length > 2000 && args[0] !== 'eval!' && args[0] !== 'eval...')
