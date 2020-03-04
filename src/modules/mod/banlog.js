@@ -25,7 +25,7 @@ module.exports.events.message = async (bot, message) => {
     } catch (e) {}
   } else if (!(user instanceof Discord.User)) {
     victim = message.guild.members.find(m => m.user.tag === user || m.user.username === user)
-    if (victim !== undefined) victim = victim.user //nice
+    if (victim) victim = victim.user // nice
   }
 
   if (victim === undefined || victim === null)

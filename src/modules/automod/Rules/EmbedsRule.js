@@ -38,10 +38,10 @@ module.exports = class EmbedsRule extends Rule {
     const lAttach = this.lastAttach[uid]
 
     if (lAttach && attach.filename === lAttach.filename && attach.filesize === lAttach.filesize) {
-      // -1 because the first message isn't counted since it's not a repeat
       if (++this.violations[uid] >= this.maxRepeats) {
-        return this.punishment
+        return ({ punishment: this.punishment })
       }
+
       setTimeout(id => --this.violations[id], this.timeout, uid)
     }
 

@@ -331,13 +331,14 @@ const uReg = {
 async function extractMembers(str, source, {id = false, keepIds = false} = {}) {
   let guild
   let message
+  let channel
 
   if (source instanceof Discord.Guild)
     guild = source
   else if (source instanceof Discord.Message)
-    [guild, message] = [source.guild, source]
+    [guild, message, channel] = [source.guild, source, source.channel]
   else if (source instanceof Discord.Channel)
-    guild = source.guild
+    [guild, channel] = [source.guild, source]
   else
     throw new Error('`source` must be one of [Guild, Message, Channel]')
 
@@ -361,8 +362,8 @@ async function extractMembers(str, source, {id = false, keepIds = false} = {}) {
       u = guild.members.find(m => m.user.tag === match[1])
     } else if (match = uReg.id.exec(a)) {
       u = guild.members.get(match[1]) || (keepIds ? match[1] : undefined)
-    } else {
-      u = guild.members.find(m => m.user.username === a)
+    } else if (message && guild) {
+      u = await interactiveFuzzyMatchMembers(message, la)
     }
 
     if (u) users.push(u)
@@ -374,6 +375,49 @@ async function extractMembers(str, source, {id = false, keepIds = false} = {}) {
   return users
 }
 module.exports.extractMembers = extractMembers
+
+function interactiveFuzzyMatchMembers(message, query) {
+  return new Promise(resolve => {
+    const results = [], exactResults = []
+
+    message.guild.members.forEach(m => {
+      if (m.user.username.toLowerCase().includes(query) || m.displayName.toLowerCase().includes(query))
+        results.push({ member: m, tag: m.user.tag, id: m.user.id, nickname: m.nickname })
+
+     if (m.user.username.toLowerCase() === query || m.displayName.toLowerCase() === query)
+        exactResults.push({ member: m, tag: m.user.tag, id: m.user.id, nickname: m.nickname })
+    })
+
+    if (results.length === 0) return resolve(null)
+    if (exactResults.length === 1) return resolve(exactResults[0].member)
+
+    const prompt = `${results.length} matches found, is one of these close?`
+    const userList = '```py\n'
+                   + results.map((v,i) =>
+                       `[${i}] ${v.tag}: ${v.id} ${v.nickname ? '-- Nickname: ' + v.nickname :''}`
+                     ).join('\n').substring(0, 1900)
+                   + '```'
+
+    message.channel.send(`${prompt}\n${userList}`)
+      .then(msg =>
+        msg.channel.awaitMessages(m => m.author.id === message.author.id && !Number.isNaN(parseInt(m.content)), { max: 1, time: 10000, errors: ['time']} )
+          .then(col => {
+            const n = parseInt(col.first().content)
+
+            if (results[n] === undefined) {
+              msg.edit(`"${n}" is not a valid choice, aborting\n${userList}`)
+              resolve(null)
+            } else {
+              msg.delete().catch(_ => {})
+              resolve(results[n].member)
+            }
+          }).catch(e => {
+            msg.edit(`Selection Timed Out\n${userList}`)
+            resolve(null)
+          })
+      )
+  })
+}
 
 /**
  * Gets all the events used by the modules

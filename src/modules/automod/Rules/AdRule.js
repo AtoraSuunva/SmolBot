@@ -36,7 +36,7 @@ module.exports = class AdRule extends Rule {
       .filter(v => v.invite === true || v.invite.guild.id !== message.guild.id)
 
     if (invites.length === 0)
-      return Promise.resolve(null)
+      return null
 
     this.violations[uid] += invites.reduce((acc, b) => acc + b.count, 0)
 
@@ -49,7 +49,7 @@ module.exports = class AdRule extends Rule {
     const index = this.shills[uid].push(message.id) - 1
     setTimeout((id, index) => --this.violations[id] || this.shills[id].splice(index, 1), this.timeout, uid, index)
 
-    return Promise.resolve(punishment ? [punishment, this.shills[uid]] : null)
+    return ({ punishment, deletes: this.shills[uid] })
   }
 }
 

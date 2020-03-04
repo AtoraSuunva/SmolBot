@@ -19,8 +19,7 @@ module.exports = class EveryoneRule extends Rule {
     this.timeout = timeout * 1000
     this.parameters = trapRoles
 
-    this.trapERole = trapRoles[0]
-    this.trapHRole = trapRoles[1]
+    this.trapRoles = trapRoles
     this.violations = AutoProp({})
     this.name = `Max everyone/here mentions (${maxMentions}) reached.`
   }
@@ -28,11 +27,9 @@ module.exports = class EveryoneRule extends Rule {
   filter(message) {
     const uid = message.guild.id + message.author.id
 
-    if (message.mentions.everyone ||
-      message.mentions.roles.has(this.trapERole) ||
-      message.mentions.roles.has(this.trapHRole)) {
+    if (message.mentions.everyone || this.trapRoles.some(r => message.mentions.roles.has(r))) {
       if (++this.violations[uid] >= this.maxMentions) {
-        return this.punishment
+        return ({ punishment: this.punishment })
       }
       setTimeout(id => --this.violations[id], this.timeout, uid)
     }
