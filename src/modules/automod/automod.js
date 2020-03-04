@@ -6,6 +6,16 @@ module.exports.config = {
   usage: ['View rules', 'automod view', 'Create a rule', 'automod add blacklist roleban 3 15 "some words" nya', 'Delete a rule', 'automod delete 3']
 }
 
+function weakRequire(mod) {
+  try {
+    return require(mod)
+  } catch {
+    return null
+  }
+}
+
+const modlog = weakRequire('../mod/modlog.js') || { createLog() {} }
+
 const EveryoneRule = require('./Rules/EveryoneRule.js')
 const ForbiddenChars = require('./Rules/ForbiddenCharsRule.js')
 const RepeatsRule = require('./Rules/RepeatsRule.js')
@@ -14,6 +24,7 @@ const BlacklistRule = require('./Rules/BlacklistRule.js')
 const EmbedsRule = require('./Rules/EmbedsRule.js')
 const RegexRule = require('./Rules/RegexRule.js')
 const EmojiOnlyRule = require('./Rules/EmojiOnlyRule.js')
+const PressureRule = require('./Rules/PressureRule.js')
 
 const Rules = {
   'everyone': EveryoneRule,
@@ -24,7 +35,28 @@ const Rules = {
   'embeds': EmbedsRule,
   'regex': RegexRule,
   'emojionly': EmojiOnlyRule,
+  'pressure': PressureRule,
 }
+
+const RulesDocs = `
+Parameters are shlexed, and should be specified as following:
+\`automod add blacklist 3 15 ban foo 'with space' bar biz\`
+> \`ad       \` => Counts server invites sent that are not to the current server
+> \`blacklist\` => Blacklists certain phrases, each occurrence in a message counts as a strike (ie. \`'foo' 'some thing' 'bar'\`)
+> \`embeds   \` => Stops users from posting the same embed over and over
+> \`emojionly\` => Strikes on messages containing only emojis
+> \`everyone \` => Strikes on attempted @ everyone attempts. You can specify roles (by ID) that count as "@ everyone" mentions
+> \`regex    \` => Strikes when a regex matches the message, only 1 regex is supported a time. Can be either given as \`'r(e)gex.*' 'flags'\` or \`'/r(e)gex.*/flags'\`
+> \`repeats  \` => Strikes on messages with repeated content (ie. copy/paste)
+> \`pressure \` => Experimental, pressure-based automod
+`.trim()
+
+const RulesHelp = 'Add a rule using `automod add <name> <punishment> <limit> <timeout> [param1 param2 ... paramN]`'
+      + '\n> `<name>` must be one of: `' + Object.keys(Rules).join('`, `') + '`'
+      + '\n> `<punishment>` must be one of `roleban`, `ban`, `softban`, `kick`, `delete`, `whisper:<message here>`'
+      + '\n> `<limit>` (number) is how many times a rule must be triggered (ie. a "strike") before the punishment activates'
+      + '\n> `<timeout>` (number) is the time in seconds for how long each "strike" lasts'
+      + '\n> `[param...]` Some rules take extra parameters, use `automod rules` to see more details about the rules'
 
 /** Map of guild_id => config */
 const automodConfig = new Map()
@@ -119,6 +151,14 @@ module.exports.events.message = (bot, message) => {
   const [cmd, opt, ...params] = bot.sleet.shlex(message)
 
   switch ((opt || '').toLowerCase()) {
+    case 'help':
+      message.channel.send(RulesHelp)
+      break
+
+    case 'rules':
+      message.channel.send(RulesDocs)
+      break
+
     case 'view':
       viewRules(bot, message, params)
       break
@@ -145,7 +185,7 @@ module.exports.events.message = (bot, message) => {
       break
 
     default:
-      message.channel.send('What do you want to do?\n`view`, `add`, `delete`')
+      message.channel.send('What do you want to do?\n`help`, `rules`, `view`, `add`, `delete`')
   }
 }
 
@@ -173,7 +213,7 @@ async function addRule(bot, message, params) {
   let [name, punishment, limit, timeout, ...ruleParams] = params
 
   if (!name || !punishment || !limit || !timeout) {
-    return message.channel.send('Missing parameters...\n`<name> <punishment> <limit> <timeout> [param1 param2 ... paramN]`')
+    return message.channel.send(`Missing parameters...\n${RulesHelp}`)
   }
 
   ruleParams = ruleParams.filter(v => !!v)
@@ -248,68 +288,70 @@ module.exports.events.everyMessage = async (bot, message) => {
   }
 
   for (let r of rules) {
-    let punishment = await r.filter(message), deletes, msg
+    const { deletes, punishment, reason } = (await r.filter(message)) || {}
 
     if (!punishment) continue
 
-    if (Array.isArray(punishment)) {
-      deletes = punishment[1]
-      punishment = punishment[0]
-    }
+    const usertag = bot.sleet.formatUser(message.author)
+    const realReason = reason || r.name || 'No reason!'
+    let silentAction = false
+    let action = null
+    let extra = null
 
-    //(null, 'delete', roleban', 'kick', 'ban', 'whisper: some message')
-    // Can also be array of [punishment, [ids to delet]]
+    //(null, 'delete', roleban', 'kick', 'ban', 'whisper: some message', 'log')
     switch((punishment + '').split(':')[0].toLowerCase()) {
       case 'delete':
+        action = 'silenced (message deleted)'
+        silentAction = true
         message.delete()
         break
 
       case 'roleban':
+        action = 'rolebanned'
         const rolebanRole = automodConfig.get(message.guild.id).roleban_role
         if (message.member.roles.has(rolebanRole)) {
-          // fuck them tbh
           message.channel.overwritePermissions(message.author, {SEND_MESSAGES: false})
-          msg = `${bot.sleet.formatUser(message.author)} was silenced: *${r.name}*`
           prefix = false
         } else {
-          // lmao constructing my own message
           roleban(bot, {channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild}, [message.member], rolebanRole, {silent: true})
-
-          msg = `${bot.sleet.formatUser(message.author)} was rolebanned: *${r.name}*`
         }
         break
 
       case 'kick':
         if (message.member.kickable) {
+          action = 'kicked'
           message.member.kick(r.name)
-          msg = `${bot.sleet.formatUser(message.author)} was kicked: *${r.name}*`
         }
         break
 
       case 'ban':
         if (message.member.bannable) {
-          message.member.ban({days: 1, reason: r.name})
-          msg = `${bot.sleet.formatUser(message.author.tag)} was banned: *${r.name}*`
+          action = 'banned'
+          message.member.ban({ days: 1, reason: realReason })
         }
         break
 
       case 'softban':
         if (message.member.bannable) {
-          message.member.ban({days: 1, reason: r.name}).then(u => message.guild.unban(message.member))
-          msg = `${bot.sleet.formatUser(message.author.tag)} was softbanned: *${r.name}*`
+          action = 'softbanned'
+          message.member.ban({ days: 1, reason: realReason }).then(u => message.guild.unban(message.member))
         }
+        break
 
       case 'whisper':
         const m = punishment.split(':').slice(1).join(':').trim()
         const member = message.member
+        action = 'whispered to'
+        extra = `Told them: ${m}`
+        silentAction = true
 
-        message.channel.send(message.author + ', ' + m, {autoDelete: false})
+        message.channel.send(message.author + ', ' + m, { autoDelete: false })
           .then(msg => {
             const original = msg.channel.permissionOverwrites.get(member.id)
 
             const a = msg.delete()
             const b = Promise.resolve(original)
-            const c = msg.channel.overwritePermissions(member, {VIEW_CHANNEL: false}, `Whisper: ${m}`)
+            const c = msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
 
             return Promise.all([a, b, c])
           }).then(args => {
@@ -324,6 +366,11 @@ module.exports.events.everyMessage = async (bot, message) => {
           })
 
         break
+
+      case 'log':
+        action = 'nothing (log)'
+        silentAction = true
+        break
     }
 
     if (deletes) {
@@ -334,11 +381,18 @@ module.exports.events.everyMessage = async (bot, message) => {
       }
     }
 
-    if (msg) {
+    if (!action) continue
+
+    const msg = `${usertag} was **${action}** for *${realReason}*`
+
+    if (msg && !silentAction) {
       prefix = prefix && (silentChannels.get(message.channel.id) < 1)
       message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
     }
 
+    const modlogMsg = msg + (extra ? `\n> *${extra}*` : '') + `\n> ${message.url}`
+
+    modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
   }
 }
 

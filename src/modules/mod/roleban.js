@@ -108,7 +108,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
         const by = bot.sleet.formatUser(message ? message.author : bot.user)
         const baseMsg = `${bot.sleet.formatUser(m.user)} has been rolebanned by ${by}`
         const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
-        const rolesMsg = (prevRoles.size === 0
+        const rolesMsg = (prevRoles.length === 0
                           ? 'No previous roles'
                           : `**Previous roles:** ${displayRoles(m.guild, prevRoles)}`)
 
@@ -146,7 +146,7 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
         const logToChannel = logChannelId && (message ? message.channel.id !== logChannelId : true)
         const baseMsg = `${bot.sleet.formatUser(m.user)} has been unrolebanned by ${by}`
         const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
-        const rolesMsg = (prevRoles.size === 0
+        const rolesMsg = (prevRoles.length === 0
                           ? 'No roles restored'
                           : `**Roles restored:** ${displayRoles(m.guild, prevRoles)}`)
 

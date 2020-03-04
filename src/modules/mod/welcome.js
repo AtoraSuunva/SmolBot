@@ -70,7 +70,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
   }
 
   if (joinInfo.instant) {
-    sendWelcome(bot, bot.channels.get(joinInfo.channels || guild.channels.first().id), {user: member, channel: null}, joinInfo.message)
+    sendWelcome(bot, bot.channels.get(joinInfo.channels || guild.channels.first().id), { user: member, channel: null }, joinInfo.message)
   } else {
     newJoins[guild.id].add(member.id)
     joinSettings[guild.id] = joinInfo
@@ -101,15 +101,15 @@ module.exports.events.everyMessage = async (bot, message) => {
     channel = bot.channels.get(joinSet.channel)
   }
 
-  sendWelcome(bot, channel, {user: message.author, channel: message.channel}, joinSet.message)
+  sendWelcome(bot, channel, { user: message.author, channel: message.channel, message }, joinSet.message)
 }
 
-function sendWelcome(bot, channel, data = {user: null, channel: null}, msg) {
+function sendWelcome(bot, channel, data = { user: null, channel: null, message: null }, msg) {
   if (channel === null) return
 
   addJoin(bot.sleet.db, channel.guild.id, data.user.id)
 
-  modlog.createLog(channel.guild, 'member_welcome', '\u{1F44B}', 'Member Welcome', `${bot.sleet.formatUser(data.user)} in ${data.channel}`)
+  modlog.createLog(channel.guild, 'member_welcome', '\u{1F44B}', 'Member Welcome', `${bot.sleet.formatUser(data.user)} in ${data.channel}` + (data.message ? `\n> ${data.message.url}` : ''))
 
   return channel.send(textReplace(msg, data))
 }

@@ -18,6 +18,6 @@ module.exports = class Rule {
    */
   filter(message) {
     if (message)
-      return this.punishment
+      return ({ punishment: this.punishment, deletes: [/* Messages to delete */], reason: 'Custom reason' })
   }
 }

@@ -34,6 +34,8 @@ const settingsTemplate = [
   {name: 'message_delete', type: 'boolean', init: true, help: 'Log deleted messages'},
   {name: 'channel_create', type: 'boolean', init: true, help: 'Log created channels'},
   {name: 'channel_delete', type: 'boolean', init: true, help: 'Log deleted channels'},
+  {name: 'reaction_actions', type: 'boolean', init: true, help: 'Allow to act on modlog entries by reacting (ie. ban with hammer)'},
+  {name: 'automod_action', type: 'boolean', init: true, help: 'Log automod actions in the modlog'},
 ]
 
 settingsTemplate.forEach((v, i) => settingsTemplate[i].reg = new RegExp('^' + prefix + v.name + '=(.*)', 'mi'))
@@ -68,6 +70,8 @@ function fetchConfig(guild, channel = null) {
       if (typeof val !== setting.type) continue
 
       settings[setting.name] = val
+    } else {
+      settings[setting.name] = setting.init
     }
   }
 
@@ -261,7 +265,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
   embed.setDescription(`${config.settings.member_add_mention ? '' : member + ' | '}
 **${member.guild.memberCount}** Members ${invMem} ${newAcc}`)
     .setColor(colors.memberAdd)
-    .setFooter(`${Time.trim(Time.since(member.user.createdAt).format({short: true}), 3)} old`)
+    .setFooter(`${Time.trim(Time.since(member.user.createdAt).format({short: true}), 3)} old`, member.user.avatarURL)
     .setTimestamp(new Date())
 
   sendLog(config.channel, ':inbox_tray:', 'Member Join', msg, {embed})
@@ -493,6 +497,52 @@ module.exports.events.messageDelete = async (bot, message) => {
           + '```\n' + delLog.replace(/(`{3})/g, '`\u{200B}'.repeat(3)).substring(0, 1500) + '\n```'
 
   sendLog(config.channel, ':wastebasket:', 'Message Deleted', msg)
+}
+
+const HAMMER = '\ud83d\udd28' // 🔨
+const BOOT = '\ud83d\udc62' // 👢
+const INFO = '\u2139\ufe0f' // ℹ️
+const MENTION = '\ud83d\udcdd' // 📝
+const userIdRegex = /(?:.*(?:from).*?|.*)\((\d+)\).*$/m
+
+module.exports.events.messageReactionAdd = (bot, react, user) => {
+  if (!react.message.guild) return
+  const config = getConfig(react.message.guild)
+  if (!config || !config.settings.reaction_actions) return
+  if (react.message.author.id !== bot.user.id || react.message.channel.id !== config.channel.id) return
+
+  const [,id] = (userIdRegex.exec(react.message.content) || [,null])
+
+  if (id === null) return
+
+  const message = react.message
+
+  switch (react.emoji.name) {
+    case HAMMER:
+      message.guild.ban(id)
+        .then(m => message.channel.send(`Banned user <@${id}>`))
+        .catch(e => message.channel.send(`Failed to ban user ${id}:\n*${e}*`))
+      break
+
+    case BOOT:
+      message.guild.fetchMember(id).then(m => {
+        if (m.kickable) {
+          m.kick().then(e => message.channel.send(`Kicked user <@${id}>`)).catch(() => {})
+        } else {
+          message.channel.send('Failed to kick user, insufficient permissions')
+        }
+      })
+      .catch(e => message.channel.send('Failed to fetch user to kick them'))
+      break
+
+    case INFO:
+      message.channel.send(id)
+      break
+
+    case MENTION:
+      message.channel.send(`<@${id}>`)
+      break
+  }
 }
 
 function messageToLog(message, {username = true, id = true, includeAttach = true} = {}) {

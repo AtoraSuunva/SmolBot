@@ -35,7 +35,7 @@ function countOcc(str, arr) {
 }
 
 // longass arabic char, of char, halfwidth spacer
-const defaultChars = ['\u{fdfd}', '\u{94c}', '\u{ffa0}']
+const defaultChars = ['\u{fdfd}', '\u{94c}']
 
  /**
  * A list of forebidden chars a user can't post
@@ -82,7 +82,7 @@ module.exports = class BlacklistRule extends Rule {
 
 
       if (this.violations[uid] >= this.maxCount) {
-        return [this.punishment, this.vioMessages[uid]]
+        return ({ punishment: this.punishment, deletes: this.vioMessages[uid] })
       }
 
     }

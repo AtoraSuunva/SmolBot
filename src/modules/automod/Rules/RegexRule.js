@@ -54,7 +54,7 @@ module.exports = class RegexRule extends Rule {
 
 
       if (this.violations[uid] >= this.maxCount) {
-        return [this.punishment, this.vioMessages[uid]]
+        return ({ punishment: this.punishment, deletes: this.vioMessages[uid] })
       }
 
     }

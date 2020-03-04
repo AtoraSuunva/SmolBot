@@ -23,6 +23,7 @@ const responses = new Map()
   .set('fuck me', {type: 'is'   , reply: 'When and where?', chance: 0.25})
   .set('haha yes',{type: 'is'   , reply: 'haha yes'})
   .set("y'all alive", {type: 'is', reply: () => pick(affirmative)})
+  .set(/thanks? smol(bot)?/, { type: 'regex', reply: 'np' })
 
 module.exports.events = {}
 module.exports.events.everyMessage = (bot, message) => {

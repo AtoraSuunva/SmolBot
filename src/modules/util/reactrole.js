@@ -4,7 +4,7 @@
 const REACT_EMOJI = '\u{1f510}'
 // lol regex
 // const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+)/ug
-const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+?)(\s+(?:(?::|->|=>|\||>|=)\s*(.*)?|$)|$)/ug
+const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+?)(\s+(?:(?::|->|=>|\||>|=)\s*(.*)?|$)|$)/ugm
 
 const reactMessages = new Map()
 const optReacts = {
@@ -21,7 +21,31 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  message.channel.send(`You can make any message be a "role giving" message (if you have manage roles & only give out roles under yours), you just need to format a message that has \`(emoji or discord emote) (some separator) (role name or role mention) [optional separator] [optional description]\`\nYou can use an emoji like :red_circle: or a discord emote like <:deletThis:318296455280459777>\nYou can use the following as separators: \`:\` \`for\` \`->\` \`=>\` \`|\` \`>\` \`=\` or just a space\nPut together, you get:\n\nSelect a reaction to get a role\n\n🔴: red\n |\\🔵 for blue\n⚫ -> black\n:soulgreen: green\n💛 => yellow\n💜 | purple\n💔 > dead\n:nom_cat: = ca\n\nThis message would be valid for giving out roles`)
+  message.channel.send(`
+You can make any message be a "role giving" message:
+  - You need Manage Roles
+  - All roles to give must be under your highest role
+  - Format a message like this:
+    - \`[emoji] [separator] [role name/mention] <optional separator> <optional description>\`
+    - \`[emoji]\`: emoji (✏️) or a discord emote (<:Bulbasaur:269682851363028994>)
+    - \`[separators]\`: \`:\` \`for\` \`->\` \`=>\` \`|\` \`>\` \`=\` or just a space
+    - \`[role name/mention]\`: Self-explanatory
+  - Then react to it with:
+    - ${optReacts.one} Only allow users to have one of the roles at a time
+    - ${REACT_EMOJI} Create the react message
+
+(For example) Select a reaction to get a role:
+
+🔴: red
+🔵 for blue
+⚫ -> black
+<:vermintide:662024166672826380> green
+💛 => yellow
+💜 | purple
+💔 > dead
+
+This message would be valid for giving out roles
+`.trim())
 }
 
 module.exports.events.init = async sleet => {
@@ -45,8 +69,6 @@ module.exports.events.raw = async (bot, packet) => {
   }
 
   const channel = bot.channels.get(packet.d.channel_id)
-
-  console.log(packet)
 
   // Message is already cached, so it already got handled just fine
   if (!channel || channel.messages.get(packet.d.message_id)) return

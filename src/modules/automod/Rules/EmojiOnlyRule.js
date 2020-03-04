@@ -30,7 +30,7 @@ module.exports = class EmojiOnlyRule extends Rule {
 
     if (justEmoji(message.content)) {
       if (++this.violations[uid] >= this.maxRepeats) {
-        return this.punishment
+        return ({ punishment: this.punishment })
       }
 
       setTimeout(id => --this.violations[id], this.timeout, uid)
