@@ -2,13 +2,14 @@
 
 module.exports.config = {
   name: 'eval',
-  invokers: ['eval', 'eval!', 'eval?'],
+  invokers: ['eval', 'eval!', 'eval?', 'eval...'],
   help: 'Evals stuff',
   expandedHelp: 'Evals stuff for testing reasons.\nIf you try to use my eval I\'ll kinkshame you.',
   invisible: true
 }
 
 const tokenReg = /(?:bot|client)\.token/gi
+const codeReg = /```(?:.*)?\n([\S\s]*)\n```/
 const v = {}
 
 module.exports.events = {}
@@ -23,14 +24,13 @@ module.exports.events.message = async (bot, message) => {
   const fetch = require('snekfetch')
 
   let args = shlex(message.content)
-  let evalMsg = message.content.substring(message.content.indexOf(args[0]) + args[0].length)
+  const noInvoker = message.content.substring(message.content.indexOf(args[0]) + args[0].length)
+  const codeMatch = codeReg.exec(noInvoker)
+  let evalMsg = codeMatch ? codeMatch[1] : noInvoker
   let output = 'aaa'
   let msg
 
-  console.log(message.content)
-  console.log(args)
-
-  bot.sleet.logger.log(evalMsg)
+  bot.sleet.logger.info('Eval', evalMsg)
 
   try {
     evalMsg = evalMsg.replace(tokenReg, '"[ https://suplex.me/PoorUnimportantReuniclus ]"')

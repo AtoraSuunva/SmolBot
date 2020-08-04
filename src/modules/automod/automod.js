@@ -108,12 +108,16 @@ async function setupAutomodFromDatabase(db) {
       activeRules.set(guild_id, [])
     }
 
-    const rule = (Rules[data.rule_name])
-      ? new Rules[data.rule_name](data.id, data.punishment, data.trigger_limit, data.timeout, data.params)
-      : null
+    try {
+      const rule = (Rules[data.rule_name])
+        ? new Rules[data.rule_name](data.id, data.punishment, data.trigger_limit, data.timeout, data.params)
+        : null
 
-    if (rule) {
-      activeRules.get(guild_id).push(rule)
+      if (rule) {
+        activeRules.get(guild_id).push(rule)
+      }
+    } catch (e) {
+      console.error('FAILED TO CREATE RULE', data.rule_name, data.id, data.punishment, data.trigger_limit, data.timeout, data.params)
     }
   }
 }
@@ -160,7 +164,7 @@ module.exports.events.message = (bot, message) => {
       break
 
     case 'view':
-      viewRules(bot, message, params)
+      viewRules(bot, message, ...params)
       break
 
     case 'add':
@@ -189,14 +193,23 @@ module.exports.events.message = (bot, message) => {
   }
 }
 
-function viewRules(bot, message) {
+function viewRules(bot, message, page = 1) {
   const rules = activeRules.get(message.guild.id)
+
+  const perPage = 10
+  const maxPage = Math.ceil(rules.length / perPage)
+
+  if (page < 1 || page > maxPage) {
+    return message.channel.send(`You need to specify a page from 1-${maxPage}`)
+  }
+
+  const pageIndicator = maxPage !== 1 ? ` [Page ${page}/${maxPage}]` : ''
 
   if (!rules || rules.length === 0) {
     message.channel.send('No rules are active on this server.')
   } else {
-    message.channel.send('Active rules are:\n```py\n' +
-      rules.map(r =>
+    message.channel.send(`Active rules (${rules.length})${pageIndicator}:` + '\n```py\n' +
+      rules.slice(perPage * (page - 1), perPage * page).map(r =>
         `[${r.id}] ${r.name} {${r.timeout / 1000} s}${r.parameters && r.parameters.length > 0 ? ' [' + r.parameters.join(', ').replace(/nigger/, 'ni---r') + ']' : ''} -> # ${r.punishment}`
       ).join('\n') + '\n```'
     )
@@ -232,6 +245,7 @@ async function addRule(bot, message, params) {
     message.channel.send(`**New rule created:**\n\`\`\`py\n[${id}] ${newRule.name} {${timeout} s}${ruleParams.length > 0 ? ' [' + ruleParams.join(', ') + ']' : ''} -> #${punishment}\n\`\`\``)
   } catch (e) {
     message.channel.send('**An error occured:**\n' + e.message)
+    bot.sleet.logger.error('Failed to add automod rule:', { name, punishment, limit, timeout, ruleParams }, e)
   }
 }
 
@@ -255,7 +269,7 @@ async function deleteRule(bot, message, params) {
 
   if (r) {
     await deleteRuleFromDatabase(bot.sleet.db, id)
-    message.channel.send('Deleted: \n```py\n' + `[${r.id}] ${r.name} {${r.timeout} s} -> # ${r.punishment}` + '\n```')
+    message.channel.send('Deleted: \n```py\n' + `[${r.id}] ${r.name} {${r.timeout / 1000} s} -> # ${r.punishment}` + '\n```')
   } else {
     message.channel.send('Did not delete anything.')
   }

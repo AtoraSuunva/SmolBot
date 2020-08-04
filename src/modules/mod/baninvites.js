@@ -58,7 +58,7 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
   if (!guild.me.permissions.has('MANAGE_GUILD')) return
 
   let invites = await guild.fetchInvites()
-  let foundInvites = invites.filter(inv => inv.inviter.id === user.id )
+  let foundInvites = invites.filter(inv => inv.inviter && inv.inviter.id === user.id )
 
   if (foundInvites.size === 0) return
 

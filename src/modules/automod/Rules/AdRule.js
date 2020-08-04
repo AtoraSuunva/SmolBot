@@ -2,7 +2,7 @@ const AutoProp = require('./AutoProp')
 const Rule = require('./Rule')
 
 // Lol regexes
-const inviteRegex = /(?:discord\s*\.\s*gg\s*|discord\s*(?:app)?\s*\.\s*com\s*\/\s*invite)\s*\/\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[\W]|$)/ig
+const inviteRegex = /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/ig
 
 /**
  * Allows a punishment to happen if a user shills another server
@@ -13,13 +13,14 @@ module.exports = class AdRule extends Rule {
    * @param {String} punishment The punishment to do
    * @param {Number} maxAds The max amount a user can post ads to servers
    * @param {Number} timeout The timeout (in seconds) before a violation expires
+   * @param {String[]} params The ids of the servers to ignore in ads
    */
-  constructor(id, punishment, maxAds, timeout) {
+  constructor(id, punishment, maxAds, timeout, params) {
     super(id, 'ad', punishment, maxAds, timeout, [])
     this.punishment = punishment
     this.maxAds = maxAds
     this.timeout = timeout * 1000
-    this.parameters = null
+    this.parameters = params
 
     this.violations = AutoProp({}, 0)
     this.shills = AutoProp({}, [])
@@ -28,12 +29,14 @@ module.exports = class AdRule extends Rule {
 
   async filter(message) {
     const uid = message.guild.id + message.author.id
+    const allowed = this.parameters || []
 
     // Fetch all the invites mentionned that
     // 1) Exist
     // 2) Aren't for the same guild the message was sent in
+    // 3) Aren't allowed
     const invites = (await getAllInvites(message.client, message.content))
-      .filter(v => v.invite === true || v.invite.guild.id !== message.guild.id)
+      .filter(v => v.invite === true || (v.invite.guild.id !== message.guild.id && !allowed.includes(v.invite.guild.id)) )
 
     if (invites.length === 0)
       return null

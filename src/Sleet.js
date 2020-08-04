@@ -328,7 +328,7 @@ const uReg = {
   id: /(\d+)/,
 }
 
-async function extractMembers(str, source, {id = false, keepIds = false} = {}) {
+async function extractMembers(str, source, {id = false, keepIds = false, invokers = [], noCmd = false} = {}) {
   let guild
   let message
   let channel
@@ -342,7 +342,15 @@ async function extractMembers(str, source, {id = false, keepIds = false} = {}) {
   else
     throw new Error('`source` must be one of [Guild, Message, Channel]')
 
-  const arr = shlex(str)
+  const shlexed = shlex(str, { invokers })
+  let arr
+
+  if (noCmd) {
+    arr = shlexed
+  } else {
+    [cmd, ...arr] = shlexed
+  }
+
   const users = []
 
   await guild.fetchMembers()
@@ -716,6 +724,7 @@ module.exports.createGist = createGist
  * @return {String} The formatted string
  */
 function formatUser(user, {id = true, plain = false} = {}) {
+  user = user.user ? user.user : user
   return `${plain ? '' : '**'}${escapeMarkdown(user.username)}${plain ? '' : '**'}\u{200e}#${user.discriminator}${id ? ' (' + user.id + ')' : ''}`
 }
 module.exports.formatUser = formatUser

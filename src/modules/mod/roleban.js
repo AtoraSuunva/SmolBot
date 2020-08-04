@@ -1,4 +1,4 @@
-const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!', 'fuck up']
+const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!', 'fuck up', 'australia']
 const unRolebanCmds = ['unroleban', 'unforebode', 'untoss', 'refenestrate']
 
 module.exports.config = {
@@ -9,6 +9,7 @@ module.exports.config = {
   usage: ['Roleban a dude', 'roleban [@user|userID]', 'Roleban many dudes', 'roleban [@user userID @user...]', 'Unroleban', 'unroleban @user']
 }
 
+const invokers = module.exports.config.invokers
 const roleNames = ['roleban', 'rolebanned', 'tossed', 'muted', 'foreboden', 'silenced']
 const roleIds   = ['122150407806910464', '303723450747322388', '367873664118685697', '382658296504385537']
 // r/ut, atlas yt, perfect, ut rp
@@ -58,7 +59,7 @@ module.exports.events.message = async (bot, message) => {
   if (message.member.highestRole.position <= rbRole.position)
     return message.channel.send('Your highest role needs to higher than the `' + rbRole.name + '` role to (un)roleban.')
 
-  const members = await bot.sleet.extractMembers(message.content, message)
+  const members = await bot.sleet.extractMembers(message.content, message, { invokers })
 
   if (members.every(m => m === null))
     return message.channel.send('I got nobody to (un)roleban.')
@@ -96,6 +97,11 @@ async function roleban(bot, message, members, rbRole, options = {}) {
       continue
     }
 
+    // Disconnect them from voice as well
+    if (m.voiceChannel) {
+      m.setVoiceChannel(null).catch(() => {})
+    }
+
     // We can't touch managed roles, so we need to keep them
     // Good to handle cases like nitro boosters who you need to roleban
     const prevRoles = m.roles.filter(r => r.id !== m.guild.id && !r.managed)
@@ -108,7 +114,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
         const by = bot.sleet.formatUser(message ? message.author : bot.user)
         const baseMsg = `${bot.sleet.formatUser(m.user)} has been rolebanned by ${by}`
         const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
-        const rolesMsg = (prevRoles.length === 0
+        const rolesMsg = (prevRoles.size === 0
                           ? 'No previous roles'
                           : `**Previous roles:** ${displayRoles(m.guild, prevRoles)}`)
 

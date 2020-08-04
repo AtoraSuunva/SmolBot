@@ -7,7 +7,7 @@ module.exports.config = {
 }
 
 const Discord = require('discord.js')
-const msgReg = /(.*?)(<?)https:\/\/(?:canary\.)?discordapp\.com\/channels\/\d+\/(\d+)\/(\d+)(>?)(.*)/
+const msgReg = /(.*?)(<?)https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/channels\/\d+\/(\d+)\/(\d+)(>?)(.*)/
 
 module.exports.events = {}
 module.exports.events.everyMessage = async (bot, message) => {
@@ -18,7 +18,7 @@ module.exports.events.everyMessage = async (bot, message) => {
     return
 
   // No url -> null
-  // w/ url -> ['msg', 'before url', 'channel', 'message', 'after url']
+  // w/ url -> ['msg', 'before url', '<', 'channel', 'message', '>', 'after url']
   const match = msgReg.exec(message.content)
 
   if (match === null)
@@ -67,9 +67,9 @@ async function fetchMessage(client, channel, messageId) {
 
 function createEmbed(message, origMessage) {
   const embed = new Discord.RichEmbed()
-    .setAuthor(`${message.author.tag} - #${message.channel.name}`, message.author.displayAvatarURL, message.url)
+    .setAuthor(`${message.client.sleet.formatUser(message.author, { id: false, plain: true })} - #${message.channel.name}`, message.author.displayAvatarURL, message.url)
     .setDescription(message.content)
-    .setFooter(`Quoted by ${origMessage.author.tag}`)
+    .setFooter(`Quoted by ${message.client.sleet.formatUser(origMessage.author, { id: false, plain: true })}`)
     .setTimestamp(message.createdAt)
 
   if (message.member)
@@ -82,3 +82,5 @@ function createEmbed(message, origMessage) {
 
   return embed
 }
+
+module.exports.createEmbed = createEmbed

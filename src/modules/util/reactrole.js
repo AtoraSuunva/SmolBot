@@ -8,7 +8,8 @@ const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\
 
 const reactMessages = new Map()
 const optReacts = {
-  one: '1\u{20e3}', // 1️⃣
+  one: '\u{31}\u{fe0f}\u{20e3}', // :one:
+  x: '\u{274c}', // :x:
 }
 
 module.exports.config = {
@@ -32,6 +33,7 @@ You can make any message be a "role giving" message:
     - \`[role name/mention]\`: Self-explanatory
   - Then react to it with:
     - ${optReacts.one} Only allow users to have one of the roles at a time
+    - ${optReacts.x} Allow users to clear their role using an ${optReacts.x} react
     - ${REACT_EMOJI} Create the react message
 
 (For example) Select a reaction to get a role:
@@ -51,7 +53,7 @@ This message would be valid for giving out roles
 module.exports.events.init = async sleet => {
   // Load stuff from db yea boi
   for (let row of await sleet.db.manyOrNone('SELECT * FROM rolereact;')) {
-    reactMessages.set(row.message, row.roles)
+    reactMessages.set(row.message, row)
   }
 }
 
@@ -95,24 +97,30 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     return parseMessage(bot, react.message, react, member)
   } else if (reactMessages.has(react.message.id)) {
     // do some role stuff...
-    const giveInfo = reactMessages.get(react.message.id)
-    const toGive = giveInfo.roles[react.emoji.id || react.emoji.name]
+    const { roles, single, canClear } = reactMessages.get(react.message.id)
+
+    if (canClear && react.emoji.name === optReacts.x) {
+      const giverRoles = Object.keys(roles).map(r => roles[r].role)
+      const keepRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
+      member.setRoles(keepRoles)
+      react.message.reactions.filter(r => r.users.get(member.id)).forEach(r => r.remove(member))
+      return
+    }
+
+    const toGive = roles[react.emoji.id || react.emoji.name]
 
     if (!toGive) {
       return
     }
 
-    if (!giveInfo.settings.single) {
+    if (!single) {
       member.addRole(toGive.role)
     } else {
       // ensure only 1 role, remove other reacts
-      const giverRoles = []
-      for (let emoji of Object.keys(giveInfo.roles))
-        giverRoles.push(giveInfo.roles[emoji].role)
-
-      const mRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
-      mRoles.push(toGive.role)
-      member.setRoles(mRoles)
+      const giverRoles = Object.keys(roles).map(r => roles[r].role)
+      const keepRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
+      keepRoles.push(toGive.role)
+      member.setRoles(keepRoles)
 
       react.message.reactions.filter(r => r.emoji.name !== react.emoji.name && r.users.get(member.id)).forEach(r => r.remove(member))
     }
@@ -126,8 +134,8 @@ module.exports.events.messageReactionRemove = async (bot, react, user) => {
 
   // Remove the role if they have it
   const member = await react.message.guild.fetchMember(user)
-  const giveInfo = reactMessages.get(react.message.id)
-  const toGive = giveInfo.roles[react.emoji.id || react.emoji.name]
+  const { roles } = reactMessages.get(react.message.id)
+  const toGive = roles[react.emoji.id || react.emoji.name]
 
   if (toGive && member.roles.get(toGive.role)) {
     member.removeRole(toGive.role)
@@ -138,11 +146,12 @@ async function parseMessage(bot, message, react, member) {
   const log = []
 
   const messageReacts = message.reactions
-  const giveSettings = {single: false}
+  const giveSettings = { single: false, canClear: false }
   const giveRoles = {}
 
   // The :one: emoji
   if (messageReacts.find(r => r.emoji.name === optReacts.one)) giveSettings.single = true
+  if (messageReacts.find(r => r.emoji.name === optReacts.x)) giveSettings.canClear = true
 
   const reg = getReactRegex()
   let m
@@ -177,23 +186,25 @@ async function parseMessage(bot, message, react, member) {
     }
   }
 
+  log.push(`\nSettings: \`${JSON.stringify(giveSettings)}\``)
+
   if (Object.keys(giveRoles).length > 0) {
     member.send('Role giving was (maybe mostly) successfully setup, logs:\n```js\n' + log.join('\n') + '\n```')
-    reactMessages.set(message.id, {roles: giveRoles, settings: giveSettings})
+    reactMessages.set(message.id, { roles: giveRoles, ...giveSettings })
 
     // Check if we should just update it instead
     if (await bot.sleet.db.oneOrNone('SELECT message FROM rolereact WHERE message = $1', [message.id]))
-      bot.sleet.db.none('UPDATE rolereact SET roles = $2 WHERE message = $1', [message.id, reactMessages.get(message.id)])
+      bot.sleet.db.none('UPDATE rolereact SET roles = $2, single = $3, canClear = $4 WHERE message = $1', [message.id, giveRoles, giveSettings.single, giveSettings.canClear])
     else
-      bot.sleet.db.none('INSERT INTO rolereact (message, roles) VALUES ($1, $2)', [message.id, reactMessages.get(message.id)])
+      bot.sleet.db.none('INSERT INTO rolereact (message, roles, single, canClear) VALUES ($1, $2, $3, $4)', [message.id, giveRoles, giveSettings.single, giveSettings.canClear])
 
-    addReactions(message, giveRoles)
+    addReactions(message, giveRoles, giveSettings)
   } else {
     member.send('Role giving failed completely (nothing was setup), logs:\n```js\n' + log.join('\n') + '\n```')
   }
 }
 
-async function addReactions(message, giveRoles) {
+async function addReactions(message, giveRoles, giveSettings) {
   // Remove the options the user put
   const opts = Object.values(optReacts)
   for (let r of message.reactions) {
@@ -203,4 +214,7 @@ async function addReactions(message, giveRoles) {
 
   for (let e of Object.keys(giveRoles))
     await message.react(e)
+
+  if (giveSettings.canClear)
+    await message.react(optReacts.x)
 }

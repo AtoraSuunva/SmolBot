@@ -42,50 +42,50 @@ module.exports = class Rule {
     let pressure = this.getPressure(member)
     const initial = pressure
 
-    console.log(`[PRESSURE] ${message.author.tag} - (Init) Pressure: ${pressure}`)
+    // console.log(`[PRESSURE] ${message.author.tag} - (Init) Pressure: ${pressure}`)
 
     const lastMessage = this.getLastMessage(member)
 
     if (lastMessage) {
       const decay = ((Date.now() - lastMessage.createdTimestamp) / 1000) * PRESSURE.DECAY
       pressure = Math.max(pressure - decay, 0)
-      console.log(`[PRESSURE]   - Decay: ${decay} => Final: ${pressure}`)
+      // console.log(`[PRESSURE]   - Decay: ${decay} => Final: ${pressure}`)
     }
 
     const BASE = PRESSURE.BASE
     pressure += BASE
-    console.log(`[PRESSURE]   - Base    : ${BASE}`)
+    // console.log(`[PRESSURE]   - Base    : ${BASE}`)
 
     const EMBEDS = (message.attachments.size + message.embeds.length) * PRESSURE.EMBED
     pressure += EMBEDS
-    console.log(`[PRESSURE]   - Embeds  : ${EMBEDS}`)
+    // console.log(`[PRESSURE]   - Embeds  : ${EMBEDS}`)
 
     const LENGTH = message.content.length * PRESSURE.LENGTH
     pressure += LENGTH
-    console.log(`[PRESSURE]   - Length  : ${LENGTH}`)
+    // console.log(`[PRESSURE]   - Length  : ${LENGTH}`)
 
     const CAPS = message.content.replace(/[^A-Z]/g, '').length * PRESSURE.LENGTH
     pressure += CAPS
-    console.log(`[PRESSURE]   - CAPS    : ${CAPS}`)
+    // console.log(`[PRESSURE]   - CAPS    : ${CAPS}`)
 
     const LINES = (message.content.split('\n').length - 1) * PRESSURE.LINE
     pressure += LINES
-    console.log(`[PRESSURE]   - Lines   : ${LINES}`)
+    // console.log(`[PRESSURE]   - Lines   : ${LINES}`)
 
     const MENTIONS = (message.mentions.users.size + message.mentions.roles.size) * PRESSURE.MENTION
     pressure += MENTIONS
-    console.log(`[PRESSURE]   - Mentions: ${MENTIONS}`)
+    // console.log(`[PRESSURE]   - Mentions: ${MENTIONS}`)
 
     let REPEAT = 0
     if (lastMessage) {
       REPEAT = (message.content === lastMessage.content) * PRESSURE.REPEAT
       pressure += REPEAT
-      console.log(`[PRESSURE]   - Repeat  : ${REPEAT}`)
+      // console.log(`[PRESSURE]   - Repeat  : ${REPEAT}`)
     }
 
     this.setLastMessage(member, message)
     this.setPressure(member, pressure)
-    console.log(`[PRESSURE] ${message.author.tag} - (End ) Pressure: ${pressure}`)
+    // console.log(`[PRESSURE] ${message.author.tag} - (End ) Pressure: ${pressure}`)
 
     if (pressure >= this.limit)
       return ({ punishment: this.punishment, reason: `Too much pressure: ${initial.toFixed(2)} => ${pressure.toFixed(2)} (B${BASE}+E${EMBEDS}+L${LENGTH}+C${CAPS}+L${LINES}+M${MENTIONS}+R${REPEAT})` })

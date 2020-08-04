@@ -1,6 +1,6 @@
 module.exports.config = {
   name: 'ban',
-  invokers: ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet', 'snap'],
+  invokers: ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet', 'snap', 'brazil'],
   help: 'Bans people',
   expandedHelp: 'does the bann',
   usage: ['Ban someone', 'ban [@user]', 'Ban another person', 'ban [user id]', 'Ban, but with reason', 'ban @user u suck']
@@ -25,7 +25,7 @@ module.exports.events.message = async (bot, message) => {
   let [cmd, user, ...reason] = bot.sleet.shlex(message, {invokers: module.exports.config.invokers})
   reason = reason.join(' ')
 
-  user = (await bot.sleet.extractMembers(user, message, {keepIds: true}))[0]
+  user = (await bot.sleet.extractMembers(user, message, { keepIds: true, noCmd: true }))[0]
 
   if (!user)
     return message.channel.send('So, who do you want to ban?')
