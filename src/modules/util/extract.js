@@ -1,7 +1,7 @@
 //Extracts stuff from a url
 module.exports.config = {
   name: 'extract',
-  invokers: ['extract'],
+  invokers: ['extract', 'ert'],
   help: 'Extracts stuff',
   expandedHelp: 's!extract https:\/\/whoa.some/url.txt\nLocked to GMs'
 }
@@ -10,8 +10,8 @@ const Discord = require('discord.js')
 const fetch = require('node-fetch')
 
 const limits = {
-  '363821920854081539': 10000,
-  '589650203498381314': 10000,
+  '363821920854081539': 11000,
+  '589650203498381314': 11000,
   '363821745590763520': 4000,
 }
 
@@ -22,7 +22,7 @@ module.exports.events.message = async (bot, message) => {
   if (!message.guild)
     return message.channel.send('Just read it yourself smh')
 
-  const limit = message.author.id === bot.sleet.config.owner.id ? 10000 : getMemberLimit(message.member)
+  const limit = message.author.id === bot.sleet.config.owner.id ? 20000 : getMemberLimit(message.member)
 
   if (limit === undefined)
     return message.channel.send('You are not allowed to extract.')

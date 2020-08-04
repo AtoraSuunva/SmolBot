@@ -17,7 +17,7 @@ module.exports.events.message = (bot, message) => {
     const freeMem = os.freemem()
 
     let fields = new Map()
-    .set('Links:'   , '[Github](https://github.com/AtlasTheBot/Booru-Discord)\nBot Invite/Sever: `b!invite`')
+    .set('Links:'   , 'this bot is pirate')
     .set('Owner:'   , `${bot.sleet.config.owner.username}#${bot.sleet.config.owner.discriminator}`)
     .set('Using:'   , `Node ${process.version}\ndiscord.js v${require('discord.js').version}`)
     .set('CPU:'     , `${(100 - (cpu * 100)).toFixed(2)}%`)
@@ -27,7 +27,7 @@ module.exports.events.message = (bot, message) => {
       let Discord = require('discord.js')
       let embed = new Discord.RichEmbed()
         .setAuthor(bot.user.username, bot.user.avatarURL)
-        .setFooter('Use b!stats for stats!')
+        .setFooter('Use s?stats for stats!')
 
       for(let [title, val] of fields) {
         embed.addField(title, val, true)

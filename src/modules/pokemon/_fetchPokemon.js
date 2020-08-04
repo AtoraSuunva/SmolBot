@@ -48,11 +48,12 @@ const getType = (types, i) => types.find(e => e.slot === i) || {type: {name: (i 
 
 async function getPoke(poke) {
   try {
-    const [info, species, bio] = await Promise.all([
+    const [info, species] = await Promise.all([
         fetch(api.pokemon + poke).then(r => r.json()),
         fetch(api.species + poke).then(r => r.json()),
-        getBio(info.name)
       ])
+
+    const bio = await getBio(info.name)
 
     const stats = {}
     info.stats.forEach(e => stats[e.stat.name] = e.base_stat)
@@ -82,8 +83,8 @@ async function getPoke(poke) {
     }
 
   } catch (e) {
-    if (e.status === 404) {
-      throw new Error('Pokemon not found')
+    if (e.status === 404 || e instanceof fetch.FetchError) {
+      throw new Error('Pokemon not found. You can search pokemon by name or national dex ID.\nIf you are looking for Gen 8 pokemon, see this issue: <https://github.com/PokeAPI/pokeapi/issues/460>')
     } else {
       throw e
     }

@@ -35,6 +35,7 @@ module.exports = class RepeatsRule extends Rule {
     if (this.lastMessage[uid] && message.content === this.lastMessage[uid]) {
       // -1 because the first message isn't counted since it's not a repeat
       if (++this.violations[uid] >= this.maxRepeats - 1) {
+        this.violations[uid] = 0
         return ({ punishment: this.punishment })
       }
 

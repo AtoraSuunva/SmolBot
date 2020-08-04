@@ -8,7 +8,7 @@ module.exports.config = {
 const whitelist = ['199017685445640193']
 
 //.set(trigger, {type: <String>, reply: <String>})
-//trigger => The thing that TRIGGERS
+//trigger => The thing that triggers a reply
 //type    => the way it should activate [is, starts, ends, regex]
 //chance  => num between 0-1 (0 is never, 1 is always. Nothing is treated as "always")
 
@@ -23,10 +23,15 @@ const responses = new Map()
   .set('fuck me', {type: 'is'   , reply: 'When and where?', chance: 0.25})
   .set('haha yes',{type: 'is'   , reply: 'haha yes'})
   .set("y'all alive", {type: 'is', reply: () => pick(affirmative)})
-  .set(/thanks? smol(bot)?/, { type: 'regex', reply: 'np' })
+
+const thanksReg = /thanks?\s*(u|you)?\s*(,\s*)?smol(bot)?/i
 
 module.exports.events = {}
 module.exports.events.everyMessage = (bot, message) => {
+
+  if (thanksReg.test(message.content)) {
+    return message.channel.send('np')
+  }
 
   if (['146545496192843776','74768773940256768'].includes(message.author.id)) {
     let m

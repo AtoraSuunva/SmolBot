@@ -90,15 +90,15 @@ function padExpressions(str, ...args) {
   return str.map((v, i) => v + (args[i] !== undefined ? (args[i] + '').padStart(2, 0) : '')).join('')
 }
 
-function sendLog(channel, emoji, type, message, { embed = null, timestamp = new Date() } = {}) {
+function sendLog(channel, emoji, type, message, { embed = null, timestamp = new Date(), ...rest } = {}) {
   const d = timestamp instanceof Date ? timestamp : new Date(timestamp)
   const time = padExpressions`${d.getUTCHours()}:${d.getUTCMinutes()}:${d.getUTCSeconds()}`
   const msg = `${emoji} \`[${time}]\` \`[${type}]\`: ${message}`
 
   if (embed && channel.permissionsFor(channel.client.user).has('EMBED_LINKS')) {
-    channel.send(msg, {embed})
+    return channel.send(msg, { embed, ...rest })
   } else {
-    channel.send(msg)
+    return channel.send(msg, rest)
   }
 }
 
@@ -142,9 +142,9 @@ module.exports.events.init = (sleet, bot) => {
   }
 }
 
-module.exports.events.raw = (bot, packet) => {
- // Switch/case doesn't count as another scope :(
- let guild, member, message
+module.exports.events.raw = async (bot, packet) => {
+  // Switch/case doesn't count as another scope :(
+  let guild, member, message
 
   // Log things even if the member/message isn't cached :)
   switch (packet.t) {
@@ -165,7 +165,8 @@ module.exports.events.raw = (bot, packet) => {
       // Cached, don't bother
       if (channel.messages.get(packet.d.id)) return
 
-      message = {id: packet.d.id}
+      await sleep(500)
+      message = { id: packet.d.id }
       message.guild = channel.guild
       message.channel = channel
       message.uncached = true
@@ -432,6 +433,9 @@ module.exports.events.userUpdate = async (bot, oldUser, newUser) => {
   }
 }
 
+const FILENAME = 'archive.dlog.txt'
+const generateArchiveUrl = (channelId, attachmentId) => `${archiveViewer}${channelId}-${attachmentId}`
+
 module.exports.events.messageDeleteBulk = async (bot, messages) => {
   const firstMsg = messages.first()
   const guild = firstMsg.guild
@@ -451,25 +455,45 @@ module.exports.events.messageDeleteBulk = async (bot, messages) => {
   }
 
   const userList = Array.from(users).map(u => bot.sleet.formatUser(u, false) + ` \`[${messagesPerUser.get(u.id)}]\``).join(', ').substring(0, 1500)
-  const filename = `${firstMsg.channel.name}.dlog.txt`
-  const gist = await bot.sleet.createGist(txt, {filename})
-  const msg = `${firstMsg.channel}, **${messages.size}** messages\n${userList}\n<${archiveViewer}${gist.body.id}>`
+  const msg = `${firstMsg.channel}, **${messages.size}** messages\n${userList}`
+  const files = [{ name: FILENAME, attachment: Buffer.from(txt, 'utf8') }]
+  const sent = await sendLog(config.channel, ':fire:', 'Channel Purged', msg, { files })
+  const attach = sent.attachments.first().id
+  sent.edit(`${sent.content}\n<${generateArchiveUrl(sent.channel.id, attach)}>`)
+}
 
-  sendLog(config.channel, ':bomb:', 'Channel Purged', msg)
+class RollingStore {
+  constructor(max) {
+    this.max = max
+    this.array = []
+  }
+
+  add(e) {
+    this.array.push(e)
+    return this.array = this.array.slice(0, this.max)
+  }
+
+  has(e) {
+    return this.array.includes(e)
+  }
 }
 
 const lastDeleteEntry = new Map()
+const deletedStore = new RollingStore(50)
 module.exports.events.messageDelete = async (bot, message) => {
+  if (!message.guild) return
   const config = getConfig(message.guild)
   if (!config || !config.settings.message_delete) return
 
   // Check the raw event handler above
   if (message.uncached) {
+    if (deletedStore.has(message.id)) return;
     const msg = `Uncached message (${message.id}) in ${message.channel}`
     sendLog(config.channel, ':wastebasket:', 'Message Deleted', msg)
     return
   }
 
+  deletedStore.add(message.id)
   const after = lastDeleteEntry.get(message.guild.id)
   let executor, reason
 

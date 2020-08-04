@@ -25,6 +25,8 @@ module.exports = class RegexRule extends Rule {
 
     const [, regExp, flags] = regexRegex.exec(regex[0]) || [, regex[0], regex[1] || '']
 
+    console.log('reg', regex)
+
     this.regex = regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
     this.lastMessage = {}
     this.violations = AutoProp({})

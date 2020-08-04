@@ -53,7 +53,7 @@ module.exports.events.message = async (bot, message) => {
     }
 
     if (g.instant_invite) {
-      return sendInviteLookup(message.channel, await bot.fetchInvite(g.instant_invite))
+      return sendInviteLookup(bot, message.channel, await bot.fetchInvite(g.instant_invite))
     }
 
     return sendGuildLookup(message.channel, g)
@@ -78,7 +78,7 @@ async function fetchGuild(data) {
   } else if (r.status === 403) {
     return {message: 'Guild found with id "`' + data + '`", no more information found.'}
   } else if (r.status === 200) {
-    return r.body
+    return r.json()
   }
 }
 
@@ -101,7 +101,7 @@ function sendInviteLookup(bot, channel, invite) {
   const created = Discord.SnowflakeUtil.deconstruct(invite.guild.id).date
   const embed = new Discord.RichEmbed()
     .setTitle(`:incoming_envelope: Invite: ${invite.code}`)
-    .addField(`Guild (${invite.guild.id}) ${invite.guild.splash ? '[Partner]' : ''}`, invite.guild.name + '\n[#' + invite.channel.name + '](http://a.ca)')
+    .addField(`Guild (${invite.guild.id})`, invite.guild.name + '\n[#' + invite.channel.name + '](http://a.ca)')
 
   if (invite.guild.icon)
     embed.setThumbnail(getGuildIcon(invite.guild))
@@ -131,12 +131,13 @@ function sendInviteLookup(bot, channel, invite) {
 
 function sendGuildLookup(channel, guild) {
   const created = Discord.SnowflakeUtil.deconstruct(guild.id).date
+
   const embed = new Discord.RichEmbed()
     .setTitle(`Guild: ${guild.name}`)
-    .setDescription('Guild found with that id')
-    .addField('Id:', guild.id)
+    .addField('ID:', guild.id, true)
+    .addField('Invite:', guild.instant_invite, true)
     .addField('Channels:', guild.channels.length + ' voice', true)
-    .addField('Members:', guild.members.length + ' online', true)
+    .addField('Members:', guild.presence_count + ' online', true)
     .addField('Created at:', created.toUTCString())
     .setTimestamp(created)
 

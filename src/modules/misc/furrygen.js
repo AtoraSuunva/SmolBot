@@ -90,7 +90,7 @@ const fields = {
     'Books', 'Records', 'Plushies', 'Pins', 'Memorabilia',
     'Cards', 'Toys', 'Cheesegraters', 'Bottle Caps',
     'Sunglasses', 'Art', 'Trinkets', 'Postcards',
-    'Shoes', 'Scarves', 'Hand Bags',
+    'Shoes', 'Scarves', 'Hand Bags', 'Feathers',
   ],
 
   Accessory: [

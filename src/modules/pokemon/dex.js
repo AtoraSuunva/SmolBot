@@ -20,6 +20,7 @@ const db = pgp({
 const fetchPokemon = require('./_fetchPokemon.js')
 
 function capitalize(str) {
+  if (!str) return ''
   return str[0].toUpperCase() + str.substring(1).toLowerCase()
 }
 
@@ -79,7 +80,7 @@ function gender(rate) {
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
-  const [cmd, pokemon] = bot.sleet.shlex(message)
+  const [cmd, pokemon, field] = bot.sleet.shlex(message)
 
   if (!pokemon) {
     return message.channel.send('So which pokemon do you want?')
@@ -97,6 +98,10 @@ module.exports.events.message = async (bot, message) => {
     return message.channel.send(e.message)
   }
 
+  if (fields[field]) {
+    return message.channel.send(fields[field](data))
+  }
+
   const embed = new Discord.RichEmbed()
 
   embed.setTitle(capitalize(data.name) + ' #' + data.id + ' -' + type(bot, data.type) + type(bot, data.type_alt) + ' ' + shape(bot, data.shape))
@@ -112,4 +117,22 @@ module.exports.events.message = async (bot, message) => {
     .addField('\u200b', '```asciidoc\nSpeed  :: ' + data.stats.speed + '\nSp.Atk :: ' + data.stats['special-attack'] + '\nSp.Def :: ' + data.stats['special-defense'] + '\n```', true)
 
   message.channel.send({embed})
+    .then(m => data.id === 149 ? m.react('\u{1f499}') : '')
+}
+
+const fields = {
+  name: d => capitalize(d.name),
+  id: d => d.id,
+  type: d => capitalize(d.type) + (d.type_alt ? ` - ${capitalize(d.type_alt)}` : ''),
+  shape: d => capitalize(d.shape),
+  color: d => capitalize(d.color),
+  sprite: d => d.sprite_front,
+  genus: d => capitalize(d.genus),
+  capture: d => d.capture_rate,
+  evolves: d => capitalize(d.evolves_from) || `${capitalize(d.name)} does not evolve from any pokemon.`,
+  gender: d => gender(d.gender_rate),
+  height: d => `${d.height / 10}m`,
+  weight: d => `${d.weight / 10}kg`,
+  dex: d => `From ${capitalize(d.dex[0].version)}:\n>>> ${d.dex[0].text.replace(/\n/g, ' ')}`,
+  stats: d => '```asciidoc\nHP  :: ' + d.stats.hp + '\nAtk :: ' + d.stats.attack + '\nDef :: ' + d.stats.defense + '\nSpeed  :: ' + d.stats.speed + '\nSp.Atk :: ' + d.stats['special-attack'] + '\nSp.Def :: ' + d.stats['special-defense'] + '\n```',
 }
