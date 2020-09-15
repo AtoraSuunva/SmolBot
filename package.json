@@ -24,9 +24,9 @@
     "convert-units": "^2.3.4",
     "discord.js": "^11.5.1",
     "erlpack": "^0.1.3",
-    "libsodium-wrappers": "^0.7.6",
-    "node-fetch": "^2.6.0",
-    "pg-promise": "^10.2.1",
+    "libsodium-wrappers": "^0.7.8",
+    "node-fetch": "^2.6.1",
+    "pg-promise": "^10.6.1",
     "pmx": "^1.6.7",
     "recursive-readdir-sync": "^1.0.6"
   }
