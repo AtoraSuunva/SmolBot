@@ -7,7 +7,7 @@ module.exports.config = {
 }
 
 const Discord = require('discord.js')
-const path = require('path')
+const BIN = '\u{d83d}\u{ddd1}\u{fe0f}'
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
@@ -24,9 +24,11 @@ module.exports.events.message = async (bot, message) => {
   }
 
   type = type || 'all'
-  let toPurge = await message.channel.fetchMessages({limit: 100, before: message.id})
+  let toPurge = await message.channel.fetchMessages({ limit: 100, before: message.id })
 
   // TODO: if limit more than 100, fetch more messages
+
+  console.log({ limit, type, extra })
 
   switch(type.toLowerCase()) {
     case 'all':
@@ -51,15 +53,14 @@ module.exports.events.message = async (bot, message) => {
     break
 
    case 'with':
-     toPurge = toPurge.filter(m => m.content.toLowerCase().includes(extra.join(' ').toLowerCase()))
+    const content = extra.join(' ').toLowerCase()
+    console.log(content)
+    toPurge = toPurge.filter(m => m.content.toLowerCase().includes(content))
    break
 
    case 'from':
    case 'by':
-     members = await bot.sleet.extractMembers(extra.join(' '), message.guild, {id: true})
-
-    console.log(members)
-
+     members = await bot.sleet.extractMembers({ from: extra.join(' '), source: message }, { id: true })
      toPurge = toPurge.filter(m => members.includes(m.author.id))
    break
 
@@ -72,7 +73,10 @@ module.exports.events.message = async (bot, message) => {
       return message.channel.send(`${type} is not a purge type.`)
   }
 
+  // console.log('purging', Array.from(toPurge.values()).map(m => m.content))
+
   toPurge = Array.from(toPurge.values()).slice(0, limit).filter(m => Date.now() - m.createdAt < 1209600000)
+  toPurge.push(message)
 
   let purgeMsg
 
@@ -80,10 +84,14 @@ module.exports.events.message = async (bot, message) => {
     purgeMsg = await message.channel.send('There is nothing to purge.')
   } else if (toPurge.length === 1) {
     toPurge[0].delete().catch(() => {})
-    purgeMsg = await message.channel.send('🗑 1')
+    purgeMsg = await message.channel.send(`${BIN} 1`)
   } else {
     let msgs = await message.channel.bulkDelete(toPurge, true).catch(() => {})
-    purgeMsg = await message.channel.send('🗑 ' + msgs.size)
+    purgeMsg = await message.channel.send(`${BIN} ${msgs.size - 1}`)
+ }
+
+  if (purgeMsg) {
+    setTimeout(() => purgeMsg.delete(), 3000)
   }
 }
 

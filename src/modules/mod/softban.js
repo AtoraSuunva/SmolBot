@@ -1,6 +1,7 @@
+const invokers = ['softban', 'gently ban', 'force cache']
 module.exports.config = {
   name: 'softban',
-  invokers: ['softban', 'gently ban', 'force cache'],
+  invokers,
   help: 'Bans/unbans people to purge messages',
   expandedHelp: 'Used to purge 1-7 days of messages by banning and unbanning someone\nPurges 7 days by default',
   usage: ['Softban', 'softban [@user]', 'Softban by id', 'softban [user id]', 'Softban with time and reason', 'softban @user 14 bad posts']
@@ -18,11 +19,11 @@ module.exports.events.message = async (bot, message) => {
   if (!message.member.permissions.has('BAN_MEMBERS'))
     return message.channel.send('You do not have ban permissions.')
 
-  let [cmd, user, days = 7, ...userReason] = bot.sleet.shlex(message, {invokers: module.exports.config.invokers})
+  let [cmd, user, days = 7, ...userReason] = bot.sleet.shlex(message, { invokers })
   userReason = userReason.join(' ')
   const reason = (userReason ? userReason + ' ' : '') + `[Softban by ${bot.sleet.formatUser(message.author)}]`
 
-  user = (await bot.sleet.extractMembers(user, message, {keepIds: true}))[0]
+  user = (await bot.sleet.extractMembers({ from: user, source: message }, { keepIds: true }))[0]
 
   if (!user)
     return message.channel.send('So, who do you want to softban?')

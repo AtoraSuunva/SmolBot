@@ -1,9 +1,8 @@
 module.exports.config = {
   name: 'welcome',
   invokers: ['welcome'],
-  help: 'welcomes people',
-  expandedHelp:'doesnt rewelcome',
-  invisible: true,
+  help: 'Welcomes people',
+  expandedHelp:'See `welcome` and `welcome help` for info and config details.',
   dbScript: 'welcome.sql',
 }
 
@@ -67,6 +66,15 @@ function addJoin(db, guild_id, user_id) {
   return db.none(
     'UPDATE welcome SET joins = array_append(joins, $<user_id>::BigInt) WHERE guild_id = $<guild_id>::BigInt',
     { guild_id, user_id }
+  )
+}
+
+function editField(db, guild_id, field, newValue) {
+  if (!validFields.includes(field)) throw new Error(`${field} is not a valid field to edit`)
+
+  return db.none(
+    `UPDATE welcome SET ${field} = $<newValue> WHERE guild_id = $<guild_id>::BigInt`,
+    { guild_id, newValue }
   )
 }
 
@@ -185,12 +193,32 @@ module.exports.events.message = async (bot, message) => {
   message.channel.send('What do you want to do? Use a subcommand: `s?welcome [command]`\n> `help` => Get help about the fields\n> `message` => Get detail about welcome messages\n> `config` => View the config for this server\n> `setup` => Setup welcome for the server\n> `delete` => Delete the welcome config for this server\n> `edit` => Edit the welcome config for this server')
 }
 
-function editWelcome(bot, message) {
-  const [, cmd, field, ...rest] = bot.sleet.shlex(message)
+const validFields = Object.keys(helpData)
+
+async function editWelcome(bot, message) {
+  const [, cmd, inField, ...rest] = bot.sleet.shlex(message)
+  const field = inField ? inField.toLowerCase() : undefined
   const value = rest.join(' ')
   const { db } = bot.sleet
 
-  console.log('edit', { cmd, field, value })
+  if (!field || !validFields.includes(field))
+    return message.channel.send(`You need to specify a valid field: \`${validFields.join('\`, \`')}\``)
+
+  const welcomeInfo = await getWelcome(db, message.guild.id)
+
+  if (!value)
+    return message.channel.send(`\`${field}\` is currently:\n> ${(''+welcomeInfo[field]).replace(/\n/g, '\n> ')}\nYou can edit this using \`welcome edit ${field} [new value here]\`.`)
+
+  if (!await keyValidators[field](message, value))
+    return message.channel.send(`That's not a valid value for ${field}`)
+
+  try {
+    await editField(db, message.guild.id, field, value)
+    message.channel.send(`\`${field}\` is now:\n> ${(''+ value).replace(/\n/g, '\n> ')}`)
+  } catch (e) {
+    console.error(e)
+    message.channel.send(`Failed to update, try later?`)
+  }
 }
 
 const displayFormatters = {
@@ -207,7 +235,7 @@ function createWelcomeInfoEmbed(data, { format = true, inline = true } = {}) {
   const embed = new Discord.RichEmbed()
 
   for (const [k, v] of Object.entries(data)) {
-    console.log('f', k, v, data)
+    // console.log('f', k, v, data)
     const val = format && displayFormatters[k] ? displayFormatters[k](v) : v
     embed.addField(k, val, inline)
   }
@@ -280,6 +308,15 @@ function getRolesFrom(m) {
   return roles
 }
 
+async function getEmoji(m, v) {
+  try {
+    await m.react(v || m.content)
+    return v || m.content
+  } catch (e) {
+    return false
+  }
+}
+
 const TRUTHY = ['true', 'y', 'yes', 'ya', 'yea', 'yeah', 't']
 const FALSY = ['false', 'n', 'no', 'nope', 'nah']
 const BOOLY = [...TRUTHY, ...FALSY]
@@ -301,6 +338,7 @@ const keyValidators = {
   rejoins: booleanValidator,
   instant: booleanValidator,
   ignore_roles: getRolesFrom,
+  react_with: getEmoji,
   yesno: booleanValidator,
 }
 
