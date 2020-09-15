@@ -1,9 +1,8 @@
 module.exports.config = {
   name: 'modlog',
   invokers: ['modlog'],
-  help: 'Modlogging-power thing. Log stuff that happens',
-  expandedHelp: 'WIP',
-  invisible: true
+  help: 'Log stuff that happens',
+  expandedHelp: 'Config via channel topics, see `modlog` and `modlog help`',
 }
 
 const Discord = require('discord.js')

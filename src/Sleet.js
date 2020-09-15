@@ -328,10 +328,13 @@ const uReg = {
   id: /(\d+)/,
 }
 
-async function extractMembers(str, source, {id = false, keepIds = false, invokers = [], noCmd = false} = {}) {
+async function extractMembers(content, { id = false, keepIds = false, invokers = [], hasCommand = true } = {}) {
   let guild
   let message
   let channel
+
+  const source = content.source ? content.source : content
+  const str = content.from ? content.from : content.content
 
   if (source instanceof Discord.Guild)
     guild = source
@@ -342,13 +345,16 @@ async function extractMembers(str, source, {id = false, keepIds = false, invoker
   else
     throw new Error('`source` must be one of [Guild, Message, Channel]')
 
+  if (!str)
+    throw new Error('There was no content to extract members from (Did you pass a guild or channel?)')
+
   const shlexed = shlex(str, { invokers })
   let arr
 
-  if (noCmd) {
-    arr = shlexed
-  } else {
+  if (content instanceof Discord.Message && hasCommand) {
     [cmd, ...arr] = shlexed
+  } else {
+    arr = shlexed
   }
 
   const users = []
@@ -668,7 +674,8 @@ function reportError(err, errType) {
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
   if (!config.selfbot && config.owner) {
-    bot.users.get(config.owner.id).send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
+    const owner = bot.users.get(config.owner.id)
+    if (owner) owner.send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
   }
 
   console.error(errType, err)
@@ -757,12 +764,12 @@ function extractOwner({id, username, discriminator, avatar}) {
 
 logger.info('Starting Login...')
 
-if (!process.env.BOT_TOKEN) {
+if (!process.env.BOT_TOKEN && !config.token) {
   logger.error('Missing bot token (BOT_TOKEN)')
   process.exit(1)
 }
 
-bot.login(process.env.BOT_TOKEN).then(async () => {
+bot.login(process.env.BOT_TOKEN || config.token).then(async () => {
   logger.info('Logged in!')
 
   if (config.owner === null) {

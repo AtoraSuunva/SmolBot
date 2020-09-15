@@ -278,6 +278,7 @@ async function deleteRule(bot, message, params) {
 module.exports.events.everyMessage = async (bot, message) => {
   if (!message.guild || message.author.bot || message.editedTimestamp) return
 
+  // const start = process.hrtime.bigint()
   const rules = activeRules.get(message.guild.id)
   let prefix = true
 
@@ -290,17 +291,22 @@ module.exports.events.everyMessage = async (bot, message) => {
   //  - The member is higher than (or equal to) the bot
   if (!rules
       || message.member.permissions.has('MANAGE_MESSAGES')
-      || message.member.highestRole.position >= message.guild.me.highestRole.position
-     )
+      || message.member.highestRole.position >= message.guild.me.highestRole.position)
     return
 
-  const { prepend, silence_prepend } = automodConfig.get(message.guild.id)
+  const autoconfig = automodConfig.get(message.guild.id)
+
+  if (!autoconfig)
+    return
+
+  const { prepend, silence_prepend } = autoconfig
 
   if (silence_prepend.some(v => message.content.includes(v))) {
     silentChannels.increment(message.channel.id)
     setTimeout(cid => silentChannels.decrement(cid), 3000, message.channel.id)
   }
 
+  // console.log(`Running automod on ${message.id}`)
   for (let r of rules) {
     const { deletes, punishment, reason } = (await r.filter(message)) || {}
 
@@ -317,17 +323,17 @@ module.exports.events.everyMessage = async (bot, message) => {
       case 'delete':
         action = 'silenced (message deleted)'
         silentAction = true
-        message.delete()
+        message.delete().catch(c => {})
         break
 
       case 'roleban':
         action = 'rolebanned'
         const rolebanRole = automodConfig.get(message.guild.id).roleban_role
         if (message.member.roles.has(rolebanRole)) {
-          message.channel.overwritePermissions(message.author, {SEND_MESSAGES: false})
+          message.channel.overwritePermissions(message.author, { SEND_MESSAGES: false })
           prefix = false
         } else {
-          roleban(bot, {channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild}, [message.member], rolebanRole, {silent: true})
+          roleban(bot, { channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild }, [message.member], rolebanRole, { silent: true })
         }
         break
 
@@ -363,7 +369,7 @@ module.exports.events.everyMessage = async (bot, message) => {
           .then(msg => {
             const original = msg.channel.permissionOverwrites.get(member.id)
 
-            const a = msg.delete()
+            const a = msg.delete().catch(c => {})
             const b = Promise.resolve(original)
             const c = msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
 
@@ -389,9 +395,9 @@ module.exports.events.everyMessage = async (bot, message) => {
 
     if (deletes) {
       if (deletes.length === 1 && deletes[0].delete) {
-        deletes[0].delete().catch(_=>{})
+        deletes[0].delete().catch(_ => {})
       } else if (deletes.length > 1) {
-        message.channel.bulkDelete(deletes).catch(_=>{})
+        message.channel.bulkDelete(deletes).catch(_ => {})
       }
     }
 
@@ -408,8 +414,8 @@ module.exports.events.everyMessage = async (bot, message) => {
 
     modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
   }
-}
-
-function tag(t) {
-  return `**${t.substring(0, t.length - 5)}**${t.substring(t.length - 5)}`
+  // to bench
+  // const end = process.hrtime.bigint()
+  // const durationMs = (end - start) / 1000000n
+  // console.log(`End automod on ${message.id}, took ${durationMs}ms`)
 }

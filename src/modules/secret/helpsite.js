@@ -7,6 +7,7 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.everyMessage = (bot, message) => {
+  if (message.author.bot || message.author.id === bot.user.id) return
   if (message.content.startsWith(`<@${bot.user.id}>`) || message.content.startsWith(`<@!${bot.user.id}>`)) {
     message.reply('https://giraffeduck.com/bots/smol/help/')
   }
