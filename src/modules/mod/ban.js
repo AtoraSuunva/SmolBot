@@ -1,4 +1,4 @@
-const invokers = ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet', 'snap', 'brazil']
+const invokers = ['ban', 'xban', 'begone', 'omae wa mou shindeiru', 'vore', 'yeet', 'snap']
 module.exports.config = {
   name: 'ban',
   invokers,
@@ -26,10 +26,10 @@ module.exports.events.message = async (bot, message) => {
   let [cmd, user, ...reason] = bot.sleet.shlex(message, { invokers })
   reason = reason.join(' ')
 
-  user = (await bot.sleet.extractMembers({ from: user, source: message }, { keepIds: true }))[0]
-
   if (!user)
     return message.channel.send('So, who do you want to ban?')
+
+  user = (await bot.sleet.extractMembers({ from: user, source: message }, { keepIds: true }))[0]
 
   const id = (user instanceof Discord.GuildMember ? user.id : user)
   const member = (user instanceof Discord.GuildMember ? user : null)

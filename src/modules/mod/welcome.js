@@ -416,8 +416,8 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
   const guild = member.guild
   const joinInfo = await fetchJoinInfo(bot.sleet.db, guild.id, member.id)
 
-  if (joinInfo === null) {
-    // No join settings for this guild...
+  if (joinInfo === null || member.bot) {
+    // No join settings for this guild or they're a bot
     return
   }
 
@@ -437,7 +437,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
 module.exports.events.everyMessage = async (bot, message) => {
   const guild = message.guild
 
-  if (!guild || !newJoins[guild.id].has(message.author.id) || !message.member || message.system) {
+  if (!guild || !newJoins[guild.id].has(message.author.id) || !message.member || message.system || message.author.bot) {
     return
   }
 

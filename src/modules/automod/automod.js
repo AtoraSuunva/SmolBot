@@ -331,9 +331,10 @@ module.exports.events.everyMessage = async (bot, message) => {
         const rolebanRole = automodConfig.get(message.guild.id).roleban_role
         if (message.member.roles.has(rolebanRole)) {
           message.channel.overwritePermissions(message.author, { SEND_MESSAGES: false })
+          action = 'muted'
           prefix = false
         } else {
-          roleban(bot, { channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild }, [message.member], rolebanRole, { silent: true })
+          roleban(bot, { channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild }, [message.member], rolebanRole, { silent: true, mention: true })
         }
         break
 
@@ -366,23 +367,21 @@ module.exports.events.everyMessage = async (bot, message) => {
         silentAction = true
 
         message.channel.send(message.author + ', ' + m, { autoDelete: false })
-          .then(msg => {
+          .then(async msg => {
             const original = msg.channel.permissionOverwrites.get(member.id)
 
-            const a = msg.delete().catch(c => {})
-            const b = Promise.resolve(original)
-            const c = msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
+            await msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
+            await msg.delete().catch(_ => {})
 
-            return Promise.all([a, b, c])
-          }).then(args => {
-            const [delMsg, original, channel] = args
-            const perms = channel.permissionOverwrites.get(member.id)
+            const perms = msg.channel.permissionOverwrites.get(member.id)
 
-            if (perms)
-              perms.delete('Hide whisper')
+            if (perms) {
+              perms.delete('Return pre-whisper perms')
+            }
 
-            if (original)
-              channel.overwritePermissions(member, original.serialize ? original.serialize() : {}, 'Hide whisper')
+            if (original) {
+              msg.channel.overwritePermissions(member, original.serialize ? original.serialize() : {}, 'Return pre-whisper perms')
+            }
           })
 
         break

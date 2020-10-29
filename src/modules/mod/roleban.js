@@ -1,4 +1,4 @@
-const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!', 'fuck up', 'australia']
+const rolebanCmds   = ['roleban', 'forebode', 'toss', 'defenestrate', 'shup', 'suplex', '!', 'fuck up', 'australia', 'brazil']
 const unRolebanCmds = ['unroleban', 'unforebode', 'untoss', 'refenestrate']
 const invokers = [...rolebanCmds, ...unRolebanCmds]
 
@@ -115,7 +115,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         const logToChannel = logChannelId && (message ? message.channel.id !== logChannelId : true)
         const by = bot.sleet.formatUser(message ? message.author : bot.user)
-        const baseMsg = `${bot.sleet.formatUser(m.user)} has been rolebanned by ${by}`
+        const baseMsg = `${bot.sleet.formatUser(m.user)}${options.mention ? ` ${m.user}` : ''} has been rolebanned by ${by}`
         const chanMsg = message ? ` in ${message.channel}` : ' by manual role removal'
         const rolesMsg = (prevRoles.size === 0
                           ? 'No previous roles'
@@ -131,6 +131,11 @@ async function roleban(bot, message, members, rbRole, options = {}) {
 
         storePreviousRoles(bot.sleet.db, m.id, prevRoles.array().map(r => r.id))
       }).catch(_ => {
+        if (_ instanceof Discord.DiscordAPIError && _.code === 50013) {
+          return message.channel.send(`I don't have the permissions to roleban ${bot.sleet.formatUser(m.user)}`)
+        }
+
+        bot.sleet.logger.error(_, { message: message.channel.id, guild: message.guild.id, content: message.content })
         message.channel.send(`Failed to roleban ${m.user.tag}. Check my perms?\n${_}`)
       })
   }
@@ -169,8 +174,18 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
 
         deletePreviousRoles(bot.sleet.db, m.id)
       }).catch(async (_) => {
+        if (_ instanceof Discord.DiscordAPIError && _.code === 50013) {
+          return message.channel.send(`I don't have the permissions to unroleban ${bot.sleet.formatUser(m.user)}`)
+        }
+
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
-        const destination = message || m.guild.channels.get(logChannelId)
+        const destination = !logChannelId ? (message ? message.channel : null) : m.guild.channels.get(logChannelId)
+
+        if (!destination || !message) {
+          return bot.sleet.logger.error(_)
+        }
+
+        bot.sleet.logger.error(_, message ? { message: message.channel.id, guild: message.guild.id, content: message.content } : { from: 'no message' })
         destination.send(`Failed to unroleban ${bot.sleet.formatUser(m.user)}. Check my perms?\n${_}`)
       })
   }

@@ -158,6 +158,8 @@ module.exports.events.raw = async (bot, packet) => {
       break
 
     case 'MESSAGE_DELETE':
+      // ignore for now
+      return;
       if (!packet.d.guild_id) return
       channel = bot.channels.get(packet.d.channel_id)
 
