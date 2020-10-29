@@ -7,3 +7,5 @@ err.log
 
 # My env vars are here lol
 ecosystem.config.js
+
+src/modules/mod/trid-tmp

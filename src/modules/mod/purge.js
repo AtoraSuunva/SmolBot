@@ -86,8 +86,13 @@ module.exports.events.message = async (bot, message) => {
     toPurge[0].delete().catch(() => {})
     purgeMsg = await message.channel.send(`${BIN} 1`)
   } else {
-    let msgs = await message.channel.bulkDelete(toPurge, true).catch(() => {})
-    purgeMsg = await message.channel.send(`${BIN} ${msgs.size - 1}`)
+    try {
+      const msgs = await message.channel.bulkDelete(toPurge, true)
+      purgeMsg = await message.channel.send(`${BIN} ${msgs.size - 1}`)
+    } catch (e) {
+      bot.logger.error('Failed to purge', { channel: message.channel.id, content: message.content })
+      message.channel.send(`Failed to purge, this is likely a permissions issue:\n\`\`\`js${e}\n\`\`\``)
+    }
  }
 
   if (purgeMsg) {
