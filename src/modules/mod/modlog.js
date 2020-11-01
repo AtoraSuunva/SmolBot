@@ -317,7 +317,7 @@ module.exports.events.guildMemberRemove = async (bot, member) => {
 
   if (member.user === undefined) member.user = await bot.fetchUser(member.id)
 
-  const msg = `${bot.sleet.formatUser(member.user)} ${member}`
+  const msg = `${bot.sleet.formatUser(member.user)} <@${member.id}>`
             + (latestKick ? ` kicked by ${bot.sleet.formatUser(latestKick.executor)} ${latestKick.reason ? 'for "' + latestKick.reason + '"': ''}` : '')
 
   const roles = (config.settings.member_remove_roles && member.roles ? member.roles.map(r => r.name).filter(r => r !== '@everyone').join(', ') : '')

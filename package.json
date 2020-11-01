@@ -20,13 +20,13 @@
   },
   "homepage": "https://github.com/AtlasTheBot/smolbot#readme",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.2",
+    "cheerio": "^1.0.0-rc.3",
     "convert-units": "^2.3.4",
     "discord.js": "^11.5.1",
     "erlpack": "^0.1.3",
     "libsodium-wrappers": "^0.7.8",
     "node-fetch": "^2.6.1",
-    "pg-promise": "^10.6.1",
+    "pg-promise": "^10.7.1",
     "pmx": "^1.6.7",
     "recursive-readdir-sync": "^1.0.6"
   }
