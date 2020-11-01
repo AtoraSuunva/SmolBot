@@ -7,7 +7,6 @@ const escapeMarkdown = Discord.Util.escapeMarkdown
 const fs = require('fs')
 const path = require('path')
 const Logger = require('./Logger.js')
-const snek = require('snekfetch')
 const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
 //this allows you to sort modules into directories
 
@@ -698,28 +697,6 @@ function writeFile(fileName, fileContent) {
     })
   })
 }
-
-/**
- * Create a gist
- * @param  {Object}    files       The files to add, in format of {"filename.txt": {content: "words"}}
- * @param  {String=''} filename    An optional param to specify the filename, if specified "files" is interpreted as the text to upload
- * @param  {String=''} description An optional description for the gist
- * @return {Promise} GitHub's response
- */
-function createGist(files, {filename = '', description = ''} = {}) {
-  if (filename) {
-    files = {[filename]: {content: files}}
-  }
-
-  return snek.post('https://api.github.com/gists', {
-    headers: {
-      'User-Agent': `${bot.user.username} Bot by ${config.owner.username} on Discord`,
-      'Authorization': `token ${process.env.GITHUB_TOKEN}`
-    },
-    data: {files, description}
-  })
-}
-module.exports.createGist = createGist
 
 /**
  * Formats a user like `**username**#discrim`
