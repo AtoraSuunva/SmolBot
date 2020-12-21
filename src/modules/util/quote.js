@@ -40,7 +40,7 @@ module.exports.events.everyMessage = async (bot, message) => {
   // if (!channel)
     // return message.channel.send('I only quote messages from the same guild.')
 
-  if (!channel.permissionsFor(message.author).has('VIEW_CHANNEL'))
+  if (!channel.permissionsFor(await channel.guild.fetchMember(message.author)).has('VIEW_CHANNEL'))
     return message.channel.send('I only quotes messages from channels you can see')
 
   let quoted

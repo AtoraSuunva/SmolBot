@@ -1,7 +1,7 @@
 //Extracts stuff from a url
 module.exports.config = {
   name: 'extract',
-  invokers: ['extract', 'ert'],
+  invokers: ['extract', 'ert', 'erp'],
   help: 'Extracts stuff',
   expandedHelp: 's!extract https:\/\/whoa.some/url.txt\nLocked to GMs'
 }
