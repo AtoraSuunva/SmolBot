@@ -117,7 +117,7 @@ async function setupAutomodFromDatabase(db) {
         activeRules.get(guild_id).push(rule)
       }
     } catch (e) {
-      console.error('FAILED TO CREATE RULE', data.rule_name, data.id, data.punishment, data.trigger_limit, data.timeout, data.params)
+      console.error('FAILED TO CREATE RULE', data.rule_name, data.id, data.punishment, data.trigger_limit, data.timeout, data.params, e)
     }
   }
 }
@@ -303,118 +303,125 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   if (silence_prepend.some(v => message.content.includes(v))) {
     silentChannels.increment(message.channel.id)
-    setTimeout(cid => silentChannels.decrement(cid), 3000, message.channel.id)
+    setTimeout(cid => silentChannels.decrement(cid), 5000, message.channel.id)
   }
 
   // console.log(`Running automod on ${message.id}`)
-  for (let r of rules) {
-    const { deletes, punishment, reason } = (await r.filter(message)) || {}
-
-    if (!punishment) continue
-
-    const usertag = bot.sleet.formatUser(message.author)
-    const realReason = reason || r.name || 'No reason!'
-    let silentAction = false
-    let action = null
-    let extra = null
-
-    //(null, 'delete', roleban', 'kick', 'ban', 'whisper: some message', 'log')
-    switch((punishment + '').split(':')[0].toLowerCase()) {
-      case 'delete':
-        action = 'silenced (message deleted)'
-        silentAction = true
-        message.delete().catch(c => {})
-        break
-
-      case 'roleban':
-        action = 'rolebanned'
-        const rolebanRole = automodConfig.get(message.guild.id).roleban_role
-        if (message.member.roles.has(rolebanRole)) {
-          message.channel.overwritePermissions(message.author, { SEND_MESSAGES: false })
-          action = 'muted'
-          prefix = false
-        } else {
-          roleban(bot, { channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild }, [message.member], rolebanRole, { silent: true, mention: true })
-        }
-        break
-
-      case 'kick':
-        if (message.member.kickable) {
-          action = 'kicked'
-          message.member.kick(r.name)
-        }
-        break
-
-      case 'ban':
-        if (message.member.bannable) {
-          action = 'banned'
-          message.member.ban({ days: 1, reason: realReason })
-        }
-        break
-
-      case 'softban':
-        if (message.member.bannable) {
-          action = 'softbanned'
-          message.member.ban({ days: 1, reason: realReason }).then(u => message.guild.unban(message.member))
-        }
-        break
-
-      case 'whisper':
-        const m = punishment.split(':').slice(1).join(':').trim()
-        const member = message.member
-        action = 'whispered to'
-        extra = `Told them: ${m}`
-        silentAction = true
-
-        message.channel.send(message.author + ', ' + m, { autoDelete: false })
-          .then(async msg => {
-            const original = msg.channel.permissionOverwrites.get(member.id)
-
-            await msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
-            await msg.delete().catch(_ => {})
-
-            const perms = msg.channel.permissionOverwrites.get(member.id)
-
-            if (perms) {
-              perms.delete('Return pre-whisper perms')
-            }
-
-            if (original) {
-              msg.channel.overwritePermissions(member, original.serialize ? original.serialize() : {}, 'Return pre-whisper perms')
-            }
-          })
-
-        break
-
-      case 'log':
-        action = 'nothing (log)'
-        silentAction = true
-        break
-    }
-
-    if (deletes) {
-      if (deletes.length === 1 && deletes[0].delete) {
-        deletes[0].delete().catch(_ => {})
-      } else if (deletes.length > 1) {
-        message.channel.bulkDelete(deletes).catch(_ => {})
-      }
-    }
-
-    if (!action) continue
-
-    const msg = `${usertag} was **${action}** for *${realReason}*`
-
-    if (msg && !silentAction) {
-      prefix = prefix && (silentChannels.get(message.channel.id) < 1)
-      message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
-    }
-
-    const modlogMsg = msg + (extra ? `\n> *${extra}*` : '') + `\n> ${message.url}`
-
-    modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
-  }
+  await Promise.all(rules.map(rule => runRule({
+    bot, message, rule, prepend, prefix,
+  })))
   // to bench
   // const end = process.hrtime.bigint()
   // const durationMs = (end - start) / 1000000n
   // console.log(`End automod on ${message.id}, took ${durationMs}ms`)
+}
+
+async function runRule({ bot, message, rule: r, prepend, prefix }) {
+  const { deletes, punishment, reason } = (await r.filter(message)) || {}
+
+  if (!punishment) return
+
+  const usertag = bot.sleet.formatUser(message.author)
+  const realReason = reason || r.name || 'No reason!'
+  let silentAction = false
+  let action = null
+  let extra = null
+
+  //(null, 'delete', roleban', 'kick', 'ban', 'whisper: some message', 'log')
+  switch((punishment + '').split(':')[0].toLowerCase()) {
+    case 'delete':
+      action = 'silenced (message deleted)'
+      silentAction = true
+      message.delete().catch(c => {})
+      break
+
+    case 'roleban':
+      action = 'rolebanned'
+      const rolebanRole = automodConfig.get(message.guild.id).roleban_role
+      if (message.member.roles.has(rolebanRole)) {
+        message.channel.overwritePermissions(message.author, { SEND_MESSAGES: false })
+        action = 'muted'
+        prefix = false
+      } else {
+        roleban(bot, { channel: message.channel, author: bot.user, member: message.guild.me, guild: message.guild }, [message.member], rolebanRole, { silent: true, mention: true })
+      }
+      break
+
+    case 'kick':
+      if (message.member.kickable) {
+        action = 'kicked'
+        message.member.kick(r.name)
+      }
+      break
+
+    case 'ban':
+      if (message.member.bannable) {
+        action = 'banned'
+        message.member.ban({ days: 1, reason: realReason })
+      }
+      break
+
+    case 'softban':
+      if (message.member.bannable) {
+        action = 'softbanned'
+        message.member.ban({ days: 1, reason: realReason }).then(u => message.guild.unban(message.member))
+      }
+      break
+
+     case 'whisper':
+      const m = punishment.split(':').slice(1).join(':').trim()
+      const member = message.member
+      action = 'whispered to'
+      extra = `Told them: ${m}`
+      silentAction = true
+
+      message.channel.send(message.author + ', ' + m, { autoDelete: false })
+        .then(async msg => {
+          const original = msg.channel.permissionOverwrites.get(member.id)
+
+          await msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
+          await msg.delete().catch(_ => {})
+
+          const perms = msg.channel.permissionOverwrites.get(member.id)
+
+          if (perms) {
+            perms.delete('Return pre-whisper perms')
+          }
+
+          if (original) {
+            msg.channel.overwritePermissions(member, original.serialize ? original.serialize() : {}, 'Return pre-whisper perms')
+          }
+        })
+
+      setTimeout(async () => {
+        const perms = msg.channel.permissionsOverwrites.get(member.id)
+        if (perms) perms.delete('Return pre-whisper perms (timeout)')
+      }, 5000)
+      break
+
+    case 'log':
+      action = 'nothing (log)'
+      silentAction = true
+      break
+  }
+
+  if (deletes) {
+    if (deletes.length === 1 && deletes[0].delete) {
+      deletes[0].delete().catch(_ => {})
+    } else if (deletes.length > 1) {
+      message.channel.bulkDelete(deletes).catch(_ => {})
+    }
+  }
+
+  if (!action) return
+
+  const msg = `${usertag} was **${action}** for *${realReason}*`
+
+  if (msg && !silentAction) {
+    prefix = prefix && (silentChannels.get(message.channel.id) < 1)
+    message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
+  }
+
+  const modlogMsg = msg + (extra ? `\n> *${extra}*` : '') + `\n> ${message.url}`
+  modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
 }

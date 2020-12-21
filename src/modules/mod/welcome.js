@@ -19,6 +19,7 @@ const welcomeColumnSet = new pgp.helpers.ColumnSet(
     { name: 'instant', def: false },
     { name: 'ignore_roles', cast: 'BigInt[]' },
     'react_with',
+    'react_animated',
   ],
   { table: 'welcome' },
 )
@@ -40,7 +41,7 @@ function fetchJoinInfo(db, guild_id, user_id) {
 
 async function getWelcome(db, guild_id) {
   return await db.oneOrNone(
-    'SELECT message, channel, rejoins, instant, ignore_roles, react_with FROM welcome WHERE guild_id = $<guild_id>',
+    'SELECT message, channel, rejoins, instant, ignore_roles, react_with, react_animated FROM welcome WHERE guild_id = $<guild_id>',
     { guild_id }
   )
 }
@@ -48,8 +49,8 @@ async function getWelcome(db, guild_id) {
 function createNewWelcome(db, guild_id, items) {
   joinSettings[guild_id] = items
   return db.none(
-    'INSERT INTO welcome (guild_id, message, channel, rejoins, instant, ignore_roles, react_with) ' +
-    'VALUES ($<guild_id>, $<message>, $<channel>::BigInt, $<rejoins>, $<instant>, $<ignore_roles>::BigInt[], $<react_with>)',
+    'INSERT INTO welcome (guild_id, message, channel, rejoins, instant, ignore_roles, react_with, react_animated) ' +
+    'VALUES ($<guild_id>, $<message>, $<channel>::BigInt, $<rejoins>, $<instant>, $<ignore_roles>::BigInt[], $<react_with>, $<react_animated>)',
     { guild_id, ...items }
   )
 }
@@ -70,7 +71,7 @@ function addJoin(db, guild_id, user_id) {
 }
 
 function editField(db, guild_id, field, newValue) {
-  if (!validFields.includes(field)) throw new Error(`${field} is not a valid field to edit`)
+  if (!validFields.includes(field) && field !== 'react_animated') throw new Error(`${field} is not a valid field to edit`)
 
   return db.none(
     `UPDATE welcome SET ${field} = $<newValue> WHERE guild_id = $<guild_id>::BigInt`,
@@ -212,8 +213,19 @@ async function editWelcome(bot, message) {
   if (!await keyValidators[field](message, value))
     return message.channel.send(`That's not a valid value for ${field}`)
 
+  const parsed = await resultParsers[field](message, value)
+
+  if (parsed === null || parsed === OPTIONAL_NO_VALUE)
+    return message.channel.send('That did not parse into a valid value for ${field}')
+
   try {
-    await editField(db, message.guild.id, field, value)
+    await editField(db, message.guild.id, field, parsed)
+
+    if (field === 'react_with') {
+      const isAnimated = animatedRegex.test(value)
+      await editField(db, message.guild.id, 'react_animated', isAnimated)
+    }
+
     message.channel.send(`\`${field}\` is now:\n> ${(''+ value).replace(/\n/g, '\n> ')}`)
   } catch (e) {
     console.error(e)
@@ -224,19 +236,21 @@ async function editWelcome(bot, message) {
 const displayFormatters = {
   channel: c => c ? `<#${c}>` : c,
   ignore_roles: r => r ? r.map(i => `<@&${i}>`).join(', ') || 'None' : 'None',
-  react_with: r => {
+  react_with: (r, data) => {
     if (!r) return 'None'
-    if (r.includes(':')) return `<:${r}>`
+    if (/\d+/.test(r)) return `<${data.react_animated ? 'a' : ''}:_:${r}>`
     return r
   },
 }
 
+const hidden_fields = ['react_animated']
 function createWelcomeInfoEmbed(data, { format = true, inline = true } = {}) {
   const embed = new Discord.RichEmbed()
 
   for (const [k, v] of Object.entries(data)) {
     // console.log('f', k, v, data)
-    const val = format && displayFormatters[k] ? displayFormatters[k](v) : v
+    if (hidden_fields.includes(k)) continue
+    const val = format && displayFormatters[k] ? displayFormatters[k](v, data) : v
     embed.addField(k, val, inline)
   }
 
@@ -265,6 +279,10 @@ async function setupWelcomeInteractive(bot, message) {
 
       if (k === 'react_with') {
         res = await promptForReact(k, message)
+        if (res) {
+          data['react_animated'] = res[1]
+          res = res[0]
+        }
       } else {
         res = await promptFor(k, message)
       }
@@ -310,8 +328,12 @@ function getRolesFrom(m) {
 
 async function getEmoji(m, v) {
   try {
-    await m.react(v || m.content)
-    return v || m.content
+    const emoji = v || m.content
+    const emojiMatch = emoji.match(/\d+/)
+    const emojiID = emojiMatch ? emojiMatch[0] : null
+
+    await m.react(emojiID || emoji)
+    return emojiID || emoji
   } catch (e) {
     return false
   }
@@ -352,14 +374,22 @@ function optionalParser(c) {
   return (c === OPTIONAL_NO_VALUE) ? null : c
 }
 
+function getRegexResult(val, regex) {
+  const res = val.match(regex)
+  return res ? res[1] || res[0] : null
+}
+
+const reactionRegex = /\d+/
+const animatedRegex = /<a:\w+:\d+>/
+
 const resultParsers = {
-  message: m => m.content,
+  message: (m, v) => v || m.content,
   channel: m => optionalParser(getChannelFrom(m)),
-  rejoins: m => booleanParser(m.content),
-  instant: m => booleanParser(m.content),
+  rejoins: (m, v) => booleanParser(v || m.content),
+  instant: (m, v) => booleanParser(v || m.content),
   ignore_roles: m => optionalParser(getRolesFrom(m)) || [],
-  react_with: m => m.content,
-  yesno: m => booleanParser(m.content),
+  react_with: (m, v) => getRegexResult(v || m.content, reactionRegex) || v || m.content,
+  yesno: (m, v) => booleanParser(v || m.content),
 }
 
 function promptFor(key, message, promptMsg) {
@@ -400,7 +430,7 @@ function promptForReact(key, message, promptMsg) {
           .then(col => {
             const r = col.first().emoji
             if (!resolved)
-              resolve(r.id ? r.identifier : r.name)
+              resolve([r.id || r.name, r.animated])
             resolved = true
           })
       }).catch(() => {
