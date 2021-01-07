@@ -22,7 +22,7 @@ module.exports = (messages) => {
 
 function messageToLog(message) {
   const embed = message.embeds.find(e => e.type === 'rich')
-  const richEmbed = !embed ? null : JSON.stringify(new Discord.RichEmbed(embed)._apiTransform())
+  const richEmbed = !embed ? null : JSON.stringify(new Discord.RichEmbed(embed).toJSON())
 
   return `[${curTime(message.createdAt)}] (${message.id}) `
          + `${message.author.tag} : ${message.content}`
