@@ -22,7 +22,7 @@ module.exports.events.message = (bot, message) => {
     case 'add':
       if (args[2] === undefined) break
       config.invokers.push(args[2])
-      config.invokers = Array.from(new Set(config.invokers)) //some magic to ensure there's no duplicate invokers
+      config.invokers = Array.from(new Set(config.invokers))
       bot.sleet.reloadConfig(config)
       message.channel.send(`Added \`${args[2]}\`\nCurrent invokers are \`${config.invokers.join('\`, \`')}\``)
       return
