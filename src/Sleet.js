@@ -189,29 +189,21 @@ let handler = {
       // lol stacktraces
     }
 
-    if (config.selfbot && callMsg && callMsg.author.id === bot.user.id) {
-      if (options)
-        promise = callMsg.edit(callMsg.content + '\n' + content, options)
-      else if (typeof content === 'object')
-        promise = callMsg.edit(callMsg.content, content)
-      else
-        promise = callMsg.edit(callMsg.content, {embed: {description: content}})
-
-    } else if (!callMsg || !sentMessages.has(callMsg.id)) {
-      promise = target.call(thisArg, content, options)
-      logger.info('Sent new')
-
-    } else {
+    if (callMsg && sentMessages.has(callMsg.id)) {
       promise = sentMessages.get(callMsg.id).edit(content, options)
-      logger.info('Edited old')
+      logger.info('Edited old', { content })
+    } else {
+      promise = target.call(thisArg, content, options)
+      logger.info('Sent new', { content })
     }
 
-    if (!config.selfbot && callMsg && callMsg.author.id !== bot.user.id && options && options.autoDelete !== false)
+    if (callMsg && (!options || options.autoDelete !== false)) {
       promise.then(m => {
         sentMessages.set(callMsg.id, m)
         if (sentMessages.size > maxSentMessagesCache)
           sentMessages.delete(sentMessages.firstKey())
       })
+    }
 
     metrics.messages_sent.inc()
     return promise

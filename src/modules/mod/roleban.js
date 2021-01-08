@@ -75,7 +75,6 @@ module.exports.events.message = async (bot, message) => {
 
 async function roleban(bot, message, members, rbRole, options = {}) {
   for (let m of members) {
-    console.log('trying to roleban', m)
     if (m === null) continue
 
     if (m.id === message.author.id) {
@@ -110,7 +109,6 @@ async function roleban(bot, message, members, rbRole, options = {}) {
 
     m.setRoles([rbRole, ...keepRoles], `[ Roleban by ${message.author.tag} (${message.author.id}) ]`)
       .then(async () => {
-        console.log('did it')
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         const logToChannel = logChannelId && (message ? message.channel.id !== logChannelId : true)
         const by = bot.sleet.formatUser(message ? message.author : bot.user)
@@ -218,16 +216,19 @@ module.exports.events.guildMemberUpdate = async (bot, oldM, newM) => {
     return
   }
 
-  const auditLogs = (await oldM.guild.fetchAuditLogs({limit: 1, type: 'MEMBER_ROLE_UPDATE'})).entries
-  let executor = 'someone unknown!'
+  let executor = 'someone unknown'
 
-  if (auditLogs.first()) {
-    const e = auditLogs.first()
-    if (e.target.id === oldM.id && e.changes[0] && e.changes[0].key === '$remove' && e.changes[0]['new'].length === 1 && e.changes[0]['new'][0].id === rbRole.id) {
-      executor = e.executor
-    } else {
-      // just give up apparantly there's a bug with this
-      return
+  if (oldM.guild.me.hasPermission('VIEW_AUDIT_LOG')) {
+    const auditLogs = (await oldM.guild.fetchAuditLogs({limit: 1, type: 'MEMBER_ROLE_UPDATE'})).entries
+
+    if (auditLogs.first()) {
+      const e = auditLogs.first()
+      if (e.target.id === oldM.id && e.changes[0] && e.changes[0].key === '$remove' && e.changes[0]['new'].length === 1 && e.changes[0]['new'][0].id === rbRole.id) {
+        executor = e.executor
+      } else {
+        // just give up apparantly there's a bug with this
+        return
+      }
     }
   }
 
