@@ -53,6 +53,8 @@ This message would be valid for giving out roles
 module.exports.events.init = async sleet => {
   // Load stuff from db yea boi
   for (let row of await sleet.db.manyOrNone('SELECT * FROM rolereact;')) {
+    row.canClear = row.canclear
+    delete row.canclear
     reactMessages.set(row.message, row)
   }
 }
@@ -72,15 +74,22 @@ module.exports.events.raw = async (bot, packet) => {
 
   const channel = bot.channels.get(packet.d.channel_id)
 
-  // Message is already cached, so it already got handled just fine
-  if (!channel || channel.messages.get(packet.d.message_id)) return
+  // no channel, just give up
+  if (!channel) return
 
-  // Easiest thing to do is probably to fetch the message and then use d.js' "message reaction add" packet handler
+  const messageCached = channel.messages.get(packet.d.message_id)
+  const memberCached  = channel.guild.members.get(packet.d.user_id)
+
+  // Assume it was cached and fired correctly
+  if (messageCached && memberCached) return
+
+  // Easiest thing to do is probably to fetch the message/member and then use d.js' "message reaction add" packet handler
   // which would allow me to just use the handler for d.js' actual reaction add event
 
-  // Fetch the message so it's cached first...
-  await channel.fetchMessage(packet.d.message_id)
-  // Now call the event ourselves :)
+
+  if (!messageCached) await channel.fetchMessage(packet.d.message_id)
+  if (!memberCached) await channel.guild.fetchMember(packet.d.user_id)
+
   // This will call the djs handler which calls the action handler and then emits the event
   bot.ws.connection.packetManager.handle(packet)
 }
@@ -118,11 +127,32 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     } else {
       // ensure only 1 role, remove other reacts
       const giverRoles = Object.keys(roles).map(r => roles[r].role)
+
+      // other react roles the member already has
+      const rEntries = Object.entries(roles)
+      const otherRoles = member
+        .roles
+        .filter(r => giverRoles.includes(r.id) && r.id !== toGive.role)
+        .array()
+        .map(r => {
+          const v = rEntries.find(e => e[1].role === r.id)
+          if (v) return v[0]
+        })
+        .filter(v => !!v)
+
       const keepRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
       keepRoles.push(toGive.role)
       member.setRoles(keepRoles)
 
-      react.message.reactions.filter(r => r.emoji.name !== react.emoji.name && r.users.get(member.id)).forEach(r => r.remove(member))
+      react.message.reactions
+      .filter(r => (
+        (
+          r.emoji.name !== react.emoji.name
+          && r.users.get(member.id)
+        )
+        || otherRoles.includes(r.id)
+      ))
+      .forEach(r => r.remove(member))
     }
   }
 }
