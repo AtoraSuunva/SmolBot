@@ -19,22 +19,22 @@ const colors = {
 
 const prefix = '>'
 const settingsTemplate = [
-  {name: 'member_add', type: 'boolean', init: true, help: 'Log members who join'},
+  {name: 'member_add', type: 'boolean', init: false, help: 'Log members who join'},
   {name: 'member_add_new', type: 'number', init: 48, help: 'The time in hours for an account to be marked as "new". 0 to disable.'},
   {name: 'member_add_invite', type: 'boolean', init: false, help: 'Log which invite they used to join'},
   {name: 'member_add_mention', type: 'boolean', init: false, help: 'If to mention the user in the message rather than the embed.'},
-  {name: 'member_welcome', type: 'boolean', init: true, help: 'Log welcome messages posted by the bot'},
-  {name: 'member_remove', type: 'boolean', init: true, help: 'Log members who leave (or are kicked)'},
-  {name: 'member_remove_roles', type: 'boolean', init: true, help: 'Log a member\'s roles when they leave'},
-  {name: 'user_ban', type: 'boolean', init: true, help: 'Log when users are banned.'},
-  {name: 'user_unban', type: 'boolean', init: true, help: 'Log when users are unbanned.'},
-  {name: 'user_update', type: 'string', init: 'username', help: 'Log a user\'s updates: =[username | avatar | both]'},
-  {name: 'delete_bulk', type: 'boolean', init: true, help: 'Log bulk deletes (purges)'},
-  {name: 'message_delete', type: 'boolean', init: true, help: 'Log deleted messages'},
-  {name: 'channel_create', type: 'boolean', init: true, help: 'Log created channels'},
-  {name: 'channel_delete', type: 'boolean', init: true, help: 'Log deleted channels'},
-  {name: 'reaction_actions', type: 'boolean', init: true, help: 'Allow to act on modlog entries by reacting (ie. ban with hammer)'},
-  {name: 'automod_action', type: 'boolean', init: true, help: 'Log automod actions in the modlog'},
+  {name: 'member_welcome', type: 'boolean', init: false, help: 'Log welcome messages posted by the bot'},
+  {name: 'member_remove', type: 'boolean', init: false, help: 'Log members who leave (or are kicked)'},
+  {name: 'member_remove_roles', type: 'boolean', init: false, help: 'Log a member\'s roles when they leave'},
+  {name: 'user_ban', type: 'boolean', init: false, help: 'Log when users are banned.'},
+  {name: 'user_unban', type: 'boolean', init: false, help: 'Log when users are unbanned.'},
+  {name: 'user_update', type: 'string', init: 'none', help: 'Log a user\'s updates: =[username | avatar | both | none]'},
+  {name: 'delete_bulk', type: 'boolean', init: false, help: 'Log bulk deletes (purges)'},
+  {name: 'message_delete', type: 'boolean', init: false, help: 'Log deleted messages'},
+  {name: 'channel_create', type: 'boolean', init: false, help: 'Log created channels'},
+  {name: 'channel_delete', type: 'boolean', init: false, help: 'Log deleted channels'},
+  {name: 'reaction_actions', type: 'boolean', init: false, help: 'Allow to act on modlog entries by reacting (ie. ban with hammer)'},
+  {name: 'automod_action', type: 'boolean', init: false, help: 'Log automod actions in the modlog'},
 ]
 
 settingsTemplate.forEach((v, i) => settingsTemplate[i].reg = new RegExp('^' + prefix + v.name + '=(.*)', 'mi'))
@@ -416,6 +416,7 @@ module.exports.events.userUpdate = async (bot, oldUser, newUser) => {
   for (let guild of bot.guilds.array()) {
     const config = getConfig(guild)
     if (!config || !config.settings.user_update) return
+    if (config.settings.user_update === 'none') return
     if (!(await userInGuild(guild, newUser))) return
 
     let msg

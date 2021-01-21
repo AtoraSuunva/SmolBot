@@ -323,6 +323,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
 
   const usertag = bot.sleet.formatUser(message.author)
   const realReason = reason || r.name || 'No reason!'
+  const logDeletedMessage = message.guild.id === '301319624874655744'
   let silentAction = false
   let action = null
   let extra = null
@@ -422,6 +423,9 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
     message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
   }
 
-  const modlogMsg = msg + (extra ? `\n> *${extra}*` : '') + `\n> ${message.url}`
+  const modlogMsg = msg
+    + (extra ? `\n> *${extra}*` : '')
+    + (logDeletedMessage ? '```\n' + message.content + '\n```' : '')
+    + `\n> ${message.url}`
   modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
 }

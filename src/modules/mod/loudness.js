@@ -34,6 +34,8 @@ module.exports.events.everyMessage = async (bot, message) => {
     .map(l => l.integrated)
     .sort((a, b) => b - a)[0]
 
+  if (loudest === null) return
+
   const emoji = getLoudnessEmoji(loudest)
 
   if (emoji === null) return
