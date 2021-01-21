@@ -4,7 +4,8 @@ module.exports.config = {
   invokers: ['furrygen', 'generate fursona', 'assign fursona'],
   help: 'Generates a fursona (randomly)',
   expandedHelp: 'You have no choice, you will be assigned a fursona.',
-  usage: ['furrygen', 'god save you']
+  usage: ['furrygen', 'god save you'],
+  invisible: true,
 }
 
 const colors = [
