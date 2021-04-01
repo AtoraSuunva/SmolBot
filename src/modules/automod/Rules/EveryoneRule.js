@@ -21,7 +21,7 @@ module.exports = class EveryoneRule extends Rule {
 
     this.trapRoles = trapRoles
     this.violations = AutoProp({})
-    this.name = `Max everyone/here mentions (${maxMentions}) reached.`
+    this.name = `Max everyone/here mentions (${maxMentions}) reached`
   }
 
   filter(message) {

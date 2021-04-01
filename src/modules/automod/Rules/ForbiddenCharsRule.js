@@ -29,7 +29,7 @@ module.exports = class ForbiddenChars extends Rule {
     this.charList = charList
     this.lastMessage = {}
     this.violations = AutoProp({})
-    this.name = `Max forbidden characters (${maxChars}) reached.`
+    this.name = `Max forbidden characters (${maxChars}) reached`
   }
 
   filter(message) {

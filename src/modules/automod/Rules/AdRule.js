@@ -24,7 +24,7 @@ module.exports = class AdRule extends Rule {
 
     this.violations = AutoProp({}, 0)
     this.shills = AutoProp({}, [])
-    this.name = `Max ads (${maxAds}) reached.`
+    this.name = `Max ads (${maxAds}) reached`
   }
 
   async filter(message) {
