@@ -135,7 +135,7 @@ const configs = new Map()
 
 function fetchConfig(guild, channel = null) {
   if (!channel && guild.channels) {
-    channel = guild.channels.find(
+    channel = guild.channels.cache.find(
       c => c.topic && c.topic.split('\n').includes(prefix + 'modlog'),
     )
   }
@@ -235,7 +235,7 @@ module.exports.createLog = createLog
 
 module.exports.events = {}
 module.exports.events.ready = async bot => {
-  for (let [id, guild] of bot.guilds) {
+  for (let [id, guild] of bot.guilds.cache) {
     let config = getConfig(guild)
     if (!config) continue
 
@@ -262,7 +262,7 @@ module.exports.events.raw = async (bot, packet) => {
   // Log things even if the member/message isn't cached :)
   switch (packet.t) {
     case 'GUILD_MEMBER_REMOVE':
-      guild = bot.guilds.get(packet.d.guild_id)
+      guild = bot.guilds.cache.get(packet.d.guild_id)
 
       if (guild.members.cache.get(packet.d.user.id)) return
 
@@ -648,7 +648,7 @@ module.exports.events.userUpdate = async (bot, oldUser, newUser) => {
     msgBoth = msgBoth ? msgBoth + ` <${newUser.displayAvatarURL()}>` : msgAvy
   }
 
-  for (let guild of bot.guilds.array()) {
+  for (let guild of bot.guilds.cache.array()) {
     const config = getConfig(guild)
     if (!config || !config.settings.user_update) return
     if (config.settings.user_update === 'none') return
