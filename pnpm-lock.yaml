@@ -1,13 +1,15 @@
 dependencies:
+  bufferutil: 4.0.3
   cheerio: 1.0.0-rc.5
   convert-units: 2.3.4
-  discord.js: 12.5.2
-  erlpack: 0.1.3
-  libsodium-wrappers: 0.7.9
+  discord.js: 12.5.2_c70f8fc5586dd378b8c866035dbe710b
+  erlpack: github.com/discord/erlpack/e27db8f82892bdb9b28a0547cc394d68b5d2242d
   node-fetch: 2.6.1
   pg-promise: 10.9.5
   pmx: 1.6.7
   recursive-readdir-sync: 1.0.6
+  utf-8-validate: 5.0.4
+  zlib-sync: 0.1.7
 lockfileVersion: 5.2
 packages:
   /@discordjs/collection/0.1.6:
@@ -67,6 +69,13 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-a7ZpuTZU1TRtnwyCNW3I5dc0wWNC3VR9S++Ewyk2HHZdrO3CQJqSpd+95Us590V6AL7JqUAH2IwZ/398PmNFgw==
+  /bufferutil/4.0.3:
+    dependencies:
+      node-gyp-build: 4.2.3
+    dev: false
+    requiresBuild: true
+    resolution:
+      integrity: sha512-yEYTwGndELGvfXsImMBLop58eaGW+YdONi1fNjTINSY98tmMmFijBG6WXgdkfuLNt4imzQNtIE+eBp1PVpMCSw==
   /cheerio-select-tmp/0.1.1:
     dependencies:
       css-select: 3.1.2
@@ -156,7 +165,7 @@ packages:
       node: '>=0.4.0'
     resolution:
       integrity: sha1-3zrhmayt+31ECqrgsp4icrJOxhk=
-  /discord.js/12.5.2:
+  /discord.js/12.5.2_c70f8fc5586dd378b8c866035dbe710b:
     dependencies:
       '@discordjs/collection': 0.1.6
       '@discordjs/form-data': 3.0.1
@@ -165,10 +174,13 @@ packages:
       prism-media: 1.2.9
       setimmediate: 1.0.5
       tweetnacl: 1.0.3
-      ws: 7.4.4
+      ws: 7.4.4_c70f8fc5586dd378b8c866035dbe710b
     dev: false
     engines:
       node: '>=12.0.0'
+    peerDependencies:
+      bufferutil: '*'
+      utf-8-validate: '*'
     resolution:
       integrity: sha512-PAJv2azCHZNz5VlSOcEYS3SPBmYvka0WHlWhTlHgorfJVRcm1xPwYFqPeU+8+YsWlUxkfgGUD2bnNkVx6vIqPw==
   /dom-serializer/1.2.0:
@@ -209,14 +221,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-hCx1oky9PFrJ611mf0ifBLBRW8lUUVRlFolb5gWRfIELabBlbp9xZvrqZLZAs+NxFnbfQoeGd8wDkygjg7U85w==
-  /erlpack/0.1.3:
-    dependencies:
-      bindings: 1.5.0
-      nan: 2.14.2
-    dev: false
-    requiresBuild: true
-    resolution:
-      integrity: sha512-QeG9v8CVsY/a/IoQi8zjn23aYKcziOihAxwjUl3tI/KB4R1FjTtctDAAMovgtpC16S+WiOauers2oWwIOQtKBQ==
   /event-target-shim/5.0.1:
     dev: false
     engines:
@@ -252,16 +256,6 @@ packages:
     dev: false
     resolution:
       integrity: sha1-Epai1Y/UXxmg9s4B1lcB4sc1tus=
-  /libsodium-wrappers/0.7.9:
-    dependencies:
-      libsodium: 0.7.9
-    dev: false
-    resolution:
-      integrity: sha512-9HaAeBGk1nKTRFRHkt7nzxqCvnkWTjn1pdjKgcUnZxj0FyOP4CnhgFhMdrFfgNsukijBGyBLpP2m2uKT1vuWhQ==
-  /libsodium/0.7.9:
-    dev: false
-    resolution:
-      integrity: sha512-gfeADtR4D/CM0oRUviKBViMGXZDgnFdMKMzHsvBdqLBHd9ySi6EtYnmuhHVDDYgYpAO8eU8hEY+F8vIUAPh08A==
   /lodash._basebind/2.3.0:
     dependencies:
       lodash._basecreate: 2.3.0
@@ -434,6 +428,11 @@ packages:
       node: 4.x || >=6.0.0
     resolution:
       integrity: sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
+  /node-gyp-build/4.2.3:
+    dev: false
+    hasBin: true
+    resolution:
+      integrity: sha512-MN6ZpzmfNCRM+3t57PTJHgHyw/h4OWnZ6mR8P5j/uZtqQr46RRuDE/P+g3n0YR/AiYXeWixZZzaip77gdICfRg==
   /nth-check/2.0.0:
     dependencies:
       boolbase: 1.0.0
@@ -637,6 +636,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
+  /utf-8-validate/5.0.4:
+    dependencies:
+      node-gyp-build: 4.2.3
+    dev: false
+    requiresBuild: true
+    resolution:
+      integrity: sha512-MEF05cPSq3AwJ2C7B7sHAA6i53vONoZbMGX8My5auEVm6W+dJ2Jd/TZPyGJ5CH42V2XtbI5FD28HeHeqlPzZ3Q==
   /util-deprecate/1.0.2:
     dev: false
     resolution:
@@ -664,7 +670,10 @@ packages:
       node: '>=0.12'
     resolution:
       integrity: sha1-dB+1HG8R0zg9pvm5IBil17qAdhE=
-  /ws/7.4.4:
+  /ws/7.4.4_c70f8fc5586dd378b8c866035dbe710b:
+    dependencies:
+      bufferutil: 4.0.3
+      utf-8-validate: 5.0.4
     dev: false
     engines:
       node: '>=8.3.0'
@@ -684,13 +693,32 @@ packages:
       node: '>=0.4'
     resolution:
       integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
+  /zlib-sync/0.1.7:
+    dependencies:
+      nan: 2.14.2
+    dev: false
+    requiresBuild: true
+    resolution:
+      integrity: sha512-UmciU6ZrIwtwPC8noMzq+kGMdiWwNRZ3wC0SbED4Ew5Ikqx14MqDPRs/Pbk+3rZPh5SzsOgUBs1WRE0iieddpg==
+  github.com/discord/erlpack/e27db8f82892bdb9b28a0547cc394d68b5d2242d:
+    dependencies:
+      bindings: 1.5.0
+      nan: 2.14.2
+    dev: false
+    name: erlpack
+    requiresBuild: true
+    resolution:
+      tarball: https://codeload.github.com/discord/erlpack/tar.gz/e27db8f82892bdb9b28a0547cc394d68b5d2242d
+    version: 0.1.3
 specifiers:
+  bufferutil: ^4.0.3
   cheerio: ^1.0.0-rc.5
   convert-units: ^2.3.4
   discord.js: ^12.5.2
-  erlpack: ^0.1.3
-  libsodium-wrappers: ^0.7.9
+  erlpack: github:discord/erlpack
   node-fetch: ^2.6.1
   pg-promise: ^10.9.5
   pmx: ^1.6.7
   recursive-readdir-sync: ^1.0.6
+  utf-8-validate: ^5.0.4
+  zlib-sync: ^0.1.7
