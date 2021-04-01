@@ -17,25 +17,49 @@ module.exports.config = {
 }
 
 const statuses = [
-  '{watching} not porn',
-  '{listening} the moans of the dammned',
-  '{streaming} hot, steamy, hot dogs',
-  'with dong',
-  '{watching} that gay shit',
-  '{watching} you search terrible things',
-  '{watching} a christian broadcast on the television',
-  'i scream',
-  '{watching} the cheesegrater in fear',
-  'Yes, I am judging you.',
-  'with new kinkshaming AI!',
-  'rating:e male/male',
-  'rating:e female/male',
-  'rating:e female/female',
-  '{watching} 👀',
+  'with boorus!',
+  '{streaming} christian anime!',
+  'send nudes',
+  '{streaming} some lewd stuff',
+  'Gla-ahn~',
+  '{streaming} handholding~',
+  '{streaming} pawholding',
+  '{streaming} some furry stuff',
+  'alone',
+  'with Atlas!',
+  'with RobotOtter!',
+  'with BulbaTrivia!',
+  "with Haram-- wait he's dead",
+  'probably something lewd',
+  'aaa',
+  'with shit code.',
+  '{streaming} the entire bee movie, but r34',
+  '{streaming} memes.',
+  '{streaming} Atlas Dying.',
+  'Japanese Anime Schoolgirl Sim',
+  'nya',
+  'as a flareon',
+  '{streaming} Jolt hugs!',
+  '{streaming} the Twitch logout page.',
+  '{streaming} Playing',
+  'Streaming',
+  'send dudes',
+  '{streaming} Atlas crying while debugging',
+  '{watching} atlas cry',
+  '{watching} the eevees!',
+  '{listening} the screams of the damned',
+  '{watching} probably something lewd',
+  '{watching} RobotOtter and Bulba fight',
+  '{listening} the moans of the damned',
+  'kobold',
+  '{watching} girls.. , .,',
+  '{watching} for big tiddy dragon gf',
+  '{watching} for big tiddy shark gf',
+  'funny joke',
 ]
 
 //strings starting with '{streaming}' will be shown as "Streaming X"
-const appendMsg = ' | b!help' //use this to keep a constant message after
+const appendMsg = ' | s!help' //use this to keep a constant message after
 const interval = 60 * 15 //in seconds
 const twitch = 'https://twitch.tv/logout' //memes
 let interv
@@ -44,11 +68,16 @@ module.exports.events = {}
 
 module.exports.events.ready = bot => {
   bot.user.setActivity(...getPlaying())
-
   interv = setInterval(
     () => bot.user.setActivity(...getPlaying()),
     interval * 1000,
   )
+}
+
+module.exports.events.init = (sleet, bot) => {
+  if (bot && bot.readyAt) {
+    module.exports.events.ready(bot)
+  }
 }
 
 module.exports.events.message = (bot, message) => {
