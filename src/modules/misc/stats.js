@@ -17,7 +17,6 @@ module.exports.events.message = (bot, message) => {
     return c.type === 'text'
   }).size
   const userCount = bot.guilds.cache
-    .values()
     .map(g => g.memberCount)
     .reduce((a, b) => a + b)
   const dmCount = bot.channels.cache.filter(c => {
@@ -41,12 +40,12 @@ module.exports.events.message = (bot, message) => {
     .set('Up for:', uptime)
 
   if (
-    message.guild !== null &&
+    message.guild === null ||
     message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
   ) {
     const embed = new Discord.MessageEmbed()
-      .setThumbnail(bot.user.displayAvatarURL())
-      .setFooter('Use b!info for info!')
+      .setThumbnail(bot.user.avatarURL())
+      .setFooter('Use s!info for info!')
 
     for (let [title, val] of fields) {
       embed.addField(title, val, true)
