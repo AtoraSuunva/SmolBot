@@ -4,7 +4,7 @@ module.exports.config = {
   name: 'unsuppress',
   invokers: ['unsuppress', 'unhide'],
   help: 'Unsuppresses messages',
-  expandedHelp: `\`unsuppress <message link>\`\n\`unsuppress <channel id> <message id>\`\nReact to a message with ${unsuppressEmoji}`
+  expandedHelp: `\`unsuppress <message link>\`\n\`unsuppress <channel id> <message id>\`\nReact to a message with ${unsuppressEmoji}`,
 }
 
 const Discord = require('discord.js')
@@ -28,17 +28,23 @@ module.exports.events.message = async (bot, message) => {
   }
 
   if (!channelId || !messageId) {
-    return message.channel.send(`You need to provide a message link, channel id + message id, or react to a message with ${unsuppressEmoji}.`)
+    return message.channel.send(
+      `You need to provide a message link, channel id + message id, or react to a message with ${unsuppressEmoji}.`,
+    )
   }
 
   const channel = bot.channels.get(channelId)
 
   if (!channel) {
-    return message.channel.send('I did not find the channel you wanted me to unsuppress in.')
+    return message.channel.send(
+      'I did not find the channel you wanted me to unsuppress in.',
+    )
   }
 
   if (!channel.permissionsFor(message.author).has('MANAGE_MESSAGES')) {
-    return message.channel.send('You need to be able to manage messages to unsuppress.')
+    return message.channel.send(
+      'You need to be able to manage messages to unsuppress.',
+    )
   }
 
   try {
@@ -75,12 +81,11 @@ async function suppressMessage(client, channelId, messageId, suppress) {
     body: JSON.stringify({ suppress }),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bot ${client.token}`
+      Authorization: `Bot ${client.token}`,
     },
   })
-  // return await client.rest.makeRequest('post', endpoint, { suppress })
 }
 
 function suppressEndpoint(client, channelId, messageId) {
-  return `${client.options.http.host}/api/v${client.options.http.version}/channels/${channelId}/messages/${messageId}/suppress-embeds`
+  return `${client.options.http.api}/api/v${client.options.http.version}/channels/${channelId}/messages/${messageId}/suppress-embeds`
 }
