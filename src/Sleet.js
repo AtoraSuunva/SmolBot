@@ -788,7 +788,24 @@ function saveAndExit() {
 }
 module.exports.saveAndExit = saveAndExit
 
-bot = new Discord.Client({ disableMentions: 'everyone' })
+const wsOptions = {
+  intents: config.intents,
+}
+
+const initPresence = {
+  status: 'dnd',
+  activity: {
+    name: 'for ready event...',
+    type: 'WATCHING',
+  },
+}
+
+bot = new Discord.Client({
+  disableMentions: 'everyone',
+  presence: initPresence,
+  ws: wsOptions,
+})
+
 bot.sleet = module.exports
 let modules = {}
 let moduleErrors = []

@@ -150,7 +150,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
       continue
     }
 
-    if (m.roles.has(rbRole.id)) {
+    if (m.roles.cached.has(rbRole.id)) {
       message.channel.send(
         `${bot.sleet.formatUser(m.user)} is already rolebanned!`,
       )
@@ -164,8 +164,8 @@ async function roleban(bot, message, members, rbRole, options = {}) {
 
     // We can't touch managed roles, so we need to keep them
     // Good to handle cases like nitro boosters who you need to roleban
-    const prevRoles = m.roles.filter(r => r.id !== m.guild.id && !r.managed)
-    const keepRoles = m.roles.filter(r => r.managed).array()
+    const prevRoles = m.roles.cache.filter(r => r.id !== m.guild.id && !r.managed)
+    const keepRoles = m.roles.cache.filter(r => r.managed).array()
 
     m.roles
       .set(
@@ -229,15 +229,15 @@ module.exports.roleban = roleban
 async function unroleban(bot, message, members, rbRole, executor = null) {
   for (let m of members) {
     if (m === null) continue
-    if (!m.roles.has(rbRole.id)) {
+    if (!m.roles.cache.has(rbRole.id)) {
       message.channel.send(`${bot.sleet.formatUser(m.user)} is not rolebanned.`)
       continue
     }
 
     const prevRoles = (
-      (await fetchPreviousRoles(bot.sleet.db, m.id)) || m.roles.map(r => r.id)
+      (await fetchPreviousRoles(bot.sleet.db, m.id)) || m.roles.cache.map(r => r.id)
     ).filter(r => r !== rbRole.id && r !== m.guild.id)
-    const keepRoles = m.roles.filter(r => r.managed).array()
+    const keepRoles = m.roles.cache.filter(r => r.managed).array()
     const by = getBy(bot, message, executor)
     botUnrolebanned.push(m.id)
 
@@ -340,7 +340,7 @@ module.exports.events.guildMemberUpdate = async (bot, oldM, newM) => {
   // Wasn't rolebanned before
   if (
     !rbRole ||
-    !oldM.roles.has(rbRole.id) ||
+    !oldM.roles.cache.has(rbRole.id) ||
     !(await fetchPreviousRoles(bot.sleet.db, oldM.id))
   ) {
     return
@@ -388,7 +388,7 @@ function fetchMember(guild, user) {
 }
 
 function getRolebanRole(guild) {
-  return guild.roles.find(
+  return guild.roles.cache.find(
     r => roleNames.includes(r.name.toLowerCase()) || roleIds.includes(r.id),
   )
 }

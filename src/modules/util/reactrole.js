@@ -81,7 +81,7 @@ module.exports.events.raw = async (bot, packet) => {
     return
   }
 
-  const channel = bot.channels.get(packet.d.channel_id)
+  const channel = bot.channels.cache.get(packet.d.channel_id)
 
   // no channel, just give up
   if (!channel) return
@@ -99,7 +99,11 @@ module.exports.events.raw = async (bot, packet) => {
   if (!memberCached) await channel.guild.members.fetch(packet.d.user_id)
 
   // This will call the djs handler which calls the action handler and then emits the event
-  bot.ws.connection.packetManager.handle(packet)
+  if (packet.t === 'MESSAGE_REACTION_ADD') {
+    bot.actions.MessageReactionAdd.handle(packet)
+  } else if (packet.t === 'MESSAGE_REACTION_REMOVE') {
+    bot.actions.MessageReactionRemove.handle(packet)
+  }
 }
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
