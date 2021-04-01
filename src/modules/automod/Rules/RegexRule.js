@@ -4,7 +4,7 @@ const Rule = require('./Rule')
 // Used to parse /regex/gi into ['regex', 'gi']
 const regexRegex = /\/(.*)\/([a-z]+)?/i
 
- /**
+/**
  * Matches messages against a regex, matching messages then get a punishment >:(
  */
 module.exports = class RegexRule extends Rule {
@@ -23,11 +23,16 @@ module.exports = class RegexRule extends Rule {
     this.timeout = timeout * 1000
     this.parameters = regex
 
-    const [, regExp, flags] = regexRegex.exec(regex[0]) || [, regex[0], regex[1] || '']
+    const [, regExp, flags] = regexRegex.exec(regex[0]) || [
+      ,
+      regex[0],
+      regex[1] || '',
+    ]
 
     console.log('reg', regex)
 
-    this.regex = regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
+    this.regex =
+      regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
     this.lastMessage = {}
     this.violations = AutoProp({})
     this.vioMessages = {}
@@ -49,16 +54,19 @@ module.exports = class RegexRule extends Rule {
       this.vioMessages[uid] = this.vioMessages[uid] || []
       this.vioMessages[uid].push(message)
 
-      setTimeout((id, occ) => {
-        this.violations[id] - occ
-        this.vioMessages[id].shift()
-      }, this.timeout, uid, occ)
-
+      setTimeout(
+        (id, occ) => {
+          this.violations[id] - occ
+          this.vioMessages[id].shift()
+        },
+        this.timeout,
+        uid,
+        occ,
+      )
 
       if (this.violations[uid] >= this.maxCount) {
-        return ({ punishment: this.punishment, deletes: this.vioMessages[uid] })
+        return { punishment: this.punishment, deletes: this.vioMessages[uid] }
       }
-
     }
   }
 }

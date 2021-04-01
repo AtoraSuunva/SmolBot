@@ -2,12 +2,31 @@ module.exports.config = {
   name: 'minesweeper',
   invokers: ['minesweeper'],
   help: 'The classic hardcore game',
-  expandedHelp: 'It\'s minesweeper. You can figure it out.\n`minesweeper [height] [width] [mines]` (height/width/mines optional)',
-  usage: ['Play the game', 'minesweeper', 'Play with a different grid size', 'minesweeper 15 15', 'Play with more mines', 'minesweeper 15 15 300']
+  expandedHelp:
+    "It's minesweeper. You can figure it out.\n`minesweeper [height] [width] [mines]` (height/width/mines optional)",
+  usage: [
+    'Play the game',
+    'minesweeper',
+    'Play with a different grid size',
+    'minesweeper 15 15',
+    'Play with more mines',
+    'minesweeper 15 15 300',
+  ],
 }
 
-const nMap = {0: ':zero:', 1: ':one:', 2: ':two:', 3: ':three:', 4: ':four:', 5: ':five:', 6: ':six:', 7: ':seven:', 8: ':eight:', 9: ':nine:'}
-const charMap = c => c === mine ? ':bomb:' : nMap[c]
+const nMap = {
+  0: ':zero:',
+  1: ':one:',
+  2: ':two:',
+  3: ':three:',
+  4: ':four:',
+  5: ':five:',
+  6: ':six:',
+  7: ':seven:',
+  8: ':eight:',
+  9: ':nine:',
+}
+const charMap = c => (c === mine ? ':bomb:' : nMap[c])
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
@@ -15,13 +34,27 @@ module.exports.events.message = (bot, message) => {
   const [pHeight, pWidth, pMines] = [height, width, mines].map(v => parseInt(v))
 
   if ([pHeight, pWidth, pMines].find(v => Number.isNaN(v) || v < 1 || v > 20))
-    return message.channel.send('Invalid settings; Height/Width and number of mines must be between 1 and 20, inclusive.')
+    return message.channel.send(
+      'Invalid settings; Height/Width and number of mines must be between 1 and 20, inclusive.',
+    )
 
-  const {grid, minecount, safe} = createMinesweeper(pHeight, pWidth, pMines)
-  const msg = `*Mines: ${minecount}*\n` + grid.map((row, y) => row.map((v, x) => (safe[0] === y && safe[1] === x) ? charMap(v) : `||${charMap(v)}||`).join('')).join('\n')
+  const { grid, minecount, safe } = createMinesweeper(pHeight, pWidth, pMines)
+  const msg =
+    `*Mines: ${minecount}*\n` +
+    grid
+      .map((row, y) =>
+        row
+          .map((v, x) =>
+            safe[0] === y && safe[1] === x ? charMap(v) : `||${charMap(v)}||`,
+          )
+          .join(''),
+      )
+      .join('\n')
 
   if (msg.length > 2000)
-    return message.channel.send('Grid is too large to send, try something smaller.')
+    return message.channel.send(
+      'Grid is too large to send, try something smaller.',
+    )
 
   message.channel.send(msg)
 }
@@ -56,7 +89,7 @@ function createMinesweeper(height = 7, width = 7, mines = 0) {
   safe = safe || [Infinity, Infinity]
 
   // Make it a regular array and not a Proxy
-  return {grid: Array.from(grid), minecount, safe}
+  return { grid: Array.from(grid), minecount, safe }
 }
 
 /**
@@ -69,7 +102,7 @@ function randInt(min, max) {
 
 // Because otherwise node just reuses the same array? ??
 function genGrid(x, y) {
-  const g = new Proxy([], {get: (t, p) => t[p] || []})
+  const g = new Proxy([], { get: (t, p) => t[p] || [] })
   while (x--) {
     let e = []
     let w = y
@@ -82,8 +115,13 @@ function genGrid(x, y) {
 // Get the 8 tiles around the tile, counting the num of mines
 function countMines(x, y, grid) {
   return [
-    grid[y-1][x-1], grid[y-1][x], grid[y-1][x+1],
-    grid[y  ][x-1],               grid[y  ][x+1],
-    grid[y+1][x-1], grid[y+1][x], grid[y+1][x+1]
+    grid[y - 1][x - 1],
+    grid[y - 1][x],
+    grid[y - 1][x + 1],
+    grid[y][x - 1],
+    grid[y][x + 1],
+    grid[y + 1][x - 1],
+    grid[y + 1][x],
+    grid[y + 1][x + 1],
   ].filter(v => v === mine).length
 }

@@ -2,7 +2,7 @@ const AutoProp = require('./AutoProp')
 const Rule = require('./Rule')
 
 // Lol regexes
-const inviteRegex = /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/ig
+const inviteRegex = /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/gi
 
 /**
  * Allows a punishment to happen if a user shills another server
@@ -35,11 +35,16 @@ module.exports = class AdRule extends Rule {
     // 1) Exist
     // 2) Aren't for the same guild the message was sent in
     // 3) Aren't allowed
-    const invites = (await getAllInvites(message.client, message.content))
-      .filter(v => v.invite === true || (v.invite.guild.id !== message.guild.id && !allowed.includes(v.invite.guild.id)) )
+    const invites = (
+      await getAllInvites(message.client, message.content)
+    ).filter(
+      v =>
+        v.invite === true ||
+        (v.invite.guild.id !== message.guild.id &&
+          !allowed.includes(v.invite.guild.id)),
+    )
 
-    if (invites.length === 0)
-      return null
+    if (invites.length === 0) return null
 
     this.violations[uid] += invites.reduce((acc, b) => acc + b.count, 0)
 
@@ -50,9 +55,14 @@ module.exports = class AdRule extends Rule {
     }
 
     const index = this.shills[uid].push(message.id) - 1
-    setTimeout((id, index) => --this.violations[id] || this.shills[id].splice(index, 1), this.timeout, uid, index)
+    setTimeout(
+      (id, index) => --this.violations[id] || this.shills[id].splice(index, 1),
+      this.timeout,
+      uid,
+      index,
+    )
 
-    return ({ punishment, deletes: this.shills[uid] })
+    return { punishment, deletes: this.shills[uid] }
   }
 }
 
@@ -76,8 +86,7 @@ async function getAllInvites(client, str) {
   const valid = []
   const invites = findAllMatches(inviteRegex, str)
 
-  if (invites.length === 0)
-    return []
+  if (invites.length === 0) return []
 
   const counts = countOccurences(invites)
   const codes = Object.keys(counts)
@@ -86,7 +95,7 @@ async function getAllInvites(client, str) {
     const invite = await resolveInvite(client, code)
 
     if (invite !== false) {
-      valid.push({code, invite, count: counts[code]})
+      valid.push({ code, invite, count: counts[code] })
     }
   }
 
@@ -107,16 +116,19 @@ async function resolveInvite(client, code) {
     // First try to fetch it, if we can then it's obviously real
     // This *does* fail if we're banned so...
     return await client.fetchInvite(code)
-  } catch(e) {
+  } catch (e) {
     try {
       // ...we try deleting it
       // If we can, whoops, shouldn't happen anyways
-      await client.rest.methods.deleteInvite({code})
+      await client.rest.methods.deleteInvite({ code })
       return false
-    } catch(e){
+    } catch (e) {
       // If we can't, then it exists but we don't have perms (obviously, we're banned)
       // (While banned, trying to fetch it returns a 404, but trying to delete it returns a 403)
-      return (e.name === 'DiscordAPIError' && (e.code === 50013 || e.message === 'Missing Permissions'))
+      return (
+        e.name === 'DiscordAPIError' &&
+        (e.code === 50013 || e.message === 'Missing Permissions')
+      )
     }
   }
 }
@@ -138,7 +150,7 @@ function countOccurences(arr) {
   const occ = {}
 
   for (const val of arr) {
-    occ[val] ? occ[val]++ : occ[val] = 1
+    occ[val] ? occ[val]++ : (occ[val] = 1)
   }
 
   return occ

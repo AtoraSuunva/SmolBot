@@ -34,7 +34,7 @@ module.exports.config = {
   // Another optional config, this will disable auto loading on bot start
   // If it's not present it will load when the bot starts
   // Useful if you want to only enable a command when needed
-  autoLoad: true
+  autoLoad: true,
 }
 
 //I need to do this or else js complains that events is undefined
@@ -79,6 +79,6 @@ module.exports.events.message = (bot, message) => {
 */
 
 //Finally, show off ready
-module.exports.events.ready = (bot) => {
-  bot.sleet.logger.info('I\'m ready!')
+module.exports.events.ready = bot => {
+  bot.sleet.logger.info("I'm ready!")
 }

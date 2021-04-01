@@ -4,7 +4,7 @@ module.exports.config = {
   invokers: ['movie'],
   help: 'according to all known laws...',
   expandedHelp: 'Posts a random snippet of the bee movie',
-  invisible: true
+  invisible: true,
 }
 
 const fs = require('fs')
@@ -17,7 +17,11 @@ module.exports.events.message = (bot, message) => {
     const bee = data.split('\n')
     const movie = Math.floor(Math.random() * bee.length)
 
-    message.channel.send(((bee[movie-1] || '') + '\n') + bee[movie] + ('\n' + (bee[movie+1] || '')))
+    message.channel.send(
+      (bee[movie - 1] || '') +
+        '\n' +
+        bee[movie] +
+        ('\n' + (bee[movie + 1] || '')),
+    )
   })
 }
-

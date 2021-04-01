@@ -3,8 +3,14 @@ module.exports.config = {
   name: 'pokedex',
   invokers: ['pokedex', 'dex', 'pokemon'],
   help: 'Searches up pokemon',
-  expandedHelp: 'Ever wanted to know the height of a diglet? Now you can!\nPulls information from both pokeapi and bulbapedia.',
-  usage: ['Get a pokemon by name', 'pokedex glaceon', 'Get a pokemon by (National) dex #', 'pokedex 471']
+  expandedHelp:
+    'Ever wanted to know the height of a diglet? Now you can!\nPulls information from both pokeapi and bulbapedia.',
+  usage: [
+    'Get a pokemon by name',
+    'pokedex glaceon',
+    'Get a pokemon by (National) dex #',
+    'pokedex 471',
+  ],
 }
 
 const Discord = require('discord.js')
@@ -14,7 +20,7 @@ const db = pgp({
   port: process.env.DB_PORT,
   database: process.env.DB_POKEMON_DATABASE,
   user: process.env.DB_POKEMON_USER,
-  password: process.env.DB_POKEMON_PASSWORD
+  password: process.env.DB_POKEMON_PASSWORD,
 })
 
 const fetchPokemon = require('./_fetchPokemon.js')
@@ -31,15 +37,23 @@ function type(bot, type) {
 
   type = type.toLowerCase().replace('-', '')
 
-  return ' ' + (bot.emojis.find(e => e.name === `type_${type}`) || `[${capitalize(type)}]`)
+  return (
+    ' ' +
+    (bot.emojis.find(e => e.name === `type_${type}`) || `[${capitalize(type)}]`)
+  )
 }
 
 function shape(bot, shape) {
-  if (shape === null || shape === undefined || typeof shape !== 'string') return ''
+  if (shape === null || shape === undefined || typeof shape !== 'string')
+    return ''
 
   shape = shape.toLowerCase().replace('-', '')
 
-  return ' ' + (bot.emojis.find(e => e.name === `shape_${shape}`) || `(${capitalize(shape)})`)
+  return (
+    ' ' +
+    (bot.emojis.find(e => e.name === `shape_${shape}`) ||
+      `(${capitalize(shape)})`)
+  )
 }
 
 const colors = {
@@ -53,14 +67,16 @@ const colors = {
   gray: '#d1d1e0',
   grey: '#d1d1e0',
   white: '#ffffff',
-  pink: '#f4bdc9'
+  pink: '#f4bdc9',
 }
 function color(color) {
   return colors[color] || '#000000'
 }
 
 function evolvesFrom(ev) {
-  return ev ? `\n**Evolves from:** [${capitalize(ev)}](${fetchPokemon.api.bulba}${ev})` : ''
+  return ev
+    ? `\n**Evolves from:** [${capitalize(ev)}](${fetchPokemon.api.bulba}${ev})`
+    : ''
 }
 
 function gender(rate) {
@@ -68,7 +84,7 @@ function gender(rate) {
     return 'Genderless'
   }
 
-  const female = rate / 8 * 100
+  const female = (rate / 8) * 100
   const male = 100 - female
 
   const str = `${male}% Male, ${female}% Female`
@@ -104,35 +120,105 @@ module.exports.events.message = async (bot, message) => {
 
   const embed = new Discord.RichEmbed()
 
-  embed.setTitle(capitalize(data.name) + ' #' + data.id + ' -' + type(bot, data.type) + type(bot, data.type_alt) + ' ' + shape(bot, data.shape))
-    .setDescription(data.description.split('\n\n')[0].trim() + `\n[Read more](${fetchPokemon.api.bulba}${data.name})`)
+  embed
+    .setTitle(
+      capitalize(data.name) +
+        ' #' +
+        data.id +
+        ' -' +
+        type(bot, data.type) +
+        type(bot, data.type_alt) +
+        ' ' +
+        shape(bot, data.shape),
+    )
+    .setDescription(
+      data.description.split('\n\n')[0].trim() +
+        `\n[Read more](${fetchPokemon.api.bulba}${data.name})`,
+    )
     .setColor(color(data.color))
     .setThumbnail(data.sprite_front)
     .setAuthor(data.genus)
     .setFooter('Info: pokeapi.co & Bulbapedia')
-    .addField('Info', '**Capture Rate:** ' + data.capture_rate + evolvesFrom(data.evolves_from), true)
-    .addField('\u200b', gender(data.gender_rate) + '\n:straight_ruler: ' + (data.height / 10) + 'm - :scales: ' + (data.weight / 10) + 'kg', true)
-    .addField(`Dex (${capitalize(data.dex[0].version)})`, data.dex[0].text.replace(/\n/g, ' '))
-    .addField('Stats', '```asciidoc\nHP  :: ' + data.stats.hp + '\nAtk :: ' + data.stats.attack + '\nDef :: ' + data.stats.defense + '\n```', true)
-    .addField('\u200b', '```asciidoc\nSpeed  :: ' + data.stats.speed + '\nSp.Atk :: ' + data.stats['special-attack'] + '\nSp.Def :: ' + data.stats['special-defense'] + '\n```', true)
+    .addField(
+      'Info',
+      '**Capture Rate:** ' + data.capture_rate + evolvesFrom(data.evolves_from),
+      true,
+    )
+    .addField(
+      '\u200b',
+      gender(data.gender_rate) +
+        '\n:straight_ruler: ' +
+        data.height / 10 +
+        'm - :scales: ' +
+        data.weight / 10 +
+        'kg',
+      true,
+    )
+    .addField(
+      `Dex (${capitalize(data.dex[0].version)})`,
+      data.dex[0].text.replace(/\n/g, ' '),
+    )
+    .addField(
+      'Stats',
+      '```asciidoc\nHP  :: ' +
+        data.stats.hp +
+        '\nAtk :: ' +
+        data.stats.attack +
+        '\nDef :: ' +
+        data.stats.defense +
+        '\n```',
+      true,
+    )
+    .addField(
+      '\u200b',
+      '```asciidoc\nSpeed  :: ' +
+        data.stats.speed +
+        '\nSp.Atk :: ' +
+        data.stats['special-attack'] +
+        '\nSp.Def :: ' +
+        data.stats['special-defense'] +
+        '\n```',
+      true,
+    )
 
-  message.channel.send({embed})
-    .then(m => data.id === 149 ? m.react('\u{1f499}') : '')
+  message.channel
+    .send({ embed })
+    .then(m => (data.id === 149 ? m.react('\u{1f499}') : ''))
 }
 
 const fields = {
   name: d => capitalize(d.name),
   id: d => d.id,
-  type: d => capitalize(d.type) + (d.type_alt ? ` - ${capitalize(d.type_alt)}` : ''),
+  type: d =>
+    capitalize(d.type) + (d.type_alt ? ` - ${capitalize(d.type_alt)}` : ''),
   shape: d => capitalize(d.shape),
   color: d => capitalize(d.color),
   sprite: d => d.sprite_front,
   genus: d => capitalize(d.genus),
   capture: d => d.capture_rate,
-  evolves: d => capitalize(d.evolves_from) || `${capitalize(d.name)} does not evolve from any pokemon.`,
+  evolves: d =>
+    capitalize(d.evolves_from) ||
+    `${capitalize(d.name)} does not evolve from any pokemon.`,
   gender: d => gender(d.gender_rate),
   height: d => `${d.height / 10}m`,
   weight: d => `${d.weight / 10}kg`,
-  dex: d => `From ${capitalize(d.dex[0].version)}:\n>>> ${d.dex[0].text.replace(/\n/g, ' ')}`,
-  stats: d => '```asciidoc\nHP  :: ' + d.stats.hp + '\nAtk :: ' + d.stats.attack + '\nDef :: ' + d.stats.defense + '\nSpeed  :: ' + d.stats.speed + '\nSp.Atk :: ' + d.stats['special-attack'] + '\nSp.Def :: ' + d.stats['special-defense'] + '\n```',
+  dex: d =>
+    `From ${capitalize(d.dex[0].version)}:\n>>> ${d.dex[0].text.replace(
+      /\n/g,
+      ' ',
+    )}`,
+  stats: d =>
+    '```asciidoc\nHP  :: ' +
+    d.stats.hp +
+    '\nAtk :: ' +
+    d.stats.attack +
+    '\nDef :: ' +
+    d.stats.defense +
+    '\nSpeed  :: ' +
+    d.stats.speed +
+    '\nSp.Atk :: ' +
+    d.stats['special-attack'] +
+    '\nSp.Def :: ' +
+    d.stats['special-defense'] +
+    '\n```',
 }
