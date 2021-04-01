@@ -555,7 +555,7 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   if (
     joinSet.ignore_roles &&
-    joinSet.ignore_roles.some(r => message.member.roles.has(r))
+    joinSet.ignore_roles.some(r => message.member.cache.roles.has(r))
   ) {
     // Ignore some "special" users ie. rolebanned ones
     return

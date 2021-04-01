@@ -122,7 +122,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
 
     if (canClear && react.emoji.name === optReacts.x) {
       const giverRoles = Object.keys(roles).map(r => roles[r].role)
-      const keepRoles = member.roles
+      const keepRoles = member.roles.cache
         .filter(r => !giverRoles.includes(r.id))
         .array()
       member.roles.set(keepRoles)
@@ -146,7 +146,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
 
       // other react roles the member already has
       const rEntries = Object.entries(roles)
-      const otherRoles = member.roles
+      const otherRoles = member.roles.cache
         .filter(r => giverRoles.includes(r.id) && r.id !== toGive.role)
         .array()
         .map(r => {
@@ -155,7 +155,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
         })
         .filter(v => !!v)
 
-      const keepRoles = member.roles
+      const keepRoles = member.roles.cache
         .filter(r => !giverRoles.includes(r.id))
         .array()
       keepRoles.push(toGive.role)
@@ -217,7 +217,7 @@ async function parseMessage(bot, message, react, member) {
     if (roleMatch[2]) roleInfo.role = roleMatch[2]
 
     // Check if this role is under the member & the bot
-    const role = message.guild.roles.find(
+    const role = message.guild.roles.cache.find(
       r => r.name === roleInfo.role || r.id === roleInfo.role,
     )
 

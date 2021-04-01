@@ -511,7 +511,7 @@ module.exports.events.guildMemberRemove = async (bot, member) => {
 
   const roles =
     config.settings.member_remove_roles && member.roles
-      ? member.roles
+      ? member.roles.cache
           .map(r => r.name)
           .filter(r => r !== '@everyone')
           .join(', ')
