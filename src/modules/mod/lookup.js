@@ -23,7 +23,7 @@ module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
   let [cmd, data] = bot.sleet.shlex(message, { invokers })
 
-  botTag = botTag || bot.emojis.find(e => e.name === 'botTag') || '[BOT]'
+  botTag = botTag || bot.emojis.cache.find(e => e.name === 'botTag') || '[BOT]'
 
   if (!data) {
     return message.channel.send('What do you want me to lookup?')
@@ -42,6 +42,7 @@ module.exports.events.message = async (bot, message) => {
     const i = await bot.fetchInvite(data)
     return sendInviteLookup(bot, message.channel, i)
   } catch (e) {
+    console.log(e)
     err = e
   }
 
@@ -119,9 +120,9 @@ function sendInviteLookup(bot, channel, invite) {
       invite.guild.name + '\n[#' + invite.channel.name + '](http://a.ca)',
     )
 
-  if (invite.guild.icon) embed.setThumbnail(getGuildIcon(invite.guild))
+  if (invite.guild.icon) embed.setThumbnail(invite.guild.iconURL())
 
-  if (invite.guild.splash) embed.setImage(getGuildSplash(invite.guild))
+  if (invite.guild.splash) embed.setImage(invite.guild.splashURL())
 
   if (invite.guild.available)
     embed.addField(
@@ -167,20 +168,4 @@ function sendGuildLookup(channel, guild) {
     .setTimestamp(created)
 
   channel.send({ embed })
-}
-
-function getGuildIcon(guild) {
-  return Discord.Constants.Endpoints.Guild(guild.id).Icon(
-    guild.client.options.http.cdn,
-    guild.icon,
-  )
-}
-
-function getGuildSplash(guild, size = 512) {
-  return (
-    Discord.Constants.Endpoints.Guild(guild.id).Splash(
-      guild.client.options.http.cdn,
-      guild.splash,
-    ) + '?size=512'
-  )
 }
