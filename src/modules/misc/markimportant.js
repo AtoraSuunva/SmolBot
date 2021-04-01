@@ -30,9 +30,9 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   alreadySent.push(react.message.id)
 
   const embed = createEmbed(react.message, react.message)
-  user.send('Please enter a 200 word essay on why I should DM this mesasge to atlas:', { embed })
+  user.send('Please enter at least 69 characters on why I should DM this mesasge to atlas:', { embed })
     .then(m => {
-      const filter = m => m.content.split(' ').length >= 200
+      const filter = m => m.content.length >= 69
       m.channel.awaitMessages(filter, { max: 1, time: 600000, errors: ['time'] })
         .then(async c => {
               const f = c.first()

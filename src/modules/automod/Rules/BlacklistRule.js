@@ -62,7 +62,7 @@ module.exports = class BlacklistRule extends Rule {
     this.violations = AutoProp({})
     this.vioMessages = {}
 
-    this.name = `Max blacklisted words (${maxCount}) reached.`
+    this.name = `Max blacklisted words (${maxCount}) reached`
   }
 
   filter(message) {

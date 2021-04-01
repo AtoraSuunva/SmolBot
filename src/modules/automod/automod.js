@@ -334,6 +334,14 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
       action = 'silenced (message deleted)'
       silentAction = true
       message.delete().catch(c => {})
+
+      if (deletes) {
+        if (deletes.length === 1 && deletes[0].delete) {
+          deletes[0].delete().catch(_ => {})
+        } else if (deletes.length > 1) {
+          message.channel.bulkDelete(deletes).catch(_ => {})
+        }
+      }
       break
 
     case 'roleban':
@@ -383,6 +391,8 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
           await msg.channel.overwritePermissions(member, { VIEW_CHANNEL: false }, `Whisper: ${m}`)
           await msg.delete().catch(_ => {})
 
+          await sleep(500)
+
           const perms = msg.channel.permissionOverwrites.get(member.id)
 
           if (perms) {
@@ -406,17 +416,9 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
       break
   }
 
-  if (deletes) {
-    if (deletes.length === 1 && deletes[0].delete) {
-      deletes[0].delete().catch(_ => {})
-    } else if (deletes.length > 1) {
-      message.channel.bulkDelete(deletes).catch(_ => {})
-    }
-  }
-
   if (!action) return
 
-  const msg = `${usertag} was **${action}** for *${realReason}*`
+  const msg = `${usertag} was **${action}** for *${realReason}* in *${message.channel}*`
 
   if (msg && !silentAction) {
     prefix = prefix && (silentChannels.get(message.channel.id) < 1)
@@ -428,4 +430,8 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
     + (logDeletedMessage ? '```\n' + message.content + '\n```' : '')
     + `\n> ${message.url}`
   modlog.createLog(message.guild, 'automod_action', '\u{1F432}', 'Automod', modlogMsg)
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

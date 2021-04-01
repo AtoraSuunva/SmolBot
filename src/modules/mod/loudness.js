@@ -29,17 +29,21 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   if (allAudio.length === 0) return
 
-  const loudness = await Promise.all(allAudio)
-  const loudest = loudness
-    .map(l => l.integrated)
-    .sort((a, b) => b - a)[0]
+  try {
+    const loudness = await Promise.all(allAudio)
+    const loudest = loudness
+      .map(l => l.integrated)
+      .sort((a, b) => b - a)[0]
 
-  if (loudest === null) return
+    if (loudest === null) return
 
-  const emoji = getLoudnessEmoji(loudest)
+    const emoji = getLoudnessEmoji(loudest)
 
-  if (emoji === null) return
-  message.react(emoji)
+    if (emoji === null) return
+    message.react(emoji)
+  } catch (e) {
+    // failed, just ignore it
+  }
 }
 
 // loudness:

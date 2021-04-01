@@ -32,7 +32,7 @@ module.exports = class RegexRule extends Rule {
     this.violations = AutoProp({})
     this.vioMessages = {}
 
-    this.name = `Max regex matches (${maxCount}) reached.`
+    this.name = `Max regex matches (${maxCount}) reached`
   }
 
   filter(message) {
