@@ -264,7 +264,7 @@ module.exports.events.raw = async (bot, packet) => {
     case 'GUILD_MEMBER_REMOVE':
       guild = bot.guilds.get(packet.d.guild_id)
 
-      if (guild.members.get(packet.d.user.id)) return
+      if (guild.members.cache.get(packet.d.user.id)) return
 
       member = packet.d.user
       member.guild = guild
@@ -278,7 +278,7 @@ module.exports.events.raw = async (bot, packet) => {
       channel = bot.channels.get(packet.d.channel_id)
 
       // Cached, don't bother
-      if (channel.messages.get(packet.d.id)) return
+      if (channel.messages.cache.get(packet.d.id)) return
 
       await sleep(500)
       message = { id: packet.d.id }
@@ -408,7 +408,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
     `${bot.sleet.formatUser(member.user)}` +
     (config.settings.member_add_mention ? ` ${member}` : '')
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
 
   const newAcc =
     config.settings.member_add_new * HOUR_MS >
@@ -433,7 +433,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
         Time.since(member.user.createdAt).format({ short: true }),
         3,
       )} old`,
-      member.user.avatarURL,
+      member.user.displayAvatarURL(),
     )
     .setTimestamp(new Date())
 
@@ -499,7 +499,7 @@ module.exports.events.guildMemberRemove = async (bot, member) => {
     lastKicks.set(member.guild.id, latestKick ? latestKick.id : undefined)
   }
 
-  if (member.user === undefined) member.user = await bot.fetchUser(member.id)
+  if (member.user === undefined) member.user = await bot.users.fetch(member.id)
 
   const msg =
     `${bot.sleet.formatUser(member.user)} <@${member.id}>` +
@@ -516,7 +516,7 @@ module.exports.events.guildMemberRemove = async (bot, member) => {
           .filter(r => r !== '@everyone')
           .join(', ')
       : ''
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
 
   embed
     .setDescription(
@@ -577,7 +577,7 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
         }`
       : '')
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
   const nBans = numBans.get(guild.id) + 1 || (await guild.fetchBans()).size
   numBans.set(guild.id, nBans)
 
@@ -619,7 +619,7 @@ module.exports.events.guildBanRemove = async (bot, guild, user) => {
         }`
       : '')
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
   const nBans = numBans.get(guild.id) - 1 || (await guild.fetchBans()).size
   numBans.set(guild.id, nBans)
 
@@ -641,9 +641,11 @@ module.exports.events.userUpdate = async (bot, oldUser, newUser) => {
     )} => ${bot.sleet.formatUser(newUser, { id: false })}`
   }
 
-  if (oldUser.avatarURL !== newUser.avatarURL) {
-    msgAvy = `${bot.sleet.formatUser(newUser)} => <${newUser.avatarURL}>`
-    msgBoth = msgBoth ? msgBoth + ` <${newUser.avatarURL}>` : msgAvy
+  if (oldUser.displayAvatarURL() !== newUser.displayAvatarURL()) {
+    msgAvy = `${bot.sleet.formatUser(
+      newUser,
+    )} => <${newUser.displayAvatarURL()}>`
+    msgBoth = msgBoth ? msgBoth + ` <${newUser.displayAvatarURL()}>` : msgAvy
   }
 
   for (let guild of bot.guilds.array()) {
@@ -822,15 +824,15 @@ module.exports.events.messageReactionAdd = (bot, react, user) => {
 
   switch (react.emoji.name) {
     case HAMMER:
-      message.guild
+      message.guild.members
         .ban(id)
         .then(m => message.channel.send(`Banned user <@${id}>`))
         .catch(e => message.channel.send(`Failed to ban user ${id}:\n*${e}*`))
       break
 
     case BOOT:
-      message.guild
-        .fetchMember(id)
+      message.guild.members
+        .fetch(id)
         .then(m => {
           if (m.kickable) {
             m.kick()
@@ -906,7 +908,7 @@ function toPrim(val) {
 
 async function userInGuild(guild, user) {
   try {
-    return await guild.fetchMember(user)
+    return await guild.members.fetch(user)
   } catch (e) {
     return false
   }

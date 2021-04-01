@@ -11,7 +11,8 @@ module.exports.events.message = (bot, message) => {
   const [cmd, fetch] = bot.sleet.shlex(message)
   let emote
 
-  if (fetch) emote = bot.emojis.find('name', fetch) || bot.emojis.get(fetch)
+  if (fetch)
+    emote = bot.emojis.find(e => e.name === fetch) || bot.emojis.get(fetch)
 
   if (emote) message.channel.send(emote.toString())
   else if (fetch)

@@ -36,7 +36,7 @@ module.exports.events.message = async (bot, message) => {
   if (!channel) return message.channel.send('Could not find that channel.')
 
   try {
-    msg = await channel.fetchMessage(msg)
+    msg = await channel.messages.fetch(msg)
   } catch (e) {
     return message.channel.send(
       'Failed to fetch that message.\nYou need a message link or use `messageid #channel`',

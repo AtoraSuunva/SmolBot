@@ -16,7 +16,6 @@ const { invokers } = (module.exports.config = {
 
 const fetch = require('node-fetch')
 const Discord = require('discord.js')
-const path = require('path')
 const time = require('./time.js')
 let botTag
 
@@ -24,7 +23,7 @@ module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
   let [cmd, data] = bot.sleet.shlex(message, { invokers })
 
-  botTag = botTag || bot.emojis.find('name', 'botTag') || '[BOT]'
+  botTag = botTag || bot.emojis.find(e => e.name === 'botTag') || '[BOT]'
 
   if (!data) {
     return message.channel.send('What do you want me to lookup?')
@@ -33,7 +32,7 @@ module.exports.events.message = async (bot, message) => {
   let err
 
   try {
-    const u = await bot.fetchUser(data)
+    const u = await bot.users.fetch(data)
     return sendUserLookup(bot, message.channel, u)
   } catch (e) {
     err = e
@@ -44,20 +43,6 @@ module.exports.events.message = async (bot, message) => {
     return sendInviteLookup(bot, message.channel, i)
   } catch (e) {
     err = e
-  }
-
-  try {
-    await bot.rest.methods.deleteInvite({ code: data })
-  } catch (e) {
-    if (
-      e.name === 'DiscordAPIError' &&
-      (e.code === 50013 || e.message === 'Missing Permissions')
-    ) {
-      // Valid, but we are banned from the guild and cannot fetch it normally
-      return message.channel.send(
-        'That invite exists, but I am banned from the guild and cannot fetch info.',
-      )
-    }
   }
 
   try {
@@ -114,9 +99,9 @@ function sendUserLookup(bot, channel, user) {
     return channel.send('Did not find info for that user.')
 
   channel.send({
-    embed: new Discord.RichEmbed()
+    embed: new Discord.MessageEmbed()
       .setTitle(bot.sleet.formatUser(user, false))
-      .setThumbnail(user.avatarURL)
+      .setThumbnail(user.displayAvatarURL())
       .setDescription(`**ID:** ${user.id}`)
       .addField('\nAccount Age:', time.since(user.createdAt).format())
       .addField('Created at (UTC):', user.createdAt.toUTCString())
@@ -127,7 +112,7 @@ function sendUserLookup(bot, channel, user) {
 
 function sendInviteLookup(bot, channel, invite) {
   const created = Discord.SnowflakeUtil.deconstruct(invite.guild.id).date
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
     .setTitle(`:incoming_envelope: Invite: ${invite.code}`)
     .addField(
       `Guild (${invite.guild.id})`,
@@ -158,13 +143,6 @@ function sendInviteLookup(bot, channel, invite) {
       true,
     )
 
-  if (invite.textChannelCount)
-    embed.addField(
-      'Channels:',
-      `:pencil: ${invite.textChannelCount} text\n:loud_sound: ${invite.voiceChannelCount} voice`,
-      true,
-    )
-
   if (invite.inviter)
     embed.addField('Inviter:', `${bot.sleet.formatUser(invite.inviter)}`)
 
@@ -179,7 +157,7 @@ function sendInviteLookup(bot, channel, invite) {
 function sendGuildLookup(channel, guild) {
   const created = Discord.SnowflakeUtil.deconstruct(guild.id).date
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
     .setTitle(`Guild: ${guild.name}`)
     .addField('ID:', guild.id, true)
     .addField('Invite:', guild.instant_invite, true)

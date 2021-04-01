@@ -42,7 +42,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
         .then(async c => {
           const f = c.first()
           user.send('Alright, sent.')
-          const owner = await bot.fetchUser('74768773940256768')
+          const owner = await bot.users.fetch('74768773940256768')
           owner.send(
             `${react.message.url}\n*From: ${
               f.author.tag
@@ -54,6 +54,6 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     })
     .catch(() => {})
 
-  // const owner = await bot.fetchUser('74768773940256768')
+  // const owner = await bot.users.fetch('74768773940256768')
   // owner.send(react.message.url, { embed })
 }

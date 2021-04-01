@@ -118,7 +118,7 @@ module.exports.events.message = async (bot, message) => {
     return message.channel.send(fields[field](data))
   }
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
 
   embed
     .setTitle(

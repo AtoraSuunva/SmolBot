@@ -104,7 +104,7 @@ module.exports.events.message = async (bot, message) => {
         '`.',
     )
 
-  if (message.member.highestRole.position <= rbRole.position)
+  if (message.member.roles.highest.position <= rbRole.position)
     return message.channel.send(
       'Your highest role needs to higher than the `' +
         rbRole.name +
@@ -139,8 +139,8 @@ async function roleban(bot, message, members, rbRole, options = {}) {
     }
 
     if (
-      message.member.highestRole &&
-      message.member.highestRole.position <= m.highestRole.position
+      message.member.roles.highest &&
+      message.member.roles.highest.position <= m.roles.highest.position
     ) {
       message.channel.send(
         `${bot.sleet.formatUser(m.user, {
@@ -158,8 +158,8 @@ async function roleban(bot, message, members, rbRole, options = {}) {
     }
 
     // Disconnect them from voice as well
-    if (m.voiceChannel) {
-      m.setVoiceChannel(null).catch(() => {})
+    if (m.voice.channel) {
+      m.voice.kick().catch(() => {})
     }
 
     // We can't touch managed roles, so we need to keep them
@@ -167,10 +167,11 @@ async function roleban(bot, message, members, rbRole, options = {}) {
     const prevRoles = m.roles.filter(r => r.id !== m.guild.id && !r.managed)
     const keepRoles = m.roles.filter(r => r.managed).array()
 
-    m.setRoles(
-      [rbRole, ...keepRoles],
-      `[ Roleban by ${message.author.tag} (${message.author.id}) ]`,
-    )
+    m.roles
+      .set(
+        [rbRole, ...keepRoles],
+        `[ Roleban by ${message.author.tag} (${message.author.id}) ]`,
+      )
       .then(async () => {
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         const logToChannel =
@@ -240,7 +241,8 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
     const by = getBy(bot, message, executor)
     botUnrolebanned.push(m.id)
 
-    m.setRoles([...prevRoles, ...keepRoles], `[ Unroleban by ${by} ]`)
+    m.roles
+      .set([...prevRoles, ...keepRoles], `[ Unroleban by ${by} ]`)
       .then(async () => {
         const logChannelId = await fetchLogChannel(bot.sleet.db, m.guild.id)
         const logToChannel =
@@ -314,7 +316,7 @@ function displayRoles(guild, prevRoles) {
 }
 
 function roleName(guild, role) {
-  return role.name || guild.roles.get(role).name
+  return role.name || guild.roles.cache.get(role).name
 }
 
 function getBy(bot, message, executor) {
@@ -378,8 +380,8 @@ module.exports.events.guildMemberUpdate = async (bot, oldM, newM) => {
 
 function fetchMember(guild, user) {
   return new Promise(r =>
-    guild
-      .fetchMember(user)
+    guild.members
+      .fetch(user)
       .then(m => r(m))
       .catch(e => r(null)),
   )

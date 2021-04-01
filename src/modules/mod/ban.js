@@ -61,7 +61,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (
     member !== null &&
-    member.highestRole.position >= message.member.highestRole.position
+    member.roles.highest.position >= message.member.roles.highest.position
   )
     return message.channel.send(
       `${bot.sleet.formatUser(member.user.tag, {
@@ -71,7 +71,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (
     member !== null &&
-    member.highestRole.position >= message.guild.me.highestRole.position
+    member.roles.highest.position >= message.guild.me.roles.highest.position
   )
     return message.channel.send(
       `${bot.sleet.formatUser(member.user.tag, {
@@ -90,7 +90,7 @@ module.exports.events.message = async (bot, message) => {
       return message.channel.send('You did not dab on them enough.')
   }
 
-  message.guild
+  message.guild.members
     .ban(id, {
       reason:
         (reason ? reason + ' ' : '') +
@@ -100,13 +100,13 @@ module.exports.events.message = async (bot, message) => {
       const user =
         u instanceof Discord.GuildMember || u instanceof Discord.User
           ? u
-          : await bot.fetchUser(u)
+          : await bot.users.fetch(u)
 
       message.channel.send(`I have banned ${bot.sleet.formatUser(user)}.`)
 
       if (logs[message.guild.id] && bot.channels.get(logs[message.guild.id])) {
-        const embed = new Discord.RichEmbed()
-          .setAuthor(bot.sleet.formatUser(user), u.avatarURL)
+        const embed = new Discord.MessageEmbed()
+          .setAuthor(bot.sleet.formatUser(user), u.displayAvatarURL())
           .setTitle('Ban')
           .setDescription(`**Reason:**\n${reason || 'No reason provided.'}`)
           .setFooter(`By ${bot.sleet.formatUser(message.author)}`)

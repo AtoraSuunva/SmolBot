@@ -28,7 +28,7 @@ module.exports.events.message = async (bot, message) => {
     victim = message.mentions.users.first()
   } else if (!isNaN(parseInt(user))) {
     try {
-      victim = await bot.fetchUser(user)
+      victim = await bot.users.fetch(user)
     } catch (e) {}
   } else if (!(user instanceof Discord.User)) {
     victim = message.guild.members.find(

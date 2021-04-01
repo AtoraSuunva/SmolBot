@@ -22,8 +22,8 @@ module.exports.events.message = (bot, message) => {
   let emote = eg
 
   if (specialEggs[spegg]) emote = bot.emojis.get(specialEggs[spegg])
-  if (message.guild && message.guild.members.get(user))
-    member = message.guild.members.get(user)
+  if (message.guild && message.guild.members.cache.get(user))
+    member = message.guild.members.cache.get(user)
   if (message.guild && message.mentions.members.first())
     member = message.mentions.members.first()
 

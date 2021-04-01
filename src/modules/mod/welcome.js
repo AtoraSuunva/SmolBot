@@ -287,7 +287,7 @@ const displayFormatters = {
 
 const hidden_fields = ['react_animated']
 function createWelcomeInfoEmbed(data, { format = true, inline = true } = {}) {
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
 
   for (const [k, v] of Object.entries(data)) {
     // console.log('f', k, v, data)
@@ -370,7 +370,8 @@ function getRolesFrom(m) {
   if (m.content.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
   const roles = [...m.content.matchAll(/(?:<@&)?(\d+)(?:>)?/g)].map(r => r[1])
 
-  if (roles.length < 1 || !roles.every(r => m.guild.roles.get(r))) return false
+  if (roles.length < 1 || !roles.every(r => m.guild.roles.cache.get(r)))
+    return false
   return roles
 }
 
