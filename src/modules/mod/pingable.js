@@ -25,7 +25,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (
     message.member.permissions.has('MANAGE_ROLES') &&
-    message.member.highestRole.calculatedPosition <= pingRole.calculatedPosition
+    message.member.roles.highest.position <= pingRole.position
   ) {
     return message.channel.send(
       "You either don't have manage roles permissions, or you're trying to manage a role above you!",

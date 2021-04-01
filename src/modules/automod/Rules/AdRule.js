@@ -114,22 +114,9 @@ module.exports.getAllInvites = getAllInvites
 async function resolveInvite(client, code) {
   try {
     // First try to fetch it, if we can then it's obviously real
-    // This *does* fail if we're banned so...
     return await client.fetchInvite(code)
   } catch (e) {
-    try {
-      // ...we try deleting it
-      // If we can, whoops, shouldn't happen anyways
-      await client.rest.methods.deleteInvite({ code })
-      return false
-    } catch (e) {
-      // If we can't, then it exists but we don't have perms (obviously, we're banned)
-      // (While banned, trying to fetch it returns a 404, but trying to delete it returns a 403)
-      return (
-        e.name === 'DiscordAPIError' &&
-        (e.code === 50013 || e.message === 'Missing Permissions')
-      )
-    }
+    return false
   }
 }
 module.exports.resolveInvite = resolveInvite

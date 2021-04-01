@@ -25,7 +25,7 @@ module.exports.events.message = async (bot, message) => {
 
   const resets = []
 
-  await message.guild.fetchMembers()
+  await message.guild.members.fetch()
 
   message.guild.members.forEach(async m => {
     if (m.nickname && m.nickname.toLowerCase().includes(words)) {

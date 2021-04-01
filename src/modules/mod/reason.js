@@ -17,9 +17,9 @@ module.exports.events.message = (bot, message) => {
 
   if (!msg) return message.channel.send('I need a message ID to work with.')
 
-  bot.channels
+  bot.channels.cache
     .get(logs[message.guild.id])
-    .fetchMessage(msg)
+    .messages.fetch(msg)
     .then(m => {
       let embed = m.embeds[0]
 

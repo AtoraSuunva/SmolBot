@@ -359,8 +359,9 @@ module.exports.events.everyMessage = async (bot, message) => {
   const rules = activeRules.get(message.guild.id)
   let prefix = true
 
-  if (!message.member)
-    message.member = await message.guild.fetchMember(message.author.id)
+  if (!message.member) {
+    message.member = await message.guild.members.fetch(message.author.id)
+  }
 
   // Automod does not apply if:
   //  - There are no automod rules
@@ -369,9 +370,11 @@ module.exports.events.everyMessage = async (bot, message) => {
   if (
     !rules ||
     message.member.permissions.has('MANAGE_MESSAGES') ||
-    message.member.highestRole.position >= message.guild.me.highestRole.position
-  )
+    message.member.roles.highest.position >=
+      message.guild.me.roles.highest.position
+  ) {
     return
+  }
 
   const autoconfig = automodConfig.get(message.guild.id)
 
@@ -434,7 +437,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
       action = 'rolebanned'
       const rolebanRole = automodConfig.get(message.guild.id).roleban_role
       if (message.member.roles.has(rolebanRole)) {
-        message.channel.overwritePermissions(message.author, {
+        message.channel.createOverwrite(message.author, {
           SEND_MESSAGES: false,
         })
         action = 'muted'
@@ -474,7 +477,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
         action = 'softbanned'
         message.member
           .ban({ days: 1, reason: realReason })
-          .then(u => message.guild.unban(message.member))
+          .then(_ => message.guild.members.unban(message.member))
       }
       break
 
@@ -490,7 +493,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
         .then(async msg => {
           const original = msg.channel.permissionOverwrites.get(member.id)
 
-          await msg.channel.overwritePermissions(
+          await msg.channel.createOverwrite(
             member,
             { VIEW_CHANNEL: false },
             `Whisper: ${m}`,
@@ -506,7 +509,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
           }
 
           if (original) {
-            msg.channel.overwritePermissions(
+            msg.channel.createOverwrite(
               member,
               original.serialize ? original.serialize() : {},
               'Return pre-whisper perms',

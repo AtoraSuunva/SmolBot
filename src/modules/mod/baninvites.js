@@ -41,10 +41,10 @@ module.exports.events.message = async (bot, message) => {
 
   let inviteStr = ''
   const inviter = invitesToRevoke.first().inviter
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
     .setAuthor(
       `${inviter.username}#${inviter.discriminator}`,
-      inviter.avatarURL,
+      inviter.displayAvatarURL(),
     )
     .setColor('#f44336')
     .setTitle('Revoked Invites:')
@@ -99,10 +99,10 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
       }\n`
   }
 
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
     .setAuthor(
       `${user.username}#${user.discriminator} (${user.id})`,
-      user.avatarURL,
+      user.displayAvatarURL(),
     )
     .setTitle('Displaying invites created by recently banned user:')
     .setDescription('```md\n' + formattedInvites + '```')

@@ -4,7 +4,8 @@
 const REACT_EMOJI = '\u{1f510}'
 // lol regex
 // const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+)/ug
-const getReactRegex = () => /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+?)(\s+(?:(?::|->|=>|\||>|=)\s*(.*)?|$)|$)/ugm
+const getReactRegex = () =>
+  /([\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]|<a?:(.*?):(\d+)>)\s*(?::|for|->|=>|\||>|=|\s)\s*(.+?)(\s+(?:(?::|->|=>|\||>|=)\s*(.*)?|$)|$)/gmu
 
 const reactMessages = new Map()
 const optReacts = {
@@ -16,13 +17,13 @@ module.exports.config = {
   name: 'reactrole',
   invokers: ['reactrole', 'rolereact'],
   help: 'Grants roles via ractions',
-  expandedHelp: `React to a message with ${REACT_EMOJI} to have it parsed & reactions added!\nUse the command for more info`
+  expandedHelp: `React to a message with ${REACT_EMOJI} to have it parsed & reactions added!\nUse the command for more info`,
 }
-
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  message.channel.send(`
+  message.channel.send(
+    `
 You can make any message be a "role giving" message:
   - You need Manage Roles
   - All roles to give must be under your highest role
@@ -47,7 +48,8 @@ You can make any message be a "role giving" message:
 💔 > dead
 
 This message would be valid for giving out roles
-`.trim())
+`.trim(),
+  )
 }
 
 module.exports.events.init = async sleet => {
@@ -60,14 +62,21 @@ module.exports.events.init = async sleet => {
 }
 
 // Make sure we get reacts for even non-cached messages
-const whitelistPackets = ['MESSAGE_REACTION_ADD', 'MESSAGE_REACTION_REMOVE', 'MESSAGE_DELETE']
+const whitelistPackets = [
+  'MESSAGE_REACTION_ADD',
+  'MESSAGE_REACTION_REMOVE',
+  'MESSAGE_DELETE',
+]
 module.exports.events.raw = async (bot, packet) => {
-  if (!packet.d || !packet.d.guild_id || !whitelistPackets.includes(packet.t)) return
+  if (!packet.d || !packet.d.guild_id || !whitelistPackets.includes(packet.t))
+    return
 
   if (packet.t === 'MESSAGE_DELETE') {
     if (reactMessages.has(packet.d.id)) {
       reactMessages.delete(packet.d.id)
-      bot.sleet.db.none('DELETE FROM rolereact WHERE message = $1', [packet.d.id])
+      bot.sleet.db.none('DELETE FROM rolereact WHERE message = $1', [
+        packet.d.id,
+      ])
     }
     return
   }
@@ -77,8 +86,8 @@ module.exports.events.raw = async (bot, packet) => {
   // no channel, just give up
   if (!channel) return
 
-  const messageCached = channel.messages.get(packet.d.message_id)
-  const memberCached  = channel.guild.members.get(packet.d.user_id)
+  const messageCached = channel.messages.cache.get(packet.d.message_id)
+  const memberCached = channel.guild.members.cache.get(packet.d.user_id)
 
   // Assume it was cached and fired correctly
   if (messageCached && memberCached) return
@@ -86,9 +95,8 @@ module.exports.events.raw = async (bot, packet) => {
   // Easiest thing to do is probably to fetch the message/member and then use d.js' "message reaction add" packet handler
   // which would allow me to just use the handler for d.js' actual reaction add event
 
-
-  if (!messageCached) await channel.fetchMessage(packet.d.message_id)
-  if (!memberCached) await channel.guild.fetchMember(packet.d.user_id)
+  if (!messageCached) await channel.messages.fetch(packet.d.message_id)
+  if (!memberCached) await channel.guild.members.fetch(packet.d.user_id)
 
   // This will call the djs handler which calls the action handler and then emits the event
   bot.ws.connection.packetManager.handle(packet)
@@ -97,7 +105,7 @@ module.exports.events.raw = async (bot, packet) => {
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (user.id === bot.user.id || user.bot || !react.message.guild) return
 
-  const member = await react.message.guild.fetchMember(user)
+  const member = await react.message.guild.members.fetch(user)
 
   if (react.emoji.name === REACT_EMOJI) {
     if (!member.permissions.has('MANAGE_ROLES')) return
@@ -110,9 +118,13 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
 
     if (canClear && react.emoji.name === optReacts.x) {
       const giverRoles = Object.keys(roles).map(r => roles[r].role)
-      const keepRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
-      member.setRoles(keepRoles)
-      react.message.reactions.filter(r => r.users.get(member.id)).forEach(r => r.remove(member))
+      const keepRoles = member.roles
+        .filter(r => !giverRoles.includes(r.id))
+        .array()
+      member.roles.set(keepRoles)
+      react.message.reactions.cache
+        .filter(r => r.users.cache.get(member.id))
+        .forEach(r => r.users.remove(member))
       return
     }
 
@@ -123,15 +135,14 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     }
 
     if (!single) {
-      member.addRole(toGive.role)
+      member.roles.add(toGive.role)
     } else {
       // ensure only 1 role, remove other reacts
       const giverRoles = Object.keys(roles).map(r => roles[r].role)
 
       // other react roles the member already has
       const rEntries = Object.entries(roles)
-      const otherRoles = member
-        .roles
+      const otherRoles = member.roles
         .filter(r => giverRoles.includes(r.id) && r.id !== toGive.role)
         .array()
         .map(r => {
@@ -140,19 +151,20 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
         })
         .filter(v => !!v)
 
-      const keepRoles = member.roles.filter(r => !giverRoles.includes(r.id)).array()
+      const keepRoles = member.roles
+        .filter(r => !giverRoles.includes(r.id))
+        .array()
       keepRoles.push(toGive.role)
-      member.setRoles(keepRoles)
+      member.roles.set(keepRoles)
 
       react.message.reactions
-      .filter(r => (
-        (
-          r.emoji.name !== react.emoji.name
-          && r.users.get(member.id)
+        .filter(
+          r =>
+            (r.emoji.name !== react.emoji.name &&
+              r.users.cache.get(member.id)) ||
+            otherRoles.includes(r.id),
         )
-        || otherRoles.includes(r.id)
-      ))
-      .forEach(r => r.remove(member))
+        .forEach(r => r.users.remove(member))
     }
   }
 }
@@ -163,12 +175,12 @@ module.exports.events.messageReactionRemove = async (bot, react, user) => {
   if (!reactMessages.has(react.message.id)) return
 
   // Remove the role if they have it
-  const member = await react.message.guild.fetchMember(user)
+  const member = await react.message.guild.members.fetch(user)
   const { roles } = reactMessages.get(react.message.id)
   const toGive = roles[react.emoji.id || react.emoji.name]
 
-  if (toGive && member.roles.get(toGive.role)) {
-    member.removeRole(toGive.role)
+  if (toGive && member.roles.cache.get(toGive.role)) {
+    member.roles.remove(toGive.role)
   }
 }
 
@@ -180,18 +192,20 @@ async function parseMessage(bot, message, react, member) {
   const giveRoles = {}
 
   // The :one: emoji
-  if (messageReacts.find(r => r.emoji.name === optReacts.one)) giveSettings.single = true
-  if (messageReacts.find(r => r.emoji.name === optReacts.x)) giveSettings.canClear = true
+  if (messageReacts.find(r => r.emoji.name === optReacts.one))
+    giveSettings.single = true
+  if (messageReacts.find(r => r.emoji.name === optReacts.x))
+    giveSettings.canClear = true
 
   const reg = getReactRegex()
   let m
 
-  while (m = reg.exec(message.content)) {
+  while ((m = reg.exec(message.content))) {
     const roleInfo = {
       name: m[2] || m[1],
       emoji: m[3] || m[1],
       role: m[4].trim(),
-      custom: !!m[2]
+      custom: !!m[2],
     }
 
     // If it's a mention, extract the id
@@ -199,18 +213,24 @@ async function parseMessage(bot, message, react, member) {
     if (roleMatch[2]) roleInfo.role = roleMatch[2]
 
     // Check if this role is under the member & the bot
-    const role = message.guild.roles.find(r => r.name === roleInfo.role || r.id === roleInfo.role)
+    const role = message.guild.roles.find(
+      r => r.name === roleInfo.role || r.id === roleInfo.role,
+    )
 
     if (!role) {
       log.push(`\`${roleInfo.role}\` is not a valid role`)
-    } else if (role.position >= member.highestRole.position) {
+    } else if (role.position >= member.roles.highest.position) {
       log.push(`\`${roleInfo.role}\` is higher or equal to your highest role`)
-    } else if (role.position >= message.guild.me.highestRole.position) {
+    } else if (role.position >= message.guild.me.roles.highest.position) {
       log.push(`\`${roleInfo.role}\` is higher or equal to my highest role`)
     } else if (roleInfo.custom && !message.client.emojis.get(roleInfo.emoji)) {
-      log.push(`\`${roleInfo.role}\` is not assigned to an emoji I have access to!`)
+      log.push(
+        `\`${roleInfo.role}\` is not assigned to an emoji I have access to!`,
+      )
     } else {
-      log.push(`\`${roleInfo.role}\` was added successfully, mapped to \`${role.name}\``)
+      log.push(
+        `\`${roleInfo.role}\` was added successfully, mapped to \`${role.name}\``,
+      )
       roleInfo.role = role.id
       giveRoles[roleInfo.emoji] = roleInfo
     }
@@ -219,18 +239,37 @@ async function parseMessage(bot, message, react, member) {
   log.push(`\nSettings: \`${JSON.stringify(giveSettings)}\``)
 
   if (Object.keys(giveRoles).length > 0) {
-    member.send('Role giving was (maybe mostly) successfully setup, logs:\n```js\n' + log.join('\n') + '\n```')
+    member.send(
+      'Role giving was (maybe mostly) successfully setup, logs:\n```js\n' +
+        log.join('\n') +
+        '\n```',
+    )
     reactMessages.set(message.id, { roles: giveRoles, ...giveSettings })
 
     // Check if we should just update it instead
-    if (await bot.sleet.db.oneOrNone('SELECT message FROM rolereact WHERE message = $1', [message.id]))
-      bot.sleet.db.none('UPDATE rolereact SET roles = $2, single = $3, canClear = $4 WHERE message = $1', [message.id, giveRoles, giveSettings.single, giveSettings.canClear])
+    if (
+      await bot.sleet.db.oneOrNone(
+        'SELECT message FROM rolereact WHERE message = $1',
+        [message.id],
+      )
+    )
+      bot.sleet.db.none(
+        'UPDATE rolereact SET roles = $2, single = $3, canClear = $4 WHERE message = $1',
+        [message.id, giveRoles, giveSettings.single, giveSettings.canClear],
+      )
     else
-      bot.sleet.db.none('INSERT INTO rolereact (message, roles, single, canClear) VALUES ($1, $2, $3, $4)', [message.id, giveRoles, giveSettings.single, giveSettings.canClear])
+      bot.sleet.db.none(
+        'INSERT INTO rolereact (message, roles, single, canClear) VALUES ($1, $2, $3, $4)',
+        [message.id, giveRoles, giveSettings.single, giveSettings.canClear],
+      )
 
     addReactions(message, giveRoles, giveSettings)
   } else {
-    member.send('Role giving failed completely (nothing was setup), logs:\n```js\n' + log.join('\n') + '\n```')
+    member.send(
+      'Role giving failed completely (nothing was setup), logs:\n```js\n' +
+        log.join('\n') +
+        '\n```',
+    )
   }
 }
 
@@ -239,12 +278,10 @@ async function addReactions(message, giveRoles, giveSettings) {
   const opts = Object.values(optReacts)
   for (let r of message.reactions) {
     if (r[0] === REACT_EMOJI || opts.includes(r[0]))
-      await r[1].remove(r[1].users.first())
+      await r[1].users.remove(r[1].users.first())
   }
 
-  for (let e of Object.keys(giveRoles))
-    await message.react(e)
+  for (let e of Object.keys(giveRoles)) await message.react(e)
 
-  if (giveSettings.canClear)
-    await message.react(optReacts.x)
+  if (giveSettings.canClear) await message.react(optReacts.x)
 }

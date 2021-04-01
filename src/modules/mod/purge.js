@@ -50,7 +50,7 @@ module.exports.events.message = async (bot, message) => {
   type = type || 'all'
 
   while (limit > 0) {
-    let toPurge = await message.channel.fetchMessages({
+    let toPurge = await message.channel.messages.fetch({
       limit: 100,
       before: beforeId,
     })

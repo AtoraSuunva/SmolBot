@@ -68,7 +68,7 @@ async function getFileToIdentify(message, url) {
 
 async function getLatestFile(message) {
   return new Promise(async resolve => {
-    message.channel.fetchMessages({ limit: 100 }).then(msgs => {
+    message.channel.messages.fetch({ limit: 100 }).then(msgs => {
       const sMsgs = msgs.array().sort((a, b) => b.createdAt - a.createdAt)
 
       for (let m of sMsgs) {

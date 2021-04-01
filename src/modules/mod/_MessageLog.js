@@ -30,7 +30,7 @@ function messageToLog(message) {
   const embed = message.embeds.find(e => e.type === 'rich')
   const richEmbed = !embed
     ? null
-    : JSON.stringify(new Discord.RichEmbed(embed).toJSON())
+    : JSON.stringify(new Discord.MessageEmbed(embed).toJSON())
 
   return (
     `[${curTime(message.createdAt)}] (${message.id}) ` +

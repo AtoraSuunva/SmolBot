@@ -45,7 +45,7 @@ async function getMessages(channel, limit) {
   while (messages.size < limit) {
     const fetchLimit = limit - messages.size < 100 ? limit - messages.size : 100
 
-    const newMessages = await channel.fetchMessages({
+    const newMessages = await channel.messages.fetch({
       limit: fetchLimit,
       before: messages.first() ? messages.first().id : undefined,
     })

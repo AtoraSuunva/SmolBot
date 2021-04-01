@@ -45,7 +45,7 @@ module.exports.events.message = (bot, message) => {
     message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
   ) {
     const embed = new Discord.MessageEmbed()
-      .setThumbnail(bot.user.avatarURL())
+      .setThumbnail(bot.user.displayAvatarURL())
       .setFooter('Use b!info for info!')
 
     for (let [title, val] of fields) {

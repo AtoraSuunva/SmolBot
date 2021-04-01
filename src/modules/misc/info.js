@@ -43,7 +43,7 @@ module.exports.events.message = (bot, message) => {
     ) {
       let Discord = require('discord.js')
       let embed = new Discord.MessageEmbed()
-        .setAuthor(bot.user.username, bot.user.avatarURL())
+        .setAuthor(bot.user.username, bot.user.displayAvatarURL())
         .setFooter('Use b!stats for stats!')
 
       for (let [title, val] of fields) {

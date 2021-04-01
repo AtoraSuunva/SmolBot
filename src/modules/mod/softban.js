@@ -62,7 +62,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (
     member !== null &&
-    member.highestRole.position >= message.member.highestRole.position
+    member.roles.highest.position >= message.member.roles.highest.position
   )
     return message.channel.send(
       `${bot.sleet.formatUser(member.user.tag, {
@@ -72,7 +72,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (
     member !== null &&
-    member.highestRole.position >= message.guild.me.highestRole.position
+    member.roles.highest.position >= message.guild.me.roles.highest.position
   )
     return message.channel.send(
       `${bot.sleet.formatUser(member.user.tag, {
@@ -84,7 +84,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (previouslyBanned) {
     try {
-      await message.guild.unban(id, { reason })
+      await message.guild.members.unban(id, { reason })
     } catch (e) {
       return message.channel.send(
         `There was an error while trying to unban that user to reban them.\n\`${e}\``,
@@ -92,14 +92,16 @@ module.exports.events.message = async (bot, message) => {
     }
   }
 
-  message.guild
+  message.guild.members
     .ban(id, { reason })
-    .then(u => (previouslyBanned ? Promise.resolve(u) : message.guild.unban(u)))
+    .then(u =>
+      previouslyBanned ? Promise.resolve(u) : message.guild.members.unban(u),
+    )
     .then(async u => {
       const user =
         u instanceof Discord.GuildMember || u instanceof Discord.User
           ? u
-          : await bot.fetchUser(u)
+          : await bot.users.fetch(u)
       message.channel.send(
         `I have softbanned ${bot.sleet.formatUser(user)}, clearing ${days} day${
           days === 1 ? '' : 's'
