@@ -16,7 +16,7 @@ module.exports.events.message = (bot, message) => {
     let fields = new Map()
       .set(
         'Links:',
-        '[Github](https://github.com/AtlasTheBot/Booru-Discord)\nBot Invite/Sever: `b!invite`',
+        'Sorry, this bot is private',
       )
       .set(
         'Owner:',
@@ -38,13 +38,13 @@ module.exports.events.message = (bot, message) => {
       )
 
     if (
-      message.guild !== null &&
+      message.guild === null ||
       message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
     ) {
       let Discord = require('discord.js')
       let embed = new Discord.MessageEmbed()
-        .setAuthor(bot.user.username, bot.user.displayAvatarURL())
-        .setFooter('Use b!stats for stats!')
+        .setAuthor(bot.user.username, bot.user.avatarURL())
+        .setFooter('Use s!stats for stats!')
 
       for (let [title, val] of fields) {
         embed.addField(title, val, true)
