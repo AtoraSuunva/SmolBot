@@ -5,7 +5,7 @@ module.exports.config = {
   help: 'translates to japanese',
   expandedHelp: 'magic',
   usage: ['translate', 'japanese weee!'],
-  invisible: true
+  invisible: true,
 }
 
 const alphabetEN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -35,7 +35,7 @@ const alphabetJP = [
   '\u{5c71}', // W
   '\u{4e42}', // X
   '\u{4e2b}', // Y
-  '\u{4e59}'  // Z
+  '\u{4e59}', // Z
 ]
 
 const reg = alphabetEN.map(v => new RegExp(v, 'g'))
@@ -46,8 +46,7 @@ module.exports.events.message = (bot, message) => {
 
   let m = msg.join(' ').toUpperCase()
 
-  reg.forEach((v, i) => m = m.replace(v, alphabetJP[i]))
+  reg.forEach((v, i) => (m = m.replace(v, alphabetJP[i])))
 
   message.channel.send(m)
 }
-

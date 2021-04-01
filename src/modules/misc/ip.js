@@ -30,7 +30,7 @@ function getIP() {
 }
 
 function randIPv4() {
-  return [1,2,3,4].map(v => randInt(0, 255)).join('.')
+  return [1, 2, 3, 4].map(v => randInt(0, 255)).join('.')
 }
 
 function randInt(min, max) {

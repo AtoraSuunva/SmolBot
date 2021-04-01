@@ -30,19 +30,29 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   alreadySent.push(react.message.id)
 
   const embed = createEmbed(react.message, react.message)
-  user.send('Please enter at least 69 characters on why I should DM this mesasge to atlas:', { embed })
+  user
+    .send(
+      'Please enter at least 69 characters on why I should DM this mesasge to atlas:',
+      { embed },
+    )
     .then(m => {
       const filter = m => m.content.length >= 69
-      m.channel.awaitMessages(filter, { max: 1, time: 600000, errors: ['time'] })
+      m.channel
+        .awaitMessages(filter, { max: 1, time: 600000, errors: ['time'] })
         .then(async c => {
-              const f = c.first()
-              user.send('Alright, sent.')
-              const owner = await bot.fetchUser('74768773940256768')
-              owner.send(`${react.message.url}\n*From: ${f.author.tag}*\n>>> ${f.content.slice(0, 1000)}`, { embed })
+          const f = c.first()
+          user.send('Alright, sent.')
+          const owner = await bot.fetchUser('74768773940256768')
+          owner.send(
+            `${react.message.url}\n*From: ${
+              f.author.tag
+            }*\n>>> ${f.content.slice(0, 1000)}`,
+            { embed },
+          )
         })
         .catch(() => {})
-    }).catch(() => {})
-
+    })
+    .catch(() => {})
 
   // const owner = await bot.fetchUser('74768773940256768')
   // owner.send(react.message.url, { embed })

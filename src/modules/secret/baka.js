@@ -3,15 +3,13 @@ module.exports.config = {
   invokers: ['baka', 'aka', 'bulge', 'ulge'],
   help: 'b',
   expandedHelp: 'vaca',
-  invisible: true
+  invisible: true,
 }
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-   const [cmd] = bot.sleet.shlex(message)
+  const [cmd] = bot.sleet.shlex(message)
 
-   if (['baka', 'aka'].includes(cmd))
-     message.channel.send('I-idiot!')
-   else
-     message.channel.send(`OwO What's this?`)
+  if (['baka', 'aka'].includes(cmd)) message.channel.send('I-idiot!')
+  else message.channel.send(`OwO What's this?`)
 }

@@ -47,7 +47,8 @@ module.exports = class Rule {
     const lastMessage = this.getLastMessage(member)
 
     if (lastMessage) {
-      const decay = ((Date.now() - lastMessage.createdTimestamp) / 1000) * PRESSURE.DECAY
+      const decay =
+        ((Date.now() - lastMessage.createdTimestamp) / 1000) * PRESSURE.DECAY
       pressure = Math.max(pressure - decay, 0)
       // console.log(`[PRESSURE]   - Decay: ${decay} => Final: ${pressure}`)
     }
@@ -56,7 +57,8 @@ module.exports = class Rule {
     pressure += BASE
     // console.log(`[PRESSURE]   - Base    : ${BASE}`)
 
-    const EMBEDS = (message.attachments.size + message.embeds.length) * PRESSURE.EMBED
+    const EMBEDS =
+      (message.attachments.size + message.embeds.length) * PRESSURE.EMBED
     pressure += EMBEDS
     // console.log(`[PRESSURE]   - Embeds  : ${EMBEDS}`)
 
@@ -72,7 +74,9 @@ module.exports = class Rule {
     pressure += LINES
     // console.log(`[PRESSURE]   - Lines   : ${LINES}`)
 
-    const MENTIONS = (message.mentions.users.size + message.mentions.roles.size) * PRESSURE.MENTION
+    const MENTIONS =
+      (message.mentions.users.size + message.mentions.roles.size) *
+      PRESSURE.MENTION
     pressure += MENTIONS
     // console.log(`[PRESSURE]   - Mentions: ${MENTIONS}`)
 
@@ -88,7 +92,12 @@ module.exports = class Rule {
     // console.log(`[PRESSURE] ${message.author.tag} - (End ) Pressure: ${pressure}`)
 
     if (pressure >= this.limit)
-      return ({ punishment: this.punishment, reason: `Too much pressure: ${initial.toFixed(2)} => ${pressure.toFixed(2)} (B${BASE}+E${EMBEDS}+L${LENGTH}+C${CAPS}+L${LINES}+M${MENTIONS}+R${REPEAT})` })
+      return {
+        punishment: this.punishment,
+        reason: `Too much pressure: ${initial.toFixed(2)} => ${pressure.toFixed(
+          2,
+        )} (B${BASE}+E${EMBEDS}+L${LENGTH}+C${CAPS}+L${LINES}+M${MENTIONS}+R${REPEAT})`,
+      }
   }
 
   /** @returns string uid suitable for automod */

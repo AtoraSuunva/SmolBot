@@ -2,12 +2,12 @@ module.exports.config = {
   name: 'welcome',
   invokers: ['welcome'],
   help: 'Welcomes people',
-  expandedHelp:'See `welcome` and `welcome help` for info and config details.',
+  expandedHelp: 'See `welcome` and `welcome help` for info and config details.',
   dbScript: 'welcome.sql',
 }
 
 const Discord = require('discord.js')
-const modlog = weakRequire('./modlog.js') || {createLog() {}}
+const modlog = weakRequire('./modlog.js') || { createLog() {} }
 const pgp = require('pg-promise')({ capSQL: true })
 
 const welcomeColumnSet = new pgp.helpers.ColumnSet(
@@ -26,23 +26,26 @@ const welcomeColumnSet = new pgp.helpers.ColumnSet(
 
 async function previouslyJoined(db, guild_id, user_id) {
   return (
-    await db.one(
-      'SELECT COUNT(*) FROM welcome WHERE guild_id = $<guild_id>::BigInt AND $<user_id>::BigInt = ANY (joins)',
-      { guild_id, user_id })
+    (
+      await db.one(
+        'SELECT COUNT(*) FROM welcome WHERE guild_id = $<guild_id>::BigInt AND $<user_id>::BigInt = ANY (joins)',
+        { guild_id, user_id },
+      )
     ).count === '1'
+  )
 }
 
 function fetchJoinInfo(db, guild_id, user_id) {
   return db.oneOrNone(
     'SELECT message, channel, rejoins, instant, ignore_roles, react_with, $<user_id>::BigInt = ANY (joins) AS previously_joined FROM welcome WHERE guild_id = $<guild_id>::BigInt',
-   { guild_id, user_id }
+    { guild_id, user_id },
   )
 }
 
 async function getWelcome(db, guild_id) {
   return await db.oneOrNone(
     'SELECT message, channel, rejoins, instant, ignore_roles, react_with, react_animated FROM welcome WHERE guild_id = $<guild_id>',
-    { guild_id }
+    { guild_id },
   )
 }
 
@@ -50,41 +53,43 @@ function createNewWelcome(db, guild_id, items) {
   joinSettings[guild_id] = items
   return db.none(
     'INSERT INTO welcome (guild_id, message, channel, rejoins, instant, ignore_roles, react_with, react_animated) ' +
-    'VALUES ($<guild_id>, $<message>, $<channel>::BigInt, $<rejoins>, $<instant>, $<ignore_roles>::BigInt[], $<react_with>, $<react_animated>)',
-    { guild_id, ...items }
+      'VALUES ($<guild_id>, $<message>, $<channel>::BigInt, $<rejoins>, $<instant>, $<ignore_roles>::BigInt[], $<react_with>, $<react_animated>)',
+    { guild_id, ...items },
   )
 }
 
 function deleteWelcome(db, guild_id) {
   delete joinSettings[guild_id]
-  return db.none(
-    'DELETE FROM welcome WHERE guild_id = $<guild_id>',
-    { guild_id }
-  )
+  return db.none('DELETE FROM welcome WHERE guild_id = $<guild_id>', {
+    guild_id,
+  })
 }
 
 function addJoin(db, guild_id, user_id) {
   return db.none(
     'UPDATE welcome SET joins = array_append(joins, $<user_id>::BigInt) WHERE guild_id = $<guild_id>::BigInt',
-    { guild_id, user_id }
+    { guild_id, user_id },
   )
 }
 
 function editField(db, guild_id, field, newValue) {
-  if (!validFields.includes(field) && field !== 'react_animated') throw new Error(`${field} is not a valid field to edit`)
+  if (!validFields.includes(field) && field !== 'react_animated')
+    throw new Error(`${field} is not a valid field to edit`)
 
   return db.none(
     `UPDATE welcome SET ${field} = $<newValue> WHERE guild_id = $<guild_id>::BigInt`,
-    { guild_id, newValue }
+    { guild_id, newValue },
   )
 }
 
 function createDefaultValueProxy(val, defaultVal) {
   return new Proxy(val, {
     get(target, name) {
-      if ( !(name in target) ) target[name] = (typeof defaultVal === 'function') ? defaultVal(name) : defaultVal
+      if (!(name in target))
+        target[name] =
+          typeof defaultVal === 'function' ? defaultVal(name) : defaultVal
       return target[name]
-    }
+    },
   })
 }
 
@@ -96,40 +101,54 @@ const joinSettings = createDefaultValueProxy({}, {})
 const helpData = {
   message: {
     prompt: 'What welcome message do you want? (`Hello {@user}!`)',
-    detail: 'The message shown to the user, use `s?welcome message` to see what you can use',
-    help: 'The welcome message posted, use `s?welcome message` to see what you can use',
+    detail:
+      'The message shown to the user, use `s?welcome message` to see what you can use',
+    help:
+      'The welcome message posted, use `s?welcome message` to see what you can use',
   },
   channel: {
-    prompt: 'Mention the channel you want to send welcome messages to, or "none" to send messages to the same channel as the welcomed user\'s first message. (`#channel`/`none`)',
-    help: 'The channel where the welcome message is posted, otherwise it\'s posted to the same channel the user posts in',
+    prompt:
+      'Mention the channel you want to send welcome messages to, or "none" to send messages to the same channel as the welcomed user\'s first message. (`#channel`/`none`)',
+    help:
+      "The channel where the welcome message is posted, otherwise it's posted to the same channel the user posts in",
   },
   rejoins: {
-    prompt: 'Do you want the bot to re-welcome people if they rejoin? (`yes/no`)',
-    detail: 'If no, the bot will store the IDs of users who joined to avoid sending 2+ welcome messages per person.',
+    prompt:
+      'Do you want the bot to re-welcome people if they rejoin? (`yes/no`)',
+    detail:
+      'If no, the bot will store the IDs of users who joined to avoid sending 2+ welcome messages per person.',
     help: 'Will the bot re-welcome people if they rejoin?',
   },
   instant: {
-    prompt: 'Do you want welcome messages be instant? If no, they will be on first message only. (`yes/no`)',
-    detail: 'Instant welcomes are sent the moment someone joins the server, and require a welcome channel to be set.',
-    help: 'Will the bot instantly welcome people when they join? Or wait for first message?',
+    prompt:
+      'Do you want welcome messages be instant? If no, they will be on first message only. (`yes/no`)',
+    detail:
+      'Instant welcomes are sent the moment someone joins the server, and require a welcome channel to be set.',
+    help:
+      'Will the bot instantly welcome people when they join? Or wait for first message?',
   },
   ignore_roles: {
-    prompt: 'Which roles do you want the bot to ignore when deciding to send welcome messages? (`@role`/`role id`/`none`)',
-    detail: 'You can mention multiple roles or send multiple roles IDs. Use `none` if you don\'t want to ignore any role. Users with these roles will not be welcomed.',
+    prompt:
+      'Which roles do you want the bot to ignore when deciding to send welcome messages? (`@role`/`role id`/`none`)',
+    detail:
+      "You can mention multiple roles or send multiple roles IDs. Use `none` if you don't want to ignore any role. Users with these roles will not be welcomed.",
     help: 'If a user has one of these roles, they will not be welcomed.',
   },
   react_with: {
-    prompt: 'An emoji to react to the message that triggered the welcome, if any. (Add a reaction!/`none`)',
-    detail: 'Use `none` if you don\'t want the bot to react to the message. The bot does not react if the user\'s message is in the same channel as the welcome message.',
-    help: 'An emoji, if any, to react to the user\'s first message with.',
+    prompt:
+      'An emoji to react to the message that triggered the welcome, if any. (Add a reaction!/`none`)',
+    detail:
+      "Use `none` if you don't want the bot to react to the message. The bot does not react if the user's message is in the same channel as the welcome message.",
+    help: "An emoji, if any, to react to the user's first message with.",
   },
 }
 
 const hData = Object.fromEntries(
-  Object.entries(helpData).map(v => [v[0], v[1].help])
+  Object.entries(helpData).map(v => [v[0], v[1].help]),
 )
 
-const helpMessage = 'There is (some) support for dynamic welcome message content:\n' +
+const helpMessage =
+  'There is (some) support for dynamic welcome message content:\n' +
   '  - `{@user}` mentions the welcomed user\n' +
   '  - `{#origin-channel}` mentions the channel where the user posted their first message'
 
@@ -141,16 +160,21 @@ module.exports.events.message = async (bot, message) => {
   }
 
   if (!message.member.hasPermission('MANAGE_GUILD')) {
-    return message.channel.send('You need to have "Manage Server" permissions to mess with welcome messages.')
+    return message.channel.send(
+      'You need to have "Manage Server" permissions to mess with welcome messages.',
+    )
   }
 
   const [, cmd] = bot.sleet.shlex(message)
   const { db } = bot.sleet
-  const lcmd = (cmd+'').toLowerCase()
+  const lcmd = (cmd + '').toLowerCase()
 
   switch (lcmd) {
     case 'help':
-      const embed = createWelcomeInfoEmbed(hData, { format: false, inline: false })
+      const embed = createWelcomeInfoEmbed(hData, {
+        format: false,
+        inline: false,
+      })
       return message.channel.send({ embed })
 
     case 'message':
@@ -181,9 +205,14 @@ module.exports.events.message = async (bot, message) => {
       if (deleteData) {
         const embed = createWelcomeInfoEmbed(deleteData)
         await deleteWelcome(db, message.guild.id)
-        message.channel.send('Welcome message deleted, for reference, these were the previous settings:', { embed })
+        message.channel.send(
+          'Welcome message deleted, for reference, these were the previous settings:',
+          { embed },
+        )
       } else {
-        message.channel.send('You do not have welcome setup! Set it up first by using `s?welcome setup`')
+        message.channel.send(
+          'You do not have welcome setup! Set it up first by using `s?welcome setup`',
+        )
       }
       return
 
@@ -191,7 +220,9 @@ module.exports.events.message = async (bot, message) => {
       return editWelcome(bot, message)
   }
 
-  message.channel.send('What do you want to do? Use a subcommand: `s?welcome [command]`\n> `help` => Get help about the fields\n> `message` => Get detail about welcome messages\n> `config` => View the config for this server\n> `setup` => Setup welcome for the server\n> `delete` => Delete the welcome config for this server\n> `edit` => Edit the welcome config for this server')
+  message.channel.send(
+    'What do you want to do? Use a subcommand: `s?welcome [command]`\n> `help` => Get help about the fields\n> `message` => Get detail about welcome messages\n> `config` => View the config for this server\n> `setup` => Setup welcome for the server\n> `delete` => Delete the welcome config for this server\n> `edit` => Edit the welcome config for this server',
+  )
 }
 
 const validFields = Object.keys(helpData)
@@ -203,20 +234,29 @@ async function editWelcome(bot, message) {
   const { db } = bot.sleet
 
   if (!field || !validFields.includes(field))
-    return message.channel.send(`You need to specify a valid field: \`${validFields.join('\`, \`')}\``)
+    return message.channel.send(
+      `You need to specify a valid field: \`${validFields.join('`, `')}\``,
+    )
 
   const welcomeInfo = await getWelcome(db, message.guild.id)
 
   if (!value)
-    return message.channel.send(`\`${field}\` is currently:\n> ${(''+welcomeInfo[field]).replace(/\n/g, '\n> ')}\nYou can edit this using \`welcome edit ${field} [new value here]\`.`)
+    return message.channel.send(
+      `\`${field}\` is currently:\n> ${('' + welcomeInfo[field]).replace(
+        /\n/g,
+        '\n> ',
+      )}\nYou can edit this using \`welcome edit ${field} [new value here]\`.`,
+    )
 
-  if (!await keyValidators[field](message, value))
+  if (!(await keyValidators[field](message, value)))
     return message.channel.send(`That's not a valid value for ${field}`)
 
   const parsed = await resultParsers[field](message, value)
 
   if (parsed === null || parsed === OPTIONAL_NO_VALUE)
-    return message.channel.send('That did not parse into a valid value for ${field}')
+    return message.channel.send(
+      'That did not parse into a valid value for ${field}',
+    )
 
   try {
     await editField(db, message.guild.id, field, parsed)
@@ -226,7 +266,9 @@ async function editWelcome(bot, message) {
       await editField(db, message.guild.id, 'react_animated', isAnimated)
     }
 
-    message.channel.send(`\`${field}\` is now:\n> ${(''+ value).replace(/\n/g, '\n> ')}`)
+    message.channel.send(
+      `\`${field}\` is now:\n> ${('' + value).replace(/\n/g, '\n> ')}`,
+    )
   } catch (e) {
     console.error(e)
     message.channel.send(`Failed to update, try later?`)
@@ -234,8 +276,8 @@ async function editWelcome(bot, message) {
 }
 
 const displayFormatters = {
-  channel: c => c ? `<#${c}>` : c,
-  ignore_roles: r => r ? r.map(i => `<@&${i}>`).join(', ') || 'None' : 'None',
+  channel: c => (c ? `<#${c}>` : c),
+  ignore_roles: r => (r ? r.map(i => `<@&${i}>`).join(', ') || 'None' : 'None'),
   react_with: (r, data) => {
     if (!r) return 'None'
     if (/\d+/.test(r)) return `<${data.react_animated ? 'a' : ''}:_:${r}>`
@@ -250,7 +292,8 @@ function createWelcomeInfoEmbed(data, { format = true, inline = true } = {}) {
   for (const [k, v] of Object.entries(data)) {
     // console.log('f', k, v, data)
     if (hidden_fields.includes(k)) continue
-    const val = format && displayFormatters[k] ? displayFormatters[k](v, data) : v
+    const val =
+      format && displayFormatters[k] ? displayFormatters[k](v, data) : v
     embed.addField(k, val, inline)
   }
 
@@ -262,13 +305,19 @@ const setupRunning = new Set()
 async function setupWelcomeInteractive(bot, message) {
   const gid = message.guild.id
   if (setupRunning.has(gid))
-    return message.channel.send('Setup is already being run in this server, finish the other setup first or cancel the last one: `s?welcome cancel`.')
+    return message.channel.send(
+      'Setup is already being run in this server, finish the other setup first or cancel the last one: `s?welcome cancel`.',
+    )
 
   const data = {}
   setupRunning.add(gid)
 
   try {
-    const doSetup = await promptFor('yesno', message, 'You don\'t have welcome setup! Do you want to set it up?')
+    const doSetup = await promptFor(
+      'yesno',
+      message,
+      "You don't have welcome setup! Do you want to set it up?",
+    )
 
     if (!doSetup) {
       throw new Error('cancelled')
@@ -295,7 +344,6 @@ async function setupWelcomeInteractive(bot, message) {
 
       data[k] = res
     }
-
   } catch (e) {
     if (!setupRunning.has(gid)) return
     console.log('err', e)
@@ -344,14 +392,14 @@ const FALSY = ['false', 'n', 'no', 'nope', 'nah']
 const BOOLY = [...TRUTHY, ...FALSY]
 
 function booleanValidator(m) {
-  return BOOLY.includes((m.content+'').toLowerCase())
+  return BOOLY.includes((m.content + '').toLowerCase())
 }
 
 function optionalValidator(v) {
-    return m => {
-      if (m.content.toLowerCase() === 'skip') return OPTIONAL_NO_VALUE
-      return v(m)
-    }
+  return m => {
+    if (m.content.toLowerCase() === 'skip') return OPTIONAL_NO_VALUE
+    return v(m)
+  }
 }
 
 const keyValidators = {
@@ -365,13 +413,13 @@ const keyValidators = {
 }
 
 function booleanParser(c) {
-  const l = (c+'').toLowerCase()
+  const l = (c + '').toLowerCase()
 
   return TRUTHY.includes(l)
 }
 
 function optionalParser(c) {
-  return (c === OPTIONAL_NO_VALUE) ? null : c
+  return c === OPTIONAL_NO_VALUE ? null : c
 }
 
 function getRegexResult(val, regex) {
@@ -388,59 +436,78 @@ const resultParsers = {
   rejoins: (m, v) => booleanParser(v || m.content),
   instant: (m, v) => booleanParser(v || m.content),
   ignore_roles: m => optionalParser(getRolesFrom(m)) || [],
-  react_with: (m, v) => getRegexResult(v || m.content, reactionRegex) || v || m.content,
+  react_with: (m, v) =>
+    getRegexResult(v || m.content, reactionRegex) || v || m.content,
   yesno: (m, v) => booleanParser(v || m.content),
 }
 
 function promptFor(key, message, promptMsg) {
   return new Promise((resolve, reject) => {
-    const msg = promptMsg || (
-      helpData[key].prompt + (!helpData[key].detail ? '' : `\n> ${helpData[key].detail}`)
-    )
-    message.channel.send(msg)
-      .then(msg => {
-        message.channel.awaitMessages(m => m.author.id === message.author.id && keyValidators[key](m), { max: 1, time: 30000, errors: ['time'] })
-          .then(col => {
-            const m = col.first()
-            resolve(resultParsers[key] ? resultParsers[key](m) : m)
-          }).catch(() => {
-            msg.edit(`${msg.content}\nTimed out.`)
-            reject(new Error('time'))
-          })
-      })
+    const msg =
+      promptMsg ||
+      helpData[key].prompt +
+        (!helpData[key].detail ? '' : `\n> ${helpData[key].detail}`)
+    message.channel.send(msg).then(msg => {
+      message.channel
+        .awaitMessages(
+          m => m.author.id === message.author.id && keyValidators[key](m),
+          { max: 1, time: 30000, errors: ['time'] },
+        )
+        .then(col => {
+          const m = col.first()
+          resolve(resultParsers[key] ? resultParsers[key](m) : m)
+        })
+        .catch(() => {
+          msg.edit(`${msg.content}\nTimed out.`)
+          reject(new Error('time'))
+        })
+    })
   })
 }
 
 function promptForReact(key, message, promptMsg) {
   return new Promise((resolve, reject) => {
     let resolved = false
-    const msg = promptMsg || (
-      helpData[key].prompt + (!helpData[key].detail ? '' : `\n> ${helpData[key].detail}`)
-    )
-    message.channel.send(msg)
+    const msg =
+      promptMsg ||
+      helpData[key].prompt +
+        (!helpData[key].detail ? '' : `\n> ${helpData[key].detail}`)
+    message.channel
+      .send(msg)
       .then(msg => {
-        message.channel.awaitMessages(m => m.author.id === message.author.id && m.content.toLowerCase().trim() === 'none', { max: 1, time: 30000, errors: ['time'] })
+        message.channel
+          .awaitMessages(
+            m =>
+              m.author.id === message.author.id &&
+              m.content.toLowerCase().trim() === 'none',
+            { max: 1, time: 30000, errors: ['time'] },
+          )
           .then(col => {
-            if (!resolved)
-              resolve(null)
-            resolved = true
-          }).catch(() => {})
-
-        msg.awaitReactions((r, u) => u.id === message.author.id && (!r.emoji.id || message.client.emojis.get(r.emoji.id)), { max: 1, time: 30000, errors: ['time'] })
-          .then(col => {
-            const r = col.first().emoji
-            if (!resolved)
-              resolve([r.id || r.name, r.animated])
+            if (!resolved) resolve(null)
             resolved = true
           })
-      }).catch(() => {
-        if (resolved) return;
+          .catch(() => {})
+
+        msg
+          .awaitReactions(
+            (r, u) =>
+              u.id === message.author.id &&
+              (!r.emoji.id || message.client.emojis.get(r.emoji.id)),
+            { max: 1, time: 30000, errors: ['time'] },
+          )
+          .then(col => {
+            const r = col.first().emoji
+            if (!resolved) resolve([r.id || r.name, r.animated])
+            resolved = true
+          })
+      })
+      .catch(() => {
+        if (resolved) return
         msg.edit(`${msg.content}\nTimed out.`)
         reject('time')
       })
   })
 }
-
 
 module.exports.events.guildMemberAdd = async (bot, member) => {
   const guild = member.guild
@@ -457,7 +524,12 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
   }
 
   if (joinInfo.instant) {
-    sendWelcome(bot, bot.channels.get(joinInfo.channels || guild.channels.first().id), { user: member, channel: null }, joinInfo.message)
+    sendWelcome(
+      bot,
+      bot.channels.get(joinInfo.channels || guild.channels.first().id),
+      { user: member, channel: null },
+      joinInfo.message,
+    )
   } else {
     newJoins[guild.id].add(member.id)
     joinSettings[guild.id] = joinInfo
@@ -467,14 +539,23 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
 module.exports.events.everyMessage = async (bot, message) => {
   const guild = message.guild
 
-  if (!guild || !newJoins[guild.id].has(message.author.id) || !message.member || message.system || message.author.bot) {
+  if (
+    !guild ||
+    !newJoins[guild.id].has(message.author.id) ||
+    !message.member ||
+    message.system ||
+    message.author.bot
+  ) {
     return
   }
 
   const joinSet = joinSettings[message.guild.id]
   let channel = message.channel
 
-  if (joinSet.ignore_roles && joinSet.ignore_roles.some(r => message.member.roles.has(r))) {
+  if (
+    joinSet.ignore_roles &&
+    joinSet.ignore_roles.some(r => message.member.roles.has(r))
+  ) {
     // Ignore some "special" users ie. rolebanned ones
     return
   }
@@ -488,22 +569,40 @@ module.exports.events.everyMessage = async (bot, message) => {
     channel = bot.channels.get(joinSet.channel)
   }
 
-  sendWelcome(bot, channel, { user: message.author, channel: message.channel, message }, joinSet.message)
+  sendWelcome(
+    bot,
+    channel,
+    { user: message.author, channel: message.channel, message },
+    joinSet.message,
+  )
 }
 
-function sendWelcome(bot, channel, data = { user: null, channel: null, message: null }, msg) {
+function sendWelcome(
+  bot,
+  channel,
+  data = { user: null, channel: null, message: null },
+  msg,
+) {
   if (channel === null) return
 
   addJoin(bot.sleet.db, channel.guild.id, data.user.id)
 
-  modlog.createLog(channel.guild, 'member_welcome', '\u{1F44B}', 'Member Welcome', `${bot.sleet.formatUser(data.user)} in ${data.channel}` + (data.message ? `\n> ${data.message.url}` : ''))
+  modlog.createLog(
+    channel.guild,
+    'member_welcome',
+    '\u{1F44B}',
+    'Member Welcome',
+    `${bot.sleet.formatUser(data.user)} in ${data.channel}` +
+      (data.message ? `\n> ${data.message.url}` : ''),
+  )
 
   return channel.send(textReplace(msg, data))
 }
 
-function textReplace(msg, data = {user: null, channel: null}) {
-  return msg.replace(/{@user}/g, data.user.toString())
-            .replace(/{#origin-channel}/g, data.channel ? data.channel.toString() : '')
+function textReplace(msg, data = { user: null, channel: null }) {
+  return msg
+    .replace(/{@user}/g, data.user.toString())
+    .replace(/{#origin-channel}/g, data.channel ? data.channel.toString() : '')
 }
 
 /**

@@ -1,7 +1,8 @@
 module.exports.config = {
   name: 'loudness',
   help: 'Checks video loudness',
-  expandedHelp: 'Reacts to videos based on the loudness of them, using LUFS.\n-7 = lil loud\n-5 = pretty loud\n-3 = loud\n-2 = louder\n-1 = loud!\n 0 = LOUD\n + = VERY LOUD',
+  expandedHelp:
+    'Reacts to videos based on the loudness of them, using LUFS.\n-7 = lil loud\n-5 = pretty loud\n-3 = loud\n-2 = louder\n-1 = loud!\n 0 = LOUD\n + = VERY LOUD',
 }
 
 const util = require('util')
@@ -9,20 +10,18 @@ const fs = require('fs').promises
 const path = require('path')
 const execFile = util.promisify(require('child_process').execFile)
 
-const audioExt = [
-  '.mp4', '.mov', '.webm', '.ogg', '.mp3', '.wav'
-]
+const audioExt = ['.mp4', '.mov', '.webm', '.ogg', '.mp3', '.wav']
 
 module.exports.events = {}
 module.exports.events.everyMessage = async (bot, message) => {
-  const attachmentsLoudness = message
-    .attachments
+  const attachmentsLoudness = message.attachments
     .filter(a => audioExt.includes(path.extname(a.url).toLowerCase()))
     .map(a => detectLoudness(a.url))
 
-  const embedsLoudness = message
-    .embeds
-    .filter(e => e.video && audioExt.includes(path.extname(e.url).toLowerCase()))
+  const embedsLoudness = message.embeds
+    .filter(
+      e => e.video && audioExt.includes(path.extname(e.url).toLowerCase()),
+    )
     .map(e => detectLoudness(e.url))
 
   const allAudio = [...attachmentsLoudness, ...embedsLoudness]
@@ -31,9 +30,7 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   try {
     const loudness = await Promise.all(allAudio)
-    const loudest = loudness
-      .map(l => l.integrated)
-      .sort((a, b) => b - a)[0]
+    const loudest = loudness.map(l => l.integrated).sort((a, b) => b - a)[0]
 
     if (loudest === null) return
 
@@ -69,19 +66,27 @@ function getLoudnessEmoji(loudness) {
 async function detectLoudness(file) {
   let stdout, stderr
   try {
-    ({ stdout, stderr } = await execFile(
-      'ffmpeg',
-      ['-i', file, '-vn', '-sn', '-dn', '-af', 'loudnorm=I=-16:dual_mono=true:TP=-1.5:LRA=11:print_format=summary', '-f', 'null', '/dev/null']
-    ))
+    ;({ stdout, stderr } = await execFile('ffmpeg', [
+      '-i',
+      file,
+      '-vn',
+      '-sn',
+      '-dn',
+      '-af',
+      'loudnorm=I=-16:dual_mono=true:TP=-1.5:LRA=11:print_format=summary',
+      '-f',
+      'null',
+      '/dev/null',
+    ]))
   } catch (e) {
     if (e.stderr.includes('does not contain any stream')) {
       // no audio in file
-      return ({
+      return {
         integrated: null,
         truePeak: null,
         lra: null,
         threshold: null,
-      })
+      }
     }
 
     throw e
@@ -95,7 +100,10 @@ async function detectLoudness(file) {
     .filter(v => v.startsWith('Input'))
     .map(v => {
       const m = v.match(/Input ([\w\s]+):\s+([-+]?\d+\.\d+)/)
-      return [m[1] === 'True Peak' ? 'truePeak' : m[1].toLowerCase(), parseInt(m[2])]
+      return [
+        m[1] === 'True Peak' ? 'truePeak' : m[1].toLowerCase(),
+        parseInt(m[2]),
+      ]
     })
 
   return Object.fromEntries(volume)

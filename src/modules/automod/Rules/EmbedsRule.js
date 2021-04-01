@@ -37,14 +37,21 @@ module.exports = class EmbedsRule extends Rule {
 
     const lAttach = this.lastAttach[uid]
 
-    if (lAttach && attach.filename === lAttach.filename && attach.filesize === lAttach.filesize) {
+    if (
+      lAttach &&
+      attach.filename === lAttach.filename &&
+      attach.filesize === lAttach.filesize
+    ) {
       if (++this.violations[uid] >= this.maxRepeats) {
-        return ({ punishment: this.punishment })
+        return { punishment: this.punishment }
       }
 
       setTimeout(id => --this.violations[id], this.timeout, uid)
     }
 
-    this.lastAttach[uid] = {filename: attach.filename, filesize: attach.filesize}
+    this.lastAttach[uid] = {
+      filename: attach.filename,
+      filesize: attach.filesize,
+    }
   }
 }

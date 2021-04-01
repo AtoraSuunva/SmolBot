@@ -2,9 +2,15 @@ module.exports.config = {
   name: 'archive',
   invokers: ['archive'],
   help: 'Archives stuff',
-  expandedHelp:'Archives messages and then uploads as a gist.\nArchives 100 messages by default.',
-  usage: ['Archive 100 messages', 'archive', 'Archive 50 messages', 'archive 50'],
-  invisible: true
+  expandedHelp:
+    'Archives messages and then uploads as a gist.\nArchives 100 messages by default.',
+  usage: [
+    'Archive 100 messages',
+    'archive',
+    'Archive 50 messages',
+    'archive 50',
+  ],
+  invisible: true,
 }
 
 const Discord = require('discord.js')
@@ -26,29 +32,34 @@ module.exports.events.message = async (bot, message) => {
   const txt = messageLog(messages)
 
   const filename = `${message.channel.name || message.author.tag}.dlog.txt`
-  const gist = await bot.sleet.createGist(txt, {filename})
+  const gist = await bot.sleet.createGist(txt, { filename })
 
-  message.channel.send(`Archived: **${messages.size}** messages\n${archiveViewer}${gist.body.id}`)
+  message.channel.send(
+    `Archived: **${messages.size}** messages\n${archiveViewer}${gist.body.id}`,
+  )
 }
 
 async function getMessages(channel, limit) {
-   let messages = new Discord.Collection()
+  let messages = new Discord.Collection()
 
-   while (messages.size < limit) {
-     const fetchLimit = limit - messages.size < 100 ? limit - messages.size : 100
+  while (messages.size < limit) {
+    const fetchLimit = limit - messages.size < 100 ? limit - messages.size : 100
 
-     const newMessages = await channel.fetchMessages({limit: fetchLimit,
-                                 before: messages.first() ? messages.first().id : undefined})
+    const newMessages = await channel.fetchMessages({
+      limit: fetchLimit,
+      before: messages.first() ? messages.first().id : undefined,
+    })
 
-     messages = messages.concat(newMessages)
-                .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
+    messages = messages
+      .concat(newMessages)
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
 
-     if (newMessages.size < 100) break
+    if (newMessages.size < 100) break
 
-     await sleep(500) // Avoid spamming discord completely
-   }
+    await sleep(500) // Avoid spamming discord completely
+  }
 
-   return messages
+  return messages
 }
 
 function sleep(time) {

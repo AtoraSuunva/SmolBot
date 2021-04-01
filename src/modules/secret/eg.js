@@ -5,7 +5,7 @@ module.exports.config = {
   invokers: ['eg', 'egg', eg, 'knot', 'eegg'],
   help: 'eg',
   expandedHelp: 'e\ng',
-  invisible: true
+  invisible: true,
 }
 
 const specialEggs = {
@@ -22,11 +22,15 @@ module.exports.events.message = (bot, message) => {
   let emote = eg
 
   if (specialEggs[spegg]) emote = bot.emojis.get(specialEggs[spegg])
-  if (message.guild && message.guild.members.get(user) ) member = message.guild.members.get(user)
-  if (message.guild && message.mentions.members.first()) member = message.mentions.members.first()
+  if (message.guild && message.guild.members.get(user))
+    member = message.guild.members.get(user)
+  if (message.guild && message.mentions.members.first())
+    member = message.mentions.members.first()
 
   if (member) {
-    const egMsg = message.channel.messages.filter(m => m.author.id === member.id).last()
+    const egMsg = message.channel.messages
+      .filter(m => m.author.id === member.id)
+      .last()
     if (egMsg) return egMsg.react(emote)
   }
 

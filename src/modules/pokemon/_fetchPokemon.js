@@ -3,7 +3,7 @@ const fetch = require('node-fetch')
 const api = {
   bulba: 'https://bulbapedia.bulbagarden.net/wiki/', // """api"""
   pokemon: 'https://pokeapi.co/api/v2/pokemon/',
-  species: 'https://pokeapi.co/api/v2/pokemon-species/'
+  species: 'https://pokeapi.co/api/v2/pokemon-species/',
 }
 
 const bulbaMap = {
@@ -28,7 +28,14 @@ async function getBio(poke) {
     poke = bulbaMap[poke] || poke.split('-')[0]
 
     const res = await fetch(api.bulba + poke).then(r => r.text())
-    const bio = cheerio.load(res)('#Biology').parent().nextUntil('h2').not('.thumb').text().trim().replace(/\n/g, '\n\n')
+    const bio = cheerio
+      .load(res)('#Biology')
+      .parent()
+      .nextUntil('h2')
+      .not('.thumb')
+      .text()
+      .trim()
+      .replace(/\n/g, '\n\n')
 
     if (bio === '') {
       throw new Error('Not a pokemon')
@@ -44,24 +51,25 @@ async function getBio(poke) {
   }
 }
 
-const getType = (types, i) => types.find(e => e.slot === i) || {type: {name: (i === 1 ? '???' : null)}}
+const getType = (types, i) =>
+  types.find(e => e.slot === i) || { type: { name: i === 1 ? '???' : null } }
 
 async function getPoke(poke) {
   try {
     const [info, species] = await Promise.all([
-        fetch(api.pokemon + poke).then(r => r.json()),
-        fetch(api.species + poke).then(r => r.json()),
-      ])
+      fetch(api.pokemon + poke).then(r => r.json()),
+      fetch(api.species + poke).then(r => r.json()),
+    ])
 
     const bio = await getBio(info.name)
 
     const stats = {}
-    info.stats.forEach(e => stats[e.stat.name] = e.base_stat)
+    info.stats.forEach(e => (stats[e.stat.name] = e.base_stat))
 
     const dex = []
     species.flavor_text_entries
       .filter(e => e.language.name === 'en')
-      .forEach(e => dex.push({version: e.version.name, text: e.flavor_text}))
+      .forEach(e => dex.push({ version: e.version.name, text: e.flavor_text }))
 
     return {
       id: info.id,
@@ -73,18 +81,21 @@ async function getPoke(poke) {
       gender_rate: species.gender_rate,
       capture_rate: species.capture_rate,
       genus: species.genera.find(e => e.language.name === 'en').genus,
-      evolves_from: species.evolves_from_species ? species.evolves_from_species.name : null,
+      evolves_from: species.evolves_from_species
+        ? species.evolves_from_species.name
+        : null,
       stats: stats,
       height: info.height,
       weight: info.weight,
       sprite_front: info.sprites.front_default,
       description: bio,
-      dex: dex
+      dex: dex,
     }
-
   } catch (e) {
     if (e.status === 404 || e instanceof fetch.FetchError) {
-      throw new Error('Pokemon not found. You can search pokemon by name or national dex ID.\nIf you are looking for Gen 8 pokemon, see this issue: <https://github.com/PokeAPI/pokeapi/issues/460>')
+      throw new Error(
+        'Pokemon not found. You can search pokemon by name or national dex ID.\nIf you are looking for Gen 8 pokemon, see this issue: <https://github.com/PokeAPI/pokeapi/issues/460>',
+      )
     } else {
       throw e
     }
@@ -93,17 +104,19 @@ async function getPoke(poke) {
 
 async function fetchPokemon(db, poke) {
   const params = [+poke || 0, (poke + '').toLowerCase()]
-  const query = await db.oneOrNone('SELECT * FROM pokemon WHERE id = $1 OR name = $2', params)
-
+  const query = await db.oneOrNone(
+    'SELECT * FROM pokemon WHERE id = $1 OR name = $2',
+    params,
+  )
 
   if (query === null) {
     const data = await getPoke(poke)
 
     await db.none(
       'INSERT INTO pokemon' +
-      ' (id, name, type, type_alt, shape, color, gender_rate, capture_rate, genus, evolves_from, stats, height, weight, sprite_front, description, dex)' +
-      ' VALUES (${id}, ${name}, ${type}, ${type_alt}, ${shape}, ${color}, ${gender_rate}, ${capture_rate}, ${genus}, ${evolves_from}, ${stats}, ${height}, ${weight}, ${sprite_front}, ${description}, ${dex}::json[])',
-      data
+        ' (id, name, type, type_alt, shape, color, gender_rate, capture_rate, genus, evolves_from, stats, height, weight, sprite_front, description, dex)' +
+        ' VALUES (${id}, ${name}, ${type}, ${type_alt}, ${shape}, ${color}, ${gender_rate}, ${capture_rate}, ${genus}, ${evolves_from}, ${stats}, ${height}, ${weight}, ${sprite_front}, ${description}, ${dex}::json[])',
+      data,
     )
 
     return data

@@ -48,13 +48,10 @@ function hashFile(file, { algorithm = 'md5' } = {}) {
 function hashFileFromURL(url, { algorithm = 'md5' } = {}) {
   return new Promise(resolve => {
     const hash = crypto.createHash(algorithm)
-    fetch(url)
-      .then(res =>
-        res.body
-          .on('data', data => hash.update(data))
-          .on('end', () => resolve(hash.digest('hex')))
-      )
+    fetch(url).then(res =>
+      res.body
+        .on('data', data => hash.update(data))
+        .on('end', () => resolve(hash.digest('hex'))),
+    )
   })
 }
-
-

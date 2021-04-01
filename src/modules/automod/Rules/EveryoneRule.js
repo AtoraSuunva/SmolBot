@@ -27,9 +27,12 @@ module.exports = class EveryoneRule extends Rule {
   filter(message) {
     const uid = message.guild.id + message.author.id
 
-    if (message.mentions.everyone || this.trapRoles.some(r => message.mentions.roles.has(r))) {
+    if (
+      message.mentions.everyone ||
+      this.trapRoles.some(r => message.mentions.roles.has(r))
+    ) {
       if (++this.violations[uid] >= this.maxMentions) {
-        return ({ punishment: this.punishment })
+        return { punishment: this.punishment }
       }
       setTimeout(id => --this.violations[id], this.timeout, uid)
     }

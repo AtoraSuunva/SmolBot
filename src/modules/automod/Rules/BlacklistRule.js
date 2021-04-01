@@ -11,22 +11,22 @@ const Rule = require('./Rule')
  * @see http://stackoverflow.com/questions/4009756/how-to-count-string-occurrence-in-string/7924240#7924240
  */
 function occurrences(string, subString, allowOverlapping) {
-    string += "";
-    subString += "";
-    if (subString.length <= 0) return (string.length + 1);
+  string += ''
+  subString += ''
+  if (subString.length <= 0) return string.length + 1
 
-    var n = 0,
-        pos = 0,
-        step = allowOverlapping ? 1 : subString.length;
+  var n = 0,
+    pos = 0,
+    step = allowOverlapping ? 1 : subString.length
 
-    while (true) {
-        pos = string.indexOf(subString, pos);
-        if (pos >= 0) {
-            ++n;
-            pos += step;
-        } else break;
-    }
-    return n;
+  while (true) {
+    pos = string.indexOf(subString, pos)
+    if (pos >= 0) {
+      ++n
+      pos += step
+    } else break
+  }
+  return n
 }
 
 function countOcc(str, arr) {
@@ -37,7 +37,7 @@ function countOcc(str, arr) {
 // longass arabic char, of char, halfwidth spacer
 const defaultChars = ['\u{fdfd}', '\u{94c}']
 
- /**
+/**
  * A list of forebidden chars a user can't post
  * Recommended to blacklist client crashing chars, as messages are auto-deleted no matter the punishment
  * The punishment applies after maxChars in a message/maxChars over the last X messages in Y seconds
@@ -75,16 +75,19 @@ module.exports = class BlacklistRule extends Rule {
       this.vioMessages[uid] = this.vioMessages[uid] || []
       this.vioMessages[uid].push(message)
 
-      setTimeout((id, occ) => {
-        this.violations[id] - occ
-        this.vioMessages[id].shift()
-      }, this.timeout, uid, occ)
-
+      setTimeout(
+        (id, occ) => {
+          this.violations[id] - occ
+          this.vioMessages[id].shift()
+        },
+        this.timeout,
+        uid,
+        occ,
+      )
 
       if (this.violations[uid] >= this.maxCount) {
-        return ({ punishment: this.punishment, deletes: this.vioMessages[uid] })
+        return { punishment: this.punishment, deletes: this.vioMessages[uid] }
       }
-
     }
   }
 }
