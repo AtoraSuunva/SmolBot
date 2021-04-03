@@ -408,7 +408,9 @@ async function extractMembers(
 
   const users = []
 
-  await guild.members.fetch()
+  if (guild.members.cache.size !== guild.members.memberCount) {
+    await guild.members.fetch()
+  }
 
   for (let a of arr) {
     let match
@@ -443,7 +445,7 @@ function interactiveFuzzyMatchMembers(message, query) {
     const results = [],
       exactResults = []
 
-    message.guild.members.forEach(m => {
+    message.guild.members.cache.forEach(m => {
       if (
         m.user.username.toLowerCase().includes(query) ||
         m.displayName.toLowerCase().includes(query)
