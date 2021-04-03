@@ -180,6 +180,8 @@ let send = Object.getOwnPropertyDescriptor(
   'send',
 )
 
+const codeRegex = /```(.+)\n([\S\s]*)\n```/
+
 let handler = {
   apply(target, thisArg, args) {
     let promise,
@@ -208,19 +210,40 @@ let handler = {
       // lol stacktraces
     }
 
+    let isEditable = true
+
     if (callMsg && sentMessages.has(callMsg.id)) {
       const sent = sentMessages.get(callMsg.id)
       const editOptions = options
-      editOptions.split = undefined
+      if (editOptions) delete editOptions.split
 
       promise = sent.edit(content, editOptions)
       logger.info('Edited old', { content })
     } else {
-      promise = target.call(thisArg, content, options)
+      let sendContent = content
+      const split = options && options.split
+
+      if (typeof content === 'string' && !split && content.length > 2000) {
+        let ext = (options && options._ext) || 'txt', fileContent = content, codeMatch = content.match(codeRegex)
+
+        if (codeMatch) {
+          ([, ext, fileContent] = codeMatch)
+        }
+
+        isEditable = false
+        sendContent = {
+          files: [{
+            name: `content.${ext}`,
+            attachment: Buffer.from(fileContent, 'utf8'),
+          }]
+        }
+      }
+
+      promise = target.call(thisArg, sendContent, options)
       logger.info('Sent new', { content })
     }
 
-    if (callMsg && (!options || options.autoDelete !== false)) {
+    if (callMsg && isEditable && (!options || options.autoDelete !== false)) {
       promise.then(m => {
         sentMessages.set(callMsg.id, Array.isArray(m) ? m[0] : m)
         if (sentMessages.size > maxSentMessagesCache)
@@ -868,5 +891,4 @@ process.on('unhandledRejection', (reason, p) => {
       reason.stack
     }\nPromise:\n${require('util').inspect(p, { depth: 2 })}`,
   )
-  fs.appendFile('err.log', p, 'utf8', console.error)
 })
