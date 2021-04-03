@@ -75,7 +75,7 @@ module.exports.events.message = async (bot, message) => {
 
 function getMemberLimit(member) {
   return Object.entries(limits)
-    .filter(v => member.roles.has(v[0]))
+    .filter(v => member.roles.cache.has(v[0]))
     .map(v => v[1])
     .sort((a, b) => a - b)
     .reverse()[0]
