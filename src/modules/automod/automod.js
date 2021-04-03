@@ -436,7 +436,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
     case 'roleban':
       action = 'rolebanned'
       const rolebanRole = automodConfig.get(message.guild.id).roleban_role
-      if (message.member.roles.has(rolebanRole)) {
+      if (message.member.roles.cache.has(rolebanRole)) {
         message.channel.createOverwrite(message.author, {
           SEND_MESSAGES: false,
         })
