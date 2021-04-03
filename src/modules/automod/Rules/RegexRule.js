@@ -29,8 +29,6 @@ module.exports = class RegexRule extends Rule {
       regex[1] || '',
     ]
 
-    console.log('reg', regex)
-
     this.regex =
       regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
     this.lastMessage = {}
