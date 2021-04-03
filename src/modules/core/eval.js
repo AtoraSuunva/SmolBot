@@ -9,6 +9,8 @@ module.exports.config = {
   invisible: true,
 }
 
+const util = require('util')
+
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
   const config = bot.sleet.config
@@ -37,10 +39,15 @@ module.exports.events.message = async (bot, message) => {
       output = await output
     }
 
+    const inspect = util.inspect(output, { depth: 1 })
+
+    if (inspect.length > 2000) {
+      return condEdit(message, msg, `Output is ${inspect.length} characters long.`)
+    }
+
     output =
       '```js\n' +
-      require('util')
-        .inspect(output, { depth: 2 })
+      inspect
         .replace(
           bot.token,
           '[ ACCORDING TO ALL KNOWN LAWS OF DISCORD, THERE IS NO WAY AN EVAL SHOULD BE ABLE TO SHOW YOUR TOKEN ]',

@@ -150,7 +150,7 @@ async function roleban(bot, message, members, rbRole, options = {}) {
       continue
     }
 
-    if (m.roles.cached.has(rbRole.id)) {
+    if (m.roles.cache.has(rbRole.id)) {
       message.channel.send(
         `${bot.sleet.formatUser(m.user)} is already rolebanned!`,
       )
