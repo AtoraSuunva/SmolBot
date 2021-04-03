@@ -161,7 +161,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
       keepRoles.push(toGive.role)
       member.roles.set(keepRoles)
 
-      react.message.reactions
+      react.message.reactions.cache
         .filter(
           r =>
             (r.emoji.name !== react.emoji.name &&
@@ -191,7 +191,7 @@ module.exports.events.messageReactionRemove = async (bot, react, user) => {
 async function parseMessage(bot, message, react, member) {
   const log = []
 
-  const messageReacts = message.reactions
+  const messageReacts = message.reactions.cache
   const giveSettings = { single: false, canClear: false }
   const giveRoles = {}
 
@@ -280,7 +280,7 @@ async function parseMessage(bot, message, react, member) {
 async function addReactions(message, giveRoles, giveSettings) {
   // Remove the options the user put
   const opts = Object.values(optReacts)
-  for (let r of message.reactions) {
+  for (let r of message.reactions.cache) {
     if (r[0] === REACT_EMOJI || opts.includes(r[0]))
       await r[1].users.remove(r[1].users.first())
   }

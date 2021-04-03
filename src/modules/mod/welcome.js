@@ -363,7 +363,7 @@ const OPTIONAL_NO_VALUE = '---SKIPPY---'
 function getChannelFrom(m) {
   if (m.content.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
   const c = /<#(\d+)>/.exec(m.content)
-  return !c || !m.guild.channels.get(c[1]) ? false : c[1]
+  return !c || !m.guild.channels.cache.get(c[1]) ? false : c[1]
 }
 
 function getRolesFrom(m) {
@@ -527,7 +527,7 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
   if (joinInfo.instant) {
     sendWelcome(
       bot,
-      bot.channels.get(joinInfo.channels || guild.channels.first().id),
+      bot.channels.cache.get(joinInfo.channels || guild.channels.first().id),
       { user: member, channel: null },
       joinInfo.message,
     )
@@ -567,7 +567,7 @@ module.exports.events.everyMessage = async (bot, message) => {
     if (message.channel.id !== joinSet.channel && joinSet.react_with) {
       message.react(joinSet.react_with)
     }
-    channel = bot.channels.get(joinSet.channel)
+    channel = bot.channels.cache.get(joinSet.channel)
   }
 
   sendWelcome(
