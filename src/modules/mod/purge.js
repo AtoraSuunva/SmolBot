@@ -57,7 +57,7 @@ module.exports.events.message = async (bot, message) => {
 
     console.log('Purging', { limit, type, extra })
 
-    toPurge = await filterMessages(bot, type, toPurge)
+    toPurge = await filterMessages(bot, type, toPurge, extra)
     toPurge = Array.from(toPurge.values())
 
     if (!purgedFirst) {
@@ -114,7 +114,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(() => resolve(), ms))
 }
 
-async function filterMessages(bot, type, messages) {
+async function filterMessages(bot, type, messages, extra) {
   // can't purge messages older than 2 weeks
   messages = messages.filter(m => Date.now() - m.createdAt < 1209600000)
 
