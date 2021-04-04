@@ -9,11 +9,11 @@ module.exports.config = {
 const pendingEmote = '\u{1f504}'
 const promiseTimeout = (time, result = null) =>
   new Promise(r => setTimeout(r, time, result))
+const { escapeMarkdown } = require('discord.js').Util
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   if (message.guild === null) return message.channel.send("You're in DMs")
-  //if (message.guild.id === '120330239996854274' && !message.member.roles.has('244328249801310219')) return message.channel.send('You all abused this command too much.')
 
   let [cmd, ...word] = bot.sleet.shlex(message.content)
   let count = 0
@@ -33,38 +33,24 @@ module.exports.events.message = (bot, message) => {
       const term = word.toLowerCase()
 
       count = starts
-        ? names(term, members)
-        : namesStart(term, members)
+        ? namesStart(term, members)
+        : names(term, members)
 
-      message.channel.send(`${count} member${count === 1 ? '' : 's'} have that${starts ? ' at the start of' : ' in'} their username!`)
+      message.channel.send(`${count} member${count === 1 ? '' : 's'} have **"${escapeMarkdown(word)}"**${starts ? ' at the start of' : ' in'} their name!`)
     })
     .catch(e => message.channel.send(`I ran into an error: ${e}`))
 }
 
 function names(word, members) {
-  let count = 0
-
-  members.array().forEach(m => {
-    if (
-      m.user.username.toLowerCase().includes(word) ||
-      (m.nickname ? m.nickname.toLowerCase().includes(word) : false)
-    )
-      count++
-  })
-
-  return count
+  return members.filter(m =>
+    m.user.username.toLowerCase().includes(word) ||
+    m.nickname?.toLowerCase().includes(word)
+  ).size
 }
 
 function namesStart(word, members) {
-  let count = 0
-
-  members.array().forEach(m => {
-    if (
-      m.user.username.toLowerCase().startsWith(word) ||
-      (m.nickname ? m.nickname.toLowerCase().startsWith(word) : false)
-    )
-      count++
-  })
-
-  return count
+  return members.filter(m =>
+    m.user.username.toLowerCase().startsWith(word) ||
+    m.nickname?.toLowerCase().startsWith(word)
+  ).size
 }
