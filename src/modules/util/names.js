@@ -16,8 +16,6 @@ module.exports.events.message = (bot, message) => {
   if (message.guild === null) return message.channel.send("You're in DMs")
 
   let [cmd, ...word] = bot.sleet.shlex(message.content)
-  let count = 0
-
   word = word.join(' ')
 
   message.react(pendingEmote)
