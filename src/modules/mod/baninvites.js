@@ -113,7 +113,7 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
         : '',
     )
 
-  guild.channels.get(logChannel).send({ embed })
+  guild.channels.cache.get(logChannel).send({ embed })
 }
 
 function shittyMStoTime(time, text) {
