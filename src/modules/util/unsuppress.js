@@ -9,7 +9,6 @@ module.exports.config = {
 
 const Discord = require('discord.js')
 const msgReg = /(.*)https:\/\/(?:canary\.)?discordapp\.com\/channels\/\d+\/(\d+)\/(\d+)(.*)/
-const fetch = require('node-fetch')
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
@@ -48,10 +47,11 @@ module.exports.events.message = async (bot, message) => {
   }
 
   try {
-    await suppressMessage(bot, channelId, messageId, false)
+    const msg = await channel.messages.fetch(messageId)
+    await msg.suppressEmbeds(false)
     message.channel.send('Unsuppressed that message.')
   } catch (e) {
-    message.channel.send('Failed to unsuppress the message.')
+    message.channel.send(`Failed to unsuppress the message.\n${e}`)
   }
 }
 
@@ -70,22 +70,5 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     return
   }
 
-  suppressMessage(bot, react.message.channel.id, react.message.id, false)
-}
-
-async function suppressMessage(client, channelId, messageId, suppress) {
-  const endpoint = suppressEndpoint(client, channelId, messageId)
-  // This endpoint doesn't actually return anything lol
-  return await fetch(endpoint, {
-    method: 'POST',
-    body: JSON.stringify({ suppress }),
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bot ${client.token}`,
-    },
-  })
-}
-
-function suppressEndpoint(client, channelId, messageId) {
-  return `${client.options.http.api}/api/v${client.options.http.version}/channels/${channelId}/messages/${messageId}/suppress-embeds`
+  react.message.suppressEmbeds(false)
 }

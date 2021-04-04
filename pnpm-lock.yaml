@@ -2,10 +2,10 @@ dependencies:
   bufferutil: 4.0.3
   cheerio: 1.0.0-rc.5
   convert-units: 2.3.4
-  discord.js: 12.5.2_c70f8fc5586dd378b8c866035dbe710b
+  discord.js: 12.5.3_c70f8fc5586dd378b8c866035dbe710b
   erlpack: github.com/discord/erlpack/e27db8f82892bdb9b28a0547cc394d68b5d2242d
   node-fetch: 2.6.1
-  pg-promise: 10.9.5
+  pg-promise: 10.10.1
   pmx: 1.6.7
   recursive-readdir-sync: 1.0.6
   utf-8-validate: 5.0.4
@@ -20,7 +20,7 @@ packages:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
-      mime-types: 2.1.29
+      mime-types: 2.1.30
     dev: false
     engines:
       node: '>= 6'
@@ -165,7 +165,7 @@ packages:
       node: '>=0.4.0'
     resolution:
       integrity: sha1-3zrhmayt+31ECqrgsp4icrJOxhk=
-  /discord.js/12.5.2_c70f8fc5586dd378b8c866035dbe710b:
+  /discord.js/12.5.3_c70f8fc5586dd378b8c866035dbe710b:
     dependencies:
       '@discordjs/collection': 0.1.6
       '@discordjs/form-data': 3.0.1
@@ -182,7 +182,7 @@ packages:
       bufferutil: '*'
       utf-8-validate: '*'
     resolution:
-      integrity: sha512-PAJv2azCHZNz5VlSOcEYS3SPBmYvka0WHlWhTlHgorfJVRcm1xPwYFqPeU+8+YsWlUxkfgGUD2bnNkVx6vIqPw==
+      integrity: sha512-D3nkOa/pCkNyn6jLZnAiJApw2N9XrIsXUAdThf01i7yrEuqUmDGc7/CexVWwEcgbQR97XQ+mcnqJpmJ/92B4Aw==
   /dom-serializer/1.2.0:
     dependencies:
       domelementtype: 2.1.0
@@ -396,20 +396,20 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha1-VSmk1nZUE07cxSZmVoNbD4Ua/O4=
-  /mime-db/1.46.0:
+  /mime-db/1.47.0:
     dev: false
     engines:
       node: '>= 0.6'
     resolution:
-      integrity: sha512-svXaP8UQRZ5K7or+ZmfNhg2xX3yKDMUzqadsSqi4NCH/KomcH75MAMYAGVlvXn4+b/xOPhS3I2uHKRUzvjY7BQ==
-  /mime-types/2.1.29:
+      integrity: sha512-QBmA/G2y+IfeS4oktet3qRZ+P5kPhCKRXxXnQEudYqUaEioAU1/Lq2us3D/t1Jfo4hE9REQPrbB7K5sOczJVIw==
+  /mime-types/2.1.30:
     dependencies:
-      mime-db: 1.46.0
+      mime-db: 1.47.0
     dev: false
     engines:
       node: '>= 0.6'
     resolution:
-      integrity: sha512-Y/jMt/S5sR9OaqteJtslsFZKWOIIqMACsJSiHghlCAyhf7jfVYjKBmLiX8OgpWeW+fjJ2b+Az69aPFPkUOY6xQ==
+      integrity: sha512-crmjA4bLtR8m9qLpHvgxSChT+XoSlZi8J4n/aIdn3z92e/U47Z0V/yl+Wh9W046GgFVAmoNR/fmdbZYcSSIUeg==
   /ms/2.0.0:
     dev: false
     resolution:
@@ -477,7 +477,7 @@ packages:
       pg: '>=8.0'
     resolution:
       integrity: sha512-ORJoFxAlmmros8igi608iVEbQNNZlp89diFVx6yV5v+ehmpMY9sK6QgpmgoXbmkNaBAx8cOOZh9g80kJv1ooyA==
-  /pg-promise/10.9.5:
+  /pg-promise/10.10.1:
     dependencies:
       assert-options: 0.7.0
       pg: 8.5.1
@@ -487,7 +487,7 @@ packages:
     engines:
       node: '>=8.0'
     resolution:
-      integrity: sha512-llJfdNQVTixjpsTuKTGStybkTWN5PYHWCTb0iqA9GFsvf1khJaH2dexljkMuyeQ41FG8ZkuqkmxrtRVauuS+0A==
+      integrity: sha512-sopmuOr2PrUNh3XI0Y15ssmjcwhZnGHyGYwuDDmWFnBydq7lvrhTMBI3hefAp3YMx07+HSXfSpJse9z5vC4bsw==
   /pg-protocol/1.4.0:
     dev: false
     resolution:
@@ -714,10 +714,10 @@ specifiers:
   bufferutil: ^4.0.3
   cheerio: ^1.0.0-rc.5
   convert-units: ^2.3.4
-  discord.js: ^12.5.2
+  discord.js: ^12.5.3
   erlpack: github:discord/erlpack
   node-fetch: ^2.6.1
-  pg-promise: ^10.9.5
+  pg-promise: ^10.10.1
   pmx: ^1.6.7
   recursive-readdir-sync: ^1.0.6
   utf-8-validate: ^5.0.4
