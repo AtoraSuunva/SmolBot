@@ -285,7 +285,7 @@ async function unroleban(bot, message, members, rbRole, executor = null) {
           ? message
             ? message.channel
             : null
-          : m.guild.channels.get(logChannelId)
+          : m.guild.channels.cache.get(logChannelId)
 
         if (!destination || !message) {
           return bot.sleet.logger.error(e)
