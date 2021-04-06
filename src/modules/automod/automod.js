@@ -489,7 +489,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
       silentAction = true
 
       message.channel
-        .send(message.author + ', ' + m, { autoDelete: false })
+        .send(`${message.author}, ${m}`, { autoDelete: false })
         .then(async msg => {
           const original = msg.channel.permissionOverwrites.get(member.id)
 
@@ -515,12 +515,13 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
               'Return pre-whisper perms',
             )
           }
+
+          setTimeout(async () => {
+            const perms = msg.channel.permissionsOverwrites.get(member.id)
+            if (original && perms) perms.delete('Return pre-whisper perms (timeout)')
+          }, 5000)
         })
 
-      setTimeout(async () => {
-        const perms = msg.channel.permissionsOverwrites.get(member.id)
-        if (perms) perms.delete('Return pre-whisper perms (timeout)')
-      }, 5000)
       break
 
     case 'log':
