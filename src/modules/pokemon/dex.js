@@ -39,7 +39,7 @@ function type(bot, type) {
 
   return (
     ' ' +
-    (bot.emojis.find(e => e.name === `type_${type}`) || `[${capitalize(type)}]`)
+    (bot.emojis.cache.find(e => e.name === `type_${type}`) || `[${capitalize(type)}]`).toString()
   )
 }
 
@@ -51,8 +51,8 @@ function shape(bot, shape) {
 
   return (
     ' ' +
-    (bot.emojis.find(e => e.name === `shape_${shape}`) ||
-      `(${capitalize(shape)})`)
+    (bot.emojis.cache.find(e => e.name === `shape_${shape}`) ||
+      `(${capitalize(shape)})`).toString()
   )
 }
 
