@@ -517,7 +517,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
           }
 
           setTimeout(async () => {
-            const perms = msg.channel.permissionsOverwrites.get(member.id)
+            const perms = msg.channel.permissionOverwrites.get(member.id)
             if (original && perms) perms.delete('Return pre-whisper perms (timeout)')
           }, 5000)
         })
