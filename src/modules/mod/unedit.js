@@ -30,7 +30,7 @@ module.exports.events.message = async (bot, message) => {
     ? ['unedit', match[3], match[2]]
     : bot.sleet.shlex(message)
   channel = channel
-    ? message.guild.channels.get(channel.replace(/[<>#]/g, ''))
+    ? message.guild.channels.cache.get(channel.replace(/[<>#]/g, ''))
     : message.channel
 
   if (!channel) return message.channel.send('Could not find that channel.')
