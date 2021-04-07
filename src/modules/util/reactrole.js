@@ -95,8 +95,12 @@ module.exports.events.raw = async (bot, packet) => {
   // Easiest thing to do is probably to fetch the message/member and then use d.js' "message reaction add" packet handler
   // which would allow me to just use the handler for d.js' actual reaction add event
 
-  if (!messageCached) await channel.messages.fetch(packet.d.message_id)
-  if (!memberCached) await channel.guild.members.fetch(packet.d.user_id)
+  try {
+    if (!messageCached) await channel.messages.fetch(packet.d.message_id)
+    if (!memberCached) await channel.guild.members.fetch(packet.d.user_id)
+  } catch {
+    // Possibly deleted or member left, give up
+  }
 
   // This will call the djs handler which calls the action handler and then emits the event
   if (packet.t === 'MESSAGE_REACTION_ADD') {
