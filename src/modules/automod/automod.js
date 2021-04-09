@@ -360,7 +360,12 @@ module.exports.events.everyMessage = async (bot, message) => {
   let prefix = true
 
   if (!message.member) {
-    message.member = await message.guild.members.fetch(message.author.id)
+    try {
+      message.member = await message.guild.members.fetch(message.author.id)
+    } catch {
+      // They likely aren't on the server anymore
+      return
+    }
   }
 
   // Automod does not apply if:
