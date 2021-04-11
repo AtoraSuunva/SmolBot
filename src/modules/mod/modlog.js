@@ -215,7 +215,7 @@ function sendLog(
  * @param emoji {String} The emoji to put in to format
  * @param type {String} The type of log this is
  * @param message {String} The message content
- * @param embed {Dicord.RichEmbed|Object?} The embed to attach, if any
+ * @param embed {Dicord.MessageEmbed|Object?} The embed to attach, if any
  */
 function createLog(
   guild,
@@ -264,7 +264,7 @@ module.exports.events.raw = async (bot, packet) => {
     case 'GUILD_MEMBER_REMOVE':
       guild = bot.guilds.cache.get(packet.d.guild_id)
 
-      if (guild.members.cache.get(packet.d.user.id)) return
+      if (!guild || guild.members.cache.get(packet.d.user.id)) return
 
       member = packet.d.user
       member.guild = guild
@@ -756,6 +756,7 @@ module.exports.events.messageDelete = async (bot, message) => {
 
     if (
       lastDel &&
+      lastDel.target &&
       lastDel.target.id === message.author.id &&
       lastDel.id !== after
     ) {
