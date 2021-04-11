@@ -11,7 +11,7 @@ const endOfLine = require('os').EOL
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
-  let [pollId] = bot.sleet.shlex(message.content)
+  let [cmd, pollId] = bot.sleet.shlex(message.content)
 
   if (pollId === undefined)
     return message.channel.send('I need a poll ID to work with.')
