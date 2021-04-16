@@ -37,8 +37,8 @@ module.exports.events.message = (bot, message) => {
 
   if (args[1].match(/<?#?\d+>?/) === null) args.unshift('bepis')
 
-  if (message.author.id === config.owner.id) channel = bot.channels.get(channel)
-  else channel = message.guild.channels.get(channel)
+  if (message.author.id === config.owner.id) channel = bot.channels.cache.get(channel)
+  else channel = message.guild.channels.cache.get(channel)
 
   if (channel === undefined)
     return message.channel.send("Couldn't find that channel...")
