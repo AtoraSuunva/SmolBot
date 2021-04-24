@@ -18,6 +18,10 @@ module.exports.events.message = (bot, message) => {
   let [cmd, ...word] = bot.sleet.shlex(message.content)
   word = word.join(' ')
 
+  if (word.trim() === '') {
+    return message.channel.send(`There are **${message.guild.memberCount.toLocaleString()}** members on the server.`)
+  }
+
   message.react(pendingEmote)
 
   const nameCheck = Promise.race([promiseTimeout(10 * 1000), message.guild.members.fetch()])
