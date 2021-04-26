@@ -21,14 +21,14 @@ module.exports.events.message = (bot, message) => {
   let member
   let emote = eg
 
-  if (specialEggs[spegg]) emote = bot.emojis.get(specialEggs[spegg])
+  if (specialEggs[spegg]) emote = bot.emojis.cache.get(specialEggs[spegg])
   if (message.guild && message.guild.members.cache.get(user))
     member = message.guild.members.cache.get(user)
   if (message.guild && message.mentions.members.first())
     member = message.mentions.members.first()
 
   if (member) {
-    const egMsg = message.channel.messages
+    const egMsg = message.channel.messages.cache
       .filter(m => m.author.id === member.id)
       .last()
     if (egMsg) return egMsg.react(emote)
