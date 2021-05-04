@@ -188,7 +188,7 @@ module.exports.events.message = (bot, message) => {
 
   if (!message.member.permissions.has('MANAGE_MESSAGES'))
     return message.channel.send(
-      'You need "Manage Messages" perms to use automod',
+      'You need "Manage Messages" permissions on the server level to manage automod.',
     )
 
   const [cmd, opt, ...params] = bot.sleet.shlex(message)
@@ -370,11 +370,11 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   // Automod does not apply if:
   //  - There are no automod rules
-  //  - You have 'Manage Messages' perms
+  //  - You have 'Manage Messages' perms (server or channel)
   //  - The member is higher than (or equal to) the bot
   if (
     !rules ||
-    message.member.permissions.has('MANAGE_MESSAGES') ||
+    message.channel.permissionsFor(message.member).has('MANAGE_MESSAGES') ||
     message.member.roles.highest.position >=
       message.guild.me.roles.highest.position
   ) {
