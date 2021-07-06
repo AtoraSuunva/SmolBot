@@ -37,7 +37,7 @@ module.exports.events.everyMessage = async (bot, message) => {
     const emoji = getLoudnessEmoji(loudest)
 
     if (emoji === null) return
-    message.react(emoji)
+    await message.react(emoji)
   } catch (e) {
     // failed, just ignore it
   }
