@@ -21,7 +21,7 @@ module.exports.events.message = async (bot, message) => {
   cmd = cmd.toLowerCase()
   user = user.join(' ').toLowerCase()
 
-  message.guild.members.forEach(m => {
+  message.guild.members.cache.forEach(m => {
     if (
       m.user.username.toLowerCase().includes(user) ||
       m.displayName.toLowerCase().includes(user)
