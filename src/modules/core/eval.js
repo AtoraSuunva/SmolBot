@@ -66,5 +66,11 @@ module.exports.events.message = async (bot, message) => {
 function condEdit(message, msg, content) {
   if (msg) msg.edit(content)
   else
-    return message.channel.send(content, { _ext: 'js' })
+    return message.channel.send(
+      content,
+      {
+        _ext: 'js',
+        disableMentions: 'all',
+      },
+    )
 }
