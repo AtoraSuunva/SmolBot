@@ -565,7 +565,7 @@ module.exports.events.everyMessage = async (bot, message) => {
 
   if (joinSet.channel !== null) {
     if (message.channel.id !== joinSet.channel && joinSet.react_with) {
-      message.react(joinSet.react_with)
+      message.react(joinSet.react_with).catch(() => {})
     }
     channel = bot.channels.cache.get(joinSet.channel)
   }
