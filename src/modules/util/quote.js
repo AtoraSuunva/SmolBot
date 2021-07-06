@@ -12,8 +12,8 @@ const msgReg = /(.*?)(<?)https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/chan
 module.exports.events = {}
 module.exports.events.everyMessage = async (bot, message) => {
   if (message.author.bot) return
-
   if (message.edits.length > 1) return
+  if (message.guild && !message.channel.permissionsFor(message.guild.me).has('EMBED_LINKS')) return
 
   // No url -> null
   // w/ url -> ['msg', 'before url', '<', 'channel', 'message', '>', 'after url']
