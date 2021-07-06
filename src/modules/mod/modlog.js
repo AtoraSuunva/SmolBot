@@ -441,6 +441,10 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
 }
 
 async function getInviter(bot, guild) {
+  if (!guild.me.permissions.has('MANAGE_GUILD')) {
+    return null
+  }
+
   const oldInvites = invites.get(guild.id)
 
   if (!oldInvites) {
