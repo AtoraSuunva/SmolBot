@@ -38,7 +38,10 @@ module.exports.events.message = (bot, message) => {
         ? namesStart(term, members)
         : names(term, members)
 
-      message.channel.send(`${count} member${count === 1 ? '' : 's'} have **"${escapeMarkdown(word)}"**${starts ? ' at the start of' : ' in'} their name!`)
+      message.channel.send(
+        `${count} member${count === 1 ? '' : 's'} have **"${escapeMarkdown(word)}"**${starts ? ' at the start of' : ' in'} their name!`,
+        { allowedMentions: { parse: [] } },
+      )
     })
     .catch(e => message.channel.send(`I ran into an error: ${e}`))
 }
