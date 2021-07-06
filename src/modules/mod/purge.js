@@ -47,6 +47,10 @@ module.exports.events.message = async (bot, message) => {
     limit = 100
   }
 
+  if (limit > 300) {
+    return message.channel.send('I will not purge more than 300 messages at a time.')
+  }
+
   type = type || 'all'
 
   while (limit > 0) {
@@ -57,7 +61,7 @@ module.exports.events.message = async (bot, message) => {
 
     console.log('Purging', { limit, type, extra })
 
-    toPurge = await filterMessages(bot, type, toPurge, extra)
+    toPurge = await filterMessages(bot, message, type, toPurge, extra)
     toPurge = Array.from(toPurge.values())
 
     if (!purgedFirst) {
@@ -65,7 +69,7 @@ module.exports.events.message = async (bot, message) => {
       purgedFirst = true
     }
 
-    toPurge = toPurge.slice(0, limit).slice(0, 100)
+    toPurge = toPurge.slice(0, Math.max(limit, 100))
 
     if (toPurge.length === 0) {
       limit = 0
@@ -76,8 +80,9 @@ module.exports.events.message = async (bot, message) => {
       limit--
     } else {
       beforeId = decrementId(
-        toPurge.map(m => BigInt(m.id)).sort((a, b) => a > b)[0],
+        toPurge.map(m => BigInt(m.id)).sort((a, b) => a < b)[0],
       )
+
       try {
         await message.channel.bulkDelete(toPurge, true)
       } catch (e) {
@@ -90,8 +95,12 @@ module.exports.events.message = async (bot, message) => {
           `Failed to purge, this is likely a permissions issue:\n\`\`\`js\n${e}\n\`\`\``,
         )
       }
+
       totalDeleted += toPurge.length
       limit -= toPurge.length
+      if (toPurge.length === 0) {
+        limit = 0 // give up
+      }
     }
 
     if (limit > 0) await sleep(500)
@@ -114,7 +123,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(() => resolve(), ms))
 }
 
-async function filterMessages(bot, type, messages, extra) {
+async function filterMessages(bot, invokingMessage, type, messages, extra) {
   // can't purge messages older than 2 weeks
   messages = messages.filter(m => Date.now() - m.createdAt < 1209600000)
 
@@ -147,7 +156,7 @@ async function filterMessages(bot, type, messages, extra) {
     case 'from':
     case 'by':
       const members = await bot.sleet.extractMembers(
-        { from: extra.join(' '), source: message },
+        { from: extra.join(' '), source: invokingMessage },
         { id: true },
       )
       return messages.filter(m => members.includes(m.author.id))
