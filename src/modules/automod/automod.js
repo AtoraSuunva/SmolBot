@@ -360,7 +360,7 @@ module.exports.events.messageUpdate = (bot, oldMessage, newMessage) => {
 
 module.exports.events.everyMessage = handleMessage
 
-async function handleMessage(bot, message)
+async function handleMessage(bot, message) {
   if (!message.guild || message.author.bot) return
 
   // const start = process.hrtime.bigint()
