@@ -352,8 +352,16 @@ async function deleteRule(bot, message, params) {
   }
 }
 
-module.exports.events.everyMessage = async (bot, message) => {
-  if (!message.guild || message.author.bot || message.editedTimestamp) return
+module.exports.events.messageUpdate = (bot, oldMessage, newMessage) => {
+  if (oldMessage.content !== newMessage.content) {
+    handleMessage(bot, newMessage)
+  }
+}
+
+module.exports.events.everyMessage = handleMessage
+
+async function handleMessage(bot, message)
+  if (!message.guild || message.author.bot) return
 
   // const start = process.hrtime.bigint()
   const rules = activeRules.get(message.guild.id)
