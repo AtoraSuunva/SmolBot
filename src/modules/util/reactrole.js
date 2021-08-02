@@ -231,7 +231,7 @@ async function parseMessage(bot, message, react, member) {
       log.push(`\`${roleInfo.role}\` is higher or equal to your highest role`)
     } else if (role.position >= message.guild.me.roles.highest.position) {
       log.push(`\`${roleInfo.role}\` is higher or equal to my highest role`)
-    } else if (roleInfo.custom && !message.client.emojis.get(roleInfo.emoji)) {
+    } else if (roleInfo.custom && !message.client.emojis.cache.get(roleInfo.emoji)) {
       log.push(
         `\`${roleInfo.role}\` is not assigned to an emoji I have access to!`,
       )
@@ -247,6 +247,11 @@ async function parseMessage(bot, message, react, member) {
   log.push(`\nSettings: \`${JSON.stringify(giveSettings)}\``)
 
   if (Object.keys(giveRoles).length > 0) {
+
+    if (!message.channel.permissionsFor(bot.user).has('ADD_REACTIONS')) {
+      return member.send('I am missing "Add Reactions" permissions to setup the reaction roles.')
+    }
+
     member.send(
       'Role giving was (maybe mostly) successfully setup, logs:\n```js\n' +
         log.join('\n') +
@@ -283,13 +288,7 @@ async function parseMessage(bot, message, react, member) {
 
 async function addReactions(message, giveRoles, giveSettings) {
   // Remove the options the user put
-  const opts = Object.values(optReacts)
-  for (let r of message.reactions.cache) {
-    if (r[0] === REACT_EMOJI || opts.includes(r[0]))
-      await r[1].users.remove(r[1].users.first())
-  }
-
+  await message.reactions.removeAll()
   for (let e of Object.keys(giveRoles)) await message.react(e)
-
   if (giveSettings.canClear) await message.react(optReacts.x)
 }
