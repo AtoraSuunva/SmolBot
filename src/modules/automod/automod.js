@@ -101,7 +101,7 @@ const silentChannels = {
  * @param {Database} db The database to use to make queries, should be `bot.sleet.db` usually
  */
 async function setupAutomodFromDatabase(db) {
-  const dbConfig = await db.many('SELECT * FROM automod')
+  const dbConfig = await db.any('SELECT * FROM automod')
 
   automodConfig.clear()
   for (let v of dbConfig) {
@@ -109,7 +109,7 @@ async function setupAutomodFromDatabase(db) {
     automodConfig.set(guild_id, data)
   }
 
-  const dbRules = await db.many('SELECT * from automod_rules')
+  const dbRules = await db.any('SELECT * from automod_rules')
 
   activeRules.clear()
   for (let v of dbRules) {
