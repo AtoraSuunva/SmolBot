@@ -66,7 +66,7 @@ module.exports.events.message = (bot, message) => {
 module.exports.events.ready = bot => {
   const userCount = bot.guilds.cache
     .map(g => g.memberCount)
-    .reduce((a, b) => a + b)
+    .reduce((a, b) => a + b, 0)
 
   bot.sleet.logger.log(
     `
