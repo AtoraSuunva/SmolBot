@@ -13,7 +13,7 @@ module.exports.events.message = async (bot, message) => {
   if (!message.guild) return
 
   const [cmd, role] = bot.sleet.shlex(message)
-  const pingRole = message.guild.roles.find(
+  const pingRole = message.guild.roles.cache.find(
     r => r.name !== '@everyone' && r.name.toLowerCase() === role,
   )
 
@@ -53,7 +53,7 @@ module.exports.events.message = async (bot, message) => {
 
 module.exports.events.everyMessage = async (bot, message) => {
   for (let [roleId, info] of pingableRoles) {
-    if (!message.mentions.roles.has(roleId)) continue
+    if (!message.mentions.roles.cache.has(roleId)) continue
 
     clearTimeout(info.timer)
     info.role.setMentionable(false)
