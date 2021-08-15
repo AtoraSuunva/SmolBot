@@ -16,7 +16,7 @@ module.exports.events.message = async (bot, message) => {
   if (!message.guild) return
   if (
     message.author.id !== bot.sleet.config.owner.id &&
-    !message.member.roles.has('244328249801310219')
+    !message.member.roles.cache.has('244328249801310219')
   )
     return
 

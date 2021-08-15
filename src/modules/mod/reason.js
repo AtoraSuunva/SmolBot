@@ -17,6 +17,10 @@ module.exports.events.message = (bot, message) => {
 
   if (!msg) return message.channel.send('I need a message ID to work with.')
 
+  if (!logs[message.guild.id]) {
+    return message.channel.send('It looks like banlogs aren\'t setup on this server')
+  }
+
   bot.channels.cache
     .get(logs[message.guild.id])
     .messages.fetch(msg)
