@@ -709,8 +709,12 @@ module.exports.events.messageDeleteBulk = async (bot, messages) => {
   const sent = await sendLog(config.channel, ':fire:', 'Channel Purged', msg, {
     files,
   })
-  const attach = sent.attachments.first().id
-  sent.edit(`${sent.content}\n<${generateArchiveUrl(sent.channel.id, attach)}>`)
+  const attach = sent.attachments.first()
+
+  if (attach)
+    const archiveUrl = generateArchiveUrl(sent.channel.id, attach.id)
+    sent.edit(`${sent.content}\n<${archiveUrl}`)
+  }
 }
 
 class RollingStore {
