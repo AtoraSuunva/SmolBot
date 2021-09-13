@@ -9,6 +9,7 @@ const util = require('util')
 const fs = require('fs').promises
 const path = require('path')
 const execFile = util.promisify(require('child_process').execFile)
+const fetch = require('node-fetch')
 
 const audioExt = ['.mp4', '.mov', '.webm', '.ogg', '.mp3', '.wav']
 
@@ -63,7 +64,25 @@ function getLoudnessEmoji(loudness) {
   }
 }
 
+// ~20 MB
+const MAX_SIZE = 20 * (2**20)
+
+const EMPTY_FILE = {
+  integrated: null,
+  truePeak: null,
+  lra: null,
+  threshold: null,
+}
+
+// Need to check duration as well? Get it in seconds like this
+// ffprobe -i some_video -show_entries format=duration -v quiet -of csv="p=0"
+
 async function detectLoudness(file) {
+  const headers = fetch(file, { method: 'HEAD' }).then(r => r.headers)
+  const size = parseInt(headers.get('content-length'))
+
+  if (size > MAX_SIZE) return EMPTY_FILE
+
   let stdout, stderr
   try {
     ;({ stdout, stderr } = await execFile('ffmpeg', [
@@ -81,19 +100,14 @@ async function detectLoudness(file) {
   } catch (e) {
     if (e.stderr.includes('does not contain any stream')) {
       // no audio in file
-      return {
-        integrated: null,
-        truePeak: null,
-        lra: null,
-        threshold: null,
-      }
+      return EMPTY_FILE
     }
 
     throw e
   }
 
   const output = stderr.split('[Parsed_loudnorm_')[1]
-  if (!output) return -Infinity
+  if (!output) return EMPTY_FILE
 
   const volume = output
     .split(/\r?\n/g)
