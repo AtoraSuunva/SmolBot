@@ -711,9 +711,9 @@ module.exports.events.messageDeleteBulk = async (bot, messages) => {
   })
   const attach = sent.attachments.first()
 
-  if (attach)
+  if (attach) {
     const archiveUrl = generateArchiveUrl(sent.channel.id, attach.id)
-    sent.edit(`${sent.content}\n<${archiveUrl}`)
+    sent.edit(`${sent.content}\n<${archiveUrl}>`)
   }
 }
 
