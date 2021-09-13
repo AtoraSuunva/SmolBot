@@ -24,7 +24,6 @@
     "cheerio": "^1.0.0-rc.5",
     "convert-units": "^2.3.4",
     "discord.js": "^12.5.3",
-    "erlpack": "github:discord/erlpack",
     "node-fetch": "^2.6.1",
     "pg-promise": "^10.10.1",
     "pmx": "^1.6.7",
