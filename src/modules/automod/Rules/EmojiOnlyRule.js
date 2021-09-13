@@ -21,19 +21,29 @@ module.exports = class EmojiOnlyRule extends Rule {
 
     this.ignore = ignore.map(v => v.toLowerCase())
     this.lastMessage = {}
-    this.violations = AutoProp({})
+    this.violations = new Map()
     this.name = `Max emoji-only messages reached (${maxRepeats})`
   }
 
   filter(message) {
     const uid = message.guild.id + message.author.id
+    const caught = this.violations.get(uid) || new Set()
 
     if (justEmoji(message.content)) {
-      if (++this.violations[uid] >= this.maxRepeats) {
+      caught.add(message.id)
+
+      if (caught.size >= this.maxRepeats) {
+        caught.clear()
+        this.violations.set(uid, caught)
         return { punishment: this.punishment }
       }
 
-      setTimeout(id => --this.violations[id], this.timeout, uid)
+      this.violations.set(uid, caught)
+
+      setTimeout(() => {
+        caught.delete(message.id)
+        this.violations.set(uid, caught)
+      }, this.timeout)
     }
   }
 }
