@@ -21,12 +21,13 @@ module.exports = class RepeatsRule extends Rule {
 
     this.ignore = ignore.map(v => v.toLowerCase())
     this.lastMessage = {}
-    this.violations = AutoProp({})
+    this.violations = new Map()
     this.name = `Max repeats reached (${maxRepeats})`
   }
 
   filter(message) {
     const uid = message.guild.id + message.author.id
+    const caught = this.violations.get(uid) || new Set()
 
     if (this.ignore.find(v => message.content.toLowerCase().startsWith(v))) {
       return
@@ -34,12 +35,21 @@ module.exports = class RepeatsRule extends Rule {
 
     if (this.lastMessage[uid] && message.content === this.lastMessage[uid]) {
       // -1 because the first message isn't counted since it's not a repeat
-      if (++this.violations[uid] >= this.maxRepeats - 1) {
-        this.violations[uid] = 0
+
+      caught.add(message.id)
+
+      if (caught.size >= this.maxRepeats - 1) {
+        caught.clear()
+        this.violations.set(uid, caught)
         return { punishment: this.punishment }
       }
 
-      setTimeout(id => --this.violations[id], this.timeout, uid)
+      this.violations.set(uid, caught)
+
+      setTimeout(() => {
+        caught.delete(message.id)
+        this.violations.set(uid, caught)
+      }, this.timeout)
     }
 
     this.lastMessage[uid] = message.content
