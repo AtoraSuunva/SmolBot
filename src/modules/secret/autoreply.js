@@ -43,8 +43,20 @@ const responses = new Map()
 
 const thanksReg = /thanks?\s*(u|you)?\s*(,\s*)?smol(bot)?/i
 
+function bananaReact(message) {
+  const hasBanana = message.content.toLowerCase().includes('banana') || message.content.toLowerCase().includes('potassium')
+  const ignoreGuild = message.guild && ['301319624874655744'].includes(message.guild.id)
+
+  if (!ignoreGuild && hasBanana) {
+    return message.react('<:potassium:889131880207745056>')
+  }
+}
+
+
 module.exports.events = {}
 module.exports.events.everyMessage = (bot, message) => {
+  if (message.author.bot) return
+
   if (thanksReg.test(message.content)) {
     return message.channel.send('np')
   }
