@@ -64,7 +64,7 @@ module.exports.events.message = async (bot, message) => {
     member.roles.highest.position >= message.member.roles.highest.position
   )
     return message.channel.send(
-      `${bot.sleet.formatUser(member.user.tag, {
+      `${bot.sleet.formatUser(member, {
         id: false,
       })} is higher or equal to you.`,
     )
@@ -74,7 +74,7 @@ module.exports.events.message = async (bot, message) => {
     member.roles.highest.position >= message.guild.me.roles.highest.position
   )
     return message.channel.send(
-      `${bot.sleet.formatUser(member.user.tag, {
+      `${bot.sleet.formatUser(member, {
         id: false,
       })} is higher or equal to *me*.`,
     )
