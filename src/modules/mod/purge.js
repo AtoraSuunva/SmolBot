@@ -112,7 +112,7 @@ module.exports.events.message = async (bot, message) => {
 
   const purgeMessage = await message.channel.send(`${BIN} ${totalDeleted}`)
   await sleep(3000)
-  purgeMessage.delete()
+  if (purgeMessage) purgeMessage.delete().catch(() => {})
 }
 
 function decrementId(id) {
