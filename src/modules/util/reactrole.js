@@ -121,6 +121,11 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     // Time to parse it
     return parseMessage(bot, react.message, react, member)
   } else if (reactMessages.has(react.message.id)) {
+
+    if (member.roles.cache.has('122150407806910464')) {
+      return react.users.remove(member)
+    }
+
     // do some role stuff...
     const { roles, single, canClear } = reactMessages.get(react.message.id)
 
