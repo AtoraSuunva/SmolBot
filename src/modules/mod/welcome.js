@@ -253,11 +253,6 @@ async function editWelcome(bot, message) {
 
   const parsed = await resultParsers[field](message, value)
 
-  if (parsed === null || parsed === OPTIONAL_NO_VALUE)
-    return message.channel.send(
-      'That did not parse into a valid value for ${field}',
-    )
-
   try {
     await editField(db, message.guild.id, field, parsed)
 
@@ -360,18 +355,22 @@ async function setupWelcomeInteractive(bot, message) {
 
 const OPTIONAL_NO_VALUE = '---SKIPPY---'
 
-function getChannelFrom(m) {
-  if (m.content.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
-  const c = /<#(\d+)>/.exec(m.content)
+function getChannelFrom(m, v) {
+  const value = v || m.content
+  console.log('channel', m.content, v)
+  if (value.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
+  const c = /<#(\d+)>/.exec(value)
   return !c || !m.guild.channels.cache.get(c[1]) ? false : c[1]
 }
 
-function getRolesFrom(m) {
-  if (m.content.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
-  const roles = [...m.content.matchAll(/(?:<@&)?(\d+)(?:>)?/g)].map(r => r[1])
+function getRolesFrom(m, v) {
+  const value = v || m.content
+  if (value.toLowerCase() === 'none') return OPTIONAL_NO_VALUE
+  const roles = [...value.matchAll(/(?:<@&)?(\d+)(?:>)?/g)].map(r => r[1])
 
   if (roles.length < 1 || !roles.every(r => m.guild.roles.cache.get(r)))
     return false
+
   return roles
 }
 
@@ -392,14 +391,15 @@ const TRUTHY = ['true', 'y', 'yes', 'ya', 'yea', 'yeah', 't']
 const FALSY = ['false', 'n', 'no', 'nope', 'nah']
 const BOOLY = [...TRUTHY, ...FALSY]
 
-function booleanValidator(m) {
-  return BOOLY.includes((m.content + '').toLowerCase())
+function booleanValidator(m, v) {
+  const value = `${v || m.content}`.toLowerCase()
+  return BOOLY.includes(value)
 }
 
-function optionalValidator(v) {
-  return m => {
-    if (m.content.toLowerCase() === 'skip') return OPTIONAL_NO_VALUE
-    return v(m)
+function optionalValidator(validator) {
+  return (m, v) => {
+    if (v === 'skip' || m.content.toLowerCase() === 'skip') return OPTIONAL_NO_VALUE
+    return validator(m, v)
   }
 }
 
@@ -433,10 +433,10 @@ const animatedRegex = /<a:\w+:\d+>/
 
 const resultParsers = {
   message: (m, v) => v || m.content,
-  channel: m => optionalParser(getChannelFrom(m)),
+  channel: (m, v) => optionalParser(getChannelFrom(m, v)),
   rejoins: (m, v) => booleanParser(v || m.content),
   instant: (m, v) => booleanParser(v || m.content),
-  ignore_roles: m => optionalParser(getRolesFrom(m)) || [],
+  ignore_roles: (m, v) => optionalParser(getRolesFrom(m, v)) || [],
   react_with: (m, v) =>
     getRegexResult(v || m.content, reactionRegex) || v || m.content,
   yesno: (m, v) => booleanParser(v || m.content),
