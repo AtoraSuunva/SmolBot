@@ -33,6 +33,7 @@ const EmbedsRule = require('./Rules/EmbedsRule.js')
 const RegexRule = require('./Rules/RegexRule.js')
 const EmojiOnlyRule = require('./Rules/EmojiOnlyRule.js')
 const PressureRule = require('./Rules/PressureRule.js')
+const ScamRule = require('./Rules/ScamRule.js')
 
 const Rules = {
   everyone: EveryoneRule,
@@ -44,6 +45,7 @@ const Rules = {
   regex: RegexRule,
   emojionly: EmojiOnlyRule,
   pressure: PressureRule,
+  scam: ScamRule,
 }
 
 const RulesDocs = `
@@ -57,6 +59,7 @@ Parameters are shlexed, and should be specified as following:
 > \`regex    \` => Strikes when a regex matches the message, only 1 regex is supported a time. Can be either given as \`'r(e)gex.*' 'flags'\` or \`'/r(e)gex.*/flags'\`
 > \`repeats  \` => Strikes on messages with repeated content (ie. copy/paste)
 > \`pressure \` => Experimental, pressure-based automod
+> \`scam     \` => Scans for known scam domains
 `.trim()
 
 const RulesHelp =
@@ -109,7 +112,7 @@ async function setupAutomodFromDatabase(db) {
     automodConfig.set(guild_id, data)
   }
 
-  const dbRules = await db.any('SELECT * from automod_rules')
+  const dbRules = await db.any('SELECT * FROM automod_rules')
 
   activeRules.clear()
   for (let v of dbRules) {
@@ -419,31 +422,31 @@ async function handleMessage(bot, message) {
 }
 
 async function runRule({ bot, message, rule: r, prepend, prefix }) {
-  const { deletes, punishment, reason } = (await r.filter(message)) || {}
+  const { deletes, punishment, reason, silent } = (await r.filter(message)) || {}
 
   if (!punishment) return
 
   const usertag = bot.sleet.formatUser(message.author)
   const realReason = reason || r.name || 'No reason!'
   const logDeletedMessage = message.guild.id === '301319624874655744'
-  let silentAction = false
+  let silentAction = silent ?? false
   let action = null
   let extra = null
 
-  //(null, 'delete', roleban', 'kick', 'ban', 'whisper: some message', 'log')
+  if (deletes) {
+    if (deletes.length === 1 && deletes[0].delete) {
+      deletes[0].delete().catch(_ => {})
+    } else if (deletes.length > 1) {
+      message.channel.bulkDelete(deletes).catch(_ => {})
+    }
+  }
+
+  // (null, 'delete', roleban', 'kick', 'ban', 'whisper: some message', 'log')
   switch ((punishment + '').split(':')[0].toLowerCase()) {
     case 'delete':
       action = 'silenced (message deleted)'
       silentAction = true
       message.delete().catch(c => {})
-
-      if (deletes) {
-        if (deletes.length === 1 && deletes[0].delete) {
-          deletes[0].delete().catch(_ => {})
-        } else if (deletes.length > 1) {
-          message.channel.bulkDelete(deletes).catch(_ => {})
-        }
-      }
       break
 
     case 'roleban':
@@ -557,6 +560,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
     (extra ? `\n> *${extra}*` : '') +
     (logDeletedMessage ? '```\n' + message.content + '\n```' : '') +
     `\n> ${message.url}`
+
   modlog.createLog(
     message.guild,
     'automod_action',
