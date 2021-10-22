@@ -2,6 +2,8 @@ const Rule = require('./Rule')
 
 const URL_REGEX = /https?:\/\/(?<host>[^\s]+\.[^\s]+?)(?:\/|\b)/gi
 
+const INVALID_CHARS_REGEX = /[\u200b-\u200f\x00]/g
+
 /**
  * Get all hosts from some string, without repetition
  * @example
@@ -10,9 +12,16 @@ const URL_REGEX = /https?:\/\/(?<host>[^\s]+\.[^\s]+?)(?:\/|\b)/gi
  *            Host
  */
 function getHostsFrom(text) {
-  const matches = [...text.matchAll(URL_REGEX)].map(m => m.groups.host)
+  const matches = [...text.matchAll(URL_REGEX)].map(m => m.groups.host.toLowerCase())
   // Don't have the same host twice
   return [...new Set(matches)]
+}
+
+/**
+ * Removes invalid/"blank" non-space characters sometimes used to bypass filters
+ */
+function cleanText(text) {
+  return text.replaceAll(INVALID_CHARS_REGEX, '')
 }
 
 /**
@@ -63,7 +72,8 @@ module.exports = class ScamRule extends Rule {
       return
     }
 
-    const hosts = getHostsFrom(message.content)
+    const cleanContent = cleanText(message.content)
+    const hosts = getHostsFrom(cleanContent)
 
     if (hosts.length === 0) {
       return
