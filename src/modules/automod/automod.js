@@ -433,7 +433,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
   let action = null
   let extra = null
 
-  if (deletes) {
+  if (deletes && punishment !== 'log') {
     if (deletes.length === 1 && deletes[0].delete) {
       deletes[0].delete().catch(_ => {})
     } else if (deletes.length > 1) {
