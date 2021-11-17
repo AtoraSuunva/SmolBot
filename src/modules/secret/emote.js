@@ -13,8 +13,8 @@ module.exports.events.message = (bot, message) => {
 
   if (fetch) {
     emote =
-      bot.emojis.cache.find(e => e.name === fetch)
-      || bot.emojis.cache.get(fetch)
+      bot.emojis.cache.find(e => e.name === fetch) ||
+      bot.emojis.cache.get(fetch)
   }
 
   if (emote) {
@@ -24,6 +24,6 @@ module.exports.events.message = (bot, message) => {
       `No emote found. Have a random one: ${bot.emojis.cache.random()}`,
     )
   } else {
-    message.channel.send(bot.emojis.random().toString())
+    message.channel.send(bot.emojis.cache.random().toString())
   }
 }
