@@ -64,6 +64,11 @@ const Time = {
       .filter((v, i) => i < places)
       .join(',')
   },
+
+  discordTimestamp(date, style) {
+    const timestamp = Math.floor(date.getTime() / 1000)
+    return `<t:${timestamp}:${style}>`
+  },
 }
 
 module.exports = Time
