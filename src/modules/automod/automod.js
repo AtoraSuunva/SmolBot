@@ -552,7 +552,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
 
   if (msg && !silentAction) {
     prefix = prefix && silentChannels.get(message.channel.id) < 1
-    message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false })
+    message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false, allowedMentions: { parse: ['roles'] } })
   }
 
   const modlogMsg =
