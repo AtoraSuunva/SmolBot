@@ -17,13 +17,16 @@ const { invokers } = (module.exports.config = {
 const fetch = require('node-fetch')
 const Discord = require('discord.js')
 const time = require('./time.js')
-let botTag
 
 module.exports.events = {}
+/**
+ *
+ * @param {Discord.Client} bot
+ * @param {Discord.Message} message
+ * @returns
+ */
 module.exports.events.message = async (bot, message) => {
   let [cmd, data] = bot.sleet.shlex(message, { invokers })
-
-  botTag = botTag || bot.emojis.cache.find(e => e.name === 'botTag') || '[BOT]'
 
   if (!data) {
     return message.channel.send('What do you want me to lookup?')
@@ -86,71 +89,191 @@ async function fetchGuild(data) {
   if (r.status === 404 || r.status === 400) {
     throw new Error('No guild found or snowflake incorrect.')
   } else if (r.status === 403) {
+    const snowflake = Discord.SnowflakeUtil.deconstruct(data)
     return {
       message:
-        'Guild found with id "`' + data + '`", no more information found.',
+        'Guild found with id "`' +
+        data +
+        '`", no more information found.\n' +
+        `Guild created at: ${formatCreatedAt(snowflake.date)}`,
     }
   } else if (r.status === 200) {
     return r.json()
   }
 }
 
-function sendUserLookup(bot, channel, user) {
-  if (!(user instanceof Discord.User))
-    return channel.send('Did not find info for that user.')
+const rpcUrl = app => `https://discord.com/api/applications/${app}/rpc`
+const oAuthUrl = app =>
+  `https://discord.com/oauth2/authorize?client_id=${app}&permissions=0&scope=bot`
 
-  channel.send({
-    embed: new Discord.MessageEmbed()
-      .setTitle(bot.sleet.formatUser(user, false))
-      .setThumbnail(user.displayAvatarURL())
-      .setDescription(`**ID:** ${user.id}`)
-      .addField('\nAccount Age:', time.since(user.createdAt).format())
-      .addField('Created at (UTC):', user.createdAt.toUTCString())
-      .setFooter('Created at')
-      .setTimestamp(user.createdAt),
-  })
+async function getRPCDetails(app) {
+  let res
+
+  res = await fetch(rpcUrl(app))
+
+  if (res.status === 404) {
+    throw new Error('No application found or snowflake incorrect.')
+  } else if (res.status === 200) {
+    return res.json()
+  }
 }
 
-function sendInviteLookup(bot, channel, invite) {
-  const created = Discord.SnowflakeUtil.deconstruct(invite.guild.id).date
+const Badges = {
+  DISCORD_EMPLOYEE: '<:BadgeStaff:909313939911897138>',
+  PARTNERED_SERVER_OWNER: '<:BadgePartner:909313940725571604>',
+  HYPESQUAD_EVENTS: '<:BadgeHypeSquadEvents:909313941178548246>',
+  BUGHUNTER_LEVEL_1: '<:BadgeBugHunter:909313942407483402>',
+  HOUSE_BRAVERY: '<:BadgeBravery:909313943233789972>',
+  HOUSE_BRILLIANCE: '<:BadgeBrilliance:909313944047468544>',
+  HOUSE_BALANCE: '<:BadgeBalance:909313944869564416>',
+  EARLY_SUPPORTER: '<:BadgeEarlySupporter:909313946132029440>',
+  TEAM_USER: '[Team User]',
+  BUGHUNTER_LEVEL_2: '<:BadgeBugHunterLvl2:909313947172233266>',
+  VERIFIED_BOT: '<:VerifiedBot:910427927160709180>',
+  EARLY_VERIFIED_DEVELOPER:
+    '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
+  DISCORD_CERTIFIED_MODERATOR: '<:BadgeCertifiedMod:909313949332275300>',
+  BOT_HTTP_INTERACTIONS: '[HTTP Interactions]',
+}
+
+function getUserBadgeEmojis(user) {
+  if (!user.flags) return []
+
+  const badges = []
+
+  for (const [key, flag] of Object.entries(Discord.UserFlags.FLAGS)) {
+    if (key !== 'VERIFIED_BOT' && user.flags.has(flag)) {
+      badges.push(Badges[key])
+    }
+  }
+
+  return badges
+}
+
+async function sendUserLookup(bot, channel, user) {
+  if (!(user instanceof Discord.User)) {
+    return channel.send('Did not find info for that user.')
+  }
+
+  const rawUser = '`' + Discord.Util.escapeInlineCode(user.tag) + '`'
+  const badges = getUserBadgeEmojis(user)
+  const formattedBadges =
+    badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
+
   const embed = new Discord.MessageEmbed()
-    .setTitle(`:incoming_envelope: Invite: ${invite.code}`)
-    .addField(
-      `Guild (${invite.guild.id})`,
-      invite.guild.name + '\n[#' + invite.channel.name + '](http://a.ca)',
+    .setTitle(bot.sleet.formatUser(user, { id: false, plain: true }))
+    .setThumbnail(user.displayAvatarURL({ size: 4096 }))
+    .setDescription(
+      `**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
     )
+    .addField('Created at:', formatCreatedAt(user.createdAt))
 
-  if (invite.guild.icon) embed.setThumbnail(invite.guild.iconURL())
+  if (user.bot) {
+    const verifiedBot = user.flags.has('VERIFIED_BOT')
 
-  if (invite.guild.splash) embed.setImage(invite.guild.splashURL())
+    let rpc = null
+    try {
+      rpc = await getRPCDetails(user.id)
+    } catch (e) {
+      rpc = null
+    }
 
-  if (invite.guild.available)
+    const details = []
+
+    if (verifiedBot) {
+      details.push(`${Badges.VERIFIED_BOT} **Verified Bot**`)
+    }
+
+    if (rpc) {
+      const availability = rpc.bot_public ? 'Public' : 'Private'
+      details.push(
+        `**${availability}** [(Invite)](${oAuthUrl(rpc.id)})\n`,
+        `> ${rpc.description.replaceAll(/\n/g, '\n> ')}`,
+      )
+    } else {
+      details.push('No RPC information available. This bot is likely too old.')
+    }
+
+    const formattedDetails = details.join('\n')
+    embed.addField('Bot Details:', formattedDetails)
+  }
+
+  channel.send({ embed })
+}
+
+const ONLINE = '<:i_online:468214881623998464>'
+const OFFLINE = '<:i_offline2:468215162244038687>'
+
+/**
+ *
+ * @param {Discord.Client} bot
+ * @param {Discord.TextChannel} channel
+ * @param {Discord.Invite} invite
+ */
+function sendInviteLookup(bot, channel, invite) {
+  const { guild, code, presenceCount, memberCount } = invite
+
+  const embed = new Discord.MessageEmbed()
+
+  if (guild.description) {
+    embed.setDescription(guild.description)
+  }
+
+  embed.setTitle(`:incoming_envelope:  Invite: ${code}`)
+  embed.addField(
+    `Guild Info:`,
+    `${guild.name}\n**ID:** ${guild.id}\n[#${invite.channel.name}](http://discord.com)`,
+    true,
+  )
+
+  const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
+  embed.addField(
+    'Members:',
+    `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
+      `${OFFLINE} **${memberCount}** Total`,
+    true,
+  )
+
+  embed.addField('Created at:', formatCreatedAt(guild.createdAt))
+
+  if (guild.icon) {
+    embed.setThumbnail(guild.iconURL({ size: 4096 }))
+  }
+
+  if (guild.features.length > 0) {
     embed.addField(
-      'Created at:',
-      `${invite.guild.createdAt.toUTCString()} (${time
-        .since(invite.guild.createdAt)
-        .format()})`,
+      'Features:',
+      '```\n' + guild.features.sort().join(', ') + '\n```',
     )
+  }
 
-  if (invite.memberCount)
+  const images = []
+
+  if (guild.splash) {
+    images.push(`[Splash](${guild.splashURL({ size: 4096 })})`)
+  }
+
+  if (guild.banner) {
+    images.push(`[Banner](${guild.bannerURL({ size: 4096 })})`)
+  }
+
+  if (images.length > 0) {
+    embed.addField('Images:', images.join('\n'), true)
+  }
+
+  embed.addField('Verification Level:', guild.verificationLevel, true)
+
+  if (guild.vanityURLCode) {
     embed.addField(
-      'Members:',
-      `<:i_online:468214881623998464> **${invite.presenceCount}** Online (${(
-        (invite.presenceCount / invite.memberCount) *
-        100
-      ).toFixed(0)}%)\n**<:i_offline2:468215162244038687> ${
-        invite.memberCount
-      }** Total`,
+      'Vanity URL:',
+      `[/${guild.vanityURLCode}](https://discord.gg/${guild.vanityURLCode})`,
       true,
     )
+  }
 
-  if (invite.inviter)
-    embed.addField('Inviter:', `${bot.sleet.formatUser(invite.inviter)}`)
-
-  embed
-    .addField('Created at (UTC):', created.toUTCString())
-    .setFooter('Created at')
-    .setTimestamp(created)
+  if (invite.inviter) {
+    embed.addField('Inviter:', `${bot.sleet.formatUser(invite.inviter)}`, true)
+  }
 
   channel.send({ embed })
 }
@@ -168,4 +291,8 @@ function sendGuildLookup(channel, guild) {
     .setTimestamp(created)
 
   channel.send({ embed })
+}
+
+function formatCreatedAt(date) {
+  return date.toUTCString() + ' (' + time.since(date).format() + ')'
 }
