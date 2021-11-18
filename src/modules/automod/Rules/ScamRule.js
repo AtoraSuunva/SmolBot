@@ -12,7 +12,9 @@ const INVALID_CHARS_REGEX = /[\u200b-\u200f\x00]/g
  *            Host
  */
 function getHostsFrom(text) {
-  const matches = [...text.matchAll(URL_REGEX)].map(m => m.groups.host.toLowerCase())
+  const matches = [...text.matchAll(URL_REGEX)].map(m =>
+    m.groups.host.toLowerCase(),
+  )
   // Don't have the same host twice
   return [...new Set(matches)]
 }
@@ -29,8 +31,9 @@ function cleanText(text) {
  */
 function checkAPIForScam(host) {
   // API returns 0 or 1 to for "not known scam" and "known scam" respectively
-  return fetch(`https://api.hyperphish.com/check-domain/${encodeURI(host)}`)
-         .then(r => !!r.json())
+  return fetch(
+    `https://api.hyperphish.com/check-domain/${encodeURI(host)}`,
+  ).then(r => !!r.json())
 }
 
 /**
@@ -38,20 +41,36 @@ function checkAPIForScam(host) {
  * @returns {bool|null} True if a scam domain, False if not, null if unknown
  */
 async function checkDBForScam(db, host) {
-  const result = await db.oneOrNone('SELECT * FROM domains WHERE host = $1', [host])
+  const result = await db.oneOrNone(
+    'SELECT host, is_scam FROM domains WHERE host = $1 AND is_scam = true',
+    [host],
+  )
 
   if (result === null) {
     return null
   }
 
-  return result.is_scam
+  return { host: result.is_host, is_scam: result.is_scam }
 }
 
 /**
  * Adds a host to the database, noting if it's a scam or not
  */
 function addHostToDB(db, host, { isScam }) {
-  return db.none('INSERT INTO domains (host, is_scam) VALUES ($1, $2)', [host, isScam])
+  return db.none('INSERT INTO domains (host, is_scam) VALUES ($1, $2)', [
+    host,
+    isScam,
+  ])
+}
+
+/**
+ * Increases the count of times a domain has been seen
+ */
+function addHitToDB(db, host) {
+  return db.none(
+    'UPDATE domains SET times_seen = times_seen + 1 WHERE host = $1',
+    [host],
+  )
 }
 
 /**
@@ -82,8 +101,10 @@ module.exports = class ScamRule extends Rule {
     const db = message.client.sleet.db
     const knownScams = await Promise.all(hosts.map(h => checkDBForScam(db, h)))
 
-    if (knownScams.some(s => s)) {
+    if (knownScams.some(s => s && s.is_scam)) {
       // There's a scam
+      knownScams.map(d => addHitToDB(db, d.host))
+
       return {
         punishment: this.punishment,
         deletes: [message],
