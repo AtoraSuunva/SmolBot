@@ -84,7 +84,7 @@ module.exports.events.raw = async (bot, packet) => {
   const channel = bot.channels.cache.get(packet.d.channel_id)
 
   // no channel, just give up
-  if (!channel) return
+  if (!channel || !channel.messages) return
 
   const messageCached = channel.messages.cache.get(packet.d.message_id)
   const memberCached = channel.guild.members.cache.get(packet.d.user_id)
@@ -121,7 +121,6 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     // Time to parse it
     return parseMessage(bot, react.message, react, member)
   } else if (reactMessages.has(react.message.id)) {
-
     if (member.roles.cache.has('122150407806910464')) {
       return react.users.remove(member)
     }
@@ -236,7 +235,10 @@ async function parseMessage(bot, message, react, member) {
       log.push(`\`${roleInfo.role}\` is higher or equal to your highest role`)
     } else if (role.position >= message.guild.me.roles.highest.position) {
       log.push(`\`${roleInfo.role}\` is higher or equal to my highest role`)
-    } else if (roleInfo.custom && !message.client.emojis.cache.get(roleInfo.emoji)) {
+    } else if (
+      roleInfo.custom &&
+      !message.client.emojis.cache.get(roleInfo.emoji)
+    ) {
       log.push(
         `\`${roleInfo.role}\` is not assigned to an emoji I have access to!`,
       )
@@ -252,9 +254,10 @@ async function parseMessage(bot, message, react, member) {
   log.push(`\nSettings: \`${JSON.stringify(giveSettings)}\``)
 
   if (Object.keys(giveRoles).length > 0) {
-
     if (!message.channel.permissionsFor(bot.user).has('ADD_REACTIONS')) {
-      return member.send('I am missing "Add Reactions" permissions to setup the reaction roles.')
+      return member.send(
+        'I am missing "Add Reactions" permissions to setup the reaction roles.',
+      )
     }
 
     member.send(
