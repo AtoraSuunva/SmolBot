@@ -2,7 +2,8 @@ const AutoProp = require('./AutoProp')
 const Rule = require('./Rule')
 
 // Lol regexes
-const inviteRegex = /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/gi
+const inviteRegex =
+  /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/gi
 
 /**
  * Allows a punishment to happen if a user shills another server
@@ -11,25 +12,29 @@ module.exports = class AdRule extends Rule {
   /**
    * @param {String|Number} id The database id of this rule
    * @param {String} punishment The punishment to do
-   * @param {Number} maxAds The max amount a user can post ads to servers
+   * @param {Number} limit The max amount a user can post ads to servers
    * @param {Number} timeout The timeout (in seconds) before a violation expires
    * @param {String[]} params The ids of the servers to ignore in ads
    */
-  constructor(id, punishment, maxAds, timeout, params) {
-    super(id, 'ad', punishment, maxAds, timeout, [])
-    this.punishment = punishment
-    this.maxAds = maxAds
-    this.timeout = timeout * 1000
-    this.parameters = params
+  constructor({ id, punishment, limit, timeout, params, message, silent }) {
+    super({
+      id,
+      name: 'ad',
+      punishment,
+      limit,
+      timeout,
+      params: [],
+      message: message || `Max ads (${limit}) reached`,
+      silent,
+    })
 
     this.violations = AutoProp({}, 0)
     this.shills = AutoProp({}, [])
-    this.name = `Max ads (${maxAds}) reached`
   }
 
   async filter(message) {
     const uid = message.guild.id + message.author.id
-    const allowed = this.parameters || []
+    const allowed = this.params || []
 
     // Fetch all the invites mentionned that
     // 1) Exist
@@ -50,7 +55,7 @@ module.exports = class AdRule extends Rule {
 
     let punishment
 
-    if (this.violations[uid] >= this.maxAds) {
+    if (this.violations[uid] >= this.limit) {
       punishment = this.punishment
     }
 

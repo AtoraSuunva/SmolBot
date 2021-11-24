@@ -50,19 +50,30 @@ module.exports = class BlacklistRule extends Rule {
    * @param {Number} maxChars The max amount a user can post a blacklisted char in 1/over many messages
    * @param {Number} timeout The timeout (in seconds) before a violation expires
    */
-  constructor(id, punishment, maxCount, timeout, blacklist = defaultChars) {
-    super(id, 'blacklist', maxCount, timeout, blacklist)
-    this.punishment = punishment
-    this.maxCount = maxCount
-    this.timeout = timeout * 1000
-    this.parameters = blacklist
+  constructor({
+    id,
+    punishment,
+    limit,
+    timeout,
+    params = defaultChars,
+    message,
+    silent,
+  }) {
+    super({
+      id,
+      punishment,
+      name: 'blacklist',
+      limit,
+      timeout,
+      params,
+      message: message || `Max blacklisted words (${limit}) reached`,
+      silent,
+    })
 
-    this.blacklist = blacklist.map(v => v.toLowerCase())
+    this.blacklist = params.map(v => v.toLowerCase())
     this.lastMessage = {}
     this.violations = AutoProp({})
     this.vioMessages = {}
-
-    this.name = `Max blacklisted words (${maxCount}) reached`
   }
 
   filter(message) {
@@ -85,7 +96,7 @@ module.exports = class BlacklistRule extends Rule {
         occ,
       )
 
-      if (this.violations[uid] >= this.maxCount) {
+      if (this.violations[uid] >= this.limit) {
         return { punishment: this.punishment, deletes: this.vioMessages[uid] }
       }
     }

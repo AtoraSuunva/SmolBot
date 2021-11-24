@@ -12,24 +12,35 @@ module.exports = class RepeatsRule extends Rule {
    * @param {Number} timeout The timeout (in seconds) before a violation expires
    * @param {String[]} ignore If a message starts with one of the strings, ignore it
    */
-  constructor(id, punishment, maxRepeats, timeout, ignore = []) {
-    super(id, 'repeats', punishment, maxRepeats, timeout, ignore)
-    this.punishment = punishment
-    this.maxRepeats = maxRepeats
-    this.timeout = timeout * 1000
-    this.parameters = ignore
+  constructor({
+    id,
+    punishment,
+    limit,
+    timeout,
+    params = [],
+    message,
+    silent,
+  }) {
+    super({
+      id,
+      name: 'repeats',
+      punishment,
+      limit,
+      timeout,
+      params: params.map(v => v.toLowerCase()),
+      message: message || `Max repeats reached (${limit})`,
+      silent,
+    })
 
-    this.ignore = ignore.map(v => v.toLowerCase())
     this.lastMessage = {}
     this.violations = new Map()
-    this.name = `Max repeats reached (${maxRepeats})`
   }
 
   filter(message) {
     const uid = message.guild.id + message.author.id
     const caught = this.violations.get(uid) || new Set()
 
-    if (this.ignore.find(v => message.content.toLowerCase().startsWith(v))) {
+    if (this.params.find(v => message.content.toLowerCase().startsWith(v))) {
       return
     }
 

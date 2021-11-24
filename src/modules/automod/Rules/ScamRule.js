@@ -50,7 +50,7 @@ async function checkDBForScam(db, host) {
     return null
   }
 
-  return { host: result.is_host, is_scam: result.is_scam }
+  return { host: result.host, is_scam: result.is_scam }
 }
 
 /**
@@ -77,9 +77,17 @@ function addHitToDB(db, host) {
  * Checks for scam domains ("free discord nitro!")
  */
 module.exports = class ScamRule extends Rule {
-  constructor(id, punishment, limit, timeout, params) {
-    super(id, 'scam', punishment, limit, timeout * 1000, params)
-    this.name = 'Scam domain detected'
+  constructor({ id, punishment, limit, timeout, params, message, silent }) {
+    super({
+      id,
+      name: 'scam',
+      punishment,
+      limit,
+      timeout,
+      params,
+      message: message || 'Scam domain detected',
+      silent,
+    })
   }
 
   /**

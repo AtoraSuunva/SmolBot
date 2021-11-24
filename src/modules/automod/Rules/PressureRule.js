@@ -1,3 +1,5 @@
+const Rule = require('./Rule')
+
 const PRESSURE = {
   /** Base pressure added on every message */
   BASE: 10,
@@ -19,15 +21,18 @@ const PRESSURE = {
 /**
  * Pressure-based automod, based on https://erikmcclure.com/blog/pressure-based-anti-spam-for-discord-bots/
  */
-module.exports = class Rule {
-  constructor(id, punishment, limit, timeout, params) {
-    this.id = id
-    this.name = `Max Pressure (${limit})`
-    this.punishment = punishment
-    this.limit = limit
-    this.timeout = timeout * 1000
-    this.params = params
-    this.reason = `Too much pressure (${limit})`
+module.exports = class PressureRule extends Rule {
+  constructor({ id, punishment, limit, timeout, params, message, silent }) {
+    super({
+      id,
+      name: 'pressure',
+      punishment,
+      limit,
+      timeout,
+      params,
+      message: message || `Too much pressure (${limit})`,
+      silent,
+    })
 
     this.pressure = new Map()
     this.lastMessage = new Map()

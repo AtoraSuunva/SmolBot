@@ -16,26 +16,29 @@ module.exports = class RegexRule extends Rule {
    * @param {String[]} regex The regex to match against, should be an array of [regex, flags], flags optional
    *  regex can also be a string of the form `'/regexp/gi'` and it will be parsed into regex + flags
    */
-  constructor(id, punishment, maxCount, timeout, regex) {
-    super(id, 'regex', punishment, maxCount, timeout, regex)
-    this.punishment = punishment
-    this.maxCount = maxCount
-    this.timeout = timeout * 1000
-    this.parameters = regex
+  constructor({ id, punishment, limit, timeout, params, message, silent }) {
+    super({
+      id,
+      name: 'regex',
+      punishment,
+      limit,
+      timeout,
+      params,
+      message: message || `Max regex matches (${limit}) reached`,
+      silent,
+    })
 
-    const [, regExp, flags] = regexRegex.exec(regex[0]) || [
+    const [, regExp, flags] = regexRegex.exec(params[0]) || [
       ,
-      regex[0],
-      regex[1] || '',
+      params[0],
+      params[1] || '',
     ]
 
     this.regex =
-      regex[0] instanceof RegExp ? regex[0] : new RegExp(regExp, flags)
+      params[0] instanceof RegExp ? params[0] : new RegExp(regExp, flags)
     this.lastMessage = {}
     this.violations = AutoProp({})
     this.vioMessages = {}
-
-    this.name = `Max regex matches (${maxCount}) reached`
   }
 
   filter(message) {
@@ -62,7 +65,7 @@ module.exports = class RegexRule extends Rule {
         occ,
       )
 
-      if (this.violations[uid] >= this.maxCount) {
+      if (this.violations[uid] >= this.limit) {
         return { punishment: this.punishment, deletes: this.vioMessages[uid] }
       }
     }

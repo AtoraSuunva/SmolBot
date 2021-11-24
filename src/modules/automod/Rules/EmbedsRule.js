@@ -11,16 +11,20 @@ module.exports = class EmbedsRule extends Rule {
    * @param {Number} maxRepeats The max number of embeds with the same name/size
    * @param {Number} timeout The time (in seconds) before a violation expires
    */
-  constructor(id, punishment, maxRepeats, timeout) {
-    super(id, 'embeds', punishment, maxRepeats, timeout, [])
-    this.punishment = punishment
-    this.maxRepeats = maxRepeats
-    this.timeout = timeout * 1000
-    this.parameters = []
+  constructor({ id, punishment, limit, timeout, message, silent }) {
+    super({
+      id,
+      name: 'embeds',
+      punishment,
+      limit,
+      timeout,
+      params: [],
+      message: message || `Max embed repeats reached (${limit})`,
+      silent,
+    })
 
     this.lastAttach = {}
     this.violations = AutoProp({})
-    this.name = `Max embed repeats reached (${maxRepeats})`
   }
 
   filter(message) {
@@ -42,7 +46,7 @@ module.exports = class EmbedsRule extends Rule {
       attach.name === lAttach.name &&
       attach.size === lAttach.size
     ) {
-      if (++this.violations[uid] >= this.maxRepeats) {
+      if (++this.violations[uid] >= this.limit) {
         return { punishment: this.punishment }
       }
 

@@ -124,29 +124,22 @@ async function setupAutomodFromDatabase(db) {
 
     try {
       const rule = Rules[data.rule_name]
-        ? new Rules[data.rule_name](
-            data.id,
-            data.punishment,
-            data.trigger_limit,
-            data.timeout,
-            data.params,
-          )
+        ? new Rules[data.rule_name]({
+            id: data.id,
+            punishment: data.punishment,
+            limit: data.trigger_limit,
+            timeout: data.timeout,
+            params: data.params,
+            message: data.message,
+            silent: data.silent,
+          })
         : null
 
       if (rule) {
         activeRules.get(guild_id).push(rule)
       }
     } catch (e) {
-      console.error(
-        'FAILED TO CREATE RULE',
-        data.rule_name,
-        data.id,
-        data.punishment,
-        data.trigger_limit,
-        data.timeout,
-        data.params,
-        e,
-      )
+      console.error('FAILED TO CREATE RULE', data.rule_name, data.id, data, e)
     }
   }
 }
@@ -300,6 +293,16 @@ async function addRule(bot, message, params) {
   // return message.channel.send(`\`${punishment} ${limit} ${timeout} ['${ruleParams.join("', '")}']\``)
 
   try {
+    const newRule = new Rules[name]({
+      id,
+      punishment,
+      limit,
+      timeout,
+      params: ruleParams,
+      message: undefined,
+      silent: false,
+    })
+
     const id = await addRuleToDatabase(
       bot.sleet.db,
       message.guild.id,
@@ -309,7 +312,7 @@ async function addRule(bot, message, params) {
       timeout,
       ruleParams,
     )
-    const newRule = new Rules[name](id, punishment, limit, timeout, ruleParams)
+
     activeRules.get(message.guild.id).push(newRule)
     message.channel.send(
       `**New rule created:**\n\`\`\`py\n[${id}] ${newRule.name} {${timeout} s}${
@@ -422,14 +425,15 @@ async function handleMessage(bot, message) {
 }
 
 async function runRule({ bot, message, rule: r, prepend, prefix }) {
-  const { deletes, punishment, reason, silent } = (await r.filter(message)) || {}
+  const { deletes, punishment, reason, silent } =
+    (await r.filter(message)) || {}
 
   if (!punishment) return
 
   const usertag = bot.sleet.formatUser(message.author)
-  const realReason = reason || r.name || 'No reason!'
+  const realReason = reason || r.message || r.name || 'No reason!'
   const logDeletedMessage = message.guild.id === '301319624874655744'
-  let silentAction = silent ?? false
+  let silentAction = (silent || r.silent) ?? false
   let action = null
   let extra = null
 
@@ -534,7 +538,8 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
 
           setTimeout(async () => {
             const perms = msg.channel.permissionOverwrites.get(member.id)
-            if (original && perms) perms.delete('Return pre-whisper perms (timeout)')
+            if (original && perms)
+              perms.delete('Return pre-whisper perms (timeout)')
           }, 5000)
         })
 
@@ -552,7 +557,10 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
 
   if (msg && !silentAction) {
     prefix = prefix && silentChannels.get(message.channel.id) < 1
-    message.channel.send((prefix ? prepend : '') + msg, { autoDelete: false, allowedMentions: { parse: ['roles'] } })
+    message.channel.send((prefix ? prepend : '') + msg, {
+      autoDelete: false,
+      allowedMentions: { parse: ['roles'] },
+    })
   }
 
   const modlogMsg =

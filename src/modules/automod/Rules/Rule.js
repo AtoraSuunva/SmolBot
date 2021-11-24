@@ -3,13 +3,24 @@
  * Takes a punishment (null, 'delete', roleban', 'kick', 'ban') and does it all the time
  */
 module.exports = class Rule {
-  constructor(id, name, punishment, limit, timeout, params) {
+  constructor({
+    id,
+    name,
+    punishment,
+    limit,
+    timeout,
+    params,
+    message,
+    silent,
+  }) {
     this.id = id
     this.name = name
     this.punishment = punishment
     this.limit = limit
     this.timeout = timeout
     this.params = params
+    this.message = message || name
+    this.silent = silent
   }
 
   /**
