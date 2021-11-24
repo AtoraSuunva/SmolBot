@@ -285,10 +285,9 @@ function sendGuildLookup(channel, guild) {
     .setTitle(`Guild: ${guild.name}`)
     .addField('ID:', guild.id, true)
     .addField('Invite:', guild.instant_invite, true)
-    .addField('Channels:', guild.channels.length + ' voice', true)
-    .addField('Members:', guild.presence_count + ' online', true)
-    .addField('Created at:', created.toUTCString())
-    .setTimestamp(created)
+    .addField('Channels:', `${guild.channels.length} voice`, true)
+    .addField('Members:', `${guild.presence_count} online`, true)
+    .addField('Created at:', formatCreatedAt(created))
 
   channel.send({ embed })
 }
