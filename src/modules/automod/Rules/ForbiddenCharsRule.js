@@ -20,29 +20,40 @@ module.exports = class ForbiddenChars extends Rule {
    * @param {string|number} id The id of this rule in the database
    * @param {String} punishment The punishment to apply after violating too many forbidden chars
    * @param {String[]} charList An array of chars to blacklist & delete on sight
-   * @param {Number} maxChars The max amount a user can post a blacklisted char in 1/over many messages
+   * @param {Number} limit The max amount a user can post a blacklisted char in 1/over many messages
    * @param {Number} timeout The timeout (in seconds) before a violation expires
    */
-  constructor(id, punishment, maxChars, timeout, charList = defaultChars) {
-    super(id, 'forbidden', punishment, maxChars, timeout, charList)
-    this.punishment = punishment
-    this.maxChars = maxChars
-    this.timeout = timeout * 1000
-    this.parameters = charList
+  constructor({
+    id,
+    punishment,
+    limit,
+    timeout,
+    params = defaultChars,
+    message,
+    silent,
+  }) {
+    super({
+      id,
+      name: 'forbidden',
+      punishment,
+      limit,
+      timeout,
+      params,
+      message: message || `Max forbidden characters (${limit}) reached`,
+      silent,
+    })
 
-    this.charList = charList
     this.lastMessage = {}
     this.violations = AutoProp({})
-    this.name = `Max forbidden characters (${maxChars}) reached`
   }
 
   filter(message) {
     const uid = message.guild.id + message.author.id
-    const occ = countOcc(message.content, this.charList)
+    const occ = countOcc(message.content, this.params)
 
     if (occ > 0) {
       setTimeout(id => --this.violations[id], this.timeout, uid)
-      if (this.violations[uid] + occ >= this.maxChars) {
+      if (this.violations[uid] + occ >= this.limit) {
         return { punishment: this.punishment }
       } else {
         return { punishment: 'delete' }

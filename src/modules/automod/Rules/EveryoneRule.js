@@ -12,16 +12,27 @@ module.exports = class EveryoneRule extends Rule {
    * @param {Number} timeout The timeout (in seconds) before a violation expires
    * @param {String[]?} trapRoles The IDs of 'trap' mentionable roles called 'everyone' and 'here', in that order
    */
-  constructor(id, punishment, maxMentions, timeout, trapRoles = []) {
-    super(id, 'everyone', punishment, maxMentions, timeout, trapRoles)
-    this.punishment = punishment
-    this.maxMentions = maxMentions
-    this.timeout = timeout * 1000
-    this.parameters = trapRoles
+  constructor({
+    id,
+    punishment,
+    limit,
+    timeout,
+    params = [],
+    message,
+    silent,
+  }) {
+    super({
+      id,
+      name: 'everyone',
+      punishment,
+      limit,
+      timeout,
+      params,
+      message: message || `Max everyone/here mentions (${limit}) reached`,
+      silent,
+    })
 
-    this.trapRoles = trapRoles
     this.violations = AutoProp({})
-    this.name = `Max everyone/here mentions (${maxMentions}) reached`
   }
 
   filter(message) {
@@ -29,9 +40,9 @@ module.exports = class EveryoneRule extends Rule {
 
     if (
       message.mentions.everyone ||
-      this.trapRoles.some(r => message.mentions.roles.has(r))
+      this.params.some(r => message.mentions.roles.has(r))
     ) {
-      if (++this.violations[uid] >= this.maxMentions) {
+      if (++this.violations[uid] >= this.limit) {
         return { punishment: this.punishment }
       }
       setTimeout(id => --this.violations[id], this.timeout, uid)
