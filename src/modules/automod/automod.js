@@ -112,7 +112,7 @@ async function setupAutomodFromDatabase(db) {
     automodConfig.set(guild_id, data)
   }
 
-  const dbRules = await db.any('SELECT * FROM automod_rules')
+  const dbRules = await db.any('SELECT * FROM automod_rules ORDER BY id')
 
   activeRules.clear()
   for (let v of dbRules) {
@@ -225,11 +225,23 @@ module.exports.events.message = (bot, message) => {
       message.channel.send(`Counts for ${params[0]} cleared`)
       break
 
+    case 'message':
+      setRuleMessage(bot, message, params)
+      break
+
     default:
       message.channel.send(
         'What do you want to do?\n`help`, `rules`, `view`, `add`, `delete`',
       )
   }
+}
+
+function formatRule(r) {
+  return `[${r.id}] (${r.name}) ${r.message} {${r.timeout / 1000} s}${
+    r.params && r.params.length > 0
+      ? ' [' + r.params.join(', ').replace(/nigger/, 'ni---r') + ']'
+      : ''
+  } -> # ${r.punishment}`
 }
 
 function viewRules(bot, message, page = 1) {
@@ -251,17 +263,9 @@ function viewRules(bot, message, page = 1) {
       `Active rules (${rules.length})${pageIndicator}:` +
         '\n```py\n' +
         rules
+          .sort((a, b) => a.id - b.id)
           .slice(perPage * (page - 1), perPage * page)
-          .map(
-            r =>
-              `[${r.id}] ${r.name} {${r.timeout / 1000} s}${
-                r.parameters && r.parameters.length > 0
-                  ? ' [' +
-                    r.parameters.join(', ').replace(/nigger/, 'ni---r') +
-                    ']'
-                  : ''
-              } -> # ${r.punishment}`,
-          )
+          .map(formatRule)
           .join('\n') +
         '\n```',
     )
@@ -293,8 +297,8 @@ async function addRule(bot, message, params) {
   // return message.channel.send(`\`${punishment} ${limit} ${timeout} ['${ruleParams.join("', '")}']\``)
 
   try {
-    const newRule = new Rules[name]({
-      id,
+    new Rules[name]({
+      id: 0,
       punishment,
       limit,
       timeout,
@@ -312,6 +316,16 @@ async function addRule(bot, message, params) {
       timeout,
       ruleParams,
     )
+
+    const newRule = new Rules[name]({
+      id,
+      punishment,
+      limit,
+      timeout,
+      params: ruleParams,
+      message: undefined,
+      silent: false,
+    })
 
     activeRules.get(message.guild.id).push(newRule)
     message.channel.send(
@@ -356,6 +370,38 @@ async function deleteRule(bot, message, params) {
   } else {
     message.channel.send('Did not delete anything.')
   }
+}
+
+async function setRuleMessage(bot, message, params) {
+  const rules = activeRules.get(message.guild.id)
+
+  if (!rules)
+    return message.channel.send('There are no rules for you to delete.')
+
+  const id = parseInt(params[0])
+
+  if (Number.isNaN(id))
+    return message.channel.send('You need to supply a valid rule ID.')
+
+  const rule = rules.find(r => r.id === id)
+
+  if (!rule) return message.channel.send("That rule doesn't exist.")
+
+  const ruleMessage = params.slice(1).join(' ')
+
+  if (ruleMessage.length > 1000)
+    return message.channel.send('Message must be under 1000 characters.')
+
+  rule.message = ruleMessage
+
+  await bot.sleet.db.any(
+    'UPDATE automod_rules SET message = $1 WHERE id = $2',
+    [ruleMessage, id],
+  )
+
+  message.channel.send(
+    'Set rule message: \n```py\n' + formatRule(rule) + '\n```',
+  )
 }
 
 module.exports.events.messageUpdate = (bot, oldMessage, newMessage) => {
@@ -481,7 +527,7 @@ async function runRule({ bot, message, rule: r, prepend, prefix }) {
     case 'kick':
       if (message.member.kickable) {
         action = 'kicked'
-        message.member.kick(r.name)
+        message.member.kick(realReason)
       }
       break
 
