@@ -31,8 +31,7 @@ const settingsTemplate = [
     name: 'member_add_new',
     type: 'number',
     init: 48,
-    help:
-      'The time in hours for an account to be marked as "new". 0 to disable.',
+    help: 'The time in hours for an account to be marked as "new". 0 to disable.',
   },
   {
     name: 'member_add_invite',
@@ -134,9 +133,18 @@ const invites = new Map()
 const configs = new Map()
 
 function fetchConfig(guild, channel = null) {
+  const me = guild.client.user
+
+  if (channel && !channel.permissionsFor(me).has('VIEW_CHANNEL')) {
+    channel = null
+  }
+
   if (!channel && guild.channels) {
     channel = guild.channels.cache.find(
-      c => c.topic && c.topic.split('\n').includes(prefix + 'modlog'),
+      c =>
+        c.permissionsFor(me).has('VIEW_CHANNEL') &&
+        c.topic &&
+        c.topic.split('\n').includes(prefix + 'modlog'),
     )
   }
 
@@ -441,10 +449,6 @@ module.exports.events.guildMemberAdd = async (bot, member) => {
 }
 
 async function getInviter(bot, guild) {
-  if (!guild.me.permissions.has('MANAGE_GUILD')) {
-    return null
-  }
-
   const oldInvites = invites.get(guild.id)
 
   if (!oldInvites) {
@@ -484,13 +488,14 @@ module.exports.events.guildMemberRemove = async (bot, member) => {
 
   if (member.guild.me.permissions.has('VIEW_AUDIT_LOG')) {
     await sleep(500) // thanks audit logs
-    latestKick = (after
-      ? await member.guild.fetchAuditLogs({ type: 'MEMBER_KICK', limit: 1 })
-      : await member.guild.fetchAuditLogs({
-          type: 'MEMBER_KICK',
-          limit: 1,
-          after,
-        })
+    latestKick = (
+      after
+        ? await member.guild.fetchAuditLogs({ type: 'MEMBER_KICK', limit: 1 })
+        : await member.guild.fetchAuditLogs({
+            type: 'MEMBER_KICK',
+            limit: 1,
+            after,
+          })
     ).entries.first()
 
     if (
@@ -709,12 +714,8 @@ module.exports.events.messageDeleteBulk = async (bot, messages) => {
   const sent = await sendLog(config.channel, ':fire:', 'Channel Purged', msg, {
     files,
   })
-  const attach = sent.attachments.first()
-
-  if (attach) {
-    const archiveUrl = generateArchiveUrl(sent.channel.id, attach.id)
-    sent.edit(`${sent.content}\n<${archiveUrl}>`)
-  }
+  const attach = sent.attachments.first().id
+  sent.edit(`${sent.content}\n<${generateArchiveUrl(sent.channel.id, attach)}>`)
 }
 
 class RollingStore {
@@ -753,13 +754,17 @@ module.exports.events.messageDelete = async (bot, message) => {
   let executor, reason
 
   if (message.guild.me.hasPermission('VIEW_AUDIT_LOG')) {
-    const lastDel = (after
-      ? await message.guild.fetchAuditLogs({ type: 'MESSAGE_DELETE', limit: 1 })
-      : await message.guild.fetchAuditLogs({
-          type: 'MESSAGE_DELETE',
-          limit: 1,
-          after,
-        })
+    const lastDel = (
+      after
+        ? await message.guild.fetchAuditLogs({
+            type: 'MESSAGE_DELETE',
+            limit: 1,
+          })
+        : await message.guild.fetchAuditLogs({
+            type: 'MESSAGE_DELETE',
+            limit: 1,
+            after,
+          })
     ).entries.first()
 
     if (
