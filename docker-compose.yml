@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  smolbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      TOKEN: '${TOKEN}'
+      APPLICATION_ID: '${APPLICATION_ID}'
+      SLEETCORD_LOG_LEVEL: debug
+    volumes:
+      - ./:/home/node/app
