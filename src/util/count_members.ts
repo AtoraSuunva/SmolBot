@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { CommandInteraction, Util } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { ChatInputCommandInteraction, escapeMarkdown } from 'discord.js'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 
 export const count_members = new SleetSlashCommand(
   {
@@ -20,7 +20,7 @@ export const count_members = new SleetSlashCommand(
   },
 )
 
-async function runCountMembers(interaction: CommandInteraction) {
+async function runCountMembers(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   const nameContains = interaction.options.getString('name_contains')
 
@@ -51,7 +51,7 @@ async function runCountMembers(interaction: CommandInteraction) {
   return interaction.editReply(
     `**${count.toLocaleString()}** member${
       count === 1 ? ' has' : 's have'
-    } **"${Util.escapeMarkdown(nameContains)}"** in their name.`,
+    } **"${escapeMarkdown(nameContains)}"** in their name.`,
   )
 }
 

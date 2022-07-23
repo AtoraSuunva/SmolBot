@@ -1,6 +1,7 @@
 import {
   APIApplication,
   ApplicationCommandOptionType,
+  GuildVerificationLevel,
 } from 'discord-api-types/v10'
 import {
   Client,
@@ -9,15 +10,16 @@ import {
   Formatters,
   GuildPreview,
   Invite,
-  MessageEmbed,
+  EmbedBuilder,
   SnowflakeUtil,
   User,
   UserFlags,
-  Util,
   Widget,
+  escapeInlineCode,
+  ChatInputCommandInteraction,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 import { fetch } from 'undici'
+import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 
 export const lookup = new SleetSlashCommand(
   {
@@ -37,7 +39,7 @@ export const lookup = new SleetSlashCommand(
   },
 )
 
-async function runLookup(interaction: CommandInteraction) {
+async function runLookup(interaction: ChatInputCommandInteraction) {
   const { client } = interaction
   const data = interaction.options.getString('data', true)
 
@@ -109,12 +111,12 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
   try {
     return await client.fetchGuildWidget(guildId)
   } catch (e) {
-    if (e instanceof DiscordAPIError && e.httpStatus === 403) {
+    if (e instanceof DiscordAPIError && e.status === 403) {
       const snowflake = SnowflakeUtil.deconstruct(guildId)
       return {
         exists: true,
         message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatCreatedAt(
-          snowflake.date,
+          new Date(Number(snowflake.timestamp)),
         )}`,
       }
     }
@@ -148,22 +150,23 @@ async function getRPCDetails(app: string): Promise<APIApplication> {
   throw new Error('Failed to fetch application RPC details.')
 }
 
-const Badges = {
-  DISCORD_EMPLOYEE: '<:BadgeStaff:909313939911897138>',
-  PARTNERED_SERVER_OWNER: '<:BadgePartner:909313940725571604>',
-  HYPESQUAD_EVENTS: '<:BadgeHypeSquadEvents:909313941178548246>',
-  BUGHUNTER_LEVEL_1: '<:BadgeBugHunter:909313942407483402>',
-  HOUSE_BRAVERY: '<:BadgeBravery:909313943233789972>',
-  HOUSE_BRILLIANCE: '<:BadgeBrilliance:909313944047468544>',
-  HOUSE_BALANCE: '<:BadgeBalance:909313944869564416>',
-  EARLY_SUPPORTER: '<:BadgeEarlySupporter:909313946132029440>',
-  TEAM_USER: '[Team User]',
-  BUGHUNTER_LEVEL_2: '<:BadgeBugHunterLvl2:909313947172233266>',
-  VERIFIED_BOT: '<:VerifiedBot:910427927160709180>',
-  EARLY_VERIFIED_DEVELOPER:
-    '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
-  DISCORD_CERTIFIED_MODERATOR: '<:BadgeCertifiedMod:909313949332275300>',
-  BOT_HTTP_INTERACTIONS: '[HTTP Interactions]',
+const Badges: Record<keyof typeof UserFlags, string> = {
+  Staff: '<:BadgeStaff:909313939911897138>',
+  Partner: '<:BadgePartner:909313940725571604>',
+  Hypesquad: '<:BadgeHypeSquadEvents:909313941178548246>',
+  BugHunterLevel1: '<:BadgeBugHunter:909313942407483402>',
+  HypeSquadOnlineHouse1: '<:BadgeBravery:909313943233789972>',
+  HypeSquadOnlineHouse2: '<:BadgeBrilliance:909313944047468544>',
+  HypeSquadOnlineHouse3: '<:BadgeBalance:909313944869564416>',
+  PremiumEarlySupporter: '<:BadgeEarlySupporter:909313946132029440>',
+  TeamPseudoUser: '[Team User]',
+  BugHunterLevel2: '<:BadgeBugHunterLvl2:909313947172233266>',
+  VerifiedBot: '<:VerifiedBot:910427927160709180>',
+  VerifiedDeveloper: '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
+  CertifiedModerator: '<:BadgeCertifiedMod:909313949332275300>',
+  BotHTTPInteractions: '[HTTP Interactions]',
+  Spammer: '[Spammer]',
+  Quarantined: '[Quarantined]',
 }
 
 /**
@@ -174,10 +177,22 @@ const Badges = {
 function getUserBadgeEmojis(user: User): string[] {
   if (!user.flags) return []
 
-  const badges = []
+  const badges: string[] = []
 
-  for (const [key, flag] of Object.entries(UserFlags.FLAGS)) {
-    if (key !== 'VERIFIED_BOT' && user.flags.has(flag) && key in Badges) {
+  // Object.entries(UserFlags) returns an array of:
+  //   - ['StringName', bit]
+  //   - ['BitString', 'StringName']
+  // Where 'StringName' is 'Staff', 'Partner', etc.
+  //       bit is 0b1, 0b10, 0b100, etc. (1, 2, 4, etc.)
+  //       'BitString' is '1', '2', '4' etc.
+  // UserFlags is both a map 'string' -> bit and bit -> 'string'
+  for (const [key, flag] of Object.entries(UserFlags)) {
+    if (
+      typeof flag === 'number' &&
+      key !== 'VerifiedBot' &&
+      user.flags.has(flag) &&
+      key in Badges
+    ) {
       badges.push(Badges[key as keyof typeof Badges])
     }
   }
@@ -198,33 +213,35 @@ async function sendUserLookup(
     return void interaction.editReply('Did not find info for that user.')
   }
 
-  const rawUser = '``' + Util.escapeInlineCode(user.tag) + '``'
+  const rawUser = '``' + escapeInlineCode(user.tag) + '``'
   const badges = getUserBadgeEmojis(user)
   const formattedBadges =
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle(formatUser(user, { id: false, markdown: false }))
     .setThumbnail(user.displayAvatarURL({ size: 4096 }))
     .setDescription(
       `**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
     )
-    .addField('Created at:', formatCreatedAt(user.createdAt))
+    .addFields([
+      { name: 'Created at:', value: formatCreatedAt(user.createdAt) },
+    ])
 
   if (user.bot) {
-    const verifiedBot = user.flags?.has('VERIFIED_BOT')
+    const verifiedBot = user.flags?.has('VerifiedBot')
 
-    let rpc = null
+    let rpc: APIApplication | null = null
     try {
       rpc = await getRPCDetails(user.id)
     } catch (e) {
       rpc = null
     }
 
-    const details = []
+    const details: string[] = []
 
     if (verifiedBot) {
-      details.push(`${Badges.VERIFIED_BOT} **Verified Bot**`)
+      details.push(`${Badges.VerifiedBot} **Verified Bot**`)
     }
 
     if (rpc) {
@@ -258,7 +275,7 @@ async function sendUserLookup(
     }
 
     const formattedDetails = details.join('\n')
-    embed.addField('Bot Details:', formattedDetails)
+    embed.addFields([{ name: 'Bot Details:', value: formattedDetails }])
   }
 
   interaction.editReply({ embeds: [embed] })
@@ -279,7 +296,7 @@ function sendInviteLookup(
     )
   }
 
-  const embed = new MessageEmbed().setFooter({
+  const embed = new EmbedBuilder().setFooter({
     text: 'Source: Invite',
   })
 
@@ -287,22 +304,30 @@ function sendInviteLookup(
     embed.setDescription(guild.description)
   }
 
-  embed.setTitle(`:incoming_envelope:  Invite: ${code}`)
-  embed.addField(
-    `Guild Info:`,
-    `${guild.name}\n**ID:** ${guild.id}\n[#${invite.channel.name}](http://discord.com)`,
-    true,
-  )
-
   const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
-  embed.addField(
-    'Members:',
-    `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
-      `${OFFLINE} **${memberCount}** Total`,
-    true,
-  )
 
-  embed.addField('Created at:', formatCreatedAt(guild.createdAt))
+  embed.setTitle(`:incoming_envelope:  Invite: ${code}`)
+
+  embed.addFields([
+    {
+      name: `Guild Info:`,
+      value: `${guild.name}\n**ID:** ${guild.id}\n[#${
+        invite.channel?.name ?? 'unknown channel'
+      }](http://discord.com)`,
+      inline: true,
+    },
+    {
+      name: 'Members:',
+      value:
+        `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
+        `${OFFLINE} **${memberCount}** Total`,
+      inline: true,
+    },
+    {
+      name: 'Created at:',
+      value: formatCreatedAt(guild.createdAt),
+    },
+  ])
 
   if (guild.icon) {
     // We just checked for an icon above, so this should never be null
@@ -311,13 +336,15 @@ function sendInviteLookup(
   }
 
   if (guild.features.length > 0) {
-    embed.addField(
-      'Features:',
-      Formatters.codeBlock(guild.features.sort().join(', ')),
-    )
+    embed.addFields([
+      {
+        name: 'Features:',
+        value: Formatters.codeBlock(guild.features.sort().join(', ')),
+      },
+    ])
   }
 
-  const images = []
+  const images: string[] = []
 
   if (guild.splash) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -329,21 +356,37 @@ function sendInviteLookup(
   }
 
   if (images.length > 0) {
-    embed.addField('Images:', images.join('\n'), true)
+    embed.addFields([
+      {
+        name: 'Images:',
+        value: images.join('\n'),
+        inline: true,
+      },
+    ])
   }
 
-  embed.addField('Verification Level:', guild.verificationLevel, true)
+  embed.addFields([
+    {
+      name: 'Verification Level:',
+      value: VerificationLevelMap[guild.verificationLevel],
+      inline: true,
+    },
+  ])
 
   if (guild.vanityURLCode) {
-    embed.addField(
-      'Vanity URL:',
-      `[/${guild.vanityURLCode}](https://discord.gg/${guild.vanityURLCode})`,
-      true,
-    )
+    embed.addFields([
+      {
+        name: 'Vanity URL:',
+        value: `[/${guild.vanityURLCode}](https://discord.gg/${guild.vanityURLCode})`,
+        inline: true,
+      },
+    ])
   }
 
   if (invite.inviter) {
-    embed.addField('Inviter:', `${formatUser(invite.inviter)}`, true)
+    embed.addFields([
+      { name: 'Inviter:', value: formatUser(invite.inviter), inline: true },
+    ])
   }
 
   interaction.editReply({ embeds: [embed] })
@@ -353,16 +396,32 @@ function sendGuildWidgetLookup(
   interaction: CommandInteraction,
   widget: Widget,
 ) {
-  const created = SnowflakeUtil.deconstruct(widget.id).date
+  const created = new Date(
+    Number(SnowflakeUtil.deconstruct(widget.id).timestamp),
+  )
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     // The docs specify that `.name` is a string and exists, but the types don't. Bug?
     .setTitle(`Guild: ${(widget as unknown as { name: string }).name}`)
-    .addField('ID:', widget.id, true)
-    .addField('Invite:', widget.instantInvite ?? 'No invite', true)
-    .addField('Channels:', `${widget.channels.size} channels`, true)
-    .addField('Members:', `${widget.presenceCount} online`, true)
-    .addField('Created at:', formatCreatedAt(created))
+    .addFields([
+      { name: 'ID:', value: widget.id, inline: true },
+      {
+        name: 'Invite:',
+        value: widget.instantInvite ?? 'No invite',
+        inline: true,
+      },
+      {
+        name: 'Channels:',
+        value: `${widget.channels.size} channels`,
+        inline: true,
+      },
+      {
+        name: 'Members:',
+        value: `${widget.presenceCount} online`,
+        inline: true,
+      },
+      { name: 'Created at:', value: formatCreatedAt(created) },
+    ])
     .setFooter({
       text: 'Source: Guild Widget',
     })
@@ -374,9 +433,9 @@ function sendGuildPreviewLookup(
   interaction: CommandInteraction,
   preview: GuildPreview,
 ) {
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle(`Guild: ${preview.name}`)
-    .addField('ID:', preview.id, true)
+    .addFields([{ name: 'ID:', value: preview.id, inline: true }])
     .setFooter({
       text: 'Source: Guild Preview',
     })
@@ -390,14 +449,16 @@ function sendGuildPreviewLookup(
     approximatePresenceCount: presenceCount,
   } = preview
   const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
-  embed
-    .addField(
-      'Members:',
-      `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
+  embed.addFields([
+    {
+      name: 'Members:',
+      value:
+        `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
         `${OFFLINE} **${memberCount}** Total`,
-      true,
-    )
-    .addField('Created at:', formatCreatedAt(preview.createdAt))
+      inline: true,
+    },
+    { name: 'Created at:', value: formatCreatedAt(preview.createdAt) },
+  ])
 
   if (preview.icon) {
     // We just checked for an icon above, so this should never be null
@@ -406,10 +467,12 @@ function sendGuildPreviewLookup(
   }
 
   if (preview.features.length > 0) {
-    embed.addField(
-      'Features:',
-      Formatters.codeBlock(preview.features.sort().join(', ')),
-    )
+    embed.addFields([
+      {
+        name: 'Features:',
+        value: Formatters.codeBlock(preview.features.sort().join(', ')),
+      },
+    ])
   }
 
   if (preview.emojis.size > 0) {
@@ -422,19 +485,21 @@ function sendGuildPreviewLookup(
       emojis = trimToLast(emojis.substring(0, 1024), ' ')
     }
 
-    embed.addField('Emojis:', emojis)
+    embed.addFields([{ name: 'Emojis:', value: emojis }])
   }
 
   if (preview.stickers.size > 0) {
-    embed.addField(
-      'Stickers:',
-      Formatters.codeBlock(
-        preview.stickers
-          .first(20)
-          .map(s => s.name)
-          .join(', '),
-      ),
-    )
+    embed.addFields([
+      {
+        name: 'Stickers:',
+        value: Formatters.codeBlock(
+          preview.stickers
+            .first(20)
+            .map(s => s.name)
+            .join(', '),
+        ),
+      },
+    ])
   }
 
   const images: string[] = []
@@ -452,7 +517,9 @@ function sendGuildPreviewLookup(
   }
 
   if (images.length > 0) {
-    embed.addField('Images:', images.join('\n'), true)
+    embed.addFields([
+      { name: 'Images:', value: images.join('\n'), inline: true },
+    ])
   }
 
   interaction.editReply({ embeds: [embed] })
@@ -479,4 +546,12 @@ function trimToLast(string: string, substring: string): string {
 // TODO: global time util
 function formatCreatedAt(date: Date): string {
   return date.toString()
+}
+
+const VerificationLevelMap: Record<GuildVerificationLevel, string> = {
+  [GuildVerificationLevel.None]: 'None',
+  [GuildVerificationLevel.Low]: 'Low',
+  [GuildVerificationLevel.Medium]: 'Medium',
+  [GuildVerificationLevel.High]: 'High',
+  [GuildVerificationLevel.VeryHigh]: 'Very High',
 }

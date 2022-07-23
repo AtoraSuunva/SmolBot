@@ -1,30 +1,41 @@
-import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { ActivityOptions, Client, CommandInteraction } from 'discord.js'
+import {
+  ActivityType,
+  APIApplicationCommandOptionChoice,
+  ApplicationCommandOptionType,
+} from 'discord-api-types/v10'
+import {
+  ActivityOptions,
+  ChatInputCommandInteraction,
+  Client,
+} from 'discord.js'
 import { isOwner, SleetContext, SleetSlashCommand } from 'sleetcord'
+
+/** Our status list needs a type and name to apply */
+type Status = Pick<ActivityOptions, 'name' | 'type'>
 
 /**
  * Valid choices for activities that bots can set
  */
-const activityChoices = [
+const activityChoices: APIApplicationCommandOptionChoice<number>[] = [
   {
     name: 'playing',
-    value: 'PLAYING',
+    value: ActivityType.Playing,
   },
   {
     name: 'streaming',
-    value: 'STREAMING',
+    value: ActivityType.Streaming,
   },
   {
     name: 'listening',
-    value: 'LISTENING',
+    value: ActivityType.Listening,
   },
   {
     name: 'watching',
-    value: 'WATCHING',
+    value: ActivityType.Watching,
   },
   {
     name: 'competing',
-    value: 'COMPETING',
+    value: ActivityType.Competing,
   },
 ]
 
@@ -43,7 +54,7 @@ export const activity = new SleetSlashCommand(
       },
       {
         name: 'type',
-        type: ApplicationCommandOptionType.String,
+        type: ApplicationCommandOptionType.Integer,
         description: 'The activity type to set',
         choices: activityChoices,
       },
@@ -55,57 +66,54 @@ export const activity = new SleetSlashCommand(
   },
 )
 
-/** Our status list needs a type and name to apply */
-type Status = Pick<ActivityOptions, 'name' | 'type'>
-
 /** These statuses will be randomly selected and shown by the bot */
 const statuses: Status[] = [
-  { type: 'PLAYING', name: 'with boorus!' },
-  { type: 'STREAMING', name: 'christian anime!' },
-  { type: 'PLAYING', name: 'send nudes' },
-  { type: 'PLAYING', name: 'as a glaceon irl' },
-  { type: 'STREAMING', name: 'handholding' },
-  { type: 'STREAMING', name: 'pawholding' },
-  { type: 'STREAMING', name: 'some furry stuff' },
-  { type: 'PLAYING', name: 'alone' },
-  { type: 'PLAYING', name: 'with Atlas!' },
-  { type: 'PLAYING', name: 'with RobotOtter!' },
-  { type: 'PLAYING', name: 'with BulbaTrivia!' },
-  { type: 'PLAYING', name: "with Haram--wait he's dead" },
-  { type: 'PLAYING', name: 'with Tol Bot 💙' },
-  { type: 'PLAYING', name: 'with Scops!' },
-  { type: 'PLAYING', name: 'with Napstato--oh, right' },
-  { type: 'PLAYING', name: 'gaming simulator 2022' },
-  { type: 'PLAYING', name: 'aaa' },
-  { type: 'PLAYING', name: 'with shit code.' },
-  { type: 'STREAMING', name: 'the entire bee movie' },
-  { type: 'STREAMING', name: 'memes.' },
-  { type: 'STREAMING', name: 'Atlas Dying.' },
-  { type: 'PLAYING', name: 'Japanese Anime Schoolgirl Sim' },
-  { type: 'PLAYING', name: 'nya' },
-  { type: 'PLAYING', name: 'as a flareon' },
-  { type: 'STREAMING', name: 'Jolt hugs!' },
-  { type: 'STREAMING', name: 'the Twitch logout page.' },
-  { type: 'STREAMING', name: 'Playing' },
-  { type: 'PLAYING', name: 'Streaming' },
-  { type: 'PLAYING', name: 'send dudes' },
-  { type: 'STREAMING', name: 'Atlas crying while debugging' },
-  { type: 'WATCHING', name: 'atlas cry' },
-  { type: 'WATCHING', name: 'the eevees!' },
-  { type: 'LISTENING', name: 'the screams of the damned' },
-  { type: 'WATCHING', name: 'probably something dumb' },
-  { type: 'WATCHING', name: 'RobotOtter and Bulba fight' },
-  { type: 'LISTENING', name: 'the moans of the damned' },
-  { type: 'PLAYING', name: 'kobold' },
-  { type: 'WATCHING', name: 'girls.. , .,' },
-  { type: 'WATCHING', name: 'for big tiddy dragon gf' },
-  { type: 'PLAYING', name: 'funny joke' },
-  { type: 'COMPETING', name: 'competitive shitposting' },
-  { type: 'COMPETING', name: 'the battle tower' },
-  { type: 'COMPETING', name: 'a pokemon battle!' },
-  { type: 'COMPETING', name: 'casual shitposting' },
-  { type: 'COMPETING', name: 'a fight to the death' },
-  { type: 'COMPETING', name: 'violence' },
+  { type: ActivityType.Playing, name: 'with boorus!' },
+  { type: ActivityType.Streaming, name: 'christian anime!' },
+  { type: ActivityType.Playing, name: 'send nudes' },
+  { type: ActivityType.Playing, name: 'as a glaceon irl' },
+  { type: ActivityType.Streaming, name: 'handholding' },
+  { type: ActivityType.Streaming, name: 'pawholding' },
+  { type: ActivityType.Streaming, name: 'some furry stuff' },
+  { type: ActivityType.Playing, name: 'alone' },
+  { type: ActivityType.Playing, name: 'with Atlas!' },
+  { type: ActivityType.Playing, name: 'with RobotOtter!' },
+  { type: ActivityType.Playing, name: 'with BulbaTrivia!' },
+  { type: ActivityType.Playing, name: "with Haram--wait he's dead" },
+  { type: ActivityType.Playing, name: 'with Tol Bot 💙' },
+  { type: ActivityType.Playing, name: 'with Scops!' },
+  { type: ActivityType.Playing, name: 'with Napstato--oh, right' },
+  { type: ActivityType.Playing, name: 'gaming simulator 2022' },
+  { type: ActivityType.Playing, name: 'aaa' },
+  { type: ActivityType.Playing, name: 'with shit code.' },
+  { type: ActivityType.Streaming, name: 'the entire bee movie' },
+  { type: ActivityType.Streaming, name: 'memes.' },
+  { type: ActivityType.Streaming, name: 'Atlas Dying.' },
+  { type: ActivityType.Playing, name: 'Japanese Anime Schoolgirl Sim' },
+  { type: ActivityType.Playing, name: 'nya' },
+  { type: ActivityType.Playing, name: 'as a flareon' },
+  { type: ActivityType.Streaming, name: 'Jolt hugs!' },
+  { type: ActivityType.Streaming, name: 'the Twitch logout page.' },
+  { type: ActivityType.Streaming, name: 'Playing' },
+  { type: ActivityType.Playing, name: 'Streaming' },
+  { type: ActivityType.Playing, name: 'send dudes' },
+  { type: ActivityType.Streaming, name: 'Atlas crying while debugging' },
+  { type: ActivityType.Watching, name: 'atlas cry' },
+  { type: ActivityType.Watching, name: 'the eevees!' },
+  { type: ActivityType.Listening, name: 'the screams of the damned' },
+  { type: ActivityType.Watching, name: 'probably something dumb' },
+  { type: ActivityType.Watching, name: 'RobotOtter and Bulba fight' },
+  { type: ActivityType.Listening, name: 'the moans of the damned' },
+  { type: ActivityType.Playing, name: 'kobold' },
+  { type: ActivityType.Watching, name: 'girls.. , .,' },
+  { type: ActivityType.Watching, name: 'for big tiddy dragon gf' },
+  { type: ActivityType.Playing, name: 'funny joke' },
+  { type: ActivityType.Competing, name: 'competitive shitposting' },
+  { type: ActivityType.Competing, name: 'the battle tower' },
+  { type: ActivityType.Competing, name: 'a pokemon battle!' },
+  { type: ActivityType.Competing, name: 'casual shitposting' },
+  { type: ActivityType.Competing, name: 'a fight to the death' },
+  { type: ActivityType.Competing, name: 'violence' },
 ]
 
 /** Holds the timeout that we use to periodically change the status */
@@ -123,8 +131,8 @@ async function runReady(client: Client) {
 /** Either set a new random status, or set it to the one the user specified */
 async function runActivity(
   this: SleetContext,
-  interaction: CommandInteraction,
-): Promise<void> {
+  interaction: ChatInputCommandInteraction,
+) {
   isOwner(interaction)
 
   if (!interaction.client.user) {
@@ -135,7 +143,7 @@ async function runActivity(
   }
 
   const name = interaction.options.getString('name')
-  const type = interaction.options.getString('type') as Exclude<
+  const type = interaction.options.getInteger('type') as Exclude<
     ActivityOptions['type'],
     undefined
   >
@@ -165,7 +173,7 @@ async function runActivity(
 
 /** You shouldn't see this, this is just a fallback status if the random pick fails */
 const FALLBACK_STATUS: Status = {
-  type: 'PLAYING',
+  type: ActivityType.Playing,
   name: 'an error happened!!',
 } as const
 
@@ -183,16 +191,11 @@ const reverseActivityTypesMap: Record<
   Exclude<Status['type'], undefined>,
   string
 > = {
-  0: 'Playing',
-  PLAYING: 'Playing',
-  1: 'Streaming',
-  STREAMING: 'Streaming',
-  2: 'Listening to',
-  LISTENING: 'Listening to',
-  3: 'Watching',
-  WATCHING: 'Watching',
-  5: 'Competing in',
-  COMPETING: 'Competing in',
+  [ActivityType.Playing]: 'Playing',
+  [ActivityType.Streaming]: 'Streaming',
+  [ActivityType.Listening]: 'Listening to',
+  [ActivityType.Watching]: 'Watching',
+  [ActivityType.Competing]: 'Competing in',
 }
 
 /**

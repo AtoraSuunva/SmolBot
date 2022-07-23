@@ -1,13 +1,13 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
-  AnyChannel,
   Client,
-  CommandInteraction,
   Guild,
   Message,
-  MessageEmbed,
+  EmbedBuilder,
   TextBasedChannel,
   User,
+  Channel,
+  ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
@@ -37,14 +37,14 @@ async function handleMessageCreate(message: Message) {
   }
 
   try {
-    const { messageEmbed, otherEmbeds } = await getQuoteFor(
+    const embed = await getQuoteFor(
       message.client,
       message.author,
       message.content,
     )
 
     message.reply({
-      embeds: [messageEmbed, ...otherEmbeds],
+      embeds: [embed],
       allowedMentions: { parse: [], repliedUser: false },
     })
   } catch {
@@ -52,16 +52,16 @@ async function handleMessageCreate(message: Message) {
   }
 }
 
-async function runQuote(interaction: CommandInteraction) {
+async function runQuote(interaction: ChatInputCommandInteraction) {
   const messageLink = interaction.options.getString('message_link', true)
 
   try {
-    const { messageEmbed, otherEmbeds } = await getQuoteFor(
+    const embed = await getQuoteFor(
       interaction.client,
       interaction.user,
       messageLink,
     )
-    interaction.reply({ embeds: [messageEmbed, ...otherEmbeds] })
+    interaction.reply({ embeds: [embed] })
   } catch (e) {
     interaction.reply({
       ephemeral: true,
@@ -93,16 +93,11 @@ function getMessageLinkIds(str: string): MessageLinkMatches | null {
   }
 }
 
-interface MessageQuote {
-  messageEmbed: MessageEmbed
-  otherEmbeds: MessageEmbed[]
-}
-
 async function getQuoteFor(
   client: Client,
   user: User,
   content: string,
-): Promise<MessageQuote> {
+): Promise<EmbedBuilder> {
   const matches = getMessageLinkIds(content)
 
   if (!matches) {
@@ -123,8 +118,7 @@ async function getQuoteFor(
     throw new Error('Channel not found')
   }
 
-  if (!channel.isText()) {
-    channel
+  if (!channel.isTextBased()) {
     throw new Error('Channel is not a text channel')
   }
 
@@ -138,38 +132,31 @@ async function getQuoteFor(
     throw new Error('Message is not in a guild')
   }
 
-  const messageEmbed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setAuthor({
       name: `${message.author.tag} - #${message.channel.name}`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
     })
-    .setDescription(message.content)
+    .setDescription(message.content || '[Failed to fetch content]')
     .setTimestamp(message.createdTimestamp)
     .setFooter({
       text: `Quoted by ${user.tag}`,
     })
 
   if (message.member) {
-    messageEmbed.setColor(message.member.displayColor)
+    embed.setColor(message.member.displayColor)
   }
 
   const imgEmbed =
     message.attachments.find(e => 'height' in e && 'width' in e) ||
-    message.embeds.find(e => e.image !== null)
+    message.embeds.find(e => 'image' in e)
 
   if (imgEmbed && imgEmbed.url) {
-    messageEmbed.setImage(imgEmbed.url)
+    embed.setImage(imgEmbed.url)
   }
 
-  const otherEmbed = message.embeds.find(
-    e => e.image === null && e.video === null,
-  )
-
-  return {
-    messageEmbed,
-    otherEmbeds: otherEmbed ? [otherEmbed] : [],
-  }
+  return embed
 }
 
 async function tryFetchGuild(
@@ -186,7 +173,7 @@ async function tryFetchGuild(
 async function tryFetchChannel(
   client: Client,
   channelId: string,
-): Promise<AnyChannel | null> {
+): Promise<Channel | null> {
   try {
     return await client.channels.fetch(channelId)
   } catch {

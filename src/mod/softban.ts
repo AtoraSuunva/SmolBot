@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
-  CommandInteraction,
+  ChatInputCommandInteraction,
   Guild,
   GuildBan,
   GuildMember,
@@ -8,11 +8,11 @@ import {
 } from 'discord.js'
 import {
   botHasPermissions,
-  SleetSlashCommand,
+  formatUser,
   getGuild,
   getUsers,
+  SleetSlashCommand,
   tryFetchMember,
-  formatUser,
 } from 'sleetcord'
 
 export const softban = new SleetSlashCommand(
@@ -20,7 +20,7 @@ export const softban = new SleetSlashCommand(
     name: 'softban',
     description:
       'Softbans a user (ban + unban). Unbans + bans already-banned users. Useful to purge messages.',
-    default_member_permissions: ['BAN_MEMBERS'],
+    default_member_permissions: ['BanMembers'],
     dm_permission: false,
     options: [
       {
@@ -68,8 +68,8 @@ interface ActionResult {
   failed: SoftbanActionFail[]
 }
 
-async function runSoftban(interaction: CommandInteraction) {
-  botHasPermissions(interaction, ['BAN_MEMBERS'])
+async function runSoftban(interaction: ChatInputCommandInteraction) {
+  await botHasPermissions(interaction, ['BanMembers'])
 
   const users = await getUsers(interaction, 'users', true)
   const deleteMessages = interaction.options.getInteger('delete_messages') ?? 1
@@ -78,16 +78,10 @@ async function runSoftban(interaction: CommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   const guild = await getGuild(interaction, true)
+  const me = await guild.members.fetchMe()
   const interactionMember = interaction.member as GuildMember
   const userHighestRole = interactionMember.roles.highest
-  const myHighestRole = interactionMember.guild.me?.roles.highest
-
-  if (!myHighestRole) {
-    return interaction.reply({
-      ephemeral: true,
-      content: 'Somehow I am not cached in this guild',
-    })
-  }
+  const myHighestRole = me.roles.highest
 
   const toBan: User[] = []
   const earlyFailed: SoftbanActionFail[] = []
@@ -95,7 +89,7 @@ async function runSoftban(interaction: CommandInteraction) {
   for (const user of users) {
     const member = await tryFetchMember(guild, user.id)
 
-    if (user.id === interaction.client.user?.id) {
+    if (user.id === me.user.id) {
       earlyFailed.push({ user, reason: 'This is me.' })
     } else if (user.id === interaction.user.id) {
       earlyFailed.push({ user, reason: 'You cannot softban yourself.' })
@@ -190,7 +184,10 @@ async function softbanUser(
       await guild.bans.remove(user, 'Softban')
     }
 
-    await guild.bans.create(user, { reason, days: delete_messages })
+    await guild.bans.create(user, {
+      reason,
+      deleteMessageDays: delete_messages,
+    })
 
     if (!isAlreadyBanned) {
       await guild.bans.remove(user, 'Softban')

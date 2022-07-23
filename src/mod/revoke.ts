@@ -1,26 +1,26 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
-  CommandInteraction,
   Guild,
   GuildBan,
   Invite,
-  MessageEmbed,
+  EmbedBuilder,
   User,
+  ChatInputCommandInteraction,
 } from 'discord.js'
 import {
   botHasPermissions,
-  inGuild,
-  SleetSlashCommand,
+  formatUser,
   getGuild,
   getUser,
-  formatUser,
+  inGuild,
+  SleetSlashCommand,
 } from 'sleetcord'
 
 export const revoke = new SleetSlashCommand(
   {
     name: 'revoke',
     description: 'Revoke all invites from a specific user',
-    default_member_permissions: ['BAN_MEMBERS'],
+    default_member_permissions: ['BanMembers'],
     dm_permission: false,
     options: [
       {
@@ -37,9 +37,11 @@ export const revoke = new SleetSlashCommand(
   },
 )
 
-async function runRevoke(interaction: CommandInteraction): Promise<unknown> {
+async function runRevoke(
+  interaction: ChatInputCommandInteraction,
+): Promise<unknown> {
   inGuild(interaction)
-  botHasPermissions(interaction, ['MANAGE_GUILD'])
+  await botHasPermissions(interaction, ['ManageGuild'])
 
   await interaction.deferReply()
 
@@ -72,7 +74,7 @@ async function runBanRevoke(ban: GuildBan): Promise<void> {
 
   const embed = formatInviteEmbed(user, revoked)
 
-  if (logChannel && logChannel.isText()) {
+  if (logChannel && logChannel.isTextBased()) {
     logChannel.send({ embeds: [embed] })
   }
 }
@@ -106,16 +108,16 @@ async function revokeInvitesFor(guild: Guild, user: User): Promise<Invite[]> {
  * Formats data into a pretty embed to send respond with
  * @param user The user that had their invites revoked
  * @param invites The invites that were revoked
- * @returns A MessageEmbed that can be sent detailing the revoked invites
+ * @returns An EmbedBuilder that can be sent detailing the revoked invites
  */
-function formatInviteEmbed(user: User, invites: Invite[]): MessageEmbed {
+function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
   const inviteList: string[] = []
 
   for (const i of invites) {
     inviteList.push(
       [
         `[${i.code}]`,
-        `[#${i.channel.name}] `,
+        `[#${i.channel?.name ?? 'unknown channel'}] `,
         `Uses: <${i.uses}/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}>, `,
         i.createdAt ? `Created: ${i.createdAt.toLocaleString()}, ` : '',
         i.expiresAt
@@ -129,7 +131,7 @@ function formatInviteEmbed(user: User, invites: Invite[]): MessageEmbed {
     inviteList.push('No invites found or revoked.')
   }
 
-  return new MessageEmbed()
+  return new EmbedBuilder()
     .setAuthor({
       name: formatUser(user, { markdown: false }),
       iconURL: user.displayAvatarURL(),

@@ -1,4 +1,4 @@
-import { Intents } from 'discord.js'
+import { GatewayIntentBits } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
 import { mute, unmute } from './mod/mute.js'
@@ -20,6 +20,7 @@ import { extract } from './util/extract.js'
 import { count_members } from './util/count_members.js'
 import { restore_embeds } from './util/restore_embeds.js'
 import { idof } from './mod/idof.js'
+import { welcome } from './mod/welcome/welcome.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -31,10 +32,10 @@ const sleetClient = new SleetClient({
   },
   client: {
     intents: [
-      Intents.FLAGS.GUILDS,
-      Intents.FLAGS.GUILD_MEMBERS,
-      Intents.FLAGS.GUILD_MESSAGES,
-      Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
     ],
   },
 })
@@ -50,6 +51,7 @@ sleetClient.addModules([
   lookup,
   unedit,
   idof,
+  welcome,
 
   // misc
   activity,

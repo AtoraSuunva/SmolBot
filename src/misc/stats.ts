@@ -1,6 +1,10 @@
-/* eslint-disable no-cond-assign */
-import { Client, CommandInteraction, Guild, MessageEmbed } from 'discord.js'
-import { SleetContext, SleetSlashCommand } from 'sleetcord'
+import {
+  Client,
+  Guild,
+  EmbedBuilder,
+  ChatInputCommandInteraction,
+} from 'discord.js'
+import { SleetSlashCommand, SleetContext } from 'sleetcord'
 
 /**
  * Get some stats about the bot, for now this includes:
@@ -24,7 +28,10 @@ export const stats = new SleetSlashCommand(
 )
 
 /** Get the stats and display them */
-async function runStats(this: SleetContext, interaction: CommandInteraction) {
+async function runStats(
+  this: SleetContext,
+  interaction: ChatInputCommandInteraction,
+) {
   const { client } = interaction
 
   /** The helper funcs work for both sharded and unsharded bots */
@@ -41,16 +48,16 @@ async function runStats(this: SleetContext, interaction: CommandInteraction) {
   const uptime = client.readyAt
   const created = client.user?.createdAt ?? null
 
-  const embed = new MessageEmbed()
-    .setTitle('Stats')
-    .addField('Guilds:', String(guildCount), true)
-    .addField('Members:', String(memberCount), true)
-    .addField('Users Cached:', String(userCount), true)
-    .addField('Channels:', String(channelCount), true)
-    .addField('Emojis Cached:', String(emojis), true)
-    .addField('Modules Loaded:', String(modules), true)
-    .addField('Uptime:', createTimestamps(uptime), true)
-    .addField('Created:', createTimestamps(created), true)
+  const embed = new EmbedBuilder().setTitle('Stats').addFields([
+    { name: 'Guilds:', value: String(guildCount), inline: true },
+    { name: 'Members:', value: String(memberCount), inline: true },
+    { name: 'Users Cached:', value: String(userCount), inline: true },
+    { name: 'Channels:', value: String(channelCount), inline: true },
+    { name: 'Emojis Cached:', value: String(emojis), inline: true },
+    { name: 'Modules Loaded:', value: String(modules), inline: true },
+    { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
+    { name: 'Created:', value: createTimestamps(created), inline: true },
+  ])
 
   if (client.user) {
     embed.setAuthor({
@@ -133,6 +140,7 @@ function createTimestamps(time: Date | null): string {
 const TIME_FORMAT = '{w} {week} {d} {day} {hh}:{mm}:{ss}'
 
 // TODO: global time util
+/* eslint-disable no-cond-assign */
 function formatTimeToString(time: number, text: string): string {
   const rep = new Map()
 

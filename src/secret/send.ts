@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { CommandInteraction } from 'discord.js'
-import { SleetSlashCommand, getTextBasedChannel } from 'sleetcord'
-import { TextChannelTypes } from '../util/constants.js'
+import { ChatInputCommandInteraction } from 'discord.js'
+import { SleetSlashCommand, getTextBasedChannel, inGuild } from 'sleetcord'
 
 export const send = new SleetSlashCommand(
   {
@@ -20,7 +19,6 @@ export const send = new SleetSlashCommand(
         description:
           'The channel to send the message to (default: same channel)',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: TextChannelTypes,
       },
     ],
   },
@@ -29,19 +27,21 @@ export const send = new SleetSlashCommand(
   },
 )
 
-async function runSend(interaction: CommandInteraction) {
-  if (!interaction.channel?.isText() || !('guild' in interaction.channel)) {
-    return interaction.reply({
-      ephemeral: true,
-      content: 'This command can only be used in text channels',
-    })
-  }
+async function runSend(interaction: ChatInputCommandInteraction) {
+  inGuild(interaction)
 
   const message = interaction.options.getString('message', true)
   const channel =
     (await getTextBasedChannel(interaction, 'channel')) ?? interaction.channel
 
-  if (!channel.permissionsFor(interaction.user)?.has('SEND_MESSAGES')) {
+  if (channel === null) {
+    return interaction.reply({
+      ephemeral: true,
+      content: 'Failed to get the channel to send a message in.',
+    })
+  }
+
+  if (!channel.permissionsFor(interaction.user)?.has('SendMessages')) {
     return interaction.reply({
       ephemeral: true,
       content: `You do not have permission to send messages in ${channel}`,
@@ -50,7 +50,7 @@ async function runSend(interaction: CommandInteraction) {
 
   if (
     !interaction.client.user ||
-    !channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES')
+    !channel.permissionsFor(interaction.client.user)?.has('SendMessages')
   ) {
     return interaction.reply({
       ephemeral: true,
@@ -59,5 +59,5 @@ async function runSend(interaction: CommandInteraction) {
   }
 
   await channel.send(message)
-  interaction.reply(`Sent message in ${channel}`)
+  return interaction.reply(`Sent message in ${channel}`)
 }

@@ -1,7 +1,7 @@
 import {
+  ChatInputCommandInteraction,
   CommandInteraction,
-  Interaction,
-  MessageEmbed,
+  EmbedBuilder,
   Team,
   User,
   version as discordJSVersion,
@@ -27,8 +27,8 @@ export const info = new SleetSlashCommand(
 )
 
 /** Get the info! */
-async function runInfo(interaction: CommandInteraction) {
-  const embed = new MessageEmbed()
+async function runInfo(interaction: ChatInputCommandInteraction) {
+  const embed = new EmbedBuilder()
 
   if (interaction.client.user) {
     embed.setAuthor({
@@ -40,13 +40,8 @@ async function runInfo(interaction: CommandInteraction) {
 
   const owner = getOwner(interaction)
   const ownerString = formatOwner(owner)
-  embed.addField('Owner', ownerString, true)
-
   const versionInfo = `Node ${process.version}\ndiscord.js v${discordJSVersion}`
-  embed.addField('Using', versionInfo, true)
-
   const cpuString = os.loadavg().join(', ')
-  embed.addField('CPU Load Average', cpuString)
 
   const totalMem = os.totalmem()
   const usedMem = os.totalmem() - os.freemem()
@@ -54,7 +49,13 @@ async function runInfo(interaction: CommandInteraction) {
   const memoryString = `${formatBytes(usedMem)} / ${formatBytes(
     totalMem,
   )} (${usedMemPercent}%)`
-  embed.addField('Memory Usage', memoryString, true)
+
+  embed.addFields([
+    { name: 'Owner', value: ownerString, inline: true },
+    { name: 'Using', value: versionInfo, inline: true },
+    { name: 'CPU Load Average', value: cpuString, inline: false },
+    { name: 'Memory Usage', value: memoryString, inline: true },
+  ])
 
   interaction.reply({
     embeds: [embed],
@@ -85,7 +86,7 @@ interface OwnerDetails {
 }
 
 /** Get the current owner of the bot/application */
-function getOwner(interaction: Interaction): OwnerDetails {
+function getOwner(interaction: CommandInteraction): OwnerDetails {
   const owner = interaction.client.application?.owner ?? null
 
   if (owner instanceof User) {
