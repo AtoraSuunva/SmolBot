@@ -1,7 +1,4 @@
-import {
-  ApplicationCommandOptionType,
-  ChannelType,
-} from 'discord-api-types/v10'
+import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
   ChannelLogsQueryOptions,
   Collection,
@@ -21,6 +18,7 @@ import {
   getTextBasedChannel,
   Mentionable,
 } from 'sleetcord'
+import { TextChannelTypes } from '../util/constants.js'
 
 export const purge = new SleetSlashCommand(
   {
@@ -88,14 +86,7 @@ export const purge = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Channel,
         description:
           'The channel to purge messages from (default: current channel)',
-        channel_types: [
-          ChannelType.GuildText,
-          ChannelType.GuildVoice,
-          ChannelType.GuildNews,
-          ChannelType.GuildNewsThread,
-          ChannelType.GuildPublicThread,
-          ChannelType.GuildPrivateThread,
-        ],
+        channel_types: TextChannelTypes,
       },
       {
         name: 'silent',
