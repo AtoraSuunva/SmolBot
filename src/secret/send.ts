@@ -1,9 +1,7 @@
-import {
-  ApplicationCommandOptionType,
-  ChannelType,
-} from 'discord-api-types/v10'
+import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import { CommandInteraction } from 'discord.js'
 import { SleetSlashCommand, getTextBasedChannel } from 'sleetcord'
+import { TextChannelTypes } from '../util/constants.js'
 
 export const send = new SleetSlashCommand(
   {
@@ -22,14 +20,7 @@ export const send = new SleetSlashCommand(
         description:
           'The channel to send the message to (default: same channel)',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: [
-          ChannelType.GuildText,
-          ChannelType.GuildVoice,
-          ChannelType.GuildNews,
-          ChannelType.GuildNewsThread,
-          ChannelType.GuildPublicThread,
-          ChannelType.GuildPrivateThread,
-        ],
+        channel_types: TextChannelTypes,
       },
     ],
   },
