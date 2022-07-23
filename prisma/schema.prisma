@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WelcomeSettings {
+  guild_id String @id
+  message String // @db.VarChar(2000)
+  channel String?
+  rejoins Boolean @default(false)
+  instant Boolean @default(false)
+  // ignoreRoles String[]
+  reactWith String
+  reactAnimated Boolean @default(false)
+}
+
+model WelcomeUsers {
+  guild_id String
+  user_id String
+  @@id([guild_id, user_id])
+}

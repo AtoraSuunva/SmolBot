@@ -1,10 +1,10 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
-  CommandInteraction,
+  ChatInputCommandInteraction,
+  cleanCodeBlockContent,
   Formatters,
   GuildMember,
   TextBasedChannel,
-  Util,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand } from 'sleetcord'
@@ -37,7 +37,7 @@ const limits = {
   '363821745590763520': 4000,
 }
 
-async function runExtract(interaction: CommandInteraction) {
+async function runExtract(interaction: ChatInputCommandInteraction) {
   const limit =
     interaction.member instanceof GuildMember
       ? getMemberLimit(interaction.member)
@@ -105,6 +105,8 @@ async function runExtract(interaction: CommandInteraction) {
       }`,
     })
   }
+
+  return undefined
 }
 
 function getRawUrl(url: string): string {
@@ -181,9 +183,7 @@ async function splitSend(
 
   for (const split of splits) {
     if (code) {
-      await channel.send(
-        Formatters.codeBlock(Util.cleanCodeBlockContent(split)),
-      )
+      await channel.send(Formatters.codeBlock(cleanCodeBlockContent(split)))
     } else {
       await channel.send(split)
     }

@@ -4,7 +4,7 @@ import {
 } from 'discord-api-types/v10'
 import {
   AutocompleteInteraction,
-  CommandInteraction,
+  ChatInputCommandInteraction,
   Formatters,
   Guild,
 } from 'discord.js'
@@ -46,7 +46,7 @@ async function userAutocomplete(
   }))
 }
 
-async function runIdof(interaction: CommandInteraction) {
+async function runIdof(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
   const matches = await matchMembers(guild, user)

@@ -1,30 +1,29 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
-  ChannelLogsQueryOptions,
+  ChatInputCommandInteraction,
   Collection,
-  CommandInteraction,
   DMChannel,
+  FetchMessagesOptions,
   GuildMember,
   Message,
   Snowflake,
   User,
 } from 'discord.js'
 import {
-  PreRunError,
   botHasPermissions,
-  inGuild,
-  SleetSlashCommand,
   getMentionables,
   getTextBasedChannel,
+  inGuild,
   Mentionable,
+  PreRunError,
+  SleetSlashCommand,
 } from 'sleetcord'
-import { TextChannelTypes } from '../util/constants.js'
 
 export const purge = new SleetSlashCommand(
   {
     name: 'purge',
     description: 'Purges a number of messages',
-    default_member_permissions: ['MANAGE_MESSAGES'],
+    default_member_permissions: ['ManageMessages'],
     dm_permission: false,
     options: [
       {
@@ -86,7 +85,6 @@ export const purge = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Channel,
         description:
           'The channel to purge messages from (default: current channel)',
-        channel_types: TextChannelTypes,
       },
       {
         name: 'silent',
@@ -106,15 +104,15 @@ const MAX_FETCH_MESSAGES = 100
  * Purge a set of messages based on a couple filter criteria.
  * @param interaction The interaction to use
  */
-async function runPurge(interaction: CommandInteraction) {
+async function runPurge(interaction: ChatInputCommandInteraction) {
   inGuild(interaction)
-  botHasPermissions(interaction, [
-    'VIEW_CHANNEL',
-    'MANAGE_MESSAGES',
-    'READ_MESSAGE_HISTORY',
+  await botHasPermissions(interaction, [
+    'ViewChannel',
+    'ManageMessages',
+    'ReadMessageHistory',
   ])
 
-  const count = interaction.options.getInteger('count') ?? 0
+  const count = interaction.options.getInteger('count') ?? MAX_FETCH_MESSAGES
   const content = interaction.options.getString('content')
   const from = await getMentionables(interaction, 'from')
   const mentions = await getMentionables(interaction, 'mentions')
@@ -198,7 +196,11 @@ async function runPurge(interaction: CommandInteraction) {
       continue
     }
 
-    const { size } = await channel.bulkDelete(filteredMessages, true)
+    const toPurge = filteredMessages
+      .sort(youngestFirst)
+      .first(count - deletedCount)
+
+    const { size } = await channel.bulkDelete(toPurge, true)
     deletedCount += size
 
     // When searching backwards:
@@ -226,7 +228,7 @@ async function runPurge(interaction: CommandInteraction) {
 }
 
 /**
- * Create the ChannelLogsQueryOptions to fetch messages, because TS' strict checking
+ * Create the FetchMessagesOptions to fetch messages, because TS' strict checking
  * doesn't allow for `after: undefined` (defined as `undefined` instead of not being present,
  * which are actually slightly different.)
  * @param after The message ID to purge after
@@ -236,8 +238,8 @@ async function runPurge(interaction: CommandInteraction) {
 function getFetchOptions(
   after: string | null,
   before: string | null,
-): ChannelLogsQueryOptions {
-  const fetchOptions: ChannelLogsQueryOptions = {
+): FetchMessagesOptions {
+  const fetchOptions: FetchMessagesOptions = {
     limit: MAX_FETCH_MESSAGES,
   }
 
