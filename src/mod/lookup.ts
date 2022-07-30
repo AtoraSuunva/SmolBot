@@ -7,7 +7,6 @@ import {
   Client,
   CommandInteraction,
   DiscordAPIError,
-  Formatters,
   GuildPreview,
   Invite,
   EmbedBuilder,
@@ -17,6 +16,7 @@ import {
   Widget,
   escapeInlineCode,
   ChatInputCommandInteraction,
+  codeBlock,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
@@ -339,7 +339,7 @@ function sendInviteLookup(
     embed.addFields([
       {
         name: 'Features:',
-        value: Formatters.codeBlock(guild.features.sort().join(', ')),
+        value: codeBlock(guild.features.sort().join(', ')),
       },
     ])
   }
@@ -470,7 +470,7 @@ function sendGuildPreviewLookup(
     embed.addFields([
       {
         name: 'Features:',
-        value: Formatters.codeBlock(preview.features.sort().join(', ')),
+        value: codeBlock(preview.features.sort().join(', ')),
       },
     ])
   }
@@ -492,7 +492,7 @@ function sendGuildPreviewLookup(
     embed.addFields([
       {
         name: 'Stickers:',
-        value: Formatters.codeBlock(
+        value: codeBlock(
           preview.stickers
             .first(20)
             .map(s => s.name)

@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
   ChatInputCommandInteraction,
   cleanCodeBlockContent,
-  Formatters,
+  codeBlock,
   GuildMember,
   TextBasedChannel,
 } from 'discord.js'
@@ -183,7 +183,7 @@ async function splitSend(
 
   for (const split of splits) {
     if (code) {
-      await channel.send(Formatters.codeBlock(cleanCodeBlockContent(split)))
+      await channel.send(codeBlock(cleanCodeBlockContent(split)))
     } else {
       await channel.send(split)
     }
