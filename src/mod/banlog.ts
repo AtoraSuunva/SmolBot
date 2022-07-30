@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { ChatInputCommandInteraction, Formatters } from 'discord.js'
+import { ChatInputCommandInteraction, codeBlock } from 'discord.js'
 import { SleetSlashCommand, makeChoices } from 'sleetcord'
 
 const typeChoices = makeChoices(['Ban', 'Unban', 'Kick', 'Mute'])
@@ -56,6 +56,6 @@ function runBanlog(interaction: ChatInputCommandInteraction) {
 
   interaction.reply({
     ephemeral: true,
-    content: Formatters.codeBlock(log),
+    content: codeBlock(log),
   })
 }

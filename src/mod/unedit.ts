@@ -1,8 +1,8 @@
 import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
   ChatInputCommandInteraction,
+  codeBlock,
   Collection,
-  Formatters,
   Message,
   PartialMessage,
 } from 'discord.js'
@@ -85,10 +85,7 @@ async function runUnedit(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  const edits = Formatters.codeBlock(
-    'json',
-    JSON.stringify(previousEdits.edits, null, 2),
-  )
+  const edits = codeBlock('json', JSON.stringify(previousEdits.edits, null, 2))
 
   return interaction.reply(edits)
 }

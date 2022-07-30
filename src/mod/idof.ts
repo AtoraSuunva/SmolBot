@@ -5,7 +5,7 @@ import {
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
-  Formatters,
+  codeBlock,
   Guild,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
@@ -56,7 +56,7 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   } else if (matches.length === 1) {
     return interaction.reply(`${matches[0].id}`)
   } else {
-    const formattedMatches = Formatters.codeBlock(
+    const formattedMatches = codeBlock(
       matches.map(m => `${m.name} (${m.id})`).join('\n'),
     )
 
