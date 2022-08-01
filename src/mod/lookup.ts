@@ -154,12 +154,12 @@ const oAuthUrl = (app: string, permissions: string, scopes: string[]) =>
   )}`
 
 /**
- * Try to get some details about a bot using the RPC api info
+ * Try to get some details about a bot using the RPC API info
  * @param app The application to lookup
  * @returns RPC details for a bot/application, if available
  * @throws Error if the application is not a bot or doesn't exist, *or* if the bot is old enough that bot ID != application ID
  */
-async function getRPCDetails(app: string): Promise<APIApplication> {
+async function fetchRPCDetails(app: string): Promise<APIApplication> {
   const res = await fetch(rpcUrl(app))
 
   if (res.status === 404) {
@@ -169,6 +169,19 @@ async function getRPCDetails(app: string): Promise<APIApplication> {
   }
 
   throw new Error('Failed to fetch application RPC details.')
+}
+
+/**
+ * Try to fetch some details about a bot using the RPC API info, returning null on failure
+ * @param app The application to lookup
+ * @returns RPC details for a bot/application, if available
+ */
+async function tryFetchRPCDetails(app: string): Promise<APIApplication | null> {
+  try {
+    return await fetchRPCDetails(app)
+  } catch {
+    return null
+  }
 }
 
 const Badges: Record<keyof typeof UserFlags, string> = {
@@ -251,14 +264,7 @@ async function sendUserLookup(
 
   if (user.bot) {
     const verifiedBot = user.flags?.has('VerifiedBot')
-
-    let rpc: APIApplication | null = null
-    try {
-      rpc = await getRPCDetails(user.id)
-    } catch {
-      rpc = null
-    }
-
+    const rpc = await tryFetchRPCDetails(user.id)
     const details: string[] = []
 
     if (verifiedBot) {
@@ -307,6 +313,11 @@ const OFFLINE = '<:i_offline2:468215162244038687>'
 const PARTNERED = '<:ServerPartnered:842194494161027100>'
 const VERIFIED = '<:ServerVerifiedIcon:751159037378297976>'
 
+/**
+ * Send a guild or group DM invite based on which kind of invite it is
+ * @param interaction The interaction to edit
+ * @param invite The invite to use
+ */
 async function sendInviteLookup(
   interaction: CommandInteraction,
   invite: Invite,
@@ -320,6 +331,11 @@ async function sendInviteLookup(
   }
 }
 
+/**
+ * Sends all available information about a guild using an invite and Guild Preview API (if available)
+ * @param interaction The interaction to edit
+ * @param invite The invite to fetch information from
+ */
 async function sendGuildInviteLookup(
   interaction: CommandInteraction,
   invite: Invite,
@@ -468,6 +484,11 @@ async function sendGuildInviteLookup(
   interaction.editReply({ embeds: [embed] })
 }
 
+/**
+ * Sends all available information about a Group DM using an invite
+ * @param interaction The interaction to reply to
+ * @param invite The invite to send data for
+ */
 async function sendGroupDMInviteLookup(
   interaction: CommandInteraction,
   invite: Invite,
@@ -499,6 +520,7 @@ async function sendGroupDMInviteLookup(
       {
         name: 'Members',
         value: `${OFFLINE} **${invite.memberCount.toLocaleString()}** Members`,
+        // There's also a list of member usernames, display this somehow?
         inline: true,
       },
       {
@@ -523,12 +545,16 @@ async function sendGroupDMInviteLookup(
   interaction.editReply({ embeds: [embed] })
 }
 
+/**
+ * Sends all available information about a guild using the Widget API
+ * @param interaction The interaction to reply to
+ * @param widget The widget to pull information from
+ */
 function sendGuildWidgetLookup(
   interaction: CommandInteraction,
   widget: Widget,
 ) {
   const created = snowflakeToDate(widget.id)
-
   const embed = new EmbedBuilder()
     // The docs specify that `.name` is a string and exists, but the types don't. Bug?
     .setTitle(`Guild: ${(widget as unknown as { name: string }).name}`)
@@ -558,42 +584,39 @@ function sendGuildWidgetLookup(
   interaction.editReply({ embeds: [embed] })
 }
 
+/**
+ * Sends all available information from a guild using the guild preview API
+ * @param interaction The interaction to reply to
+ * @param preview The guild preview to display info for
+ */
 function sendGuildPreviewLookup(
   interaction: CommandInteraction,
   preview: GuildPreview,
 ) {
-  const embed = new EmbedBuilder()
-    .setTitle(`Guild: ${preview.name}`)
-    .addFields([{ name: 'ID:', value: preview.id, inline: true }])
-    .setFooter({
-      text: 'Source: Guild Preview',
-    })
-
-  if (preview.description) {
-    embed.setDescription(preview.description)
-  }
-
   const {
     approximateMemberCount: memberCount,
     approximatePresenceCount: presenceCount,
   } = preview
   const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
-  embed.addFields([
-    {
-      name: 'Members:',
-      value:
-        `${ONLINE} **${presenceCount.toLocaleString()}** Online (${ratio}%)\n` +
-        `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
-      inline: true,
-    },
-    { name: 'Guild Created At:', value: formatCreatedAt(preview.createdAt) },
-  ])
 
-  if (preview.icon) {
-    // We just checked for an icon above, so this should never be null
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    embed.setThumbnail(preview.iconURL({ size: 4096 })!)
-  }
+  const embed = new EmbedBuilder()
+    .setTitle(`Guild: ${preview.name}`)
+    .setThumbnail(preview.iconURL({ size: 4096 }))
+    .setDescription(preview.description)
+    .addFields([
+      { name: 'ID:', value: preview.id, inline: true },
+      {
+        name: 'Members:',
+        value:
+          `${ONLINE} **${presenceCount.toLocaleString()}** Online (${ratio}%)\n` +
+          `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
+        inline: true,
+      },
+      { name: 'Guild Created At:', value: formatCreatedAt(preview.createdAt) },
+    ])
+    .setFooter({
+      text: 'Source: Guild Preview',
+    })
 
   if (preview.features.length > 0) {
     embed.addFields([
@@ -622,14 +645,12 @@ function sendGuildPreviewLookup(
   const images: string[] = []
 
   if (preview.splash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const splash = preview.splashURL({ size: 4096 })!
+    const splash = preview.splashURL({ size: 4096 })
     images.push(`[Splash](${splash})`)
   }
 
   if (preview.discoverySplash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const discoverySplash = preview.discoverySplashURL({ size: 4096 })!
+    const discoverySplash = preview.discoverySplashURL({ size: 4096 })
     images.push(`[Discovery Splash](${discoverySplash})`)
   }
 
@@ -692,6 +713,11 @@ function trimToLast(string: string, substring: string): string {
   return string.substring(0, index)
 }
 
+/**
+ * Parse a Discord Snowflake into a JS Date
+ * @param snowflake The Snowflake to parse
+ * @returns A JS Date representing the Snowflake
+ */
 function snowflakeToDate(snowflake: string): Date {
   return new Date(Number(SnowflakeUtil.deconstruct(snowflake).timestamp))
 }
@@ -705,6 +731,7 @@ function formatExpiresAt(date: Date): string {
   return date.toString()
 }
 
+/** A map of GuildVerificationLevel to displayable strings */
 const VerificationLevelMap: Record<GuildVerificationLevel, string> = {
   [GuildVerificationLevel.None]: 'None',
   [GuildVerificationLevel.Low]: 'Low',
@@ -713,6 +740,7 @@ const VerificationLevelMap: Record<GuildVerificationLevel, string> = {
   [GuildVerificationLevel.VeryHigh]: 'Very High',
 }
 
+/** A map of GuildNSFWLevel to displayable strings */
 const NSFWLevelMap: Record<GuildNSFWLevel, string> = {
   [GuildNSFWLevel.Default]: 'Default',
   [GuildNSFWLevel.Explicit]: 'Explicit',
