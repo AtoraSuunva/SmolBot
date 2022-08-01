@@ -17,6 +17,11 @@ import {
   escapeInlineCode,
   ChatInputCommandInteraction,
   codeBlock,
+  GuildPreviewEmoji,
+  Collection,
+  Sticker,
+  ChannelType,
+  GuildNSFWLevel,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
@@ -24,7 +29,7 @@ import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 export const lookup = new SleetSlashCommand(
   {
     name: 'lookup',
-    description: 'Lookup a user, guild, or invite',
+    description: 'Lookup a user, guild, or invite :)',
     options: [
       {
         name: 'data',
@@ -112,17 +117,33 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
     return await client.fetchGuildWidget(guildId)
   } catch (e) {
     if (e instanceof DiscordAPIError && e.status === 403) {
-      const snowflake = SnowflakeUtil.deconstruct(guildId)
       return {
         exists: true,
         message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatCreatedAt(
-          new Date(Number(snowflake.timestamp)),
+          snowflakeToDate(guildId),
         )}`,
       }
     }
   }
 
   throw new Error('Failed to fetch guild preview and widget.')
+}
+
+/**
+ * Try to fetch a guild preview for a guild
+ * @param client The client to use for the request
+ * @param guildId The guild ID to fetch with
+ * @returns Either a GuildPreview (if available) or null
+ */
+async function tryFetchGuildPreview(
+  client: Client,
+  guildId: string,
+): Promise<GuildPreview | null> {
+  try {
+    return await client.fetchGuildPreview(guildId)
+  } catch (e) {
+    return null
+  }
 }
 
 const rpcUrl = (app: string) =>
@@ -234,7 +255,7 @@ async function sendUserLookup(
     let rpc: APIApplication | null = null
     try {
       rpc = await getRPCDetails(user.id)
-    } catch (e) {
+    } catch {
       rpc = null
     }
 
@@ -283,56 +304,81 @@ async function sendUserLookup(
 
 const ONLINE = '<:i_online:468214881623998464>'
 const OFFLINE = '<:i_offline2:468215162244038687>'
+const PARTNERED = '<:ServerPartnered:842194494161027100>'
+const VERIFIED = '<:ServerVerifiedIcon:751159037378297976>'
 
-function sendInviteLookup(
+async function sendInviteLookup(
   interaction: CommandInteraction,
   invite: Invite,
-): void {
+): Promise<void> {
+  if (invite.guild) {
+    // Guild Invite
+    return sendGuildInviteLookup(interaction, invite)
+  } else {
+    // Group DM invite? Maybe something else?
+    return sendGroupDMInviteLookup(interaction, invite)
+  }
+}
+
+async function sendGuildInviteLookup(
+  interaction: CommandInteraction,
+  invite: Invite,
+): Promise<void> {
   const { guild, code, presenceCount, memberCount } = invite
 
   if (!guild) {
-    return void interaction.editReply(
-      'Failed to fetch the guild for that invite...',
-    )
+    return void interaction.editReply('Not a guild invite!')
   }
 
-  const embed = new EmbedBuilder().setFooter({
-    text: 'Source: Invite',
-  })
-
-  if (guild.description) {
-    embed.setDescription(guild.description)
-  }
-
+  const preview = await tryFetchGuildPreview(interaction.client, guild.id)
   const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
+  const guildIcons = [
+    guild.partnered ? PARTNERED : '',
+    guild.verified ? VERIFIED : '',
+  ].filter(v => !!v)
+  const guildPrepend = guildIcons.length > 0 ? `${guildIcons.join(' ')} ` : ''
 
-  embed.setTitle(`:incoming_envelope:  Invite: ${code}`)
+  const embed = new EmbedBuilder()
+    .setTitle(`:incoming_envelope:  Guild Invite: ${code}`)
+    .setThumbnail(guild.iconURL({ size: 4096 }))
+    .setDescription(guild.description)
+    .addFields([
+      {
+        name: `Guild Info:`,
+        value: `${guildPrepend}${guild.name}\n**ID:** ${guild.id}\n[#${
+          invite.channel?.name ?? 'unknown channel'
+        }](http://discord.com)`,
+        inline: true,
+      },
+      {
+        name: 'Members:',
+        value:
+          `${ONLINE} **${presenceCount.toLocaleString()}** Online (${ratio}%)\n` +
+          `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
+        inline: true,
+      },
+      {
+        name: 'Guild Created At:',
+        value: formatCreatedAt(guild.createdAt),
+      },
+    ])
+    .setFooter({
+      text: `Source: Invite${preview ? ' & Guild Preview' : ''}`,
+    })
 
-  embed.addFields([
-    {
-      name: `Guild Info:`,
-      value: `${guild.name}\n**ID:** ${guild.id}\n[#${
-        invite.channel?.name ?? 'unknown channel'
-      }](http://discord.com)`,
-      inline: true,
-    },
-    {
-      name: 'Members:',
-      value:
-        `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
-        `${OFFLINE} **${memberCount}** Total`,
-      inline: true,
-    },
-    {
-      name: 'Created at:',
-      value: formatCreatedAt(guild.createdAt),
-    },
-  ])
+  if (invite.expiresAt) {
+    embed.addFields([
+      {
+        name: 'Invite Expires At:',
+        value: formatExpiresAt(invite.expiresAt),
+      },
+    ])
+  }
 
-  if (guild.icon) {
-    // We just checked for an icon above, so this should never be null
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    embed.setThumbnail(guild.iconURL({ size: 4096 })!)
+  if (invite.inviter) {
+    embed.addFields([
+      { name: 'Inviter:', value: formatUser(invite.inviter), inline: true },
+    ])
   }
 
   if (guild.features.length > 0) {
@@ -344,10 +390,29 @@ function sendInviteLookup(
     ])
   }
 
+  if (preview) {
+    if (preview.emojis.size > 0) {
+      embed.addFields([
+        {
+          name: `Emojis (${preview.emojis.size}):`,
+          value: formatPreviewEmojis(preview.emojis),
+        },
+      ])
+    }
+
+    if (preview.stickers.size > 0) {
+      embed.addFields([
+        {
+          name: `Stickers (${preview.stickers.size}):`,
+          value: formatStickers(preview.stickers),
+        },
+      ])
+    }
+  }
+
   const images: string[] = []
 
   if (guild.splash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     images.push(`[Splash](${guild.splashURL({ size: 4096 })})`)
   }
 
@@ -359,7 +424,7 @@ function sendInviteLookup(
     embed.addFields([
       {
         name: 'Images:',
-        value: images.join('\n'),
+        value: images.join(' — '),
         inline: true,
       },
     ])
@@ -371,7 +436,20 @@ function sendInviteLookup(
       value: VerificationLevelMap[guild.verificationLevel],
       inline: true,
     },
+    {
+      name: 'NSFW Level:',
+      value: NSFWLevelMap[guild.nsfwLevel],
+      inline: true,
+    },
   ])
+
+  if (guild.premiumSubscriptionCount !== null) {
+    embed.addFields({
+      name: 'Boosts:',
+      value: guild.premiumSubscriptionCount?.toLocaleString() ?? '0',
+      inline: true,
+    })
+  }
 
   if (guild.vanityURLCode) {
     embed.addFields([
@@ -383,10 +461,63 @@ function sendInviteLookup(
     ])
   }
 
-  if (invite.inviter) {
-    embed.addFields([
-      { name: 'Inviter:', value: formatUser(invite.inviter), inline: true },
+  // TODO: add in blank fields to align things? do i even bother?
+
+  // There's also the welcome screen but meh
+
+  interaction.editReply({ embeds: [embed] })
+}
+
+async function sendGroupDMInviteLookup(
+  interaction: CommandInteraction,
+  invite: Invite,
+): Promise<void> {
+  const { code, guild } = invite
+
+  if (guild) {
+    return void interaction.editReply('Not a group DM invite!')
+  }
+
+  if (!invite.channel || invite.channel.type !== ChannelType.GroupDM) {
+    return void interaction.editReply('Failed to fetch group DM channel!')
+  }
+
+  const createdAt = snowflakeToDate(invite.channel.id)
+
+  const embed = new EmbedBuilder()
+    .setTitle(`:incoming_envelope:  Group DM Invite: ${code}`)
+    .setThumbnail(invite.channel.iconURL({ size: 4096 }))
+    .setFooter({
+      text: `Source: Invite`,
+    })
+    .addFields([
+      {
+        name: 'Group DM Info:',
+        value: invite.channel?.name ?? 'unknown group dm',
+        inline: true,
+      },
+      {
+        name: 'Members',
+        value: `${OFFLINE} **${invite.memberCount.toLocaleString()}** Members`,
+        inline: true,
+      },
+      {
+        name: 'GDM Created At:',
+        value: formatCreatedAt(createdAt),
+      },
     ])
+
+  if (invite.expiresAt) {
+    embed.addFields([
+      {
+        name: 'Invite Expires At:',
+        value: formatExpiresAt(invite.expiresAt),
+      },
+    ])
+  }
+
+  if (invite.inviter) {
+    embed.addFields([{ name: 'Inviter:', value: formatUser(invite.inviter) }])
   }
 
   interaction.editReply({ embeds: [embed] })
@@ -396,9 +527,7 @@ function sendGuildWidgetLookup(
   interaction: CommandInteraction,
   widget: Widget,
 ) {
-  const created = new Date(
-    Number(SnowflakeUtil.deconstruct(widget.id).timestamp),
-  )
+  const created = snowflakeToDate(widget.id)
 
   const embed = new EmbedBuilder()
     // The docs specify that `.name` is a string and exists, but the types don't. Bug?
@@ -417,10 +546,10 @@ function sendGuildWidgetLookup(
       },
       {
         name: 'Members:',
-        value: `${widget.presenceCount} online`,
+        value: `${widget.presenceCount.toLocaleString()} online`,
         inline: true,
       },
-      { name: 'Created at:', value: formatCreatedAt(created) },
+      { name: 'Guild Created At:', value: formatCreatedAt(created) },
     ])
     .setFooter({
       text: 'Source: Guild Widget',
@@ -453,11 +582,11 @@ function sendGuildPreviewLookup(
     {
       name: 'Members:',
       value:
-        `${ONLINE} **${presenceCount}** Online (${ratio}%)\n` +
-        `${OFFLINE} **${memberCount}** Total`,
+        `${ONLINE} **${presenceCount.toLocaleString()}** Online (${ratio}%)\n` +
+        `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
       inline: true,
     },
-    { name: 'Created at:', value: formatCreatedAt(preview.createdAt) },
+    { name: 'Guild Created At:', value: formatCreatedAt(preview.createdAt) },
   ])
 
   if (preview.icon) {
@@ -476,28 +605,16 @@ function sendGuildPreviewLookup(
   }
 
   if (preview.emojis.size > 0) {
-    let emojis = preview.emojis
-      .first(100)
-      .map(e => e.toString())
-      .join(' ')
-
-    if (emojis.length > 1024) {
-      emojis = trimToLast(emojis.substring(0, 1024), ' ')
-    }
-
-    embed.addFields([{ name: 'Emojis:', value: emojis }])
+    embed.addFields([
+      { name: 'Emojis:', value: formatPreviewEmojis(preview.emojis) },
+    ])
   }
 
   if (preview.stickers.size > 0) {
     embed.addFields([
       {
         name: 'Stickers:',
-        value: codeBlock(
-          preview.stickers
-            .first(20)
-            .map(s => s.name)
-            .join(', '),
-        ),
+        value: formatStickers(preview.stickers),
       },
     ])
   }
@@ -526,6 +643,38 @@ function sendGuildPreviewLookup(
 }
 
 /**
+ * Format a colletion of emojis into a string for display
+ * @param emojis GuildPreview emojis as a Collection
+ * @returns A string representation of the emojis
+ */
+function formatPreviewEmojis(
+  emojis: Collection<string, GuildPreviewEmoji>,
+): string {
+  let formattedEmojis = emojis
+    .first(100)
+    .map(e => e.toString())
+    .join(' ')
+
+  if (formattedEmojis.length > 1024) {
+    formattedEmojis = trimToLast(formattedEmojis.substring(0, 1024), ' ')
+  }
+
+  return formattedEmojis
+}
+
+/**
+ * Format a Collection of stickers into a string for display
+ * @param stickers Guild stickers as a Collection
+ * @returns A string representation of the stickers
+ */
+function formatStickers(stickers: Collection<string, Sticker>): string {
+  return stickers
+    .first(20)
+    .map(s => `[${s.name}](${s.url})`)
+    .join(', ')
+}
+
+/**
  * Trims a string to the last occurance of a substring
  *
  * @example
@@ -543,8 +692,16 @@ function trimToLast(string: string, substring: string): string {
   return string.substring(0, index)
 }
 
+function snowflakeToDate(snowflake: string): Date {
+  return new Date(Number(SnowflakeUtil.deconstruct(snowflake).timestamp))
+}
+
 // TODO: global time util
 function formatCreatedAt(date: Date): string {
+  return date.toString()
+}
+
+function formatExpiresAt(date: Date): string {
   return date.toString()
 }
 
@@ -554,4 +711,11 @@ const VerificationLevelMap: Record<GuildVerificationLevel, string> = {
   [GuildVerificationLevel.Medium]: 'Medium',
   [GuildVerificationLevel.High]: 'High',
   [GuildVerificationLevel.VeryHigh]: 'Very High',
+}
+
+const NSFWLevelMap: Record<GuildNSFWLevel, string> = {
+  [GuildNSFWLevel.Default]: 'Default',
+  [GuildNSFWLevel.Explicit]: 'Explicit',
+  [GuildNSFWLevel.Safe]: 'Safe',
+  [GuildNSFWLevel.AgeRestricted]: 'Age Restricted',
 }
