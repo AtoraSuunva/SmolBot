@@ -35,7 +35,7 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildMessageReactions,
+      GatewayIntentBits.MessageContent,
     ],
   },
 })

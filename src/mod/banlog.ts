@@ -1,5 +1,8 @@
-import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { ChatInputCommandInteraction, codeBlock } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction,
+  codeBlock,
+} from 'discord.js'
 import { SleetSlashCommand, makeChoices } from 'sleetcord'
 
 const typeChoices = makeChoices(['Ban', 'Unban', 'Kick', 'Mute'])

@@ -1,4 +1,3 @@
-import { ApplicationCommandOptionType } from 'discord-api-types/v10'
 import {
   Client,
   Guild,
@@ -8,6 +7,7 @@ import {
   User,
   Channel,
   ChatInputCommandInteraction,
+  ApplicationCommandOptionType,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 

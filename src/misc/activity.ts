@@ -1,10 +1,8 @@
 import {
+  ActivityOptions,
   ActivityType,
   APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
-} from 'discord-api-types/v10'
-import {
-  ActivityOptions,
   ChatInputCommandInteraction,
   Client,
 } from 'discord.js'

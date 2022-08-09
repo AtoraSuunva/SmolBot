@@ -1,8 +1,6 @@
 import {
   APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
-} from 'discord-api-types/v10'
-import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   codeBlock,
