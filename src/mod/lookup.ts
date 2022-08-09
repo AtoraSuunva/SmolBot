@@ -1,9 +1,4 @@
 import {
-  APIApplication,
-  ApplicationCommandOptionType,
-  GuildVerificationLevel,
-} from 'discord-api-types/v10'
-import {
   Client,
   CommandInteraction,
   DiscordAPIError,
@@ -22,6 +17,9 @@ import {
   Sticker,
   ChannelType,
   GuildNSFWLevel,
+  ApplicationCommandOptionType,
+  APIApplication,
+  GuildVerificationLevel,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'

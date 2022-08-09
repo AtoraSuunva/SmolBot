@@ -1,7 +1,4 @@
-import {
-  APIApplicationCommandChannelOption,
-  ChannelType,
-} from 'discord-api-types/v10'
+import { APIApplicationCommandChannelOption, ChannelType } from 'discord.js'
 
 export const TextChannelTypes: NonNullable<
   APIApplicationCommandChannelOption['channel_types']

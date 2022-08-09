@@ -1,5 +1,9 @@
-import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { ChatInputCommandInteraction, GuildMember, Role } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction,
+  GuildMember,
+  Role,
+} from 'discord.js'
 import { formatUser, getMembers, inGuild, SleetSlashCommand } from 'sleetcord'
 
 const mutedRoles = [
