@@ -9,6 +9,5 @@ services:
       NODE_ENV: production
       TOKEN: '${TOKEN}'
       APPLICATION_ID: '${APPLICATION_ID}'
-      SLEETCORD_LOG_LEVEL: debug
     volumes:
       - ./:/home/node/app

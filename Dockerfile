@@ -16,6 +16,8 @@ COPY --from=ts-compiler /usr/app/package.json /usr/app/pnpm-lock.yaml ./
 COPY --from=ts-compiler /usr/app/dist ./dist
 RUN pnpm fetch --prod
 RUN pnpm install -r --offline --prod
+# TODO: Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again
+RUN pnpx prisma generate
 
 # Minimal Linux runtime, with effectively only the absolute basics needed to run Node.js
 # https://github.com/GoogleContainerTools/distroless/blob/main/nodejs/README.md
