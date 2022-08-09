@@ -9,6 +9,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
+import { welcomeCache } from './cache.js'
 
 export const deleteCommand = new SleetSlashSubcommand(
   {
@@ -29,7 +30,7 @@ async function runDelete(
 
   const welcome = await prisma.welcomeSettings.findUnique({
     where: {
-      guild_id: guild.id,
+      guildID: guild.id,
     },
   })
 
@@ -53,37 +54,35 @@ async function runDelete(
     components: [row],
   })
 
-  if ('createMessageComponentCollector' in message) {
-    const collector = message.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      time: 60 * 1000,
-    })
+  const collector = message.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: 60 * 1000,
+  })
 
-    collector.on('collect', i => {
-      if (i.user.id === interaction.user.id) {
-        deleteWelcomeSettingsFrom(guild, i)
-        interaction.editReply({
-          content: `Welcome config deleted. Requested by ${interaction.user}`,
-          components: [],
-        })
-        collector.stop()
-      } else {
-        i.reply({
-          ephemeral: true,
-          content: `Only ${interaction.user} can confirm this deletion.`,
-        })
-      }
-    })
+  collector.on('collect', i => {
+    if (i.user.id === interaction.user.id) {
+      deleteWelcomeSettingsFrom(guild, i)
+      interaction.editReply({
+        content: `Welcome config deleted. Requested by ${interaction.user}`,
+        components: [],
+      })
+      collector.stop()
+    } else {
+      i.reply({
+        ephemeral: true,
+        content: `Only ${interaction.user} can confirm this deletion.`,
+      })
+    }
+  })
 
-    collector.on('end', (_collected, reason) => {
-      if (reason === 'time') {
-        interaction.editReply({
-          content: 'Deletion timed out',
-          components: [],
-        })
-      }
-    })
-  }
+  collector.on('end', (_collected, reason) => {
+    if (reason === 'time') {
+      interaction.editReply({
+        content: 'Deletion timed out',
+        components: [],
+      })
+    }
+  })
 }
 
 async function deleteWelcomeSettingsFrom(
@@ -96,9 +95,11 @@ async function deleteWelcomeSettingsFrom(
 
   await prisma.welcomeSettings.delete({
     where: {
-      guild_id: guild.id,
+      guildID: guild.id,
     },
   })
+
+  welcomeCache.delete(guild.id)
 
   await defer
   interaction.editReply({
