@@ -21,9 +21,22 @@ import { count_members } from './util/count_members.js'
 import { restore_embeds } from './util/restore_embeds.js'
 import { idof } from './mod/idof.js'
 import { welcome } from './mod/welcome/welcome.js'
+import { LoggerOptions } from 'pino'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
+const NODE_ENV = env.get('NODE_ENV').required().asString()
+const USE_PINO_PRETTY = env.get('USE_PINO_PRETTY').required().asBool()
+
+const loggerOptions: LoggerOptions = {
+  level: NODE_ENV === 'development' ? 'debug' : 'info',
+}
+
+if (USE_PINO_PRETTY) {
+  loggerOptions.transport = {
+    target: 'pino-pretty',
+  }
+}
 
 const sleetClient = new SleetClient({
   sleet: {
@@ -38,6 +51,7 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.MessageContent,
     ],
   },
+  logger: loggerOptions,
 })
 
 sleetClient.addModules([
