@@ -11,18 +11,18 @@ datasource db {
 }
 
 model WelcomeSettings {
-  guild_id String @id
-  message String // @db.VarChar(2000)
+  guildID String @id @map("guild_id")
+  message String
   channel String?
   rejoins Boolean @default(false)
   instant Boolean @default(false)
-  // ignoreRoles String[]
-  reactWith String
-  reactAnimated Boolean @default(false)
+  ignoreRoles String @default("") @map("ignore_roles")
+  reactWith String? @map("react_with")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }
 
-model WelcomeUsers {
-  guild_id String
-  user_id String
-  @@id([guild_id, user_id])
+model WelcomeJoins {
+  guildID String @map("guild_id")
+  userID String @map("user_id")
+  @@id([guildID, userID])
 }

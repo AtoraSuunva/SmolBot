@@ -5,11 +5,13 @@ CREATE TABLE "WelcomeSettings" (
     "channel" TEXT,
     "rejoins" BOOLEAN NOT NULL DEFAULT false,
     "instant" BOOLEAN NOT NULL DEFAULT false,
-    "reactWith" TEXT NOT NULL
+    "ignore_roles" TEXT NOT NULL DEFAULT '',
+    "react_with" TEXT,
+    "updated_at" DATETIME NOT NULL
 );
 
 -- CreateTable
-CREATE TABLE "WelcomeUsers" (
+CREATE TABLE "WelcomeJoins" (
     "guild_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
 
