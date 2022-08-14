@@ -6,7 +6,6 @@
   "main": "dist/index.js",
   "scripts": {
     "main": "node -r dotenv/config dist/index.js",
-    "dev": "node --loader ts-node/esm -r dotenv/config src/index.ts | pino-pretty",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
     "lint:fix": "eslint src/ --fix && prettier --write src/ && tsc --noEmit"
