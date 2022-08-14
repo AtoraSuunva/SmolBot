@@ -94,7 +94,7 @@ async function runLookup(interaction: ChatInputCommandInteraction) {
   interaction.editReply(`Failed to do lookup, got:\n> ${String(error)}`)
 }
 
-type GuildExists = { exists: true; message: string }
+type GuildExists = { exists: boolean; message: string }
 type GuildData = GuildExists | GuildPreview | Widget
 
 /**
@@ -114,12 +114,19 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
   try {
     return await client.fetchGuildWidget(guildId)
   } catch (e) {
-    if (e instanceof DiscordAPIError && e.status === 403) {
-      return {
-        exists: true,
-        message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatCreatedAt(
-          snowflakeToDate(guildId),
-        )}`,
+    if (e instanceof DiscordAPIError) {
+      if (e.status === 403) {
+        return {
+          exists: true,
+          message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatCreatedAt(
+            snowflakeToDate(guildId),
+          )}`,
+        }
+      } else if (e.status === 404) {
+        return {
+          exists: false,
+          message: `No guild with ID "\`${guildId}\`" not found.`,
+        }
       }
     }
   }
@@ -349,7 +356,7 @@ async function sendGuildInviteLookup(
   const guildIcons = [
     guild.partnered ? PARTNERED : '',
     guild.verified ? VERIFIED : '',
-  ].filter(v => !!v)
+  ].filter((v) => !!v)
   const guildPrepend = guildIcons.length > 0 ? `${guildIcons.join(' ')} ` : ''
 
   const embed = new EmbedBuilder()
@@ -671,7 +678,7 @@ function formatPreviewEmojis(
 ): string {
   let formattedEmojis = emojis
     .first(100)
-    .map(e => e.toString())
+    .map((e) => e.toString())
     .join(' ')
 
   if (formattedEmojis.length > 1024) {
@@ -689,7 +696,7 @@ function formatPreviewEmojis(
 function formatStickers(stickers: Collection<string, Sticker>): string {
   return stickers
     .first(20)
-    .map(s => `[${s.name}](${s.url})`)
+    .map((s) => `[${s.name}](${s.url})`)
     .join(', ')
 }
 
