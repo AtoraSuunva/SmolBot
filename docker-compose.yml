@@ -10,4 +10,7 @@ services:
     environment:
       NODE_ENV: development # for now, until I have good prod logging
     volumes:
-      - ./:/home/node/app
+      - db-data:/home/node/app/prisma/db
+
+volumes:
+  db-data:
