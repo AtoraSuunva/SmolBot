@@ -37,14 +37,14 @@ async function handleMessageCreate(message: Message) {
   }
 
   try {
-    const embed = await getQuoteFor(
+    const embeds = await getQuoteFor(
       message.client,
       message.author,
       message.content,
     )
 
     message.reply({
-      embeds: [embed],
+      embeds,
       allowedMentions: { parse: [], repliedUser: false },
     })
   } catch {
@@ -56,12 +56,12 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
   const messageLink = interaction.options.getString('message_link', true)
 
   try {
-    const embed = await getQuoteFor(
+    const embeds = await getQuoteFor(
       interaction.client,
       interaction.user,
       messageLink,
     )
-    interaction.reply({ embeds: [embed] })
+    interaction.reply({ embeds })
   } catch (e) {
     interaction.reply({
       ephemeral: true,
@@ -97,7 +97,7 @@ async function getQuoteFor(
   client: Client,
   user: User,
   content: string,
-): Promise<EmbedBuilder> {
+): Promise<EmbedBuilder[]> {
   const matches = getMessageLinkIds(content)
 
   if (!matches) {
@@ -132,31 +132,71 @@ async function getQuoteFor(
     throw new Error('Message is not in a guild')
   }
 
+  const embeds: EmbedBuilder[] = []
+
+  const quoteContent = formatQuoteContent(message.content)
+
   const embed = new EmbedBuilder()
     .setAuthor({
       name: `${message.author.tag} - #${message.channel.name}`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
     })
-    .setDescription(message.content || '[Failed to fetch content]')
+    .setDescription(quoteContent)
     .setTimestamp(message.createdTimestamp)
     .setFooter({
       text: `Quoted by ${user.tag}`,
     })
 
+  embeds.push(embed)
+
   if (message.member) {
     embed.setColor(message.member.displayColor)
   }
 
+  if (message.reference) {
+    const reference = await message.fetchReference()
+    const content = (reference.content || 'Click to see message')
+      .split('\n')
+      .join(' ')
+
+    const shortContent =
+      content.length > 50 ? `${content.substring(0, 50)}...` : content
+
+    embed.addFields([
+      {
+        name: `Reply to ${reference.author.tag}`,
+        value: `[${shortContent}](${reference.url})`,
+      },
+    ])
+  }
+
   const imgEmbed =
-    message.attachments.find(e => 'height' in e && 'width' in e) ||
-    message.embeds.find(e => 'image' in e)
+    message.attachments.find((e) => 'height' in e && 'width' in e) ||
+    message.embeds.find((e) => e.image)
 
   if (imgEmbed && imgEmbed.url) {
     embed.setImage(imgEmbed.url)
   }
 
-  return embed
+  if (message.embeds[0]) {
+    const msgEmbed = EmbedBuilder.from(message.embeds[0])
+    embeds.push(msgEmbed)
+  }
+
+  return embeds
+}
+
+function formatQuoteContent(content: string): string | null {
+  if (content.trim() === '') return null
+
+  const lines = content.split('\n')
+
+  if (lines.length > 10) {
+    return `${lines.slice(0, 10).join('\n')}...`
+  } else {
+    return lines.join('\n')
+  }
 }
 
 async function tryFetchGuild(
