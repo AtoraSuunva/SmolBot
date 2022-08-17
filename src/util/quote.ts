@@ -11,6 +11,11 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
+/** Number of lines before quote content becomes cut */
+const MAX_QUOTE_LINES = 10
+/** Number of characters before replied message content becomes cut */
+const MAX_REPLY_LENGTH = 100
+
 export const quote = new SleetSlashCommand(
   {
     name: 'quote',
@@ -161,7 +166,9 @@ async function getQuoteFor(
       .join(' ')
 
     const shortContent =
-      content.length > 50 ? `${content.substring(0, 50)}...` : content
+      content.length > MAX_REPLY_LENGTH
+        ? `${content.substring(0, MAX_REPLY_LENGTH)}...`
+        : content
 
     embed.addFields([
       {
@@ -192,8 +199,8 @@ function formatQuoteContent(content: string): string | null {
 
   const lines = content.split('\n')
 
-  if (lines.length > 10) {
-    return `${lines.slice(0, 10).join('\n')}...`
+  if (lines.length > MAX_QUOTE_LINES) {
+    return `${lines.slice(0, MAX_QUOTE_LINES).join('\n')}...`
   } else {
     return lines.join('\n')
   }
