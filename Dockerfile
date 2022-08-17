@@ -18,6 +18,7 @@ COPY --from=dev-build /home/node/app/prisma ./prisma
 COPY --from=dev-build /home/node/app/dist ./dist
 RUN pnpm fetch --prod
 RUN pnpm install -r --offline --prod
+RUN pnpx prisma generate
 
 # The actual runtime itself
 FROM node:18-slim as prod-runtime
