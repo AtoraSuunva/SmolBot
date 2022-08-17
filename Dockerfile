@@ -4,8 +4,8 @@ WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 COPY prisma/ ./prisma/
-RUN pnpm install -r
-COPY . ./
+RUN pnpm install
+COPY src/ ./src/
 RUN pnpm run build
 
 
@@ -14,8 +14,8 @@ FROM node:18-slim as prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
-COPY --from=dev-build /home/node/app/dist ./dist
 COPY --from=dev-build /home/node/app/prisma ./prisma
+COPY --from=dev-build /home/node/app/dist ./dist
 RUN pnpm fetch --prod
 RUN pnpm install -r --offline --prod
 
