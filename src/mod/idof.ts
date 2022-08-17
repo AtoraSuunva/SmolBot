@@ -45,7 +45,7 @@ export const idof = new SleetSlashCommand(
 async function runIdof(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
-  const matches = await matchMembers(guild, user)
+  const matches = await matchMembers(guild, user, true)
 
   if (matches.length === 0) {
     return interaction.reply(`No users found matching "${user}"`)
@@ -74,16 +74,38 @@ async function fetchMembers(guild: Guild) {
 // Limit the number of autocomplete options returned
 const MAX_MATCHES = 10
 
-async function matchMembers(guild: Guild, query: string) {
+/**
+ * Try to match a query against every member in a guild, returning possible matches
+ * @param guild The guild to search
+ * @param query The query to search with. It will be searched for case-insensitively in tag and nickname
+ * @param tryExactMatch Try for an exact match. If an exact match with a tag is found, only return that
+ * @returns
+ */
+async function matchMembers(
+  guild: Guild,
+  query: string,
+  tryExactMatch = false,
+) {
   const lowerValue = query.toLowerCase()
   const members = await fetchMembers(guild)
 
   const matches: GuildMember[] = []
 
   for (const m of members.values()) {
+    if (tryExactMatch && m.user.tag === query) {
+      return [
+        {
+          name: `${m.user.tag}${
+            m.nickname ? ` (Nickname: ${m.nickname})` : ''
+          }`,
+          value: m.user.tag,
+          id: m.user.id,
+        },
+      ]
+    }
+
     if (
-      m.user.tag.toLowerCase() === query ||
-      m.user.username.toLowerCase().includes(lowerValue) ||
+      m.user.tag.toLowerCase().includes(lowerValue) ||
       !!m.nickname?.toLowerCase().includes(lowerValue)
     ) {
       matches.push(m)
