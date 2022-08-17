@@ -1,12 +1,25 @@
 import {
-  APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
-  AutocompleteInteraction,
   ChatInputCommandInteraction,
   codeBlock,
   Guild,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { AutocompleteHandler, getGuild, SleetSlashCommand } from 'sleetcord'
+
+const userAutocomplete: AutocompleteHandler<string> = async ({
+  interaction,
+  value,
+}) => {
+  if (!interaction.inGuild()) {
+    return []
+  }
+
+  const guild = await getGuild(interaction, true)
+  return (await matchMembers(guild, value)).map((m) => ({
+    name: m.name,
+    value: m.value,
+  }))
+}
 
 export const idof = new SleetSlashCommand(
   {
@@ -28,22 +41,6 @@ export const idof = new SleetSlashCommand(
   },
 )
 
-async function userAutocomplete(
-  interaction: AutocompleteInteraction,
-  _name: string,
-  value: string,
-): Promise<APIApplicationCommandOptionChoice<string>[]> {
-  if (!interaction.inGuild()) {
-    return []
-  }
-
-  const guild = await getGuild(interaction, true)
-  return (await matchMembers(guild, value)).map(m => ({
-    name: m.name,
-    value: m.value,
-  }))
-}
-
 async function runIdof(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
@@ -52,10 +49,10 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   if (matches.length === 0) {
     return interaction.reply(`No users found matching "${user}"`)
   } else if (matches.length === 1) {
-    return interaction.reply(`${matches[0].id}`)
+    return interaction.reply(matches[0].id)
   } else {
     const formattedMatches = codeBlock(
-      matches.map(m => `${m.name} (${m.id})`).join('\n'),
+      matches.map((m) => `${m.name} (${m.id})`).join('\n'),
     )
 
     return interaction.reply(
@@ -79,12 +76,12 @@ async function matchMembers(guild: Guild, query: string) {
 
   return members
     .filter(
-      m =>
-        m.user.tag === query ||
+      (m) =>
+        m.user.tag.toLowerCase() === query ||
         m.user.username.toLowerCase().includes(lowerValue) ||
         !!m.nickname?.toLowerCase().includes(lowerValue),
     )
-    .map(m => ({
+    .map((m) => ({
       name: `${m.user.tag}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
       value: m.user.tag,
       id: m.user.id,
