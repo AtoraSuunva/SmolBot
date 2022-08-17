@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   codeBlock,
   Guild,
+  GuildMember,
 } from 'discord.js'
 import { AutocompleteHandler, getGuild, SleetSlashCommand } from 'sleetcord'
 
@@ -70,20 +71,29 @@ async function fetchMembers(guild: Guild) {
   return guild.members.fetch()
 }
 
+// Limit the number of autocomplete options returned
+const MAX_MATCHES = 10
+
 async function matchMembers(guild: Guild, query: string) {
   const lowerValue = query.toLowerCase()
   const members = await fetchMembers(guild)
 
-  return members
-    .filter(
-      (m) =>
-        m.user.tag.toLowerCase() === query ||
-        m.user.username.toLowerCase().includes(lowerValue) ||
-        !!m.nickname?.toLowerCase().includes(lowerValue),
-    )
-    .map((m) => ({
-      name: `${m.user.tag}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
-      value: m.user.tag,
-      id: m.user.id,
-    }))
+  const matches: GuildMember[] = []
+
+  for (const m of members.values()) {
+    if (
+      m.user.tag.toLowerCase() === query ||
+      m.user.username.toLowerCase().includes(lowerValue) ||
+      !!m.nickname?.toLowerCase().includes(lowerValue)
+    ) {
+      matches.push(m)
+      if (matches.length >= MAX_MATCHES) break
+    }
+  }
+
+  return matches.map((m) => ({
+    name: `${m.user.tag}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
+    value: m.user.tag,
+    id: m.user.id,
+  }))
 }
