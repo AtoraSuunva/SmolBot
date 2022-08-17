@@ -1,25 +1,37 @@
 # Smol Bot
 
-My private mod/util/misc bot for discord, mainly used for r/ut and sometimes beta/staging for RobotOtter
+Various (mostly) moderation- or utility-focused commands I've needed, in a Discord bot.
+
+Acts somewhat as a staging enviroment for some features, but mostly for more niche commands I've needed.
+
+> ⚠️ This is currently a very WIP version. Many things will break, setup will be hard. It's best to just look at the codebase for now
 
 ## Setup
 
-1. Create a Postgres DB (Postgres is *required* because of use of json/array storage)
-2. Create DB user for the bot
-3. Run the table creations scripts under `sql/create`
-4. `git clone`  
-5. `npm i`  
-6. Set the following env vars:
+While open-source, Smol Bot isn't really designed to be ran anywhere. If you're familiar with nodejs or docker, you can get it running yourself, but documentation isn't a big priority.
 
-    - `BOT_TOKEN`
-    - `GITHUB_TOKEN` (To be replaced with `GD_TOKEN` soon tm)
-    - `DB_HOST`
-    - `DB_PORT`
-    - `DB_DATABASE`
-    - `DB_USER`
-    - `DB_PASSWORD`
-    - `DB_POKEMON_DATABASE` (You can just reuse the same DB/user/pass as the rest, unless you want a dedicated pokemon database)
-    - `DB_POKEMON_USER`
-    - `DB_POKEMON_PASSWORD`
+### .env requirements
+```sh
+NODE_ENV=development # or production
+TOKEN=discord bot token
+APPLICATION_ID=discord application id
+USE_PINO_PRETTY=true # or false for default pino logs
+DATABASE_URL="file:./db/dev.db" # or anywhere else you want an sqlite db to be
+```
 
-7. Should be ready to go
+### Running
+
+```sh
+# Migrate the database if needed
+pnpx prisma migrate deploy
+```
+
+```sh
+pnpm run build
+pnpm run main
+```
+
+Docker can also be used, automatically building, migrating, and running
+```sh
+docker-compose up
+```

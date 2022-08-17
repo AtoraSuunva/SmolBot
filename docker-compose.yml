@@ -4,11 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
       NODE_ENV: development # for now, until I have good prod logging
-      USE_PINO_PRETTY: 'false'
     volumes:
       - ./:/home/node/app
