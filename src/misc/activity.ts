@@ -57,6 +57,7 @@ export const activity = new SleetSlashCommand(
         choices: activityChoices,
       },
     ],
+    registerOnlyInGuilds: [],
   },
   {
     ready: runReady,

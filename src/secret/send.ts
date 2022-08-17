@@ -23,6 +23,7 @@ export const send = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Channel,
       },
     ],
+    registerOnlyInGuilds: [],
   },
   {
     run: runSend,

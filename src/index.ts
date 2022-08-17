@@ -54,6 +54,9 @@ const sleetClient = new SleetClient({
   logger: loggerOptions,
 })
 
+// TODO: some modules should be locked to, say, a dev guild only
+// `registerOnlyInGuilds` solves that, but we need a way to pass which guild(s) to the commands
+// `devGuild` option in sleet? `registerOnlyInGuilds: ['devGuild']`?
 sleetClient.addModules([
   // mod
   mute,
