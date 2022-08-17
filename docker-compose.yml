@@ -1,13 +1,14 @@
 version: '3.7'
 services:
-  smolbot:
+  bot:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      NODE_ENV: production
-      TOKEN: '${TOKEN}'
-      APPLICATION_ID: '${APPLICATION_ID}'
+      NODE_ENV: development # for now, until I have good prod logging
+      USE_PINO_PRETTY: 'false'
     volumes:
       - ./:/home/node/app
