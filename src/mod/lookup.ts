@@ -694,10 +694,16 @@ function formatPreviewEmojis(
  * @returns A string representation of the stickers
  */
 function formatStickers(stickers: Collection<string, Sticker>): string {
-  return stickers
+  let formattedStickers = stickers
     .first(20)
     .map((s) => `[${s.name}](${s.url})`)
     .join(', ')
+
+  if (formattedStickers.length > 1024) {
+    formattedStickers = trimToLast(formattedStickers.substring(0, 1024), ', ')
+  }
+
+  return formattedStickers
 }
 
 /**
