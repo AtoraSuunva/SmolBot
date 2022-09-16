@@ -22,6 +22,7 @@ import { restore_embeds } from './util/restore_embeds.js'
 import { idof } from './mod/idof.js'
 import { welcome } from './mod/welcome/welcome.js'
 import { LoggerOptions } from 'pino'
+import { lock_post } from './mod/lock_post.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -69,6 +70,7 @@ sleetClient.addModules([
   unedit,
   idof,
   welcome,
+  lock_post, // guild
 
   // misc
   activity,
