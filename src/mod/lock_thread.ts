@@ -5,33 +5,33 @@ import {
   escapeMarkdown,
   PrivateThreadChannel,
   PublicThreadChannel,
+  ThreadEditData,
 } from 'discord.js'
 import { formatUser, getChannel, SleetSlashCommand } from 'sleetcord'
 
-export const lock_post = new SleetSlashCommand(
+export const lock_thread = new SleetSlashCommand(
   {
-    name: 'lock_post',
-    description: 'Locks a forum post',
+    name: 'lock_thread',
+    description: 'Locks a thread',
     dm_permission: false,
     default_member_permissions: ['ManageThreads'],
     options: [
       {
-        name: 'post',
-        description: 'The post to lock',
-        type: ApplicationCommandOptionType.Channel,
-        channel_types: [ChannelType.GuildPublicThread],
+        name: 'reason',
+        description: 'The reason for locking the thread',
+        type: ApplicationCommandOptionType.String,
         required: true,
       },
       {
-        name: 'reason',
-        description: 'The reason for locking the post',
-        type: ApplicationCommandOptionType.String,
-        required: true,
+        name: 'thread',
+        description: 'The thread to lock',
+        type: ApplicationCommandOptionType.Channel,
+        channel_types: [ChannelType.GuildPublicThread],
       },
     ],
   },
   {
-    run: runLockPost,
+    run: runLockThread,
   },
 )
 
@@ -43,18 +43,18 @@ const logToChannels: Record<string, string> = {
 
 async function logToChannel(
   interaction: ChatInputCommandInteraction<'cached' | 'raw'>,
-  post: PublicThreadChannel | PrivateThreadChannel,
+  thread: PublicThreadChannel | PrivateThreadChannel,
   reason: string,
 ) {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const logChannelId = logToChannels[post.parentId!]
+  const logChannelId = logToChannels[thread.parentId!]
 
   if (!logChannelId) return
 
   const formattedReason = [
-    `**Locked Thread:** ${escapeMarkdown(post.name)}`,
+    `**Locked Thread:** ${escapeMarkdown(thread.name)}`,
     `**Locked By:** ${formatUser(interaction.user)}`,
-    post.url,
+    thread.url,
     `**Reason:** ${reason}`,
   ].join('\n')
 
@@ -67,10 +67,18 @@ async function logToChannel(
   return channel.send({ content: formattedReason })
 }
 
-async function runLockPost(interaction: ChatInputCommandInteraction) {
-  const post = await getChannel(interaction, 'post', true)
+async function runLockThread(interaction: ChatInputCommandInteraction) {
+  const thread =
+    (await getChannel(interaction, 'thread')) ?? interaction.channel
   const reason = interaction.options.getString('reason', true)
   const formattedReason = `Locked by ${interaction.user.tag}: ${reason}`
+
+  if (!thread) {
+    return interaction.reply({
+      content: 'Please provide a thread to lock',
+      ephemeral: true,
+    })
+  }
 
   if (!interaction.inGuild()) {
     return interaction.reply({
@@ -79,16 +87,16 @@ async function runLockPost(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  if (!post.isThread()) {
+  if (!thread.isThread()) {
     return interaction.reply({
-      content: 'You can only lock forum posts',
+      content: 'You can only lock threads & forum posts',
       ephemeral: true,
     })
   }
 
-  if (post.locked) {
+  if (thread.archived && thread.locked) {
     return interaction.reply({
-      content: 'This post is already locked',
+      content: 'This thread is already archived & locked',
       ephemeral: true,
     })
   }
@@ -96,22 +104,31 @@ async function runLockPost(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply({ ephemeral: true })
 
   try {
-    await post.edit({
-      archived: true,
-      locked: true,
+    const threadEditData: ThreadEditData = {}
+
+    if (!thread.archived) {
+      threadEditData.archived = true
+    }
+
+    if (!thread.locked) {
+      threadEditData.locked = true
+    }
+
+    await thread.edit({
+      ...threadEditData,
       reason: formattedReason,
     })
   } catch (error) {
     await defer
     return interaction.editReply({
-      content: `An error occurred while locking the post: ${error}`,
+      content: `An error occurred while locking the thread: ${error}`,
     })
   }
 
-  await logToChannel(interaction, post, reason)
+  await logToChannel(interaction, thread, reason)
   await defer
 
   return interaction.editReply({
-    content: `Locked post ${post} for reason ${reason}`,
+    content: `Locked thread ${thread} for reason ${reason}`,
   })
 }
