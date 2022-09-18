@@ -18,6 +18,7 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
+import emojiRegexFactory from 'emoji-regex'
 
 export const purge = new SleetSlashCommand(
   {
@@ -57,9 +58,16 @@ export const purge = new SleetSlashCommand(
       },
       {
         name: 'emoji',
+        type: ApplicationCommandOptionType.Integer,
+        description:
+          'Purge only messages with this many or more emoji (default: 0)',
+        min_value: 0,
+      },
+      {
+        name: 'only_emoji',
         type: ApplicationCommandOptionType.Boolean,
         description:
-          'Purge only messages that contain an emoji (default: none)',
+          'Purge only messages that only contain emoji (default: false)',
       },
       {
         name: 'embeds',
@@ -117,7 +125,8 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   const from = await getMentionables(interaction, 'from')
   const mentions = await getMentionables(interaction, 'mentions')
   const bots = interaction.options.getBoolean('bots') ?? false
-  const emoji = interaction.options.getBoolean('emoji') ?? false
+  const emoji = interaction.options.getInteger('emoji') ?? 0
+  const onlyEmoji = interaction.options.getBoolean('only_emoji') ?? false
   const embeds = interaction.options.getInteger('embeds') ?? 0
   const before = interaction.options.getString('before')
   const after = interaction.options.getString('after')
@@ -188,6 +197,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       mentions,
       bots,
       emoji,
+      onlyEmoji,
       embeds,
     })
 
@@ -209,7 +219,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
     if (
       before &&
       after &&
-      filteredMessages.some(message => !isAfter(message, after))
+      filteredMessages.some((message) => !isAfter(message, after))
     ) {
       break
     }
@@ -264,7 +274,8 @@ interface FilterOptions {
   from?: Mentionable[] | null
   mentions?: Mentionable[] | null
   bots: boolean
-  emoji: boolean
+  emoji: number
+  onlyEmoji: boolean
   embeds: number
 }
 
@@ -286,17 +297,19 @@ function filterMessages(
     mentions,
     bots,
     emoji,
+    onlyEmoji,
     embeds,
   }: FilterOptions,
 ): FetchedMessages {
-  return messages.filter(message => {
+  return messages.filter((message) => {
     if (after && !isAfter(message, after)) return false
     if (before && !isBefore(message, before)) return false
     if (content && !hasContent(message, content)) return false
     if (from && !isFrom(message, from)) return false
     if (mentions && !doesMention(message, mentions)) return false
     if (bots && !isBot(message)) return false
-    if (emoji && !hasEmoji(message)) return false
+    if (emoji && !hasCountEmoji(message, emoji)) return false
+    if (onlyEmoji && !hasOnlyEmoji(message)) return false
     if (embeds && !hasCountEmbeds(message, embeds)) return false
     if (!isDeleteable(message)) return false
     return true
@@ -353,14 +366,27 @@ function isBot(message: Message): boolean {
   return message.author.bot
 }
 
-function hasEmoji(message: Message): boolean {
-  // TODO: regex this
-  return message.content.includes('🙏')
+const emojiRegex = emojiRegexFactory()
+const discordEmojiRegex = /<a?:\w+:\d+>/g
+
+function hasCountEmoji(message: Message, maxEmoji: number): boolean {
+  const unicodeEmojis = message.content.match(emojiRegex)?.length ?? 0
+  const discordEmojis = message.content.match(discordEmojiRegex)?.length ?? 0
+  return unicodeEmojis + discordEmojis >= maxEmoji
 }
 
-function hasCountEmbeds(message: Message, embedCount: number): boolean {
+function hasOnlyEmoji(message: Message): boolean {
+  return (
+    message.content
+      .replaceAll(emojiRegex, '')
+      .replaceAll(discordEmojiRegex, '')
+      .trim() === ''
+  )
+}
+
+function hasCountEmbeds(message: Message, maxEmbeds: number): boolean {
   const count = message.embeds.length + message.attachments.size
-  return count >= embedCount
+  return count >= maxEmbeds
 }
 
 // 14 Days period in ms
