@@ -279,12 +279,13 @@ async function sendUserLookup(
     if (rpc) {
       const availability = rpc.bot_public ? 'Public' : 'Private'
       details.push(
+        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}`,
+        '\n',
         `**${availability}** [(Invite)](${oAuthUrl(
           rpc.id,
           rpc.install_params?.permissions ?? '0',
           rpc.install_params?.scopes ?? ['bot'],
-        )})\n`,
-        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}`,
+        )})`,
       )
 
       if (rpc.terms_of_service_url) {
