@@ -23,6 +23,7 @@ import { idof } from './mod/idof.js'
 import { welcome } from './mod/welcome/welcome.js'
 import { LoggerOptions } from 'pino'
 import { lock_thread } from './mod/lock_thread.js'
+import { ping } from './misc/ping.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -78,6 +79,7 @@ sleetClient.addModules([
   info,
   stats,
   minesweeper,
+  ping,
 
   // util
   quote,
