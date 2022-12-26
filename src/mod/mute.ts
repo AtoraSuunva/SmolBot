@@ -42,7 +42,7 @@ export const mute = new SleetSlashCommand(
     ],
   },
   {
-    run: i => runMute(i, 'mute'),
+    run: (i) => runMute(i, 'mute'),
   },
 )
 
@@ -72,7 +72,7 @@ export const unmute = new SleetSlashCommand(
     ],
   },
   {
-    run: i => runMute(i, 'unmute'),
+    run: (i) => runMute(i, 'unmute'),
   },
 )
 
@@ -108,7 +108,7 @@ async function runMute(
   const me = await interactionMember.guild.members.fetchMe()
   const userHighestRole = interactionMember.roles.highest
   const myHighestRole = me.roles.highest
-  const mutedRole = interactionMember.guild.roles.cache.find(r =>
+  const mutedRole = interactionMember.guild.roles.cache.find((r) =>
     mutedRoles.includes(r.name.toLowerCase()),
   )
 
@@ -121,7 +121,8 @@ async function runMute(
     })
   }
 
-  if (mutedRole.comparePositionTo(userHighestRole) > 0) {
+  const isOwner = interactionMember.id === interactionMember.guild.ownerId
+  if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
     return interaction.reply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
       ephemeral: true,
@@ -139,7 +140,10 @@ async function runMute(
       earlyFailed.push({ member, reason: 'This is me.' })
     } else if (member.id === interaction.user.id) {
       earlyFailed.push({ member, reason: `You cannot ${action} yourself.` })
-    } else if (member.roles.highest.position >= userHighestRole.position) {
+    } else if (
+      !isOwner &&
+      member.roles.highest.position >= userHighestRole.position
+    ) {
       earlyFailed.push({
         member,
         reason: `You cannot ${action} someone with a higher or equal role to you.`,
@@ -193,10 +197,10 @@ function muteAction(
   const succeeded: MuteSuccess[] = []
   const failed: MuteFail[] = []
 
-  const actions = members.map(async member => {
+  const actions = members.map(async (member) => {
     try {
       const previousRoles = await storeRoles(member)
-      const keepRoles = member.roles.cache.filter(r => r.managed).toJSON()
+      const keepRoles = member.roles.cache.filter((r) => r.managed).toJSON()
       await member.roles.set([...keepRoles, mutedRole], reason)
       succeeded.push({ member, roles: previousRoles })
     } catch (e) {
@@ -215,7 +219,7 @@ function unmuteAction(
   const succeeded: MuteSuccess[] = []
   const failed: MuteFail[] = []
 
-  const actions = members.map(async member => {
+  const actions = members.map(async (member) => {
     try {
       const restoredRoles = await restoreRoles(member, mutedRole, reason)
       succeeded.push({ member, roles: restoredRoles })
@@ -231,7 +235,7 @@ const storedMutes = new Map<string, string[]>()
 
 async function storeRoles(member: GuildMember): Promise<Role[]> {
   const previous = storedMutes.get(member.id) ?? []
-  const roles = member.roles.cache.filter(validRole).map(r => r.id)
+  const roles = member.roles.cache.filter(validRole).map((r) => r.id)
   storedMutes.set(member.id, [...previous, ...roles])
   return member.roles.cache.toJSON()
 }
@@ -245,7 +249,7 @@ async function restoreRoles(
 
   // Resolve all the roles in case one of them has since been deleted or something
   const resolvedStoredRoles = await Promise.all(
-    roles.map(async r => {
+    roles.map(async (r) => {
       const role = member.guild.roles.cache.get(r)
       if (role) return role
       try {
@@ -258,7 +262,7 @@ async function restoreRoles(
 
   const applyRoles = [...resolvedStoredRoles, ...member.roles.cache.toJSON()]
     .filter(isDefined)
-    .filter(r => validRole(r) && r.id !== mutedRole.id)
+    .filter((r) => validRole(r) && r.id !== mutedRole.id)
 
   await member.roles.set(applyRoles, reason)
   storedMutes.delete(member.id)
@@ -278,7 +282,7 @@ function validRole(role: Role): boolean {
 function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
   return (
     succeeded
-      .map(success => {
+      .map((success) => {
         const { member, roles } = success
         const act = action === 'mute' ? 'Previous Roles' : 'Restored'
 
@@ -297,12 +301,12 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
 
 function formatFails(failed: MuteFail[]): string {
   return failed
-    .map(fail => `> ${formatUser(fail.member)} - ${fail.reason}`)
+    .map((fail) => `> ${formatUser(fail.member)} - ${fail.reason}`)
     .join('\n')
 }
 
 function formatRoles(roles: Role[]): string {
   if (roles.length === 0) return 'None'
 
-  return roles.map(r => r.toString()).join(', ')
+  return roles.map((r) => r.toString()).join(', ')
 }
