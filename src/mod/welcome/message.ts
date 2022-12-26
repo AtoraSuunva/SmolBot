@@ -1,4 +1,8 @@
-import { ChatInputCommandInteraction } from 'discord.js'
+import {
+  ChatInputCommandInteraction,
+  GuildMember,
+  GuildTextBasedChannel,
+} from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const message = new SleetSlashSubcommand(
@@ -33,4 +37,21 @@ function runMessage(interaction: ChatInputCommandInteraction) {
     ephemeral: true,
     content: messageInfo,
   })
+}
+
+interface WelcomeContext {
+  member: GuildMember
+  origin: GuildTextBasedChannel | undefined
+  welcome: GuildTextBasedChannel
+}
+
+export function formatMessage(
+  message: string,
+  { member, origin, welcome }: WelcomeContext,
+) {
+  return message
+    .replaceAll('{@user}', member.toString())
+    .replaceAll('{#origin-channel}', origin?.toString() ?? '')
+    .replaceAll('{#welcome-channel}', welcome.toString())
+    .replaceAll('{server-name}', member.guild.name)
 }

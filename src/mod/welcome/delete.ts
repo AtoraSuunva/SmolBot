@@ -59,7 +59,7 @@ async function runDelete(
     time: 60 * 1000,
   })
 
-  collector.on('collect', i => {
+  collector.on('collect', (i) => {
     if (i.user.id === interaction.user.id) {
       deleteWelcomeSettingsFrom(guild, i)
       interaction.editReply({
@@ -94,6 +94,12 @@ async function deleteWelcomeSettingsFrom(
   })
 
   await prisma.welcomeSettings.delete({
+    where: {
+      guildID: guild.id,
+    },
+  })
+
+  await prisma.welcomeJoins.deleteMany({
     where: {
       guildID: guild.id,
     },

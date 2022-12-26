@@ -1,12 +1,12 @@
 import { WelcomeSettings } from '@prisma/client'
-import { Message } from 'discord.js'
+import { Guild, GuildMember, GuildTextBasedChannel, Message } from 'discord.js'
 import { SleetSlashCommand, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
 import { fields } from './fields.js'
-import { message } from './message.js'
+import { formatMessage, message } from './message.js'
 
 export const welcome = new SleetSlashCommand(
   {
@@ -17,24 +17,19 @@ export const welcome = new SleetSlashCommand(
     options: [fields, message, deleteCommand, config],
   },
   {
+    guildMemberAdd: handleGuildMemberAdd,
     messageCreate: handleMessageCreate,
   },
 )
 
-// TODO: the actual welcome
-// considerations:
-//   - cache db ✅
-//   - invalidate cache on delete/edit ✅
-//   - ignore people
-//   - check rejoins (+cache joins)
+async function handleGuildMemberAdd(member: GuildMember) {
+  if (member.user.bot) return
+
+  handleJoin(member)
+}
 
 async function handleMessageCreate(message: Message) {
-  if (message.author.bot || !message.inGuild()) return
-
-  const welcomeSettings = await getSettingsFor(message.guild.id)
-
-  // No settings for this guild
-  if (welcomeSettings === null) return
+  if (message.author.bot || !message.inGuild() || message.system) return
 
   const member =
     message.member ?? (await tryFetchMember(message.guild, message.author.id))
@@ -43,25 +38,87 @@ async function handleMessageCreate(message: Message) {
     return // Failed to fetch member
   }
 
-  // message: string
-  // channel: string | null
-  // instant: boolean
-  // reactWith: string | null
-  const { rejoins, ignoreRoles } = welcomeSettings
+  handleJoin(member, message.channel, message)
+}
+
+async function handleJoin(
+  member: GuildMember,
+  channel?: GuildTextBasedChannel,
+  message?: Message,
+) {
+  if (member.user.bot) return
+
+  const welcomeSettings = await getSettingsFor(member.guild.id)
+
+  // No settings for this guild
+  if (welcomeSettings === null) return
+
+  const {
+    rejoins,
+    ignoreRoles,
+    channel: welcomeChannel,
+    message: welcomeMessage,
+    instant,
+    reactWith,
+  } = welcomeSettings
+
+  if (!instant && !channel) {
+    // Don't instantly welcome people and
+    // the user didn't post a message
+    return
+  }
 
   // probably should auto do this somewhere lol
   const roleIDs = ignoreRoles.split(',')
 
-  if (member.roles.cache.some(r => roleIDs.includes(r.id))) {
+  if (member.roles.cache.some((r) => roleIDs.includes(r.id))) {
     return // Ignore them because of their roles
   }
 
   if (rejoins !== true) {
-    const joins = await getJoinsFor(message.guild.id)
+    const joins = await getJoinsFor(member.guild.id)
     if (joins.includes(member.id)) return // Ignore them because they've joined before
   }
 
-  addJoin(message.guild.id, member.id)
+  const sendChannel =
+    (welcomeChannel
+      ? await resolveTextBasedChannel(member.guild, welcomeChannel)
+      : null) ?? channel
+
+  if (sendChannel) {
+    const msg = formatMessage(welcomeMessage, {
+      member,
+      origin: channel,
+      welcome: sendChannel,
+    })
+    sendChannel.send(msg)
+  }
+
+  if (reactWith && message) {
+    // ignore errors, not my problem really
+    message.react(reactWith).catch(() => void 0)
+  }
+
+  addJoin(member.guild.id, member.id)
+}
+
+async function resolveTextBasedChannel(
+  guild: Guild,
+  channelID: string,
+): Promise<GuildTextBasedChannel | null> {
+  const cachedChannel = guild.channels.cache.get(channelID)
+
+  if (cachedChannel && cachedChannel.isTextBased()) {
+    return cachedChannel
+  }
+
+  const channel = await guild.channels.fetch(channelID)
+
+  if (channel && channel.isTextBased()) {
+    return channel
+  }
+
+  return null
 }
 
 const joinCache = new Map<string, string[]>()
@@ -78,8 +135,7 @@ function addJoin(guildID: string, userID: string) {
 }
 
 async function getJoinsFor(guildID: string): Promise<string[]> {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  if (joinCache.has(guildID)) return joinCache.get(guildID)!
+  if (joinCache.has(guildID)) return joinCache.get(guildID) ?? []
 
   return prisma.welcomeJoins
     .findMany({
@@ -88,7 +144,7 @@ async function getJoinsFor(guildID: string): Promise<string[]> {
       },
       select: { userID: true },
     })
-    .then(joins => joins.map(j => j.userID))
+    .then((joins) => joins.map((j) => j.userID))
 }
 
 async function getSettingsFor(
