@@ -5,8 +5,8 @@ export const TextChannelTypes: NonNullable<
 > = [
   ChannelType.GuildText,
   ChannelType.GuildVoice,
-  ChannelType.GuildNews,
-  ChannelType.GuildNewsThread,
-  ChannelType.GuildPublicThread,
-  ChannelType.GuildPrivateThread,
+  ChannelType.GuildAnnouncement,
+  ChannelType.AnnouncementThread,
+  ChannelType.PublicThread,
+  ChannelType.PrivateThread,
 ]

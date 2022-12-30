@@ -8,11 +8,11 @@ import {
   ApplicationCommandOptionType,
 } from 'discord.js'
 import {
-  botHasPermissions,
+  botHasPermissionsGuard,
   formatUser,
   getGuild,
   getUser,
-  inGuild,
+  inGuildGuard,
   SleetSlashCommand,
 } from 'sleetcord'
 
@@ -40,8 +40,8 @@ export const revoke = new SleetSlashCommand(
 async function runRevoke(
   interaction: ChatInputCommandInteraction,
 ): Promise<unknown> {
-  inGuild(interaction)
-  await botHasPermissions(interaction, ['ManageGuild'])
+  inGuildGuard(interaction)
+  await botHasPermissionsGuard(interaction, ['ManageGuild'])
 
   await interaction.deferReply()
 
@@ -87,7 +87,7 @@ async function runBanRevoke(ban: GuildBan): Promise<void> {
  */
 async function revokeInvitesFor(guild: Guild, user: User): Promise<Invite[]> {
   const invites = await guild.invites.fetch()
-  const toRevoke = invites.filter(i => i.inviterId === user.id)
+  const toRevoke = invites.filter((i) => i.inviterId === user.id)
 
   if (toRevoke.size === 0) {
     return []

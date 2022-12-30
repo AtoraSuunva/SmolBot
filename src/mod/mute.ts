@@ -4,7 +4,12 @@ import {
   GuildMember,
   Role,
 } from 'discord.js'
-import { formatUser, getMembers, inGuild, SleetSlashCommand } from 'sleetcord'
+import {
+  formatUser,
+  getMembers,
+  inGuildGuard,
+  SleetSlashCommand,
+} from 'sleetcord'
 
 const mutedRoles = [
   'muted',
@@ -96,7 +101,7 @@ async function runMute(
   interaction: ChatInputCommandInteraction,
   action: MuteAction,
 ): Promise<unknown> {
-  inGuild(interaction)
+  inGuildGuard(interaction)
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 

@@ -206,6 +206,7 @@ const Badges: Record<keyof typeof UserFlags, string> = {
   BotHTTPInteractions: '[HTTP Interactions]',
   Spammer: '[Spammer]',
   Quarantined: '[Quarantined]',
+  ActiveDeveloper: '<:activedev:1042545590640324608>',
 }
 
 /**
