@@ -38,7 +38,7 @@ async function runRestoreEmbeds(
     })
   }
 
-  await interaction.channel.messages.edit(message.id, { flags })
+  await interaction.channel.messages.edit(message.id, { flags: flags.bitfield })
 
   return interaction.reply({
     ephemeral: true,

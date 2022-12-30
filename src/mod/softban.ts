@@ -7,7 +7,7 @@ import {
   User,
 } from 'discord.js'
 import {
-  botHasPermissions,
+  botHasPermissionsGuard,
   formatUser,
   getGuild,
   getUsers,
@@ -69,7 +69,7 @@ interface ActionResult {
 }
 
 async function runSoftban(interaction: ChatInputCommandInteraction) {
-  await botHasPermissions(interaction, ['BanMembers'])
+  await botHasPermissionsGuard(interaction, ['BanMembers'])
 
   const users = await getUsers(interaction, 'users', true)
   const deleteMessages = interaction.options.getInteger('delete_messages') ?? 1
@@ -157,7 +157,7 @@ async function softbanUsers(
   users: User[],
   context: BanContext,
 ): Promise<ActionResult> {
-  const results = await Promise.all(users.map(m => softbanUser(m, context)))
+  const results = await Promise.all(users.map((m) => softbanUser(m, context)))
 
   const succeeded: SoftbanActionSuccess[] = []
   const failed: SoftbanActionFail[] = []
@@ -208,11 +208,11 @@ async function tryFetchBan(guild: Guild, user: User): Promise<GuildBan | null> {
 }
 
 function formatSuccesses(success: SoftbanActionSuccess[]): string {
-  return success.map(succ => `> ${formatUser(succ.user)}`).join('\n')
+  return success.map((succ) => `> ${formatUser(succ.user)}`).join('\n')
 }
 
 function formatFails(failed: SoftbanActionFail[]): string {
   return failed
-    .map(fail => `> ${formatUser(fail.user)} - ${fail.reason}`)
+    .map((fail) => `> ${formatUser(fail.user)} - ${fail.reason}`)
     .join('\n')
 }
