@@ -3,10 +3,12 @@ import {
   ChatInputCommandInteraction,
   codeBlock,
   Collection,
+  CommandInteraction,
   Message,
+  MessageContextMenuCommandInteraction,
   PartialMessage,
 } from 'discord.js'
-import { SleetSlashCommand, isLikelyID } from 'sleetcord'
+import { SleetSlashCommand, isLikelyID, SleetMessageCommand } from 'sleetcord'
 
 export const unedit = new SleetSlashCommand(
   {
@@ -25,7 +27,16 @@ export const unedit = new SleetSlashCommand(
   },
   {
     messageUpdate: handleMessageUpdate,
-    run: runUnedit,
+    run: runUneditSlashCommand,
+  },
+)
+
+export const unedit_message = new SleetMessageCommand(
+  {
+    name: 'Unedit Message',
+  },
+  {
+    run: runUneditContextMenu,
   },
 )
 
@@ -65,18 +76,33 @@ async function handleMessageUpdate(
   editStore.sweep(editSweeper)
 }
 
-async function runUnedit(interaction: ChatInputCommandInteraction) {
+function runUneditSlashCommand(interaction: ChatInputCommandInteraction) {
   const messageLink = interaction.options.getString('message_link', true)
-  const messageId = getMessageId(messageLink)
+  const messageID = getMessageId(messageLink)
 
-  if (messageId === null) {
+  if (messageID === null) {
     return interaction.reply({
       ephemeral: true,
-      content: 'Invalid message link or message id',
+      content: 'Invalid message link or message ID.',
     })
   }
 
-  const previousEdits = editStore.get(messageId)
+  return runUnedit(interaction, messageID, false)
+}
+
+function runUneditContextMenu(
+  interaction: MessageContextMenuCommandInteraction,
+  message: Message,
+) {
+  runUnedit(interaction, message.id, true)
+}
+
+function runUnedit(
+  interaction: CommandInteraction,
+  messageID: string,
+  ephemeral: boolean,
+) {
+  const previousEdits = editStore.get(messageID)
 
   if (!previousEdits || previousEdits.edits.length === 0) {
     return interaction.reply({
@@ -87,7 +113,10 @@ async function runUnedit(interaction: ChatInputCommandInteraction) {
 
   const edits = codeBlock('json', JSON.stringify(previousEdits.edits, null, 2))
 
-  return interaction.reply(edits)
+  return interaction.reply({
+    content: edits,
+    ephemeral,
+  })
 }
 
 const messageLinkRegex =
