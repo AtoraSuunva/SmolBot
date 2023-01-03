@@ -1,5 +1,11 @@
 import { WelcomeSettings } from '@prisma/client'
-import { Guild, GuildMember, GuildTextBasedChannel, Message } from 'discord.js'
+import {
+  Guild,
+  GuildMember,
+  GuildTextBasedChannel,
+  Message,
+  PartialGuildMember,
+} from 'discord.js'
 import { SleetSlashCommand, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
@@ -18,14 +24,25 @@ export const welcome = new SleetSlashCommand(
   },
   {
     guildMemberAdd: handleGuildMemberAdd,
+    guildMemberUpdate: handleGuildMemberUpdate,
     messageCreate: handleMessageCreate,
   },
 )
 
 async function handleGuildMemberAdd(member: GuildMember) {
   if (member.user.bot) return
+  if (member.pending) return
 
   handleJoin(member)
+}
+
+async function handleGuildMemberUpdate(
+  oldMember: GuildMember | PartialGuildMember,
+  newMember: GuildMember,
+) {
+  if (oldMember.pending && !newMember.pending) {
+    handleJoin(newMember)
+  }
 }
 
 async function handleMessageCreate(message: Message) {
