@@ -6,6 +6,7 @@ import {
 } from 'discord.js'
 import {
   formatUser,
+  getGuild,
   getMembers,
   inGuildGuard,
   SleetSlashCommand,
@@ -102,6 +103,7 @@ async function runMute(
   action: MuteAction,
 ): Promise<unknown> {
   inGuildGuard(interaction)
+  const guild = await getGuild(interaction, true)
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
@@ -109,11 +111,11 @@ async function runMute(
   const reason = interaction.options.getString('reason') ?? 'No reason given'
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  const interactionMember = interaction.member as GuildMember
-  const me = await interactionMember.guild.members.fetchMe()
+  const interactionMember = await guild.members.fetch(interaction.user.id)
+  const me = await guild.members.fetchMe()
   const userHighestRole = interactionMember.roles.highest
   const myHighestRole = me.roles.highest
-  const mutedRole = interactionMember.guild.roles.cache.find((r) =>
+  const mutedRole = guild.roles.cache.find((r) =>
     mutedRoles.includes(r.name.toLowerCase()),
   )
 
@@ -126,7 +128,7 @@ async function runMute(
     })
   }
 
-  const isOwner = interactionMember.id === interactionMember.guild.ownerId
+  const isOwner = interactionMember.id === guild.ownerId
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
     return interaction.reply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
