@@ -13,7 +13,7 @@ import { banlog } from './mod/banlog.js'
 import { lookup } from './mod/lookup.js'
 import { softban } from './mod/softban.js'
 import { quote } from './utility/quote.js'
-import { unedit } from './mod/unedit.js'
+import { unedit, unedit_message } from './mod/unedit.js'
 import { autoreply } from './secret/autoreply.js'
 import { send } from './secret/send.js'
 import { extract } from './utility/extract.js'
@@ -24,6 +24,9 @@ import { welcome } from './mod/welcome/welcome.js'
 import { LoggerOptions } from 'pino'
 import { lock_thread } from './mod/lock_thread.js'
 import { ping } from './misc/ping.js'
+import { report_message } from './mod/report/report_message.js'
+import { report } from './mod/report/report.js'
+import { mass_ban, mass_kick } from './mod/mass_action.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -69,9 +72,14 @@ sleetClient.addModules([
   banlog,
   lookup,
   unedit,
+  unedit_message,
   idof,
   welcome,
-  lock_thread, // guild
+  lock_thread,
+  report,
+  report_message,
+  mass_ban,
+  mass_kick,
 
   // misc
   activity,
