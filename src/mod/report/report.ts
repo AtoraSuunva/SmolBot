@@ -4,7 +4,8 @@ import {
   EmbedBuilder,
   EmbedFooterOptions,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { ReportConfigResolved, fetchConfig } from './report_config.js'
 
 export const report = new SleetSlashCommand(
   {
@@ -38,6 +39,23 @@ export const report = new SleetSlashCommand(
 )
 
 async function runReport(interaction: ChatInputCommandInteraction) {
+  const guild = await getGuild(interaction, true)
+
+  let conf: ReportConfigResolved
+
+  try {
+    conf = await fetchConfig(guild)
+  } catch (err) {
+    const content = err instanceof Error ? err.message : String(err)
+    interaction.reply({
+      content,
+      ephemeral: true,
+    })
+    return
+  }
+
+  const { config, reportChannel } = conf
+
   const content = interaction.options.getString('content', true)
   const anonymous = interaction.options.getBoolean('anonymous', false) ?? true
   const attachment = interaction.options.getAttachment('attachment', false)
@@ -68,9 +86,14 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     }
   }
 
+  await reportChannel.send({
+    content: config.message,
+    embeds: [embed],
+  })
+
   interaction.reply({
     content:
-      "Your report has been sent to the moderators.\nHere's a copy of your report",
+      "Your report has been sent to the moderators.\nHere's a copy of your report:",
     embeds: [embed],
     ephemeral: true,
   })
