@@ -1,7 +1,6 @@
 import {
   ActionRowBuilder,
   DiscordjsError,
-  EmbedBuilder,
   EmbedFooterOptions,
   Message,
   MessageContextMenuCommandInteraction,
@@ -9,8 +8,11 @@ import {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  time,
 } from 'discord.js'
 import { SleetMessageCommand } from 'sleetcord'
+import { quoteMessage } from '../../util/quoteMessage.js'
+import { fetchConfig, ReportConfigResolved } from './report_config.js'
 
 export const report_message = new SleetMessageCommand(
   {
@@ -27,9 +29,24 @@ async function runReportMessage(
   message: Message,
 ) {
   if (!message.inGuild()) {
-    await interaction.reply('This command can only be used in a guild.')
+    interaction.reply('This command can only be used in a guild.')
     return
   }
+
+  let conf: ReportConfigResolved
+
+  try {
+    conf = await fetchConfig(message.guild)
+  } catch (err) {
+    const content = err instanceof Error ? err.message : String(err)
+    interaction.reply({
+      content,
+      ephemeral: true,
+    })
+    return
+  }
+
+  const { config, reportChannel } = conf
 
   const customId = `report_message:${message.id}:${interaction.id}`
 
@@ -93,19 +110,26 @@ async function runReportMessage(
     footer.iconURL = interaction.user.displayAvatarURL()
   }
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: `${message.author.tag} - #${message.channel.name}`,
-      iconURL: message.author.displayAvatarURL(),
-      url: message.url,
-    })
-    .setTitle('Message Reported')
-    .setDescription(message.content)
+  const [report, ...extraEmbeds] = await quoteMessage(message)
+
+  report
     .setFooter(footer)
-    .setTimestamp(message.createdAt)
+    .setTimestamp(null)
+    .addFields([
+      {
+        name: 'Posted at',
+        value: time(message.createdAt, 'F'),
+        inline: true,
+      },
+      {
+        name: 'Edited at',
+        value: message.editedAt ? time(message.editedAt, 'F') : 'Never',
+        inline: true,
+      },
+    ])
 
   if (reason) {
-    embed.addFields([
+    report.addFields([
       {
         name: 'Reason',
         value: reason,
@@ -113,10 +137,25 @@ async function runReportMessage(
     ])
   }
 
-  modalInteraction.reply({
-    content:
-      "Message was reported to the mods!\nHere's a preview of the report:",
-    embeds: [embed],
-    ephemeral: true,
-  })
+  const embeds = [report, ...extraEmbeds]
+
+  try {
+    await reportChannel.send({
+      content: config.message,
+      embeds,
+    })
+
+    modalInteraction.reply({
+      content:
+        "Your report has been sent to the moderators.\nHere's a copy of your report:",
+      embeds,
+      ephemeral: true,
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    modalInteraction.reply({
+      content: `Failed to send report: ${msg}`,
+      ephemeral: true,
+    })
+  }
 }

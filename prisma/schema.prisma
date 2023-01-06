@@ -26,3 +26,10 @@ model WelcomeJoins {
   userID String @map("user_id")
   @@id([guildID, userID])
 }
+
+model ReportConfig {
+  guildID String @id @map("guild_id")
+  channelID String @map("channel_id")
+  message String
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
