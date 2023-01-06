@@ -10,11 +10,7 @@ import {
   ApplicationCommandOptionType,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-
-/** Number of lines before quote content becomes cut */
-const MAX_QUOTE_LINES = 10
-/** Number of characters before replied message content becomes cut */
-const MAX_REPLY_LENGTH = 100
+import { quoteMessage } from '../util/quoteMessage.js'
 
 export const quote = new SleetSlashCommand(
   {
@@ -37,7 +33,7 @@ export const quote = new SleetSlashCommand(
 )
 
 async function handleMessageCreate(message: Message) {
-  if (message.author.bot || !('guild' in message)) {
+  if (message.author.bot || !message.inGuild()) {
     return
   }
 
@@ -68,6 +64,7 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
     )
     interaction.reply({ embeds })
   } catch (e) {
+    console.error(e)
     interaction.reply({
       ephemeral: true,
       content: e instanceof Error ? e.message : String(e),
@@ -133,77 +130,17 @@ async function getQuoteFor(
     throw new Error('Message not found')
   }
 
-  if (!('guild' in message.channel)) {
+  if (!message.inGuild()) {
     throw new Error('Message is not in a guild')
   }
 
-  const embeds: EmbedBuilder[] = []
+  const [quote, ...extraEmbeds] = await quoteMessage(message)
 
-  const quoteContent = formatQuoteContent(message.content)
+  quote.setFooter({
+    text: `Quoted by ${user.tag}`,
+  })
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: `${message.author.tag} - #${message.channel.name}`,
-      iconURL: message.author.displayAvatarURL(),
-      url: message.url,
-    })
-    .setDescription(quoteContent)
-    .setTimestamp(message.createdTimestamp)
-    .setFooter({
-      text: `Quoted by ${user.tag}`,
-    })
-
-  embeds.push(embed)
-
-  if (message.member) {
-    embed.setColor(message.member.displayColor)
-  }
-
-  if (message.reference) {
-    const reference = await message.fetchReference()
-    const content = (reference.content || 'Click to see message')
-      .split('\n')
-      .join(' ')
-
-    const shortContent =
-      content.length > MAX_REPLY_LENGTH
-        ? `${content.substring(0, MAX_REPLY_LENGTH)}...`
-        : content
-
-    embed.addFields([
-      {
-        name: `Reply to ${reference.author.tag}`,
-        value: `[${shortContent}](${reference.url})`,
-      },
-    ])
-  }
-
-  const imgEmbed =
-    message.attachments.find((e) => 'height' in e && 'width' in e) ||
-    message.embeds.find((e) => e.image)
-
-  if (imgEmbed && imgEmbed.url) {
-    embed.setImage(imgEmbed.url)
-  }
-
-  if (message.embeds[0]) {
-    const msgEmbed = EmbedBuilder.from(message.embeds[0])
-    embeds.push(msgEmbed)
-  }
-
-  return embeds
-}
-
-function formatQuoteContent(content: string): string | null {
-  if (content.trim() === '') return null
-
-  const lines = content.split('\n')
-
-  if (lines.length > MAX_QUOTE_LINES) {
-    return `${lines.slice(0, MAX_QUOTE_LINES).join('\n')}...`
-  } else {
-    return lines.join('\n')
-  }
+  return [quote, ...extraEmbeds]
 }
 
 async function tryFetchGuild(
