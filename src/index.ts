@@ -28,6 +28,7 @@ import { report_message } from './mod/report/report_message.js'
 import { report } from './mod/report/report.js'
 import { mass_ban, mass_kick } from './mod/mass_action.js'
 import { report_config } from './mod/report/report_config.js'
+import { convert } from './utility/convert.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -96,6 +97,7 @@ sleetClient.addModules([
   extract,
   count_members,
   restore_embeds,
+  convert,
 
   // secret
   autoreply,

@@ -23,16 +23,20 @@
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@prisma/client": "^4.8.0",
+    "@types/convert-units": "^2.3.5",
+    "convert-units": "^2.3.4",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
     "env-var": "^7.3.0",
+    "humanize-duration": "^3.27.3",
     "pino": "^8.8.0",
     "pino-pretty": "^9.1.1",
     "sleetcord": "^0.7.1",
     "undici": "^5.14.0"
   },
   "devDependencies": {
+    "@types/humanize-duration": "^3.27.1",
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",

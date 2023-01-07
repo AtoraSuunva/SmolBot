@@ -2,9 +2,12 @@ lockfileVersion: 5.4
 
 specifiers:
   '@prisma/client': ^4.8.0
+  '@types/convert-units': ^2.3.5
+  '@types/humanize-duration': ^3.27.1
   '@types/node': ^18.11.18
   '@typescript-eslint/eslint-plugin': ^5.47.1
   '@typescript-eslint/parser': ^5.47.1
+  convert-units: ^2.3.4
   discord.js: ^14.7.1
   dotenv: ^16.0.3
   emoji-regex: ^10.2.1
@@ -12,6 +15,7 @@ specifiers:
   eslint: ^8.30.0
   eslint-config-prettier: ^8.5.0
   eslint-plugin-import: ^2.26.0
+  humanize-duration: ^3.27.3
   pino: ^8.8.0
   pino-pretty: ^9.1.1
   prettier: ^2.8.1
@@ -22,16 +26,20 @@ specifiers:
 
 dependencies:
   '@prisma/client': 4.8.0_prisma@4.8.0
+  '@types/convert-units': 2.3.5
+  convert-units: 2.3.4
   discord.js: 14.7.1
   dotenv: 16.0.3
   emoji-regex: 10.2.1
   env-var: 7.3.0
+  humanize-duration: 3.27.3
   pino: 8.8.0
   pino-pretty: 9.1.1
   sleetcord: 0.7.1
   undici: 5.14.0
 
 devDependencies:
+  '@types/humanize-duration': 3.27.1
   '@types/node': 18.11.18
   '@typescript-eslint/eslint-plugin': 5.47.1_txmweb6yn7coi7nfrp22gpyqmy
   '@typescript-eslint/parser': 5.47.1_lzzuuodtsqwxnvqeq4g4likcqa
@@ -181,6 +189,14 @@ packages:
   /@tokenizer/token/0.3.0:
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
     dev: false
+
+  /@types/convert-units/2.3.5:
+    resolution: {integrity: sha512-uPxhvoCflbz9hm0aiLEHnwT7JTdhJcKUmArdmmKtWjbK+tw9hUguYh0vTpA5ugqc9/a+hWdPB7NW0SX6peLS8g==}
+    dev: false
+
+  /@types/humanize-duration/3.27.1:
+    resolution: {integrity: sha512-K3e+NZlpCKd6Bd/EIdqjFJRFHbrq5TzPPLwREk5Iv/YoIjQrs6ljdAUCo+Lb2xFlGNOjGSE0dqsVD19cZL137w==}
+    dev: true
 
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
@@ -488,6 +504,13 @@ packages:
   /concat-map/0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
     dev: true
+
+  /convert-units/2.3.4:
+    resolution: {integrity: sha512-ERHfdA0UhHJp1IpwE6PnFJx8LqG7B1ZjJ20UvVCmopEnVCfER68Tbe3kvN63dLbYXDA2xFWRE6zd4Wsf0w7POg==}
+    dependencies:
+      lodash.foreach: 2.3.0
+      lodash.keys: 2.3.0
+    dev: false
 
   /cross-spawn/7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -1098,6 +1121,10 @@ packages:
       readable-stream: 3.6.0
     dev: false
 
+  /humanize-duration/3.27.3:
+    resolution: {integrity: sha512-iimHkHPfIAQ8zCDQLgn08pRqSVioyWvnGfaQ8gond2wf7Jq2jJ+24ykmnRyiz3fIldcn4oUuQXpjqKLhSVR7lw==}
+    dev: false
+
   /ieee754/1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
     dev: false
@@ -1296,12 +1323,134 @@ packages:
       p-locate: 5.0.0
     dev: true
 
+  /lodash._basebind/2.3.0:
+    resolution: {integrity: sha512-SHqM7YCuJ+BeGTs7lqpWnmdHEeF4MWxS3dksJctHFNxR81FXPOzA4bS5Vs5CpcGTkBpM8FCl+YEbQEblRw8ABg==}
+    dependencies:
+      lodash._basecreate: 2.3.0
+      lodash._setbinddata: 2.3.0
+      lodash.isobject: 2.3.0
+    dev: false
+
+  /lodash._basecreate/2.3.0:
+    resolution: {integrity: sha512-vwZaWldZwS2y9b99D8i9+WtgiZXbHKsBsMrpxJEqTsNW20NhJo5W8PBQkeQO9CmxuqEYn8UkMnfEM2MMT4cVrw==}
+    dependencies:
+      lodash._renative: 2.3.0
+      lodash.isobject: 2.3.0
+      lodash.noop: 2.3.0
+    dev: false
+
+  /lodash._basecreatecallback/2.3.0:
+    resolution: {integrity: sha512-Ev+pDzzfVfgbiucpXijconLGRBar7/+KNCf05kSnk4CmdDVhAy1RdbU9efCJ/o9GXI08JdUGwZ+5QJ3QX3kj0g==}
+    dependencies:
+      lodash._setbinddata: 2.3.0
+      lodash.bind: 2.3.0
+      lodash.identity: 2.3.0
+      lodash.support: 2.3.0
+    dev: false
+
+  /lodash._basecreatewrapper/2.3.0:
+    resolution: {integrity: sha512-YLycQ7k8AB9Wc1EOvLNxuRWcqipDkMXq2GCgnLWQR6qtgTb3gY3LELzEpnFshrEO4LOLs+R2EpcY+uCOZaLQ8Q==}
+    dependencies:
+      lodash._basecreate: 2.3.0
+      lodash._setbinddata: 2.3.0
+      lodash._slice: 2.3.0
+      lodash.isobject: 2.3.0
+    dev: false
+
+  /lodash._createwrapper/2.3.0:
+    resolution: {integrity: sha512-XjaI/rzg9W+WO4WJDQ+PRlHD5sAMJ1RhJLuT65cBxLCb1kIYs4U20jqvTDGAWyVT3c34GYiLd9AreHYuB/8yJA==}
+    dependencies:
+      lodash._basebind: 2.3.0
+      lodash._basecreatewrapper: 2.3.0
+      lodash.isfunction: 2.3.0
+    dev: false
+
+  /lodash._objecttypes/2.3.0:
+    resolution: {integrity: sha512-jbA6QyHt9cw3BzvbWzIcnU3Z12jSneT6xBgz3Y782CJsN1tV5aTBKrFo2B4AkeHBNaxSrbPYZZpi1Lwj3xjdtg==}
+    dev: false
+
+  /lodash._renative/2.3.0:
+    resolution: {integrity: sha512-v44MRirqYqZGK/h5UKoVqXWF2L+LUiLTU+Ogu5rHRVWJUA1uWIlHaMpG8f/OA8j++BzPMQij9+erXHtgFcbuwg==}
+    dev: false
+
+  /lodash._setbinddata/2.3.0:
+    resolution: {integrity: sha512-xMFfbF7dL+sFtrdE49uHFmfpBAEwlFtfgMp86nQRlAF6aizYL+3MTbnYMKJSkP1W501PhsgiBED5kBbZd8kR2g==}
+    dependencies:
+      lodash._renative: 2.3.0
+      lodash.noop: 2.3.0
+    dev: false
+
+  /lodash._shimkeys/2.3.0:
+    resolution: {integrity: sha512-9Iuyi7TiWMGa/9+2rqEE+Zwye4b/U2w7Saw6UX1h6Xs88mEER+uz9FZcEBPKMVKsad9Pw5GNAcIBRnW2jNpneQ==}
+    dependencies:
+      lodash._objecttypes: 2.3.0
+    dev: false
+
+  /lodash._slice/2.3.0:
+    resolution: {integrity: sha512-7C61GhzRUv36gTafr+RIb+AomCAYsSATEoK4OP0VkNBcwvsM022Z22AVgqjjzikeNO1U29LzsJZDvLbiNPUYvA==}
+    dev: false
+
+  /lodash.bind/2.3.0:
+    resolution: {integrity: sha512-goakyOo+FMN8lttMPnZ0UNlr5RlzX4IrUXyTJPT2A0tGCMXySupond9wzvDqTvVmYTcQjIKGrj8naJDS2xWAlQ==}
+    dependencies:
+      lodash._createwrapper: 2.3.0
+      lodash._renative: 2.3.0
+      lodash._slice: 2.3.0
+    dev: false
+
+  /lodash.foreach/2.3.0:
+    resolution: {integrity: sha512-yLnyptVRJd0//AbGp480grgQG9iaDIV5uOgSbpurRy1dYybPbjNTLQ3FyLEQ84buVLPG7jyaiyvpzgfOutRB3Q==}
+    dependencies:
+      lodash._basecreatecallback: 2.3.0
+      lodash.forown: 2.3.0
+    dev: false
+
+  /lodash.forown/2.3.0:
+    resolution: {integrity: sha512-dUnCsuQTtq3Y7bxPNoEEqjJjPL2ftLtcz2PTeRKvhbpdM514AvnqCjewHGsm/W+dwspIwa14KoWEZeizJ7smxA==}
+    dependencies:
+      lodash._basecreatecallback: 2.3.0
+      lodash._objecttypes: 2.3.0
+      lodash.keys: 2.3.0
+    dev: false
+
+  /lodash.identity/2.3.0:
+    resolution: {integrity: sha512-NYJ2r2cwy3tkx/saqbIZEX6oQUzjWTnGRu7d/zmBjMCZos3eHBxCpbvWFWSetv8jFVrptsp6EbWjzNgBKhUoOA==}
+    dev: false
+
+  /lodash.isfunction/2.3.0:
+    resolution: {integrity: sha512-X5lteBYlCrVO7Qc00fxP8W90fzRp6Ax9XcHANmU3OsZHdSyIVZ9ZlX5QTTpRq8aGY+9I5Rmd0UTzTIIyWPugEQ==}
+    dev: false
+
+  /lodash.isobject/2.3.0:
+    resolution: {integrity: sha512-jo1pfV61C4TE8BfEzqaHj6EIKiSkFANJrB6yscwuCJMSRw5tbqjk4Gv7nJzk4Z6nFKobZjGZ8Qd41vmnwgeQqQ==}
+    dependencies:
+      lodash._objecttypes: 2.3.0
+    dev: false
+
+  /lodash.keys/2.3.0:
+    resolution: {integrity: sha512-c0UW0ffqMxSCtoVbmVt2lERJLkEqgoOn2ejPsWXzr0ZrqRbl3uruGgwHzhtqXxi6K/ei3Ey7zimOqSwXgzazPg==}
+    dependencies:
+      lodash._renative: 2.3.0
+      lodash._shimkeys: 2.3.0
+      lodash.isobject: 2.3.0
+    dev: false
+
   /lodash.merge/4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
     dev: true
 
+  /lodash.noop/2.3.0:
+    resolution: {integrity: sha512-NpSm8HRm1WkBBWHUveDukLF4Kfb5P5E3fjHc9Qre9A11nNubozLWD2wH3UBTZbu+KSuX8aSUvy9b+PUyEceJ8g==}
+    dev: false
+
   /lodash.snakecase/4.1.1:
     resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
+    dev: false
+
+  /lodash.support/2.3.0:
+    resolution: {integrity: sha512-etc7VWbB0U3Iya8ixj2xy4sDBN3jvPX7ODi8iXtn4KkkjNpdngrdc7Vlt5jub/Vgqx6/dWtp7Ml9awhCQPYKGQ==}
+    dependencies:
+      lodash._renative: 2.3.0
     dev: false
 
   /lodash/4.17.21:
