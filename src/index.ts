@@ -29,6 +29,7 @@ import { report } from './mod/report/report.js'
 import { mass_ban, mass_kick } from './mod/mass_action.js'
 import { report_config } from './mod/report/report_config.js'
 import { convert } from './utility/convert.js'
+import { time_since } from './utility/time_since.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -98,6 +99,7 @@ sleetClient.addModules([
   count_members,
   restore_embeds,
   convert,
+  time_since,
 
   // secret
   autoreply,
