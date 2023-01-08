@@ -30,6 +30,7 @@ import { mass_ban, mass_kick } from './mod/mass_action.js'
 import { report_config } from './mod/report/report_config.js'
 import { convert } from './utility/convert.js'
 import { time_since } from './utility/time_since.js'
+import { vc_log } from './mod/vc_log.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -57,6 +58,7 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildVoiceStates,
     ],
   },
   logger: loggerOptions,
@@ -84,6 +86,7 @@ sleetClient.addModules([
   report_config,
   mass_ban,
   mass_kick,
+  vc_log,
 
   // misc
   activity,
