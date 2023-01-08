@@ -76,8 +76,9 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
   if (logChannel === null) return
   if (!guild.me.permissions.has('MANAGE_GUILD')) return
 
-  let invites = await guild.fetchInvites()
-  let foundInvites = invites.filter(
+  const revokeInvites = guild.id === '120330239996854274'
+  const invites = await guild.fetchInvites()
+  const foundInvites = invites.filter(
     inv => inv.inviter && inv.inviter.id === user.id,
   )
 
@@ -99,6 +100,10 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
       }\n`
   }
 
+  if (revokeInvites) {
+    await Promise.all(invites.map(i => i.delete('User was banned')))
+  }
+
   const embed = new Discord.MessageEmbed()
     .setAuthor(
       `${user.username}#${user.discriminator} (${user.id})`,
@@ -107,10 +112,9 @@ module.exports.events.guildBanAdd = async (bot, guild, user) => {
     .setTitle('Displaying invites created by recently banned user:')
     .setDescription('```md\n' + formattedInvites + '```')
     .setFooter(
-      'Use "b!banrevoke [id]" or "b!br [id]" to revoke all invites.' +
-        (guild.id === '120330239996854274')
-        ? 'Ksink has already revoked the invites'
-        : '',
+      revokeInvites
+        ? 'Invites have been revoked'
+        : 'Use s?revoke [user id] to revoke these invites',
     )
 
   guild.channels.cache.get(logChannel).send({ embed })
