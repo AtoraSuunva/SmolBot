@@ -27,16 +27,6 @@ function cleanText(text) {
 }
 
 /**
- * Contacts the phishing API to check if the host is a known scam domain
- */
-function checkAPIForScam(host) {
-  // API returns 0 or 1 to for "not known scam" and "known scam" respectively
-  return fetch(
-    `https://api.hyperphish.com/check-domain/${encodeURI(host)}`,
-  ).then(r => !!r.json())
-}
-
-/**
  * Checks a database to know if a host is a known scam or not
  * @returns {bool|null} True if a scam domain, False if not, null if unknown
  */

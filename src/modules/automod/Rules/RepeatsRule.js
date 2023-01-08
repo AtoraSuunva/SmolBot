@@ -1,4 +1,3 @@
-const AutoProp = require('./AutoProp')
 const Rule = require('./Rule')
 
 /**
@@ -32,7 +31,7 @@ module.exports = class RepeatsRule extends Rule {
       silent,
     })
 
-    this.lastMessage = {}
+    this.lastMessage = new Map()
     this.violations = new Map()
   }
 
@@ -40,16 +39,10 @@ module.exports = class RepeatsRule extends Rule {
     const uid = message.guild.id + message.author.id
     const caught = this.violations.get(uid) || new Set()
 
-    if (this.params.find(v => message.content.toLowerCase().startsWith(v))) {
-      return
-    }
-
-    if (this.lastMessage[uid] && message.content === this.lastMessage[uid]) {
-      // -1 because the first message isn't counted since it's not a repeat
-
+    if (isRepeat(message, this.lastMessage.get(uid))) {
       caught.add(message.id)
 
-      if (caught.size >= this.maxRepeats - 1) {
+      if (caught.size >= this.limit - 1) {
         caught.clear()
         this.violations.set(uid, caught)
         return { punishment: this.punishment }
@@ -63,6 +56,16 @@ module.exports = class RepeatsRule extends Rule {
       }, this.timeout)
     }
 
-    this.lastMessage[uid] = message.content
+    this.lastMessage.set(uid, {
+      id: message.id,
+      content: message.content,
+    })
   }
+}
+
+function isRepeat(message, lastMessage) {
+  if (!message || !lastMessage) return false
+  return (
+    message.id !== lastMessage.id && message.content === lastMessage.content
+  )
 }

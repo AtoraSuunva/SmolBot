@@ -3,7 +3,7 @@ const Rule = require('./Rule')
 
 // Lol regexes
 const inviteRegex =
-  /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*([a-z0-9-]+?)(?:https:\/\/|discord\.gg|[^a-z0-9-]|$)/gi
+  /(?:discord\s*\.?\s*gg\s*|discord\s*(?:app)?\s*\.?\s*com\s*\/?\s*invite)\s*\/?\s*(?<code>[a-z0-9-]+)/gi
 
 /**
  * Allows a punishment to happen if a user shills another server
@@ -42,12 +42,24 @@ module.exports = class AdRule extends Rule {
     // 3) Aren't allowed
     const invites = (
       await getAllInvites(message.client, message.content)
-    ).filter(
-      v =>
-        v.invite === true ||
-        (v.invite.guild.id !== message.guild.id &&
-          !allowed.includes(v.invite.guild.id)),
-    )
+    ).filter(v => {
+      if (v.invite === true) {
+        // Just a boolean
+        return true
+      } else if (v.invite.guild) {
+        // Invite to guild
+        return (
+          v.invite.guild.id !== message.guild.id &&
+          !allowed.includes(v.invite.guild.id)
+        )
+      } else if (v.channel.type === 'group') {
+        // Group DM invite
+        return true
+      } else {
+        // Unsure?
+        return true
+      }
+    })
 
     if (invites.length === 0) return null
 
@@ -85,11 +97,11 @@ module.exports = class AdRule extends Rule {
  *
  * @param {Discord.Client} client The client to resolve invites with
  * @param {String} str The string to check for invites
- * @return {FoundInvites[]} An array of all the founds invites
+ * @return {Promise<FoundInvites[]>} An array of all the founds invites
  */
 async function getAllInvites(client, str) {
   const valid = []
-  const invites = findAllMatches(inviteRegex, str)
+  const invites = getAllInviteCodes(inviteRegex, str)
 
   if (invites.length === 0) return []
 
@@ -117,6 +129,7 @@ module.exports.getAllInvites = getAllInvites
  * @return {Discord.Invite|Boolean} The Invite object if it can be fetched, otherwise true/false based on *best guess* if it exists
  */
 async function resolveInvite(client, code) {
+  return true
   try {
     // First try to fetch it, if we can then it's obviously real
     return await client.fetchInvite(code)
@@ -126,16 +139,8 @@ async function resolveInvite(client, code) {
 }
 module.exports.resolveInvite = resolveInvite
 
-function findAllMatches(reg, str) {
-  let arr
-  const matches = []
-
-  while ((arr = reg.exec(str)) !== null) {
-    matches.push(arr[1])
-  }
-
-  reg.lastIndex = 0
-  return matches
+function getAllInviteCodes(reg, str) {
+  return Array.from(str.matchAll(reg)).map(match => match.groups.code)
 }
 
 function countOccurences(arr) {
