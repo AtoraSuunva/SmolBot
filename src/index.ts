@@ -31,6 +31,7 @@ import { report_config } from './mod/report/report_config.js'
 import { convert } from './utility/convert.js'
 import { time_since } from './utility/time_since.js'
 import { vc_log } from './mod/vc_log.js'
+import { timeout_button } from './secret/timeout_button.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -107,6 +108,7 @@ sleetClient.addModules([
   // secret
   autoreply,
   send,
+  timeout_button,
 ])
 
 // const TEST_GUILD_ID = env.get('TEST_GUILD_ID').required().asString()
