@@ -26,7 +26,17 @@ export const lock_thread = new SleetSlashCommand(
         name: 'thread',
         description: 'The thread to lock',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: [ChannelType.GuildPublicThread],
+        channel_types: [
+          ChannelType.PublicThread,
+          ChannelType.PrivateThread,
+          ChannelType.AnnouncementThread,
+        ],
+      },
+      {
+        name: 'ephemeral',
+        description:
+          'Send lock feedback as an ephemeral message (default: True)',
+        type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
@@ -72,6 +82,12 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
     (await getChannel(interaction, 'thread')) ?? interaction.channel
   const reason = interaction.options.getString('reason', true)
   const formattedReason = `Locked by ${interaction.user.tag}: ${reason}`
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
+
+  if (interaction.channel?.isThread() && interaction.channel.locked) {
+    // We can't reply to interactions in locked threads, it just doesn't work
+    return
+  }
 
   if (!thread) {
     return interaction.reply({
@@ -101,7 +117,21 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  const defer = interaction.deferReply({ ephemeral: true })
+  if (!thread.editable) {
+    return interaction.reply({
+      content: 'I cannot edit this thread',
+      ephemeral: true,
+    })
+  }
+
+  const defer = interaction.deferReply({ ephemeral })
+
+  if (!ephemeral) {
+    await defer
+    interaction.editReply({
+      content: `Locking thread ${thread} for "${reason}"...`,
+    })
+  }
 
   try {
     const threadEditData: ThreadEditData = {}
@@ -129,6 +159,6 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   await defer
 
   return interaction.editReply({
-    content: `Locked thread ${thread} for reason ${reason}`,
+    content: `Locked thread ${thread} for "${reason}"`,
   })
 }
