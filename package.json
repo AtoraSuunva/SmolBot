@@ -29,9 +29,9 @@
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
     "env-var": "^7.3.0",
-    "humanize-duration": "^3.27.3",
     "pino": "^8.8.0",
     "pino-pretty": "^9.1.1",
+    "pretty-ms": "^8.0.0",
     "sleetcord": "^0.7.1",
     "undici": "^5.14.0"
   },

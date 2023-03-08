@@ -15,10 +15,10 @@ specifiers:
   eslint: ^8.31.0
   eslint-config-prettier: ^8.6.0
   eslint-plugin-import: ^2.26.0
-  humanize-duration: ^3.27.3
   pino: ^8.8.0
   pino-pretty: ^9.1.1
   prettier: ^2.8.1
+  pretty-ms: ^8.0.0
   prisma: ^4.8.1
   sleetcord: ^0.7.1
   typescript: ^4.9.4
@@ -32,9 +32,9 @@ dependencies:
   dotenv: 16.0.3
   emoji-regex: 10.2.1
   env-var: 7.3.0
-  humanize-duration: 3.27.3
   pino: 8.8.0
   pino-pretty: 9.1.1
+  pretty-ms: 8.0.0
   sleetcord: 0.7.1
   undici: 5.14.0
 
@@ -1121,10 +1121,6 @@ packages:
       readable-stream: 3.6.0
     dev: false
 
-  /humanize-duration/3.27.3:
-    resolution: {integrity: sha512-iimHkHPfIAQ8zCDQLgn08pRqSVioyWvnGfaQ8gond2wf7Jq2jJ+24ykmnRyiz3fIldcn4oUuQXpjqKLhSVR7lw==}
-    dev: false
-
   /ieee754/1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
     dev: false
@@ -1603,6 +1599,11 @@ packages:
       callsites: 3.1.0
     dev: true
 
+  /parse-ms/3.0.0:
+    resolution: {integrity: sha512-Tpb8Z7r7XbbtBTrM9UhpkzzaMrqA2VXMT3YChzYltwV3P3pM6t8wl7TvpMnSTosz1aQAdVib7kdoys7vYOPerw==}
+    engines: {node: '>=12'}
+    dev: false
+
   /path-exists/3.0.0:
     resolution: {integrity: sha512-bpC7GYwiDYQ4wYLe+FA8lhRjhQCMcQGuSgGGqDkg/QerRWw9CmGRT0iSOVRSZJ29NMLZgIzqaljJ63oaL4NIJQ==}
     engines: {node: '>=4'}
@@ -1700,6 +1701,13 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
+
+  /pretty-ms/8.0.0:
+    resolution: {integrity: sha512-ASJqOugUF1bbzI35STMBUpZqdfYKlJugy6JBziGi2EE+AL5JPJGSzvpeVXojxrr0ViUYoToUjb5kjSEGf7Y83Q==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      parse-ms: 3.0.0
+    dev: false
 
   /prisma/4.8.1:
     resolution: {integrity: sha512-ZMLnSjwulIeYfaU1O6/LF6PEJzxN5par5weykxMykS9Z6ara/j76JH3Yo2AH3bgJbPN4Z6NeCK9s5fDkzf33cg==}
