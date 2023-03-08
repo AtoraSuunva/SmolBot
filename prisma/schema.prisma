@@ -39,3 +39,26 @@ model VoiceLogConfig {
   channelID String @map("channel_id")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
+
+model ModLogConfig {
+  guildID String @id @map("guild_id")
+  channelID String @map("channel_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  enabled Boolean
+
+  memberAdd Boolean @map("member_add")
+  memberAddNew Int @map("member_add_new")
+  memberAddInvite Boolean @map("member_add_invite")
+  memberWelcome Boolean @map("member_welcome")
+  memberRemove Boolean @map("member_remove")
+  memberRemoveRoles Boolean @map("member_remove_roles")
+  memberBan Boolean @map("member_ban")
+  memberUnban Boolean @map("member_unban")
+  userUpdate String @map("user_update")
+  messageDelete Boolean @map("message_delete")
+  messageDeleteBulk Boolean @map("message_delete_bulk")
+  channelCreate Boolean @map("channel_create")
+  channelDelete Boolean @map("channel_delete")
+  reactionActions Boolean @map("reaction_actions")
+  automodAction Boolean @map("automod_action")
+}

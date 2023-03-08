@@ -4,7 +4,7 @@ import {
   time,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import humanizeDuration from 'humanize-duration'
+import prettyMilliseconds from 'pretty-ms'
 
 export const time_since = new SleetSlashCommand(
   {
@@ -46,7 +46,7 @@ function runTimeSince(interaction: ChatInputCommandInteraction) {
 
   const dateSeconds = parsedDate / 1_000
   const durationMs = Date.now() - parsedDate
-  const duration = humanizeDuration(durationMs)
+  const duration = prettyMilliseconds(durationMs, { verbose: true })
 
   return interaction.reply({
     content: `The time since ${time(dateSeconds, 'F')} (${time(

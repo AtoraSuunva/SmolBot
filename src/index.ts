@@ -31,6 +31,7 @@ import { report_config } from './mod/report/report_config.js'
 import { convert } from './utility/convert.js'
 import { time_since } from './utility/time_since.js'
 import { vc_log } from './mod/vc_log.js'
+import { modlog, modlogModules } from './mod/modlog/modlog.js'
 import { timeout_button } from './secret/timeout_button.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
@@ -88,6 +89,8 @@ sleetClient.addModules([
   mass_ban,
   mass_kick,
   vc_log,
+  modlog,
+  ...modlogModules,
 
   // misc
   activity,
