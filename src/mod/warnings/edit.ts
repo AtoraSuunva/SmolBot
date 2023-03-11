@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { formatWarningToField, getConfigForGuild } from './utils.js'
+import { formatWarningToField, fetchWarningConfigFor } from './utils.js'
 
 export const warningsEdit = new SleetSlashSubcommand(
   {
@@ -56,7 +56,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   const permanent = interaction.options.getBoolean('permanent', false)
   const voidWarning = interaction.options.getBoolean('void', false)
 
-  const config = await getConfigForGuild(guild.id, true)
+  const config = await fetchWarningConfigFor(guild.id, true)
 
   const oldWarning = await prisma.warning.findFirst({
     where: {
@@ -91,7 +91,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
 
-  const embed = new EmbedBuilder().addFields([
+  const embed = new EmbedBuilder().setTitle('Edited Warning').addFields([
     formatWarningToField(newWarning, config, {
       showModNote: true,
       showUserOnWarning: true,
@@ -101,7 +101,6 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   ])
 
   await interaction.reply({
-    content: 'Edited warning',
     embeds: [embed],
   })
 }

@@ -2,9 +2,10 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
-import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { formatUserWarningsToEmbed, getConfigForGuild } from './utils.js'
+import { respondWithPaginatedWarnings, WarningFetcher } from './pagination.js'
+import { fetchPaginatedWarningHistory } from './utils.js'
 
 export const warningsHistory = new SleetSlashSubcommand(
   {
@@ -27,31 +28,37 @@ export const warningsHistory = new SleetSlashSubcommand(
 async function warningHistoryRun(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   const warningID = interaction.options.getInteger('warning_id', true)
-  const config = await getConfigForGuild(guild.id, true)
 
-  const warningHistory = await prisma.warning.findMany({
+  const warningHistory = await prisma.warning.findFirst({
     where: {
       guildID: guild.id,
       warningID,
+      validUntil: null,
     },
   })
 
-  if (warningHistory.length === 0) {
-    interaction.reply({
-      content: `No history found for warning #${warningID}`,
+  if (!warningHistory) {
+    await interaction.reply({
+      content: `Warning #${warningID} not found`,
       ephemeral: true,
     })
     return
   }
 
-  const user = await interaction.client.users.fetch(warningHistory[0].userID)
-  const embed = formatUserWarningsToEmbed(user, warningHistory, config, {
-    showModNote: true,
-    showResponsibleMod: true,
-    showVersion: true,
-  })
+  const user = await interaction.client.users.fetch(warningHistory.userID)
 
-  await interaction.reply({
-    embeds: [embed],
+  const fetchWarnings: WarningFetcher = (guildID, _config, currentPage) =>
+    fetchPaginatedWarningHistory(guildID, warningID, currentPage)
+
+  const formattedUser = {
+    name: formatUser(user, { markdown: false }),
+    iconURL: user.displayAvatarURL(),
+  }
+
+  respondWithPaginatedWarnings(interaction, fetchWarnings, {
+    formatAuthor: () => formattedUser,
+    formatTitle: () => `Warning #${warningID} history`,
+    formatDescription: () => null,
+    modView: true,
   })
 }

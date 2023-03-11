@@ -7,12 +7,12 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { updateWarning } from './edit.js'
-import { formatWarningToField, getConfigForGuild } from './utils.js'
+import { formatWarningToField, fetchWarningConfigFor } from './utils.js'
 
 export const warningsRevert = new SleetSlashSubcommand(
   {
     name: 'revert',
-    description: 'Revert a warning',
+    description: 'Revert a warning to a previous version',
     options: [
       {
         name: 'warning_id',
@@ -39,7 +39,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
   const warningID = interaction.options.getInteger('warning_id', true)
   const version = interaction.options.getInteger('version', true)
 
-  const config = await getConfigForGuild(guild.id, true)
+  const config = await fetchWarningConfigFor(guild.id, true)
 
   const warningHistory = await prisma.warning.findMany({
     where: {
@@ -72,17 +72,21 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
 
-  const embed = new EmbedBuilder().addFields([
-    formatWarningToField(newWarning, config, {
-      showModNote: true,
-      showUserOnWarning: true,
-      showResponsibleMod: true,
-      showVersion: true,
-    }),
-  ])
+  const embed = new EmbedBuilder()
+    .setTitle('Reverted Warning')
+    .setDescription(
+      `Reverted warning #**${warningID}** to version **${version}**`,
+    )
+    .addFields([
+      formatWarningToField(newWarning, config, {
+        showModNote: true,
+        showUserOnWarning: true,
+        showResponsibleMod: true,
+        showVersion: true,
+      }),
+    ])
 
   interaction.reply({
-    content: `Reverted warning #${warningID} to version ${version}`,
     embeds: [embed],
   })
 }
