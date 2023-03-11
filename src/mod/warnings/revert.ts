@@ -7,7 +7,11 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { updateWarning } from './edit.js'
-import { formatWarningToField, fetchWarningConfigFor } from './utils.js'
+import {
+  formatWarningToField,
+  fetchWarningConfigFor,
+  markWarningArchiveDirty,
+} from './utils.js'
 
 export const warningsRevert = new SleetSlashSubcommand(
   {
@@ -71,6 +75,8 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
   }
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
+
+  markWarningArchiveDirty(guild.id)
 
   const embed = new EmbedBuilder()
     .setTitle('Reverted Warning')

@@ -1,6 +1,12 @@
-import { Prisma, Warning, WarningConfig } from '@prisma/client'
+import {
+  Prisma,
+  Warning,
+  WarningConfig,
+  WarningDirtyTracker,
+} from '@prisma/client'
 import { APIEmbedField, time } from 'discord.js'
 import { PreRunError } from 'sleetcord'
+import { DAY, MINUTE } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 
 export const MAX_PER_PAGE = 5
@@ -209,8 +215,6 @@ export function formatWarningToField(
   }
 }
 
-const DAY_TO_MS = 24 * 60 * 60 * 1000
-
 function warningIsExpired(
   warning: Warning,
   config: WarningConfig,
@@ -225,5 +229,66 @@ function warningIsExpired(
 }
 
 function getExpirationDate(days: number): Date {
-  return new Date(Date.now() + days * DAY_TO_MS)
+  return new Date(Date.now() + days * DAY)
+}
+
+const DIRTY_WAIT_FOR = 10 * MINUTE
+
+/**
+ * Sets a flag indicating that the warning archive is dirty for a guild if the guild is not already marked dirty
+ *
+ * Also updates the last-set-dirty flag
+ * @param guildID The guild to update for
+ * @param force Forcefully set a new dirty date
+ * @param isDirty Whether the guild is dirty or not (default: false)
+ * @returns The new dirty date if updated, null if not
+ */
+export async function markWarningArchiveDirty(
+  guildID: string,
+  force = false,
+  isDirty = true,
+) {
+  const newDirty: WarningDirtyTracker = {
+    guildID,
+    lastSetDirty: new Date(),
+    isDirty,
+  }
+
+  const updateDirty = () =>
+    prisma.warningDirtyTracker.upsert({
+      where: {
+        guildID,
+      },
+      create: newDirty,
+      update: newDirty,
+    })
+
+  if (force) {
+    return updateDirty()
+  }
+
+  const lastDirty = await prisma.warningDirtyTracker.findUnique({
+    where: {
+      guildID,
+    },
+  })
+
+  if (!lastDirty || !lastDirty.isDirty) {
+    return updateDirty()
+  }
+
+  return null
+}
+
+export async function fetchGuildsPendingArchive() {
+  const dirty = await prisma.warningDirtyTracker.findMany({
+    where: {
+      isDirty: true,
+      lastSetDirty: {
+        lte: new Date(Date.now() - DIRTY_WAIT_FOR),
+      },
+    },
+  })
+
+  return dirty.map((d) => d.guildID)
 }

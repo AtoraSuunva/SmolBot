@@ -65,9 +65,17 @@ model ModLogConfig {
 }
 
 model WarningConfig {
-  guildID      String   @id @map("guild_id")
-  expiresAfter Int      @map("expires_after")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  guildID        String   @id @map("guild_id")
+  expiresAfter   Int      @map("expires_after")
+  archiveEnabled Boolean  @map("archive_enabled") @default(false)
+  archiveChannel String?  @map("archive_channel")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+}
+
+model WarningDirtyTracker {
+  guildID String @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty Boolean @map("is_dirty")
 }
 
 model Warning {
