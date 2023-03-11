@@ -24,12 +24,14 @@ export const warningsAdd = new SleetSlashSubcommand(
         description: 'The reason for the warning',
         type: ApplicationCommandOptionType.String,
         required: true,
+        max_length: 256,
       },
       {
         name: 'mod_note',
         description:
           'A note for moderators, will not be shown to the user if they lookup warnings (default: none)',
         type: ApplicationCommandOptionType.String,
+        max_length: 256,
       },
       {
         name: 'permanent',
@@ -93,9 +95,9 @@ async function warningsAddRun(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const filters: Prisma.WarningWhereInput = {
+  const filters = {
     userID: user.id,
-  }
+  } satisfies Prisma.WarningWhereInput
 
   const fetchWarnings: WarningFetcher = (guildID, config, currentPage) =>
     fetchPaginatedWarnings(guildID, config, currentPage, filters)

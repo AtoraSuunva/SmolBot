@@ -51,13 +51,13 @@ function warningsViewRun(interaction: ChatInputCommandInteraction) {
   const permanent = interaction.options.getBoolean('permanent')
   const voidWarning = interaction.options.getBoolean('void')
 
-  const filters: Prisma.WarningWhereInput = {
+  const filters = {
     ...(user ? { userID: user.id } : {}),
     ...(reason ? { reason: { contains: reason } } : {}),
     ...(modNote ? { modNote: { contains: modNote } } : {}),
     ...(permanent !== null ? { permanent } : {}),
     ...(voidWarning !== null ? { void: voidWarning } : {}),
-  }
+  } satisfies Prisma.WarningWhereInput
 
   const fetchWarnings: WarningFetcher = (guildID, config, currentPage) =>
     fetchPaginatedWarnings(guildID, config, currentPage, filters)

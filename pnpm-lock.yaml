@@ -2,12 +2,15 @@ lockfileVersion: 5.4
 
 specifiers:
   '@prisma/client': ~4.11.0
+  '@sapphire/shapeshift': ^3.8.1
   '@types/convert-units': ~2.3.5
   '@types/humanize-duration': ~3.27.1
   '@types/node': ~18.15.0
   '@typescript-eslint/eslint-plugin': ~5.54.1
   '@typescript-eslint/parser': ~5.54.1
   convert-units: ~2.3.4
+  csv-parse: ^5.3.6
+  csv-stringify: ^6.3.0
   discord.js: ~14.7.1
   dotenv: ~16.0.3
   emoji-regex: ~10.2.1
@@ -15,6 +18,7 @@ specifiers:
   eslint: ~8.36.0
   eslint-config-prettier: ~8.7.0
   eslint-plugin-import: ~2.27.5
+  humanize-duration: ~3.28.0
   pino: ~8.11.0
   pino-pretty: ~9.4.0
   prettier: ~2.8.4
@@ -26,12 +30,16 @@ specifiers:
 
 dependencies:
   '@prisma/client': 4.11.0_prisma@4.11.0
+  '@sapphire/shapeshift': 3.8.1
   '@types/convert-units': 2.3.5
   convert-units: 2.3.4
+  csv-parse: 5.3.6
+  csv-stringify: 6.3.0
   discord.js: 14.7.1
   dotenv: 16.0.3
   emoji-regex: 10.2.1
   env-var: 7.3.0
+  humanize-duration: 3.28.0
   pino: 8.11.0
   pino-pretty: 9.4.0
   pretty-ms: 8.0.0
@@ -556,6 +564,14 @@ packages:
       shebang-command: 2.0.0
       which: 2.0.2
     dev: true
+
+  /csv-parse/5.3.6:
+    resolution: {integrity: sha512-WI330GjCuEioK/ii8HM2YE/eV+ynpeLvU+RXw4R8bRU8R0laK5zO3fDsc4gH8s472e3Ga38rbIjCAiQh+tEHkw==}
+    dev: false
+
+  /csv-stringify/6.3.0:
+    resolution: {integrity: sha512-kTnnBkkLmAR1G409aUdShppWUClNbBQZXhrKrXzKYBGw4yfROspiFvVmjbKonCrdGfwnqwMXKLQG7ej7K/jwjg==}
+    dev: false
 
   /dateformat/4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
@@ -1187,6 +1203,10 @@ packages:
     dependencies:
       glob: 8.1.0
       readable-stream: 3.6.2
+    dev: false
+
+  /humanize-duration/3.28.0:
+    resolution: {integrity: sha512-jMAxraOOmHuPbffLVDKkEKi/NeG8dMqP8lGRd6Tbf7JgAeG33jjgPWDbXXU7ypCI0o+oNKJFgbSB9FKVdWNI2A==}
     dev: false
 
   /ieee754/1.2.1:
