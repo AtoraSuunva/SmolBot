@@ -6,8 +6,8 @@ import {
 import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
 import { TextChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
+import { formatConfig } from '../../util/format.js'
 import { clearCacheFor } from './utils.js'
-import { formatConfig } from './view.js'
 
 enum UserUpdate {
   None = 'None',
