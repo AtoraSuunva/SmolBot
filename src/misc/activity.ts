@@ -7,6 +7,7 @@ import {
   Client,
 } from 'discord.js'
 import { isOwnerGuard, SleetContext, SleetSlashCommand } from 'sleetcord'
+import { MINUTE } from '../util/constants.js'
 
 /** Our status list needs a type and name to apply */
 type Status = Pick<ActivityOptions, 'name' | 'type'>
@@ -118,7 +119,7 @@ const statuses: Status[] = [
 /** Holds the timeout that we use to periodically change the status */
 let timeout: NodeJS.Timeout
 /** Every 15m, change the current status */
-const timeoutDelay = 15 * 60 * 1000 // in ms
+const timeoutDelay = 15 * MINUTE // in ms
 
 /** Run a timeout to change the bot's status on READY and every couple mins */
 async function runReady(client: Client) {

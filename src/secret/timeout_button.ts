@@ -7,6 +7,7 @@ import {
   Interaction,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SECOND } from '../util/constants.js'
 
 export const timeout_button = new SleetSlashCommand(
   {
@@ -64,7 +65,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       const member = await guild.members.fetch(interaction.user.id)
 
       try {
-        await member.timeout(time * 1000, 'Timeout Button [funny]')
+        await member.timeout(time * SECOND, 'Timeout Button [funny]')
 
         interaction.reply({
           content: `You have been timed out for ${time} seconds`,

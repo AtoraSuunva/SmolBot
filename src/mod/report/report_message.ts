@@ -11,6 +11,7 @@ import {
   time,
 } from 'discord.js'
 import { SleetMessageCommand } from 'sleetcord'
+import { MINUTE } from '../../util/constants.js'
 import { quoteMessage } from '../../util/quoteMessage.js'
 import { fetchConfig, ReportConfigResolved } from './report_config.js'
 
@@ -85,7 +86,7 @@ async function runReportMessage(
   const modalInteraction = await interaction
     .awaitModalSubmit({
       filter: (i) => i.customId === customId,
-      time: 1000 * 60 * 5,
+      time: 15 * MINUTE,
     })
     .catch((err) => {
       if (err instanceof DiscordjsError) {

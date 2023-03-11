@@ -4,6 +4,8 @@ import {
   escapeMarkdown,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SECOND } from '../util/constants.js'
+import { setTimeout } from 'timers/promises'
 
 export const count_members = new SleetSlashCommand(
   {
@@ -36,18 +38,18 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply()
 
   const members = await Promise.race([
-    promiseTimeout(10 * 1000),
+    setTimeout(10 * SECOND),
     guild.members.fetch(),
   ])
 
-  if (members === null) {
+  if (!members) {
     return interaction.editReply(
       'Timed out while trying to fetch members, try again later.',
     )
   }
 
   const nameContainsLower = nameContains.toLowerCase()
-  const count = members.filter(member =>
+  const count = members.filter((member) =>
     member.user.username.toLowerCase().includes(nameContainsLower),
   ).size
 
@@ -57,8 +59,3 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
     } **"${escapeMarkdown(nameContains)}"** in their name.`,
   )
 }
-
-const promiseTimeout = <T = null>(
-  time: number,
-  result: T | null = null,
-): Promise<T | null> => new Promise(r => setTimeout(r, time, result))

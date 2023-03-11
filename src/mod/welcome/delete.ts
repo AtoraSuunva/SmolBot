@@ -8,6 +8,7 @@ import {
   ComponentType,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { MINUTE } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 
@@ -56,7 +57,7 @@ async function runDelete(
 
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
-    time: 60 * 1000,
+    time: 2 * MINUTE,
   })
 
   collector.on('collect', (i) => {
