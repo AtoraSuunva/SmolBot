@@ -9,6 +9,7 @@ import {
   PartialMessage,
 } from 'discord.js'
 import { SleetSlashCommand, isLikelyID, SleetMessageCommand } from 'sleetcord'
+import { HOUR } from '../util/constants.js'
 
 export const unedit = new SleetSlashCommand(
   {
@@ -48,10 +49,10 @@ interface EditStoreEntry {
 const editStore = new Collection<string, EditStoreEntry>()
 
 /** 3 hours in ms */
-const sweepLifetime = 1000 * 60 * 60 * 3
+const SWEEP_LIFETIME = 3 * HOUR
 
 const editSweeper = (value: EditStoreEntry) =>
-  Date.now() - value.lastEditTimestamp > sweepLifetime
+  Date.now() - value.lastEditTimestamp > SWEEP_LIFETIME
 
 async function handleMessageUpdate(
   oldMessage: Message | PartialMessage,

@@ -10,8 +10,9 @@ import {
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
+import { HOUR } from '../../../util/constants.js'
 import { prisma } from '../../../util/db.js'
-import { EVENT_COLORS, formatLog, getConfigFor, HOURS_MS } from '../utils.js'
+import { EVENT_COLORS, formatLog, getConfigFor } from '../utils.js'
 
 export const logGuildMemberAdd = new SleetModule(
   {
@@ -70,7 +71,7 @@ async function guildMemberAdd(member: GuildMember) {
   const userCreatedAt = Date.now() - member.user.createdTimestamp
 
   const newAccount =
-    config.memberAddNew * HOURS_MS > userCreatedAt
+    config.memberAddNew * HOUR > userCreatedAt
       ? ' | :warning: New Account!'
       : ''
 

@@ -2,8 +2,6 @@ import { ModLogConfig } from '@prisma/client'
 import { Guild } from 'discord.js'
 import { prisma } from '../../util/db.js'
 
-export const HOURS_MS = 1000 * 60 * 60
-
 export enum EVENT_COLORS {
   memberAdd = 0x77b255,
   memberRemove = 0xdd2e44,
