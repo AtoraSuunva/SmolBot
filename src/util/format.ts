@@ -1,7 +1,7 @@
 import { codeBlock, Guild } from 'discord.js'
 
 export function formatConfig<
-  Value extends string | number | boolean | Date,
+  Value extends string | number | boolean | Date | null,
   Config extends Record<string, Value>,
 >(guild: Guild, config: Partial<Config>): string {
   let longest = 0

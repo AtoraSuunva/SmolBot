@@ -6,7 +6,11 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { formatWarningToField, fetchWarningConfigFor } from './utils.js'
+import {
+  formatWarningToField,
+  fetchWarningConfigFor,
+  markWarningArchiveDirty,
+} from './utils.js'
 
 export const warningsEdit = new SleetSlashSubcommand(
   {
@@ -90,6 +94,8 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   }
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
+
+  markWarningArchiveDirty(guild.id)
 
   const embed = new EmbedBuilder().setTitle('Edited Warning').addFields([
     formatWarningToField(newWarning, config, {

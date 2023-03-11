@@ -10,6 +10,7 @@ import {
   InteractionEditReplyOptions,
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
+import { MINUTE } from '../../util/constants.js'
 import {
   formatWarningToField,
   fetchWarningConfigFor,
@@ -119,8 +120,8 @@ export async function respondWithPaginatedWarnings(
 
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
-    time: 1000 * 60 * 20, // Always stop after 20 minutes
-    idle: 1000 * 60 * 5, // Stop if there's been no interaction in 5 minutes
+    time: MINUTE * 20, // Always stop after 20 minutes
+    idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
   collector.on('collect', async (interaction) => {
