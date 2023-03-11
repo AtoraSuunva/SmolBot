@@ -1,11 +1,12 @@
+import { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { getDefaultWarningConfig } from './config/edit.js'
-import { formatUserWarningsToEmbed, getWarningsForUser } from './utils.js'
+import { respondWithPaginatedWarnings, WarningFetcher } from './pagination.js'
+import { fetchPaginatedWarnings } from './utils.js'
 
 export const warningsAdd = new SleetSlashSubcommand(
   {
@@ -92,34 +93,20 @@ async function warningsAddRun(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const allWarnings = await getWarningsForUser(guild.id, user.id)
-  let config = await prisma.warningConfig.findUnique({
-    where: {
-      guildID: guild.id,
-    },
-  })
-
-  const configMessage = !config
-    ? `\n:information_source: No warning config exists, so I created a default config for you, see \`/warnings config edit\` to edit it.`
-    : ''
-
-  if (!config) {
-    config = await prisma.warningConfig.create({
-      data: {
-        guildID: guild.id,
-        ...getDefaultWarningConfig(),
-      },
-    })
+  const filters: Prisma.WarningWhereInput = {
+    userID: user.id,
   }
 
-  const embed = formatUserWarningsToEmbed(user, allWarnings, config, {
-    showModNote: true,
-    showResponsibleMod: true,
-    showVersion: true,
-  })
+  const fetchWarnings: WarningFetcher = (guildID, config, currentPage) =>
+    fetchPaginatedWarnings(guildID, config, currentPage, filters)
 
-  await interaction.reply({
-    content: `Added warning to ${formatUser(user)}${configMessage}`,
-    embeds: [embed],
+  const formattedUser = {
+    name: formatUser(user, { markdown: false }),
+    iconURL: user.displayAvatarURL(),
+  }
+
+  respondWithPaginatedWarnings(interaction, fetchWarnings, {
+    formatAuthor: () => formattedUser,
+    modView: true,
   })
 }
