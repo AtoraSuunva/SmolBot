@@ -11,54 +11,79 @@ datasource db {
 }
 
 model WelcomeSettings {
-  guildID String @id @map("guild_id")
-  message String
-  channel String?
-  rejoins Boolean @default(false)
-  instant Boolean @default(false)
-  ignoreRoles String @default("") @map("ignore_roles")
-  reactWith String? @map("react_with")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  guildID     String   @id @map("guild_id")
+  message     String
+  channel     String?
+  rejoins     Boolean  @default(false)
+  instant     Boolean  @default(false)
+  ignoreRoles String   @default("") @map("ignore_roles")
+  reactWith   String?  @map("react_with")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 }
 
 model WelcomeJoins {
   guildID String @map("guild_id")
-  userID String @map("user_id")
+  userID  String @map("user_id")
+
   @@id([guildID, userID])
 }
 
 model ReportConfig {
-  guildID String @id @map("guild_id")
-  channelID String @map("channel_id")
-  message String
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
+  message   String
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model VoiceLogConfig {
-  guildID String @id @map("guild_id")
-  channelID String @map("channel_id")
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model ModLogConfig {
-  guildID String @id @map("guild_id")
-  channelID String @map("channel_id")
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
   updatedAt DateTime @updatedAt @map("updated_at")
-  enabled Boolean
+  enabled   Boolean
 
-  memberAdd Boolean @map("member_add")
-  memberAddNew Int @map("member_add_new")
-  memberAddInvite Boolean @map("member_add_invite")
-  memberWelcome Boolean @map("member_welcome")
-  memberRemove Boolean @map("member_remove")
+  memberAdd         Boolean @map("member_add")
+  memberAddNew      Int     @map("member_add_new")
+  memberAddInvite   Boolean @map("member_add_invite")
+  memberWelcome     Boolean @map("member_welcome")
+  memberRemove      Boolean @map("member_remove")
   memberRemoveRoles Boolean @map("member_remove_roles")
-  memberBan Boolean @map("member_ban")
-  memberUnban Boolean @map("member_unban")
-  userUpdate String @map("user_update")
-  messageDelete Boolean @map("message_delete")
+  memberBan         Boolean @map("member_ban")
+  memberUnban       Boolean @map("member_unban")
+  userUpdate        String  @map("user_update")
+  messageDelete     Boolean @map("message_delete")
   messageDeleteBulk Boolean @map("message_delete_bulk")
-  channelCreate Boolean @map("channel_create")
-  channelDelete Boolean @map("channel_delete")
-  reactionActions Boolean @map("reaction_actions")
-  automodAction Boolean @map("automod_action")
+  channelCreate     Boolean @map("channel_create")
+  channelDelete     Boolean @map("channel_delete")
+  reactionActions   Boolean @map("reaction_actions")
+  automodAction     Boolean @map("automod_action")
+}
+
+model WarningConfig {
+  guildID      String   @id @map("guild_id")
+  expiresAfter Int      @map("expires_after")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+}
+
+model Warning {
+  guildID   String @map("guild_id")
+  warningID Int    @map("warning_id")
+  version   Int
+
+  user        String
+  userID      String    @map("user_id")
+  reason      String
+  permanent   Boolean   @default(false)
+  void        Boolean   @default(false)
+  moderatorID String?   @map("moderator_id")
+  modNote     String?   @map("mod_note")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, warningID, version])
 }

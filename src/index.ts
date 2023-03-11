@@ -33,6 +33,7 @@ import { time_since } from './utility/time_since.js'
 import { vc_log } from './mod/vc_log.js'
 import { modlog, modlogModules } from './mod/modlog/modlog.js'
 import { timeout_button } from './secret/timeout_button.js'
+import { warnings } from './mod/warnings/warnings.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -91,6 +92,7 @@ sleetClient.addModules([
   vc_log,
   modlog,
   ...modlogModules,
+  warnings,
 
   // misc
   activity,
