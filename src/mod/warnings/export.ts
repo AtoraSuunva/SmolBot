@@ -1,4 +1,8 @@
-import { ChatInputCommandInteraction, Client } from 'discord.js'
+import {
+  AttachmentBuilder,
+  ChatInputCommandInteraction,
+  Client,
+} from 'discord.js'
 import { getGuild, SleetContext, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import {
@@ -8,6 +12,7 @@ import {
 } from './utils.js'
 import { setTimeout, setInterval } from 'timers/promises'
 import { MINUTE, SECOND } from '../../util/constants.js'
+import { stringify } from 'csv-stringify'
 
 export const warningsExport = new SleetSlashSubcommand(
   {
@@ -70,38 +75,21 @@ async function archiveAllDirtyGuilds(client: Client) {
   }
 }
 
-async function csvArchiveForGuild(
-  guildID: string,
-): Promise<{ name: string; attachment: Buffer }> {
+async function csvArchiveForGuild(guildID: string): Promise<AttachmentBuilder> {
   const allWarnings = await prisma.warning.findMany({
     where: {
       guildID,
     },
   })
 
-  const csv = jsontoCSV(allWarnings)
-
-  return {
-    name: 'warnings.csv',
-    attachment: Buffer.from(csv),
-  }
-}
-
-function jsontoCSV(json: Record<string, unknown>[]) {
-  if (json.length === 0) return ''
-
-  const fields = Object.keys(json[0])
-
-  const csv = [
-    fields.join(','),
-    ...json.map((row) =>
-      fields
-        .map((fieldName) =>
-          JSON.stringify(row[fieldName]).replaceAll('\\"', '""'),
-        )
-        .join(','),
-    ),
-  ].join('\n')
-
-  return csv
+  return new AttachmentBuilder(
+    stringify(allWarnings, {
+      header: true,
+      cast: {
+        boolean: (value) => (value ? 'true' : 'false'),
+        date: (value) => value.toISOString(),
+      },
+      escape_formulas: true, // so you can happily import into excel or whatever and not get hit by "===username==="
+    }),
+  ).setName('warnings.csv')
 }

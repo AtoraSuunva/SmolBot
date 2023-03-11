@@ -36,6 +36,7 @@ export interface RespondWithPaginationOptions {
   formatDescription?: FormatDescription
   modView?: boolean
   showUserOnWarning?: boolean
+  ephemeral?: boolean
 }
 
 function defaultFormatAuthor(): EmbedAuthorOptions | null {
@@ -61,10 +62,11 @@ export async function respondWithPaginatedWarnings(
     formatDescription = defaultFormatDescription,
     modView = false,
     showUserOnWarning = false,
+    ephemeral = false,
   } = options
 
   const defer = !interaction.deferred
-    ? interaction.deferReply()
+    ? interaction.deferReply({ ephemeral })
     : Promise.resolve()
 
   const guild = await getGuild(interaction, true)
