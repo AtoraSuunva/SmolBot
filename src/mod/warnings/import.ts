@@ -8,7 +8,14 @@ import { parse } from 'csv-parse'
 import { Readable } from 'stream'
 import { fetch } from 'undici'
 import { Prisma, Warning } from '@prisma/client'
-import { s, Result, ObjectValidator } from '@sapphire/shapeshift'
+import {
+  s,
+  Result,
+  ObjectValidator,
+  BaseError,
+  CombinedError,
+  CombinedPropertyError,
+} from '@sapphire/shapeshift'
 import { prisma } from '../../util/db.js'
 
 // Seperate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
@@ -41,10 +48,13 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     return
   }
 
+  const defer = interaction.deferReply()
+
   const response = await fetch(file.url)
 
   if (!response.body || !response.ok) {
-    interaction.reply('Failed to fetch file')
+    await defer
+    interaction.editReply('Failed to fetch file')
     return
   }
 
@@ -80,10 +90,11 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
 
     if (validated.isErr()) {
       console.error(validated.error)
-      interaction.reply(
+      await defer
+      interaction.editReply(
         `You have an invalid row in your csv:\n${codeBlock(
           'js',
-          validated.error.message,
+          JSON.stringify(formatBaseError(validated.error), null, 2),
         )}\nat:\n${codeBlock('js', JSON.stringify(record, null, 2))}`,
       )
       return
@@ -92,7 +103,8 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
 
       if (validated.value.guildID !== guild.id) {
         // This *SHOULDN'T* happen, but just in case because this would be REALLY bad
-        interaction.reply(
+        await defer
+        interaction.editReply(
           `You have an invalid row in your csv:\n${codeBlock(
             'js',
             'guildID must be the same as the guild the command was called in',
@@ -115,7 +127,8 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
 
   // TODO: when I finally migrate to postgres, use `await prisma.warning.createMany`
 
-  interaction.reply(`Imported warnings (${created} added)`)
+  await defer
+  interaction.editReply(`Imported warnings (${created} added)`)
 }
 
 const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
@@ -123,7 +136,7 @@ const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
     guildID: s.string.regex(/^\d{1,20}$/), // Probably more than long enough for a snowflake
     warningID: s.string.reshape(reshapeToNumber),
     version: s.string.reshape(reshapeToNumber),
-    user: s.string.lengthLessThan(37), // 2-32 username + #discrim (5)
+    user: s.string.lengthLessThanOrEqual(100), // 2-32 username + #discrim (5) = 37 but JS doesn't count astral symbols correctly, discord does
     userID: s.string.regex(/^\d{1,20}$/),
     reason: s.string.lengthLessThan(256),
     permanent: s.string.reshape(reshapeToBoolean),
@@ -163,4 +176,28 @@ function reshapeToDate(value: string): Result<Date, Error> {
   }
 
   return Result.ok(parsed)
+}
+
+function formatBaseError(error: BaseError): Record<string, unknown> {
+  if (
+    error instanceof CombinedError ||
+    error instanceof CombinedPropertyError
+  ) {
+    return {
+      errors: error.errors.map((v) => {
+        if (v instanceof BaseError) {
+          return formatBaseError(v)
+        } else {
+          return {
+            property: v[0],
+            errors: formatBaseError(v[1]),
+          }
+        }
+      }),
+    }
+  } else if ('toJSON' in error && typeof error.toJSON === 'function') {
+    return error.toJSON()
+  }
+
+  return { message: error.message }
 }
