@@ -4,7 +4,7 @@ WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 COPY prisma/ ./prisma/
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
 RUN pnpm run build
 
@@ -16,8 +16,7 @@ RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
 COPY --from=dev-build /home/node/app/prisma ./prisma
 COPY --from=dev-build /home/node/app/dist ./dist
-RUN pnpm fetch --prod
-RUN pnpm install -r --offline --prod
+RUN pnpm install --prod --frozen-lockfile
 RUN pnpx prisma generate
 
 # The actual runtime itself
