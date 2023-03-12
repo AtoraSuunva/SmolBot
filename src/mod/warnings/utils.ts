@@ -249,7 +249,7 @@ export function getExpirationWhereFilter(
 }
 
 function getExpirationDate(days: number): Date {
-  return new Date(Date.now() + days * DAY)
+  return new Date(Date.now() - days * DAY)
 }
 
 const DIRTY_WAIT_FOR = 10 * MINUTE
