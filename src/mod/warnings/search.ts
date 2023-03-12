@@ -37,6 +37,16 @@ export const warningsSearch = new SleetSlashSubcommand(
         description: 'Filter warnings that are void or not',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'expired',
+        description: 'Filter warnings that are expired or not',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'reverse',
+        description: 'Show the results in reverse order (oldest first)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
     ],
   },
   {
@@ -50,6 +60,8 @@ function warningsViewRun(interaction: ChatInputCommandInteraction) {
   const modNote = interaction.options.getString('mod_note')
   const permanent = interaction.options.getBoolean('permanent')
   const voidWarning = interaction.options.getBoolean('void')
+  const expired = interaction.options.getBoolean('expired')
+  const reverse = interaction.options.getBoolean('reverse') ?? false
 
   const filters = {
     ...(user ? { userID: user.id } : {}),
@@ -57,10 +69,11 @@ function warningsViewRun(interaction: ChatInputCommandInteraction) {
     ...(modNote ? { modNote: { contains: modNote } } : {}),
     ...(permanent !== null ? { permanent } : {}),
     ...(voidWarning !== null ? { void: voidWarning } : {}),
+    ...(expired !== null ? { expired } : {}),
   } satisfies Prisma.WarningWhereInput
 
   const fetchWarnings: WarningFetcher = (guildID, config, currentPage) =>
-    fetchPaginatedWarnings(guildID, config, currentPage, filters)
+    fetchPaginatedWarnings(guildID, config, currentPage, filters, reverse)
 
   const formattedUser = user
     ? {

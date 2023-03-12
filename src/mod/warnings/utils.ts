@@ -26,9 +26,8 @@ export interface PaginatedWarnings {
   counts: WarningCount
 }
 
-export interface WarningFilters {
-  userID: string
-  reason: string
+export interface WarningFilters extends Prisma.WarningWhereInput {
+  expired?: boolean
 }
 
 /**
@@ -44,18 +43,34 @@ export async function fetchPaginatedWarnings(
   guildID: string,
   config: WarningConfig,
   page: number,
-  filters: Prisma.WarningWhereInput,
+  filters: WarningFilters,
+  reverse = false,
 ): Promise<PaginatedWarnings> {
-  const counts = await fetchWarningCount(guildID, config.expiresAfter, filters)
+  const expirationFilter = getExpirationWhereFilter(config.expiresAfter)
+
+  const { expired: filterExpired, ...prismaFilters } = filters
+
+  const whereExpired: Prisma.WarningWhereInput =
+    filterExpired !== undefined
+      ? filterExpired
+        ? expirationFilter
+        : { NOT: [expirationFilter] }
+      : {}
+
+  const counts = await fetchWarningCount(guildID, config.expiresAfter, {
+    ...prismaFilters,
+    ...whereExpired,
+  })
 
   const warnings = await prisma.warning.findMany({
     where: {
-      ...filters,
+      ...prismaFilters,
+      ...whereExpired,
       guildID,
       validUntil: null,
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: reverse ? 'asc' : 'desc',
     },
     skip: (page - 1) * MAX_PER_PAGE,
     take: MAX_PER_PAGE,
@@ -85,17 +100,7 @@ async function fetchWarningCount(
       ...filters,
       guildID,
       validUntil: null,
-      OR: [
-        {
-          void: true,
-        },
-        {
-          permanent: false,
-          createdAt: {
-            gte: getExpirationDate(days),
-          },
-        },
-      ],
+      ...getExpirationWhereFilter(days),
     },
   })
 
@@ -194,24 +199,21 @@ export function formatWarningToField(
   const expireDate = getExpirationDate(config.expiresAfter)
 
   const w = warning
-  const version = showVersion ? ` (v${w.version})` : ''
+  const version = showVersion && w.version > 1 ? ` (v${w.version})` : ''
   const permaText = w.permanent ? ' (Permanent)' : ''
-  const warningUser = showUserOnWarning
-    ? `**User:** ${w.user} (${w.userID})\n`
-    : ''
+  const warningUser = showUserOnWarning ? ` — ${w.user} (${w.userID})` : ''
   const timestamp = time(w.createdAt, 'R')
   const expiredText = warningIsExpired(w, config, expireDate)
     ? ' (Expired)'
     : ''
   const voidOrExpired = w.void ? ' (Void)' : expiredText
   const modNote = showModNote && w.modNote ? `\n**Note:** ${w.modNote}` : ''
-  const responsibleMod = showResponsibleMod
-    ? `\n**By:** <@${w.moderatorID}>`
-    : ''
+  const responsibleMod =
+    showResponsibleMod && w.moderatorID ? `\n**By:** <@${w.moderatorID}>` : ''
 
   return {
-    name: `#${w.warningID}${version}${permaText}${voidOrExpired}`,
-    value: `${warningUser}> ${w.reason} (${timestamp})${modNote}${responsibleMod}`,
+    name: `#${w.warningID}${version}${warningUser}${permaText}${voidOrExpired}`,
+    value: `> ${w.reason} (${timestamp})${modNote}${responsibleMod}`,
   }
 }
 
@@ -224,8 +226,26 @@ function warningIsExpired(
     warning.void ||
     (config.expiresAfter > 0 &&
       !warning.permanent &&
-      warning.createdAt >= expireDate)
+      warning.createdAt <= expireDate)
   )
+}
+
+export function getExpirationWhereFilter(
+  days: number,
+): Prisma.WarningWhereInput {
+  return {
+    OR: [
+      {
+        void: true,
+      },
+      {
+        permanent: false,
+        createdAt: {
+          lte: getExpirationDate(days),
+        },
+      },
+    ],
+  }
 }
 
 function getExpirationDate(days: number): Date {
