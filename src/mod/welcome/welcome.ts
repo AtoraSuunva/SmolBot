@@ -29,6 +29,9 @@ export const welcome = new SleetSlashCommand(
   },
 )
 
+/** Guild ID -> Set of member IDs */
+const newMembers = new Map<string, Set<string>>()
+
 async function handleGuildMemberAdd(member: GuildMember) {
   if (member.user.bot) return
   if (member.pending) return
@@ -55,6 +58,16 @@ async function handleMessageCreate(message: Message) {
     return // Failed to fetch member
   }
 
+  const newJoins = newMembers.get(member.guild.id)
+
+  // Check if this member is new before trying to welcome them
+  // We can't just rely on welcome joins since someone might want to welcome rejoins but only when
+  // they send a message, but someone leaving doesn't clear the welcome joins.
+  // We need to know who is "new" (including rejoins) and we should try to welcome on message
+  // This could be another table for persistance (ie. someone joins, bot dies, bot comes back,
+  // they send a message), but for now, meh, it's fine, and I'd need to cache it anyway.
+  if (!newJoins || !newJoins.has(member.id)) return
+
   handleJoin(member, message.channel, message)
 }
 
@@ -80,8 +93,11 @@ async function handleJoin(
   } = welcomeSettings
 
   if (!instant && !channel) {
-    // Don't instantly welcome people and
-    // the user didn't post a message
+    // Don't instantly welcome people and the user didn't post a message
+    // Instead note down the join for later
+    const set = newMembers.get(member.guild.id) ?? new Set()
+    set.add(member.id)
+    newMembers.set(member.guild.id, set)
     return
   }
 
@@ -92,9 +108,9 @@ async function handleJoin(
     return // Ignore them because of their roles
   }
 
-  if (rejoins !== true) {
-    const joins = await getJoinsFor(member.guild.id)
-    if (joins.includes(member.id)) return // Ignore them because they've joined before
+  if (!rejoins && (await hasJoinedBefore(member.guild.id, member.id))) {
+    // Ignore them because they've joined before
+    return
   }
 
   const sendChannel =
@@ -138,12 +154,12 @@ async function resolveTextBasedChannel(
   return null
 }
 
-const joinCache = new Map<string, string[]>()
+async function addJoin(guildID: string, userID: string) {
+  const set = newMembers.get(guildID) ?? new Set()
+  set.delete(userID)
+  newMembers.set(guildID, set)
 
-function addJoin(guildID: string, userID: string) {
-  joinCache.set(guildID, [...(joinCache.get(guildID) ?? []), userID])
-
-  return prisma.welcomeJoins.create({
+  return await prisma.welcomeJoins.create({
     data: {
       guildID,
       userID,
@@ -151,17 +167,19 @@ function addJoin(guildID: string, userID: string) {
   })
 }
 
-async function getJoinsFor(guildID: string): Promise<string[]> {
-  if (joinCache.has(guildID)) return joinCache.get(guildID) ?? []
-
-  return prisma.welcomeJoins
-    .findMany({
+async function hasJoinedBefore(
+  guildID: string,
+  userID: string,
+): Promise<boolean> {
+  return await prisma.welcomeJoins
+    .findFirst({
       where: {
         guildID,
+        userID,
       },
       select: { userID: true },
     })
-    .then((joins) => joins.map((j) => j.userID))
+    .then((row) => row !== null)
 }
 
 async function getSettingsFor(
