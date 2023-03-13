@@ -51,19 +51,19 @@ async function runStats(
   const created = client.user?.createdAt ?? null
 
   const embed = new EmbedBuilder().setTitle('Stats').addFields([
-    { name: 'Guilds:', value: String(guildCount), inline: true },
-    { name: 'Members:', value: String(memberCount), inline: true },
-    { name: 'Users Cached:', value: String(userCount), inline: true },
-    { name: 'Channels:', value: String(channelCount), inline: true },
-    { name: 'Emojis Cached:', value: String(emojis), inline: true },
-    { name: 'Modules Loaded:', value: String(modules), inline: true },
+    { name: 'Guilds:', value: guildCount.toLocaleString(), inline: true },
+    { name: 'Members:', value: memberCount.toLocaleString(), inline: true },
+    { name: 'Users Cached:', value: userCount.toLocaleString(), inline: true },
+    { name: 'Channels:', value: channelCount.toLocaleString(), inline: true },
+    { name: 'Emojis Cached:', value: emojis.toLocaleString(), inline: true },
+    { name: 'Modules Loaded:', value: modules.toLocaleString(), inline: true },
     { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
     { name: 'Created:', value: createTimestamps(created), inline: true },
   ])
 
   if (client.user) {
     embed.setAuthor({
-      name: client.user.tag,
+      name: `${client.user.tag} (${client.user.id})`,
     })
 
     embed.setThumbnail(client.user.displayAvatarURL())
@@ -130,6 +130,9 @@ async function getEmojiCount(client: Client): Promise<number> {
 function createTimestamps(date: Date | null): string {
   if (!date) return 'Never'
 
-  const formatted = prettyMilliseconds(date.getTime(), { verbose: true })
+  const formatted = prettyMilliseconds(Date.now() - date.getTime(), {
+    verbose: true,
+  })
+
   return `${formatted}\n${time(date)}\n${time(date, 'R')}`
 }
