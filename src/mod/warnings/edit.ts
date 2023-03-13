@@ -117,12 +117,12 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
  * @param newWarning The new warning to create
  * @returns The newly created warning entry
  */
-export function updateWarning(
+export async function updateWarning(
   guildID: string,
   newWarning: Warning,
 ): Promise<Warning> {
   // Transaction since we shouldn't be abble to mark the old warning as expired while erroring on the new warning
-  return prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx) => {
     // Mark the old warning as having expired just now
     await tx.warning.updateMany({
       where: {
