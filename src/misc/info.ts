@@ -26,13 +26,16 @@ export const info = new SleetSlashCommand(
   },
 )
 
+/** os.loadavg() "Returns an array containing the 1, 5, and 15 minute load averages." */
+const cpuLoadIntervals = [1, 5, 15]
+
 /** Get the info! */
 async function runInfo(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
 
   if (interaction.client.user) {
     embed.setAuthor({
-      name: interaction.client.user.tag,
+      name: `${interaction.client.user.tag} (${interaction.client.user.id})`,
     })
 
     embed.setThumbnail(interaction.client.user.displayAvatarURL())
@@ -41,7 +44,10 @@ async function runInfo(interaction: ChatInputCommandInteraction) {
   const owner = getOwner(interaction)
   const ownerString = formatOwner(owner)
   const versionInfo = `Node ${process.version}\ndiscord.js v${discordJSVersion}`
-  const cpuString = os.loadavg().join(', ')
+  const cpuString = os
+    .loadavg()
+    .map((v, i) => `${cpuLoadIntervals[i]}m: ${v.toFixed(2)}%`)
+    .join(', ')
 
   const totalMem = os.totalmem()
   const usedMem = os.totalmem() - os.freemem()
