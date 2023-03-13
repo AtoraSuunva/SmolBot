@@ -6,3 +6,4 @@ node_modules
 dist/
 prisma/db/
 prisma/**/*.db
+prisma/**/*.sqlite

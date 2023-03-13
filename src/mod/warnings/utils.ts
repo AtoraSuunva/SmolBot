@@ -142,7 +142,7 @@ export async function fetchWarningHistoryCount(
   guildID: string,
   warningID: number,
 ): Promise<number> {
-  return prisma.warning.count({
+  return await prisma.warning.count({
     where: {
       guildID,
       warningID,
@@ -274,8 +274,8 @@ export async function markWarningArchiveDirty(
     isDirty,
   }
 
-  const updateDirty = () =>
-    prisma.warningDirtyTracker.upsert({
+  const updateDirty = async () =>
+    await prisma.warningDirtyTracker.upsert({
       where: {
         guildID,
       },
