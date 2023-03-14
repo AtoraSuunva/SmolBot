@@ -5,6 +5,7 @@ import {
   Role,
 } from 'discord.js'
 import {
+  botHasPermissionsGuard,
   formatUser,
   getGuild,
   getMembers,
@@ -104,6 +105,8 @@ async function runMute(
 ): Promise<unknown> {
   inGuildGuard(interaction)
   const guild = await getGuild(interaction, true)
+
+  await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
