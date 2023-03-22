@@ -27,7 +27,6 @@ import { ping } from './misc/ping.js'
 import { report_message } from './mod/report/report_message.js'
 import { report } from './mod/report/report.js'
 import { mass_ban, mass_kick } from './mod/mass_action.js'
-import { report_config } from './mod/report/report_config.js'
 import { convert } from './utility/convert.js'
 import { time_since } from './utility/time_since.js'
 import { vc_log } from './mod/vc_log.js'
@@ -36,6 +35,7 @@ import { timeout_button } from './secret/timeout_button.js'
 import { warnings } from './mod/warnings/warnings.js'
 import { myWarnings } from './mod/warnings/my-warnings.js'
 import { warningsImport } from './mod/warnings/import.js'
+import { report_manage } from './mod/report/manage/index.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -86,9 +86,9 @@ sleetClient.addModules([
   idof,
   welcome,
   lock_thread,
-  report,
-  report_message,
-  report_config,
+  report, // /report slash command
+  report_message, // Message Command
+  report_manage, // /report_manage [config|unblock]
   mass_ban,
   mass_kick,
   vc_log,

@@ -10,10 +10,11 @@ import {
   TextInputStyle,
   time,
 } from 'discord.js'
-import { SleetMessageCommand } from 'sleetcord'
+import { SleetMessageCommand, getGuild } from 'sleetcord'
 import { MINUTE } from '../../util/constants.js'
 import { quoteMessage } from '../../util/quoteMessage.js'
-import { fetchConfig, ReportConfigResolved } from './report_config.js'
+import { fetchConfig } from './manage/config.js'
+import { sendReport } from './utils.js'
 
 export const report_message = new SleetMessageCommand(
   {
@@ -29,25 +30,27 @@ async function runReportMessage(
   interaction: MessageContextMenuCommandInteraction,
   message: Message,
 ) {
+  const guild = await getGuild(interaction, true)
+
   if (!message.inGuild()) {
-    interaction.reply('This command can only be used in a guild.')
-    return
-  }
-
-  let conf: ReportConfigResolved
-
-  try {
-    conf = await fetchConfig(message.guild)
-  } catch (err) {
-    const content = err instanceof Error ? err.message : String(err)
     interaction.reply({
-      content,
+      content: 'You can only report messages from servers.',
       ephemeral: true,
     })
     return
   }
 
-  const { config, reportChannel } = conf
+  const config = await fetchConfig(guild, interaction.user).catch((err) =>
+    err instanceof Error ? err.message : String(err),
+  )
+
+  if (typeof config === 'string') {
+    interaction.reply({
+      content: config,
+      ephemeral: true,
+    })
+    return
+  }
 
   const customId = `report_message:${message.id}:${interaction.id}`
 
@@ -68,7 +71,7 @@ async function runReportMessage(
     .setCustomId('anon')
     .setLabel('Send report anonymously? (Optional)')
     .setRequired(false)
-    .setPlaceholder('"yes" or "no" (default "no")')
+    .setPlaceholder('"yes" or "no" (default "yes")')
     .setMaxLength(3)
     .setStyle(TextInputStyle.Short)
 
@@ -100,7 +103,8 @@ async function runReportMessage(
   }
 
   const reason = modalInteraction.fields.getTextInputValue('reason')
-  const isAnonString = modalInteraction.fields.getTextInputValue('anon') ?? 'no'
+  const isAnonString =
+    modalInteraction.fields.getTextInputValue('anon') || 'yes'
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
   const footer: EmbedFooterOptions = {
@@ -113,21 +117,15 @@ async function runReportMessage(
 
   const [report, ...extraEmbeds] = await quoteMessage(message)
 
-  report
-    .setFooter(footer)
-    .setTimestamp(null)
-    .addFields([
-      {
-        name: 'Posted at',
-        value: time(message.createdAt, 'F'),
-        inline: true,
-      },
-      {
-        name: 'Edited at',
-        value: message.editedAt ? time(message.editedAt, 'F') : 'Never',
-        inline: true,
-      },
-    ])
+  const createdAt = time(message.createdAt, 'F')
+  const editedAt = message.editedAt ? time(message.editedAt, 'F') : ''
+
+  report.setFooter(footer).addFields([
+    {
+      name: `Posted ${editedAt ? '& Edited' : ''} at`,
+      value: `${createdAt}${editedAt ? '\n' + editedAt : ''}`,
+    },
+  ])
 
   if (reason) {
     report.addFields([
@@ -141,10 +139,7 @@ async function runReportMessage(
   const embeds = [report, ...extraEmbeds]
 
   try {
-    await reportChannel.send({
-      content: config.message,
-      embeds,
-    })
+    await sendReport(config, interaction.user, embeds)
 
     modalInteraction.reply({
       content:

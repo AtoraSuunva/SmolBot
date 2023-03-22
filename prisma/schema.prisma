@@ -30,9 +30,27 @@ model WelcomeJoins {
 
 model ReportConfig {
   guildID   String   @id @map("guild_id")
-  channelID String   @map("channel_id")
+  enabled   Boolean
+  channelID String?  @map("channel_id")
   message   String
   updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model UserReport {
+  reportID  String   @id @default(cuid()) @map("report_id")
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+model ReportBan {
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  reason    String
+  moderator String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([guildID, userID])
 }
 
 model VoiceLogConfig {
@@ -67,15 +85,15 @@ model ModLogConfig {
 model WarningConfig {
   guildID        String   @id @map("guild_id")
   expiresAfter   Int      @map("expires_after")
-  archiveEnabled Boolean  @map("archive_enabled") @default(false)
+  archiveEnabled Boolean  @default(false) @map("archive_enabled")
   archiveChannel String?  @map("archive_channel")
   updatedAt      DateTime @updatedAt @map("updated_at")
 }
 
 model WarningDirtyTracker {
-  guildID String @id @map("guild_id")
+  guildID      String   @id @map("guild_id")
   lastSetDirty DateTime @map("last_set_dirty")
-  isDirty Boolean @map("is_dirty")
+  isDirty      Boolean  @map("is_dirty")
 }
 
 model Warning {
