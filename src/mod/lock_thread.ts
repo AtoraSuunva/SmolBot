@@ -5,7 +5,7 @@ import {
   escapeMarkdown,
   PrivateThreadChannel,
   PublicThreadChannel,
-  ThreadEditData,
+  ThreadEditOptions,
 } from 'discord.js'
 import { formatUser, getChannel, SleetSlashCommand } from 'sleetcord'
 
@@ -134,7 +134,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   }
 
   try {
-    const threadEditData: ThreadEditData = {}
+    const threadEditData: ThreadEditOptions = {}
 
     if (!thread.archived) {
       threadEditData.archived = true
