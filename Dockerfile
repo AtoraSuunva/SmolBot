@@ -7,8 +7,7 @@ RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
-RUN pnpx prisma generate
-RUN pnpm run build
+RUN pnpx prisma generate && pnpm run build
 
 
 # Step that only pulls in (production) deps required to run the app
@@ -19,7 +18,7 @@ COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml 
 COPY --from=dev-build /home/node/app/dist ./dist/
 COPY --from=dev-build /home/node/app/prisma ./prisma/
 RUN pnpm install --prod --frozen-lockfile
-RUN pnpx prisma migrate deploy
+
 
 # The actual runtime itself
 FROM node:18-slim as prod-runtime
