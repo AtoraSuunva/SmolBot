@@ -2,10 +2,10 @@
 FROM node:18-slim as dev-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml tsconfig.json ./
-COPY prisma/ ./prisma/
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
+COPY tsconfig.json ./
 RUN pnpm run build
 
 
@@ -14,10 +14,11 @@ FROM node:18-slim as prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
-COPY --from=dev-build /home/node/app/prisma ./prisma
-COPY --from=dev-build /home/node/app/dist ./dist
+COPY --from=dev-build /home/node/app/dist ./dist/
 RUN pnpm install --prod --frozen-lockfile
+COPY /prisma ./prisma/
 RUN pnpx prisma generate
+RUN pnpm prisma migrate deploy
 
 # The actual runtime itself
 FROM node:18-slim as prod-runtime
