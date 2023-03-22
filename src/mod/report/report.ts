@@ -1,11 +1,13 @@
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  Colors,
   EmbedBuilder,
   EmbedFooterOptions,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
-import { ReportConfigResolved, fetchConfig } from './report_config.js'
+import { fetchConfig } from './manage/config.js'
+import { sendReport } from './utils.js'
 
 export const report = new SleetSlashCommand(
   {
@@ -41,24 +43,21 @@ export const report = new SleetSlashCommand(
 async function runReport(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
-  let conf: ReportConfigResolved
+  const config = await fetchConfig(guild, interaction.user).catch((err) =>
+    err instanceof Error ? err.message : String(err),
+  )
 
-  try {
-    conf = await fetchConfig(guild)
-  } catch (err) {
-    const content = err instanceof Error ? err.message : String(err)
+  if (typeof config === 'string') {
     interaction.reply({
-      content,
+      content: config,
       ephemeral: true,
     })
     return
   }
 
-  const { config, reportChannel } = conf
-
   const content = interaction.options.getString('content', true)
-  const anonymous = interaction.options.getBoolean('anonymous', false) ?? true
-  const attachment = interaction.options.getAttachment('attachment', false)
+  const anonymous = interaction.options.getBoolean('anonymous') ?? true
+  const attachment = interaction.options.getAttachment('attachment')
 
   const footer: EmbedFooterOptions = {
     text: `Reported by ${anonymous ? 'Anonymous' : interaction.user.tag}`,
@@ -72,6 +71,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     .setTitle('Report')
     .setDescription(content)
     .setFooter(footer)
+    .setColor(Colors.DarkPurple)
 
   if (attachment) {
     if (attachment.contentType?.startsWith('image/')) {
@@ -86,15 +86,22 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     }
   }
 
-  await reportChannel.send({
-    content: config.message,
-    embeds: [embed],
-  })
+  const embeds = [embed]
 
-  interaction.reply({
-    content:
-      "Your report has been sent to the moderators.\nHere's a copy of your report:",
-    embeds: [embed],
-    ephemeral: true,
-  })
+  try {
+    await sendReport(config, interaction.user, embeds)
+
+    interaction.reply({
+      content:
+        "Your report has been sent to the moderators.\nHere's a copy of your report:",
+      embeds,
+      ephemeral: true,
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    interaction.reply({
+      content: `Failed to send report: ${msg}`,
+      ephemeral: true,
+    })
+  }
 }
