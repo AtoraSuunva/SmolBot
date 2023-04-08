@@ -19,9 +19,9 @@ import {
 import { prisma } from '../../util/db.js'
 
 // Seperate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
-export const warningsImport = new SleetSlashCommand(
+export const importWarnings = new SleetSlashCommand(
   {
-    name: 'import-warnings',
+    name: 'import_warnings',
     description:
       'Import warnings from a CSV file. Can only create NEW warnings',
     default_member_permissions: ['ManageGuild'],
