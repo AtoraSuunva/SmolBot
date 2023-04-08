@@ -2,9 +2,9 @@ import { ModLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  Constants,
 } from 'discord.js'
 import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
-import { TextChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { clearCacheFor } from './utils.js'
@@ -37,7 +37,7 @@ export const edit = new SleetSlashSubcommand(
         name: 'channel',
         description: 'The channel to log to',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: TextChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'member_add',

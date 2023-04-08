@@ -5,6 +5,7 @@ import {
   ChatInputCommandInteraction,
   CommandInteraction,
   CommandInteractionOption,
+  Constants,
   EmbedBuilder,
 } from 'discord.js'
 import getEmojiRegex from 'emoji-regex'
@@ -14,7 +15,6 @@ import {
   getTextBasedChannel,
   SleetSlashSubcommand,
 } from 'sleetcord'
-import { TextChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 
@@ -36,7 +36,7 @@ export const config = new SleetSlashSubcommand(
         description:
           'A specific channel to send the message in, if any. (default: "none")',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: TextChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'unset_channel',
@@ -84,7 +84,7 @@ function isSubcommandOption(option: CommandInteractionOption): boolean {
 function getAllOptions(
   options: readonly CommandInteractionOption[],
 ): CommandInteractionOption[] {
-  return options.flatMap(option => {
+  return options.flatMap((option) => {
     if (isSubcommandOption(option)) {
       return option.options ? getAllOptions(option.options) : []
     }
@@ -144,7 +144,8 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   const instant = interaction.options.getBoolean('instant')
   // Can be empty
   const ignoreRolesOption = await getRoles(interaction, 'ignore_roles')
-  const ignoreRoles = ignoreRolesOption?.map(role => role.id).join(',') || null
+  const ignoreRoles =
+    ignoreRolesOption?.map((role) => role.id).join(',') || null
   // Can be unset
   const reactWith = getEmoji(interaction, 'react_with')
   const reactWithOption = interaction.options.get('react_with')
@@ -245,8 +246,8 @@ const displayFormatters = {
   ignore_roles: (r: string) =>
     r
       .split(',')
-      .filter(v => v.trim() !== '')
-      .map(i => `<@&${i}>`)
+      .filter((v) => v.trim() !== '')
+      .map((i) => `<@&${i}>`)
       .join(', ') || 'None',
   react_with: (r: string | null) => r ?? 'None',
 }
@@ -280,7 +281,7 @@ function createWelcomeEmbed(
       value: displayFormatters.react_with(welcome.reactWith),
       inline: true,
     },
-  ].map(field => ({
+  ].map((field) => ({
     ...field,
     name: changes.includes(field.name) ? `🟡 ${field.name}` : field.name,
   }))

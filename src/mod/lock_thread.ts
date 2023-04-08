@@ -1,7 +1,7 @@
 import {
   ApplicationCommandOptionType,
-  ChannelType,
   ChatInputCommandInteraction,
+  Constants,
   escapeMarkdown,
   PrivateThreadChannel,
   PublicThreadChannel,
@@ -26,11 +26,7 @@ export const lock_thread = new SleetSlashCommand(
         name: 'thread',
         description: 'The thread to lock',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: [
-          ChannelType.PublicThread,
-          ChannelType.PrivateThread,
-          ChannelType.AnnouncementThread,
-        ],
+        channel_types: Constants.ThreadChannelTypes,
       },
       {
         name: 'ephemeral',

@@ -2,12 +2,12 @@ import { ReportConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  Constants,
   Guild,
   GuildTextBasedChannel,
   User,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
-import { TextChannelTypes } from '../../../util/constants.js'
 import { prisma } from '../../../util/db.js'
 import { formatConfig } from '../../../util/format.js'
 import { handleReportButtonInteraction } from '../utils.js'
@@ -26,7 +26,7 @@ export const report_config = new SleetSlashSubcommand(
         name: 'channel',
         description: 'The channel to send reports to',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: TextChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'message',
