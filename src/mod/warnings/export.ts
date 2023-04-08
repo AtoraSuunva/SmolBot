@@ -21,7 +21,7 @@ export const warningsExport = new SleetSlashSubcommand(
   },
   {
     run: warningsExportRun,
-    // ready: warningsExportReady,
+    ready: warningsExportReady,
   },
 )
 

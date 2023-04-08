@@ -204,9 +204,17 @@ const Badges: Record<keyof typeof UserFlags, string> = {
   VerifiedDeveloper: '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
   CertifiedModerator: '<:BadgeCertifiedMod:909313949332275300>',
   BotHTTPInteractions: '[HTTP Interactions]',
+  ActiveDeveloper: '<:activedev:1042545590640324608>',
+
+  // Not officially documented, but "known"
   Spammer: '[Spammer]',
   Quarantined: '[Quarantined]',
-  ActiveDeveloper: '<:activedev:1042545590640324608>',
+  Collaborator: '[Collaborator]',
+  DisablePremium: '[DisablePremium]',
+  HasUnreadUrgentMessages: '[HasUnreadUrgentMessages]',
+  MFASMS: '[MFASMS]',
+  PremiumPromoDismissed: '[PremiumPromoDismissed]',
+  RestrictedCollaborator: '[RestrictedCollaborator]',
 }
 
 /**

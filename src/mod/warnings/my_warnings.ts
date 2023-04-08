@@ -6,7 +6,7 @@ import { fetchPaginatedWarnings } from './utils.js'
 
 export const myWarnings = new SleetSlashCommand(
   {
-    name: 'my-warnings',
+    name: 'my_warnings',
     description: 'View your warnings',
   },
   {

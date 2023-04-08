@@ -6,7 +6,9 @@ import { warningsSearch } from './search.js'
 import { warningsEdit } from './edit.js'
 import { warningsHistory } from './history.js'
 import { warningsRevert } from './revert.js'
-import { warningsExport, warningsExportReady } from './export.js'
+import { warningsExport } from './export.js'
+import { importWarnings } from './import_warnings.js'
+import { myWarnings } from './my_warnings.js'
 
 const warningsConfig = new SleetSlashCommandGroup({
   name: 'config',
@@ -29,7 +31,6 @@ export const warnings = new SleetSlashCommand(
       warningsExport,
     ],
   },
-  {
-    ready: warningsExportReady, // TODO: this is because sleet is bugged, remove when updated, see https://github.com/AtoraSuunva/sleet/issues/1
-  },
+  {},
+  [importWarnings, myWarnings],
 )
