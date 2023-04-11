@@ -1,5 +1,5 @@
 import { ModLogConfig } from '@prisma/client'
-import { Guild } from 'discord.js'
+import { Guild, GuildTextBasedChannel } from 'discord.js'
 import { prisma } from '../../util/db.js'
 
 export enum EVENT_COLORS {
@@ -25,6 +25,23 @@ export async function getConfigFor(guild: Guild): Promise<ModLogConfig | null> {
   if (config) configCache.set(guild, config)
 
   return config
+}
+
+export type ConfigChecker = (config: ModLogConfig) => boolean
+
+export async function getValidatedConfigFor(
+  guild: Guild,
+  checker: ConfigChecker = () => true,
+): Promise<{ config: ModLogConfig; channel: GuildTextBasedChannel } | null> {
+  const config = await getConfigFor(guild)
+
+  if (!config || !config.enabled || !checker(config)) return null
+
+  const channel = guild.channels.cache.get(config.channelID)
+
+  if (!channel || !channel.isTextBased()) return null
+
+  return { config, channel }
 }
 
 export function clearCacheFor(guild: Guild) {

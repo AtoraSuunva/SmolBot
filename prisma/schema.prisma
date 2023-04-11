@@ -78,6 +78,7 @@ model ModLogConfig {
   messageDeleteBulk Boolean @map("message_delete_bulk")
   channelCreate     Boolean @map("channel_create")
   channelDelete     Boolean @map("channel_delete")
+  channelUpdate     Boolean @map("channel_update")
   reactionActions   Boolean @map("reaction_actions")
   automodAction     Boolean @map("automod_action")
 }
