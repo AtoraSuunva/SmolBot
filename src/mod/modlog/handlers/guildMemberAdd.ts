@@ -1,18 +1,16 @@
-import { ModLogConfig } from '@prisma/client'
 import {
   Client,
   Collection,
   EmbedBuilder,
   Guild,
   GuildMember,
-  GuildTextBasedChannel,
   Invite,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from '../../../util/constants.js'
 import { prisma } from '../../../util/db.js'
-import { EVENT_COLORS, formatLog, getConfigFor } from '../utils.js'
+import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
 
 export const logGuildMemberAdd = new SleetModule(
   {
@@ -38,26 +36,16 @@ async function ready(client: Client) {
   })
 
   for (const guildID of guildIDs) {
-    const guild = await client.guilds.fetch(guildID.guildID)
-    invitesCache.set(guild, await guild.invites.fetch())
+    try {
+      const guild = await client.guilds.fetch(guildID.guildID)
+
+      if (!guild.members.me?.permissions.has('ManageGuild')) continue
+
+      invitesCache.set(guild, await guild.invites.fetch())
+    } catch {
+      // Ignore
+    }
   }
-}
-
-type ConfigChecker = (config: ModLogConfig) => boolean
-
-async function getValidatedConfigFor(
-  guild: Guild,
-  checker: ConfigChecker = () => true,
-): Promise<{ config: ModLogConfig; channel: GuildTextBasedChannel } | null> {
-  const config = await getConfigFor(guild)
-
-  if (!config || !config.enabled || !checker(config)) return null
-
-  const channel = guild.channels.cache.get(config.channelID)
-
-  if (!channel || !channel.isTextBased()) return null
-
-  return { config, channel }
 }
 
 async function guildMemberAdd(member: GuildMember) {
@@ -89,7 +77,7 @@ async function guildMemberAdd(member: GuildMember) {
     )
     .setColor(EVENT_COLORS.memberAdd)
     .setFooter({
-      text: `${prettyMilliseconds(userCreatedAt)} old`,
+      text: `${prettyMilliseconds(userCreatedAt, { unitCount: 3 })} old`,
       iconURL: member.user.displayAvatarURL(),
     })
     .setTimestamp(new Date())
@@ -103,6 +91,8 @@ async function guildMemberAdd(member: GuildMember) {
 async function getPossibleInvites(
   member: GuildMember,
 ): Promise<InviteCollection | null> {
+  if (!member.guild.members.me?.permissions.has('ManageGuild')) return null
+
   const { guild } = member
 
   const cachedInvites = invitesCache.get(guild)

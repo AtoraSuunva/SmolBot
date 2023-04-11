@@ -9,7 +9,7 @@ import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { clearCacheFor } from './utils.js'
 
-enum UserUpdate {
+export enum UserUpdate {
   None = 'None',
   Username = 'Username',
   Avatar = 'Avatar',
@@ -108,6 +108,11 @@ export const edit = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.Boolean,
       },
       {
+        name: 'channel_update',
+        description: 'Log when a channel is updated',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
         name: 'reaction_actions',
         description: 'Allow to act on modlog entries by reacting',
         type: ApplicationCommandOptionType.Boolean,
@@ -139,6 +144,7 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
   const memberUnban = options.getBoolean('member_unban')
   const userUpdate = options.getString('user_update')
   const messageDelete = options.getBoolean('message_delete')
+  const channelUpdate = options.getBoolean('channel_update')
   const messageDeleteBulk = options.getBoolean('message_delete_bulk')
   const channelCreate = options.getBoolean('channel_create')
   const channelDelete = options.getBoolean('channel_delete')
@@ -179,6 +185,7 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
       messageDeleteBulk ?? oldSettings?.messageDeleteBulk ?? false,
     channelCreate: channelCreate ?? oldSettings?.channelCreate ?? false,
     channelDelete: channelDelete ?? oldSettings?.channelDelete ?? false,
+    channelUpdate: channelUpdate ?? oldSettings?.channelUpdate ?? false,
     reactionActions: reactionActions ?? oldSettings?.reactionActions ?? false,
     automodAction: automodAction ?? oldSettings?.automodAction ?? false,
   }

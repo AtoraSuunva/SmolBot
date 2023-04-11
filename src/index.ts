@@ -31,6 +31,7 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildModeration, // For Audit Log Events
     ],
   },
   logger: loggerOptions,
