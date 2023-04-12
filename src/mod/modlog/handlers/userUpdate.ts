@@ -40,17 +40,29 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
     if (!conf) continue
     const { config, channel } = conf
 
-    if (config.userUpdate === UserUpdate.None) continue
+    switch (config.userUpdate) {
+      case UserUpdate.Username:
+        if (!usernameUpdate) continue
+        break
+      case UserUpdate.Avatar:
+        if (!avatarUpdate) continue
+        break
+      case UserUpdate.Both:
+        if (!usernameUpdate && !avatarUpdate) continue
+        break
+      case UserUpdate.None:
+        continue
+    }
 
     const member = await fetchUserInGuild(guild, newUser)
 
     if (!member) continue
 
-    const message = `${formatUser(newUser)}${
+    const message = `${formatUser(oldUser as User)}${
       logMessage[config.userUpdate as UserUpdate]
     }`
 
-    channel.send(formatLog('👤', 'User Update', message))
+    channel.send(formatLog('👥', 'User Update', message))
   }
 }
 
