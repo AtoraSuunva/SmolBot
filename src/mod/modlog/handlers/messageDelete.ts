@@ -56,6 +56,8 @@ async function messageDelete(message: Message | PartialMessage) {
 
     if (
       auditEntry?.target?.id === message.author.id &&
+      auditEntry.extra.channel.id === message.channel.id &&
+      auditEntry.extra.count === 1 &&
       auditEntry.id !== lastEntry
     ) {
       executor = auditEntry.executor
