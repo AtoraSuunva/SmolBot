@@ -54,10 +54,11 @@ export function formatLog(
   message: string,
   timestamp = new Date(),
 ): string {
-  const time = padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
-  const msg = `${emoji} \`[${time}]\` \`[${type}]\`: ${message}`
+  return `${emoji} \`[${formatTime(timestamp)}]\` \`[${type}]\`: ${message}`
+}
 
-  return msg
+export function formatTime(timestamp: Date = new Date()): string {
+  return padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
 }
 
 /** Pads the expressions in tagged template literals */
