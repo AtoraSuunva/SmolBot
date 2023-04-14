@@ -7,10 +7,15 @@ export type BanAuditLog = GuildAuditLogsEntry<
   AuditLogEvent,
   'Create' | 'Delete',
   'User',
-  AuditLogEvent.MemberBanAdd | AuditLogEvent.MemberBanRemove
+  | AuditLogEvent.MemberBanAdd
+  | AuditLogEvent.MemberBanRemove
+  | AuditLogEvent.MemberKick
 >
 
-export async function logMemberBan(
+/**
+ * Log when a member is removed forcefully by a mod from a guild (or let back in). Ban, unban, and kick.
+ */
+export async function logMemberModRemove(
   auditLogEntry: BanAuditLog,
   { channel, config, guild }: AuditInfo,
 ) {
@@ -18,7 +23,8 @@ export async function logMemberBan(
     (auditLogEntry.action === AuditLogEvent.MemberBanAdd &&
       !config.memberBan) ||
     (auditLogEntry.action === AuditLogEvent.MemberBanRemove &&
-      !config.memberUnban)
+      !config.memberUnban) ||
+    (auditLogEntry.action === AuditLogEvent.MemberKick && !config.memberRemove)
   ) {
     return
   }
@@ -54,14 +60,17 @@ export async function logMemberBan(
 const LogEmoji = {
   [AuditLogEvent.MemberBanAdd]: '🔨',
   [AuditLogEvent.MemberBanRemove]: '👼',
+  [AuditLogEvent.MemberKick]: '🥾',
 }
 
 const LogName = {
   [AuditLogEvent.MemberBanAdd]: 'Member Ban',
   [AuditLogEvent.MemberBanRemove]: 'Member Unban',
+  [AuditLogEvent.MemberKick]: 'Member Kick',
 }
 
 const LogVerb = {
   [AuditLogEvent.MemberBanAdd]: 'banned',
   [AuditLogEvent.MemberBanRemove]: 'unbanned',
+  [AuditLogEvent.MemberKick]: 'kicked',
 }
