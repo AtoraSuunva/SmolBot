@@ -16,7 +16,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
   let usernameUpdate = ''
   let avatarUpdate = ''
 
-  if (oldUser.username !== newUser.username) {
+  if (oldUser.tag && oldUser.tag !== newUser.tag) {
     usernameUpdate = ` => ${formatUser(newUser, { id: false })}`
   }
 
