@@ -77,7 +77,7 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
   }
 
   try {
-    const text = (await fetch(extractFrom).then(r => r.text())).trim()
+    const text = (await fetch(extractFrom).then((r) => r.text())).trim()
 
     if (text.length === 0) {
       interaction.reply({
@@ -114,7 +114,7 @@ function getRawUrl(url: string): string {
     /https?:\/\/gist\.github\.com\/.+\/.+/.test(url) &&
     url
       .split('/')
-      .filter(a => !!a)
+      .filter((a) => !!a)
       .pop() !== 'raw'
   )
     return url.endsWith('/') ? url + 'raw' : url + '/raw'
@@ -124,7 +124,7 @@ function getRawUrl(url: string): string {
       'https://pastebin.com/raw/' +
       url
         .split('/')
-        .filter(a => !!a)
+        .filter((a) => !!a)
         .pop()
     )
 
@@ -133,7 +133,7 @@ function getRawUrl(url: string): string {
       'https://hastebin.com/raw/' +
       url
         .split('/')
-        .filter(a => !!a)
+        .filter((a) => !!a)
         .pop()
     )
 
@@ -142,8 +142,8 @@ function getRawUrl(url: string): string {
 
 function getMemberLimit(member: GuildMember): number {
   return Object.entries(limits)
-    .filter(v => member.roles.cache.has(v[0]))
-    .map(v => v[1])
+    .filter((v) => member.roles.cache.has(v[0]))
+    .map((v) => v[1])
     .sort((a, b) => a - b)
     .reverse()[0]
 }
@@ -177,7 +177,7 @@ async function splitSend(
 ) {
   const splits: string[] = []
 
-  content.match(whitespaceSplitRegex)?.forEach(v => splits.push(v))
+  content.match(whitespaceSplitRegex)?.forEach((v) => splits.push(v))
 
   if (splits[0] === undefined) channel.send('`[Empty Message]`')
 
@@ -192,5 +192,5 @@ async function splitSend(
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(r => setTimeout(r, ms))
+  return new Promise((r) => setTimeout(r, ms))
 }

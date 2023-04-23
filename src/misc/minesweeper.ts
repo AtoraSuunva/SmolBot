@@ -187,5 +187,5 @@ function countMines(x: number, y: number, grid: Grid): number {
     grid[y + 1]?.[x - 1],
     grid[y + 1]?.[x],
     grid[y + 1]?.[x + 1],
-  ].filter(v => v === MINE).length
+  ].filter((v) => v === MINE).length
 }
