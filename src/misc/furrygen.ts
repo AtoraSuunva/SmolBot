@@ -321,7 +321,7 @@ const fieldList = Object.keys(fields)
 /** Get the length of the longest key so we can format it nicely */
 const maxFieldLength =
   fieldList
-    .map(v => v.length)
+    .map((v) => v.length)
     .sort()
     .pop() ?? 0
 

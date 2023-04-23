@@ -5,10 +5,10 @@ import {
   Message,
   PartialMessage,
   User,
+  MessageMentions,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
-import { MessageMentions } from 'discord.js'
 import { notNullish } from '../../../util/format.js'
 import { messageToLog } from './messageDelete.js'
 
@@ -128,10 +128,12 @@ type KeysOfType<T, KT> = {
   [K in keyof T]: T[K] extends KT ? K : never
 }[keyof T]
 
-type GetValue<M extends Map<any, any>> = M extends Map<any, infer V> ? V : never
+type GetValue<M extends Map<unknown, unknown>> = M extends Map<unknown, infer V>
+  ? V
+  : never
 
 function extractMentions<
-  K extends KeysOfType<MessageMentions, Collection<string, any>>,
+  K extends KeysOfType<MessageMentions, Collection<string, unknown>>,
   R extends MessageMentions[K],
   V extends GetValue<R>,
 >(messages: Collection<string, Message | PartialMessage>, key: K): Set<V> {
@@ -139,9 +141,9 @@ function extractMentions<
   // then believes that flatMap HAS to return a Collection<string, User | Channel | Role...> and possibly nothing else
   // even AFTER it goddamn inferred EXACTLY what `m.mentions[key]` should return
   return new Set(
-    (
-      messages.flatMap((m): any => m.mentions[key]) as R
-    ).values() as IterableIterator<V>,
+    messages
+      .flatMap((m): Collection<string, unknown> => m.mentions[key])
+      .values() as IterableIterator<V>,
   )
 }
 

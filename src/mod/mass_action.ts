@@ -187,7 +187,7 @@ async function runMassAction(
     output.push(formattedFailure)
   }
 
-  let ephemeral = success.length === 0
+  const ephemeral = success.length === 0
 
   if (success.length + failure.length > OUTPUT_LIMIT) {
     await interaction.reply({
