@@ -43,10 +43,10 @@ export const unedit_message = new SleetMessageCommand(
 
 interface EditStoreEntry {
   lastEditTimestamp: number
-  edits: string[]
+  edits: Message[]
 }
 
-const editStore = new Collection<string, EditStoreEntry>()
+export const editStore = new Collection<string, EditStoreEntry>()
 
 /** 3 hours in ms */
 const SWEEP_LIFETIME = 3 * HOUR
@@ -58,19 +58,25 @@ async function handleMessageUpdate(
   oldMessage: Message | PartialMessage,
   newMessage: Message | PartialMessage,
 ) {
-  if (newMessage.content === null) {
+  if (newMessage.partial) {
     return
   }
 
   const previousEdits = editStore.get(newMessage.id) ?? {
-    lastEditTimestamp:
-      oldMessage.editedTimestamp ?? oldMessage.createdTimestamp,
-    edits: [oldMessage.content ?? '[Initial message content not cached]'],
+    lastEditTimestamp: 0,
+    edits: [],
   }
 
-  previousEdits.edits.push(newMessage.content)
+  previousEdits.edits.pop()
+
+  if (!oldMessage.partial) {
+    previousEdits.edits.push(oldMessage)
+  }
+
+  previousEdits.edits.push(newMessage)
   previousEdits.lastEditTimestamp =
     newMessage.editedTimestamp ?? newMessage.createdTimestamp
+
   editStore.set(newMessage.id, previousEdits)
 
   // Remove all older entries to keep memory from endlessly growing
@@ -112,7 +118,8 @@ function runUnedit(
     })
   }
 
-  const edits = codeBlock('json', JSON.stringify(previousEdits.edits, null, 2))
+  const contents = previousEdits.edits.map((m) => m.content)
+  const edits = codeBlock('json', JSON.stringify(contents, null, 2))
 
   return interaction.reply({
     content: edits,
