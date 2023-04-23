@@ -5,8 +5,11 @@ import {
   PartialMessage,
   AuditLogEvent,
   GuildAuditLogsFetchOptions,
+  escapeMarkdown,
+  AttachmentPayload,
 } from 'discord.js'
 import { basename } from 'node:path'
+import { editStore } from '../../unedit.js'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -67,8 +70,14 @@ async function messageDelete(message: Message | PartialMessage) {
     }
   }
 
-  // TODO: edits, somewhere... Use up the edit store from unedit.ts?
-  const deletedMessage = messageToLog(message, { username: false, id: false })
+  const edits = editStore.get(message.id)?.edits ?? []
+  const editsLog = [...edits.slice(0, -1), message].map((m, i) =>
+    messageToLog(m, {
+      username: false,
+      id: false,
+      includeAttachments: i === 0,
+    }),
+  )
   const attachProxy = message.attachments.map(
     (a) =>
       a.url.replace(
@@ -79,25 +88,32 @@ async function messageDelete(message: Message | PartialMessage) {
 
   const stickers = message.stickers.map((s) => `${s.name} (<${s.url}>)`)
 
+  const messageContent = editsLog.join('\n')
+  const isTooLong = messageContent.length > 2000
+
   const msg =
     `(${message.id}) from ${formatUser(message.author)} in ${message.channel}` +
     (executor ? ` by ${formatUser(executor)}` : '') +
     (reason ? ` for "${reason}"` : '') +
-    // (message.edits.length > 1
-    //   ? `, **${message.edits.length}** revisions`
-    //   : '') +
+    (edits.length > 1 ? `, **${edits.length}** revisions` : '') +
     '\n' +
     (attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
       : '') +
     (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '') +
-    '```\n' +
-    deletedMessage
-      .replace(/(`{3})/g, '`\u{200B}`\u{200B}`\u{200B}')
-      .substring(0, 1500) +
-    '\n```'
+    (isTooLong ? '' : '```\n' + messageContent + '\n```')
 
-  channel.send(formatLog('🗑️', 'Message Deleted', msg))
+  const files: AttachmentPayload[] = []
+
+  if (isTooLong) {
+    files.push({
+      name: 'message.txt',
+      attachment: Buffer.from(messageContent),
+      description: `Deleted Message by ${message.author.tag}`,
+    })
+  }
+
+  channel.send({ content: formatLog('🗑️', 'Message Deleted', msg), files })
 }
 
 function messageToLog(
@@ -107,7 +123,9 @@ function messageToLog(
   return (
     `[${formatTime(message.editedAt ?? message.createdAt)}]` +
     (id ? '(' + message.id + ') ' : '') +
-    `${username ? message.author.tag + ' :' : ''} ${message.content}` +
+    `${username ? message.author.tag + ' :' : ''} ${escapeMarkdown(
+      message.content,
+    )}` +
     `${
       includeAttachments && message.attachments.size > 0
         ? ' | Attachments: ' +
