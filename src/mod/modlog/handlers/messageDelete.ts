@@ -116,10 +116,18 @@ async function messageDelete(message: Message | PartialMessage) {
   channel.send({ content: formatLog('🗑️', 'Message Deleted', msg), files })
 }
 
-function messageToLog(
+export function messageToLog(
   message: Message,
-  { username = true, id = true, includeAttachments = true } = {},
+  {
+    username = true,
+    id = true,
+    includeAttachments = true,
+    includeEmbed = false,
+  } = {},
 ): string {
+  const embed = message.embeds.find((e) => e.data.type === 'rich')
+  const richEmbed = embed?.toJSON()
+
   return (
     `[${formatTime(message.editedAt ?? message.createdAt)}]` +
     (id ? '(' + message.id + ') ' : '') +
@@ -128,8 +136,13 @@ function messageToLog(
     )}` +
     `${
       includeAttachments && message.attachments.size > 0
-        ? ' | Attachments: ' +
-          message.attachments.map((a) => basename(a.url)).join(', ')
+        ? ' | Attach: ' +
+          message.attachments.map((a) => basename(a.url)).join(' ; ')
+        : ''
+    }` +
+    `${
+      includeEmbed && richEmbed
+        ? ' | RichEmbed: ' + JSON.stringify(richEmbed)
         : ''
     }`
   )
