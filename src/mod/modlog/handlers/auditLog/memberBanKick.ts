@@ -15,7 +15,7 @@ export type BanAuditLog = GuildAuditLogsEntry<
 /**
  * Log when a member is removed forcefully by a mod from a guild (or let back in). Ban, unban, and kick.
  */
-export async function logMemberModRemove(
+export async function logMemberBanKick(
   auditLogEntry: BanAuditLog,
   { channel, config, guild }: AuditInfo,
 ) {
