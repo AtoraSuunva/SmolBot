@@ -72,11 +72,14 @@ async function handleMessageDeleteBulk(
     files,
   })
 
-  const attachmentId = sentMessage.attachments.first()?.id
-  if (attachmentId) {
+  const attachmentUrl = sentMessage.attachments.first()?.url
+
+  if (attachmentUrl) {
+    const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
+
     sentMessage.edit({
       content: `${sentMessage.content}\n<${generateArchiveUrl(
-        channel.id,
+        channelId,
         attachmentId,
       )}>`,
       files,
@@ -128,16 +131,19 @@ type KeysOfType<T, KT> = {
   [K in keyof T]: T[K] extends KT ? K : never
 }[keyof T]
 
-type GetValue<M extends Map<unknown, unknown>> = M extends Map<unknown, infer V>
+type GetMapValue<M extends Map<unknown, unknown>> = M extends Map<
+  unknown,
+  infer V
+>
   ? V
   : never
 
 function extractMentions<
   K extends KeysOfType<MessageMentions, Collection<string, unknown>>,
   R extends MessageMentions[K],
-  V extends GetValue<R>,
+  V extends GetMapValue<R>,
 >(messages: Collection<string, Message | PartialMessage>, key: K): Set<V> {
-  // any cast since typescript apparently can correctly resolve both K and R completely fine, but
+  // casts since typescript apparently can correctly resolve K, R, and V completely fine, but
   // then believes that flatMap HAS to return a Collection<string, User | Channel | Role...> and possibly nothing else
   // even AFTER it goddamn inferred EXACTLY what `m.mentions[key]` should return
   return new Set(
