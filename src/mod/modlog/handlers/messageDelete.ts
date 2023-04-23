@@ -6,6 +6,7 @@ import {
   AuditLogEvent,
   GuildAuditLogsFetchOptions,
 } from 'discord.js'
+import { basename } from 'node:path'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -72,7 +73,7 @@ async function messageDelete(message: Message | PartialMessage) {
     (a) =>
       a.url.replace(
         'https://cdn.discordapp.com',
-        '<https://media.discordapp.net>',
+        '<https://media.discordapp.net',
       ) + '>',
   )
 
@@ -108,8 +109,9 @@ function messageToLog(
     (id ? '(' + message.id + ') ' : '') +
     `${username ? message.author.tag + ' :' : ''} ${message.content}` +
     `${
-      includeAttachments && message.attachments.first() !== undefined
-        ? ' | Attach: ' + message.attachments.map((a) => a.url).join(', ')
+      includeAttachments && message.attachments.size > 0
+        ? ' | Attachments: ' +
+          message.attachments.map((a) => basename(a.url)).join(', ')
         : ''
     }`
   )
