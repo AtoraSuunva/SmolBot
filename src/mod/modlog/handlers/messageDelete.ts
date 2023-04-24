@@ -5,8 +5,8 @@ import {
   PartialMessage,
   AuditLogEvent,
   GuildAuditLogsFetchOptions,
-  escapeMarkdown,
   AttachmentPayload,
+  escapeCodeBlock,
 } from 'discord.js'
 import { basename } from 'node:path'
 import { editStore } from '../../unedit.js'
@@ -35,7 +35,7 @@ async function messageDelete(message: Message | PartialMessage) {
   if (message.partial) {
     const msg = `(${message.id}) (uncached) in ${
       message.channel
-    } at ${formatTime(message.createdAt)}`
+    } at \`${formatTime(message.createdAt)}\``
 
     channel.send(formatLog('🗑️', 'Message deleted', msg))
     return
@@ -131,7 +131,7 @@ export function messageToLog(
   return (
     `[${formatTime(message.editedAt ?? message.createdAt)}]` +
     (id ? '(' + message.id + ') ' : '') +
-    `${username ? message.author.tag + ' :' : ''} ${escapeMarkdown(
+    `${username ? message.author.tag + ' :' : ''} ${escapeCodeBlock(
       message.content,
     )}` +
     `${

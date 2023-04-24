@@ -1,4 +1,4 @@
-import { GatewayIntentBits } from 'discord.js'
+import { GatewayIntentBits, Partials } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
 import { LoggerOptions } from 'pino'
@@ -33,6 +33,7 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.GuildVoiceStates,
       GatewayIntentBits.GuildModeration, // For Audit Log Events
     ],
+    partials: [Partials.User, Partials.GuildMember],
   },
   logger: loggerOptions,
 })

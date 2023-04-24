@@ -13,10 +13,13 @@ export const logUserUpdate = new SleetModule(
 )
 
 async function userUpdate(oldUser: User | PartialUser, newUser: User) {
+  // We can't compare partial old user to the new version at all, since it's just an ID
+  if (oldUser.partial) return
+
   let usernameUpdate = ''
   let avatarUpdate = ''
 
-  if (oldUser.tag && oldUser.tag !== newUser.tag) {
+  if (oldUser.tag !== newUser.tag) {
     usernameUpdate = ` ⇒ ${formatUser(newUser, { id: false })}`
   }
 
