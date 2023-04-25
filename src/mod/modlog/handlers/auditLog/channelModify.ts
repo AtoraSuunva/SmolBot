@@ -5,6 +5,7 @@ import {
   GuildAuditLogsEntry,
   GuildBasedChannel,
   NonThreadGuildBasedChannel,
+  escapeMarkdown,
 } from 'discord.js'
 import { formatLog } from '../../utils.js'
 import { formatUser } from 'sleetcord'
@@ -103,7 +104,7 @@ function formatChannel(
       ? ` in ${formatChannel(channel.parent)}`
       : ''
 
-  return `**${channel.name}** (${channel.id}) [\`${
+  return `**${escapeMarkdown(channel.name)}** (${channel.id}) [\`${
     ChannelTypeNames[channel.type]
   }\`]${parent}`
 }

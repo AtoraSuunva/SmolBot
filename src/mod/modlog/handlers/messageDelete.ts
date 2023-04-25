@@ -71,12 +71,17 @@ async function messageDelete(message: Message | PartialMessage) {
   }
 
   const edits = editStore.get(message.id)?.edits ?? []
-  const editsLog = [...edits.slice(0, -1), message].map((m, i) =>
-    messageToLog(m, {
-      username: false,
-      id: false,
-      includeAttachments: i === 0,
-    }),
+  // Set to dedupe identical logs, often just discord editing in link embeds after the message was sent
+  const editsLog = Array.from(
+    new Set(
+      [...edits.slice(0, -1), message].map((m, i) =>
+        messageToLog(m, {
+          username: false,
+          id: false,
+          includeAttachments: i === 0,
+        }),
+      ),
+    ),
   )
   const attachProxy = message.attachments.map(
     (a) =>
@@ -95,7 +100,7 @@ async function messageDelete(message: Message | PartialMessage) {
     `(${message.id}) from ${formatUser(message.author)} in ${message.channel}` +
     (executor ? ` by ${formatUser(executor)}` : '') +
     (reason ? ` for "${reason}"` : '') +
-    (edits.length > 1 ? `, **${edits.length}** revisions` : '') +
+    (editsLog.length > 1 ? `, **${editsLog.length}** revisions` : '') +
     '\n' +
     (attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
@@ -131,9 +136,9 @@ export function messageToLog(
   return (
     `[${formatTime(message.editedAt ?? message.createdAt)}]` +
     (id ? '(' + message.id + ') ' : '') +
-    `${username ? message.author.tag + ' :' : ''} ${escapeCodeBlock(
-      message.content,
-    )}` +
+    `${
+      username ? escapeCodeBlock(message.author.tag) + ' :' : ''
+    } ${escapeCodeBlock(message.content)}` +
     `${
       includeAttachments && message.attachments.size > 0
         ? ' | Attach: ' +
@@ -142,7 +147,7 @@ export function messageToLog(
     }` +
     `${
       includeEmbed && richEmbed
-        ? ' | RichEmbed: ' + JSON.stringify(richEmbed)
+        ? ' | RichEmbed: ' + escapeCodeBlock(JSON.stringify(richEmbed))
         : ''
     }`
   )
