@@ -24,19 +24,21 @@ async function handleGuildMemberRemove(
   const roles = config.memberRemoveRoles
     ? member.roles.cache
         .filter((r) => r.id !== member.guild.id)
-        .map((r) => r.name)
+        .map((r) => r.toString())
         .join(', ')
     : ''
 
   const joinedAgo =
     member.joinedTimestamp !== null
-      ? prettyMilliseconds(member.joinedTimestamp, { unitCount: 3 })
+      ? prettyMilliseconds(Date.now() - member.joinedTimestamp, {
+          unitCount: 3,
+        })
       : 'some unknown time'
 
   const embed = new EmbedBuilder()
     .setDescription(
       `**${member.guild.memberCount.toLocaleString()}** Members\n${
-        roles ? '**Roles**:' + roles : ''
+        roles ? '**Roles**: ' + roles : ''
       }`,
     )
     .setColor(EVENT_COLORS.memberRemove)

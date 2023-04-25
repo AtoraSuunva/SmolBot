@@ -61,7 +61,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
 
     if (!member) continue
 
-    const message = `${formatUser(oldUser as User)}${
+    const message = `${formatUser(oldUser)}${
       logMessage[config.userUpdate as UserUpdate]
     }`
 

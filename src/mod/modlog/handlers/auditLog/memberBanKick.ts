@@ -48,13 +48,14 @@ export async function logMemberBanKick(
 
   const message = `${targetUser} ${verb} by ${execUser}${reason}`
 
-  channel.send(
-    formatLog(
+  channel.send({
+    content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],
       message,
     ),
-  )
+    allowedMentions: { parse: [] },
+  })
 }
 
 const LogEmoji = {
