@@ -24,6 +24,7 @@ async function handleGuildMemberRemove(
   const roles = config.memberRemoveRoles
     ? member.roles.cache
         .filter((r) => r.id !== member.guild.id)
+        .sort((a, b) => b.position - a.position)
         .map((r) => r.toString())
         .join(', ')
     : ''
@@ -38,7 +39,7 @@ async function handleGuildMemberRemove(
   const embed = new EmbedBuilder()
     .setDescription(
       `**${member.guild.memberCount.toLocaleString()}** Members\n${
-        roles ? '**Roles**: ' + roles : ''
+        roles ? '**Roles:** ' + roles : ''
       }`,
     )
     .setColor(EVENT_COLORS.memberRemove)
