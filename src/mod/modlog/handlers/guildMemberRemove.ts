@@ -49,7 +49,11 @@ async function handleGuildMemberRemove(
     .setTimestamp(new Date())
 
   channel.send({
-    content: formatLog('📤', 'Member Remove', formatUser(member.user)),
+    content: formatLog(
+      '📤',
+      'Member Remove',
+      formatUser(member.user, { mention: true }),
+    ),
     embeds: [embed],
   })
 }
