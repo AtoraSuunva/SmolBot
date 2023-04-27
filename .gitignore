@@ -7,3 +7,5 @@ dist/
 prisma/db/
 prisma/**/*.db
 prisma/**/*.sqlite
+csv
+src/import-parse.ts
