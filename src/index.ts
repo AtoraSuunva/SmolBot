@@ -29,11 +29,18 @@ const sleetClient = new SleetClient({
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.GuildVoiceStates,
       GatewayIntentBits.GuildModeration, // For Audit Log Events
     ],
-    partials: [Partials.User, Partials.GuildMember],
+    partials: [
+      Partials.User,
+      Partials.GuildMember,
+      Partials.Reaction,
+      Partials.Message,
+      Partials.Channel,
+    ],
   },
   logger: loggerOptions,
 })
