@@ -270,11 +270,11 @@ async function restoreRoles(
     }),
   )
 
-  const applyRoles = [...resolvedStoredRoles, ...member.roles.cache.toJSON()]
+  const applyRoles = resolvedStoredRoles
     .filter(isDefined)
     .filter((r) => validRole(r) && r.id !== mutedRole.id)
 
-  await member.roles.set(applyRoles, reason)
+  await member.roles.add(applyRoles, reason)
   storedMutes.delete(member.id)
   return applyRoles
 }
