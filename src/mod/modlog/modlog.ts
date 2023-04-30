@@ -7,6 +7,7 @@ import { logUserUpdate } from './handlers/userUpdate.js'
 import { logMessageDelete } from './handlers/messageDelete.js'
 import { logMessageDeleteBulk } from './handlers/messageDeleteBulk.js'
 import { logGuildMemberRemove } from './handlers/guildMemberRemove.js'
+import { modlogMessageReactionAdd } from './handlers/messageReactionAdd.js'
 
 export const modlog = new SleetSlashCommand(
   {
@@ -24,5 +25,6 @@ export const modlog = new SleetSlashCommand(
     logMessageDelete,
     logMessageDeleteBulk,
     logAuditLog,
+    modlogMessageReactionAdd,
   ],
 )
