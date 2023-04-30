@@ -61,7 +61,7 @@ export async function logMemberBanKick(
 const LogEmoji = {
   [AuditLogEvent.MemberBanAdd]: '🔨',
   [AuditLogEvent.MemberBanRemove]: '👼',
-  [AuditLogEvent.MemberKick]: '🥾',
+  [AuditLogEvent.MemberKick]: '👢',
 }
 
 const LogName = {
