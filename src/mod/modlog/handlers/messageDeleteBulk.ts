@@ -82,7 +82,6 @@ async function handleMessageDeleteBulk(
         channelId,
         attachmentId,
       )}>`,
-      files,
     })
   }
 }
