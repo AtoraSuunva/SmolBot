@@ -274,6 +274,7 @@ async function restoreRoles(
     .filter(isDefined)
     .filter((r) => validRole(r) && r.id !== mutedRole.id)
 
+  await member.roles.remove(mutedRole, reason)
   await member.roles.add(applyRoles, reason)
   storedMutes.delete(member.id)
   return applyRoles
@@ -318,5 +319,8 @@ function formatFails(failed: MuteFail[]): string {
 function formatRoles(roles: Role[]): string {
   if (roles.length === 0) return 'None'
 
-  return roles.map((r) => r.toString()).join(', ')
+  return roles
+    .sort((a, b) => b.position - a.position)
+    .map((r) => r.toString())
+    .join(', ')
 }
