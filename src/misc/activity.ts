@@ -68,9 +68,7 @@ export const activity = new SleetSlashCommand(
 
 /** These statuses will be randomly selected and shown by the bot */
 const statuses: Status[] = [
-  { type: ActivityType.Playing, name: 'with boorus!' },
   { type: ActivityType.Streaming, name: 'christian anime!' },
-  { type: ActivityType.Playing, name: 'send nudes' },
   { type: ActivityType.Playing, name: 'as a glaceon irl' },
   { type: ActivityType.Streaming, name: 'handholding' },
   { type: ActivityType.Streaming, name: 'pawholding' },
@@ -83,7 +81,7 @@ const statuses: Status[] = [
   { type: ActivityType.Playing, name: 'with Tol Bot 💙' },
   { type: ActivityType.Playing, name: 'with Scops!' },
   { type: ActivityType.Playing, name: 'with Napstato--oh, right' },
-  { type: ActivityType.Playing, name: 'gaming simulator 2022' },
+  { type: ActivityType.Playing, name: 'gaming simulator 2023' },
   { type: ActivityType.Playing, name: 'aaa' },
   { type: ActivityType.Playing, name: 'with shit code.' },
   { type: ActivityType.Streaming, name: 'the entire bee movie' },
@@ -103,7 +101,6 @@ const statuses: Status[] = [
   { type: ActivityType.Listening, name: 'the screams of the damned' },
   { type: ActivityType.Watching, name: 'probably something dumb' },
   { type: ActivityType.Watching, name: 'RobotOtter and Bulba fight' },
-  { type: ActivityType.Listening, name: 'the moans of the damned' },
   { type: ActivityType.Playing, name: 'kobold' },
   { type: ActivityType.Watching, name: 'girls.. , .,' },
   { type: ActivityType.Watching, name: 'for big tiddy dragon gf' },
