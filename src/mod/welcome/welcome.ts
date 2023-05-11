@@ -6,13 +6,14 @@ import {
   Message,
   PartialGuildMember,
 } from 'discord.js'
-import { SleetSlashCommand, tryFetchMember } from 'sleetcord'
+import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
 import { fields } from './fields.js'
 import { formatMessage, message } from './message.js'
+import { formatLog, sendToModLog } from '../modlog/utils.js'
 
 export const welcome = new SleetSlashCommand(
   {
@@ -124,7 +125,15 @@ async function handleJoin(
       origin: channel,
       welcome: sendChannel,
     })
-    sendChannel.send(msg)
+    const sentMessage = await sendChannel.send(msg)
+
+    const modLogMsg = formatLog(
+      '👋',
+      'Member Welcome',
+      `${formatUser(member)} in ${sendChannel} at ${sentMessage.url}`,
+    )
+
+    sendToModLog(member.guild, modLogMsg, (config) => config.memberWelcome)
   }
 
   if (reactWith && message) {

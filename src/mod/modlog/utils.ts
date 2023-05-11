@@ -1,5 +1,5 @@
 import { ModLogConfig } from '@prisma/client'
-import { Guild, GuildTextBasedChannel } from 'discord.js'
+import { Guild, GuildTextBasedChannel, TextChannel } from 'discord.js'
 import { prisma } from '../../util/db.js'
 
 export enum EVENT_COLORS {
@@ -59,6 +59,16 @@ export function formatLog(
 
 export function formatTime(timestamp: Date = new Date()): string {
   return padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
+}
+
+type SendPayload = Parameters<TextChannel['send']>[0]
+
+export async function sendToModLog(guild: Guild, payload: SendPayload, checker: ConfigChecker = () => true) {
+  const config = await getValidatedConfigFor(guild, checker)
+
+  if (!config) return
+
+  return config.channel.send(payload)
 }
 
 /** Pads the expressions in tagged template literals */
