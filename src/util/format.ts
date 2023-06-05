@@ -1,9 +1,11 @@
 import { codeBlock, Guild } from 'discord.js'
 
-export function formatConfig<
-  Value extends string | number | boolean | Date | null,
-  Config extends Record<string, Value>,
->(guild: Guild, config: Partial<Config>): string {
+type Values = string | number | boolean | Date | null | undefined
+
+export function formatConfig<Config extends Record<string, Values>>(
+  guild: Guild,
+  config: Partial<Config>,
+): string {
   let longest = 0
 
   const formatted = Object.entries(config)
@@ -11,7 +13,7 @@ export function formatConfig<
       ([key]) =>
         !['guildid', 'updatedat', 'createdat'].includes(key.toLowerCase()),
     )
-    .map(([key, value]): [string, Value] => {
+    .map(([key, value]): [string, Values] => {
       const snakeKey = snakeCase(key)
       const lengthKey = snakeKey === 'channel_id' ? 'channel' : snakeKey
 
@@ -25,7 +27,7 @@ export function formatConfig<
         value = `#${
           guild.channels.cache.get(value as string)?.name ??
           `unknown-channel (${value})`
-        }` as Value
+        }`
       }
 
       return `${key.padEnd(longest, ' ')} = ${value}`
