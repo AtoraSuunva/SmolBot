@@ -1,6 +1,5 @@
 import {
   Client,
-  CommandInteraction,
   DiscordAPIError,
   GuildPreview,
   Invite,
@@ -20,9 +19,16 @@ import {
   ApplicationCommandOptionType,
   APIApplication,
   GuildVerificationLevel,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Interaction,
+  ButtonInteraction,
+  time,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
+import prettyMilliseconds from 'pretty-ms'
 
 export const lookup = new SleetSlashCommand(
   {
@@ -39,12 +45,31 @@ export const lookup = new SleetSlashCommand(
   },
   {
     run: runLookup,
+    interactionCreate,
   },
 )
 
-async function runLookup(interaction: ChatInputCommandInteraction) {
-  const { client } = interaction
+const LOOKUP_ID = 'lookup'
+
+function interactionCreate(interaction: Interaction) {
+  if (
+    interaction.isButton() &&
+    interaction.customId.startsWith(`${LOOKUP_ID}:`)
+  ) {
+    const [, data] = interaction.customId.split(':')
+    lookupAndRespond(interaction, data)
+  }
+}
+
+function runLookup(interaction: ChatInputCommandInteraction) {
   const data = interaction.options.getString('data', true)
+  lookupAndRespond(interaction, data)
+}
+
+type LookupInteraction = ChatInputCommandInteraction | ButtonInteraction
+
+async function lookupAndRespond(interaction: LookupInteraction, data: string) {
+  const { client } = interaction
 
   await interaction.deferReply()
 
@@ -118,7 +143,7 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
       if (e.status === 403) {
         return {
           exists: true,
-          message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatCreatedAt(
+          message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatDate(
             snowflakeToDate(guildId),
           )}`,
         }
@@ -212,7 +237,7 @@ const Badges: Record<keyof typeof UserFlags, string> = {
   Collaborator: '[Collaborator]',
   DisablePremium: '[DisablePremium]',
   HasUnreadUrgentMessages: '[HasUnreadUrgentMessages]',
-  MFASMS: '[MFASMS]',
+  MFASMS: '[MFA SMS]',
   PremiumPromoDismissed: '[PremiumPromoDismissed]',
   RestrictedCollaborator: '[RestrictedCollaborator]',
 }
@@ -254,7 +279,7 @@ function getUserBadgeEmojis(user: User): string[] {
  * @param user The user ID to lookup
  */
 async function sendUserLookup(
-  interaction: CommandInteraction,
+  interaction: LookupInteraction,
   user: User,
 ): Promise<void> {
   if (!(user instanceof User)) {
@@ -272,9 +297,15 @@ async function sendUserLookup(
     .setDescription(
       `**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
     )
-    .addFields([
-      { name: 'Created at:', value: formatCreatedAt(user.createdAt) },
-    ])
+    .addFields([{ name: 'Created at:', value: formatDate(user.createdAt) }])
+
+  if (typeof user.accentColor === 'number') {
+    embed.setColor(user.accentColor)
+  }
+
+  if (user.banner) {
+    embed.setImage(user.bannerURL({ size: 4096 })!)
+  }
 
   if (user.bot) {
     const verifiedBot = user.flags?.has('VerifiedBot')
@@ -334,7 +365,7 @@ const VERIFIED = '<:ServerVerifiedIcon:751159037378297976>'
  * @param invite The invite to use
  */
 async function sendInviteLookup(
-  interaction: CommandInteraction,
+  interaction: LookupInteraction,
   invite: Invite,
 ): Promise<void> {
   if (invite.guild) {
@@ -352,7 +383,7 @@ async function sendInviteLookup(
  * @param invite The invite to fetch information from
  */
 async function sendGuildInviteLookup(
-  interaction: CommandInteraction,
+  interaction: LookupInteraction,
   invite: Invite,
 ): Promise<void> {
   const { guild, code, presenceCount, memberCount } = invite
@@ -369,8 +400,9 @@ async function sendGuildInviteLookup(
   ].filter((v) => !!v)
   const guildPrepend = guildIcons.length > 0 ? `${guildIcons.join(' ')} ` : ''
 
+  const components = new ActionRowBuilder<ButtonBuilder>()
   const embed = new EmbedBuilder()
-    .setTitle(`:incoming_envelope:  Guild Invite: ${code}`)
+    .setTitle(`📨 • Guild Invite: ${code}`)
     .setThumbnail(guild.iconURL({ size: 4096 }))
     .setDescription(guild.description)
     .addFields([
@@ -389,8 +421,8 @@ async function sendGuildInviteLookup(
         inline: true,
       },
       {
-        name: 'Guild Created At:',
-        value: formatCreatedAt(guild.createdAt),
+        name: 'Guild Created:',
+        value: formatDate(guild.createdAt),
       },
     ])
     .setFooter({
@@ -400,8 +432,8 @@ async function sendGuildInviteLookup(
   if (invite.expiresAt) {
     embed.addFields([
       {
-        name: 'Invite Expires At:',
-        value: formatExpiresAt(invite.expiresAt),
+        name: 'Invite Expires:',
+        value: formatDate(invite.expiresAt),
       },
     ])
   }
@@ -409,6 +441,14 @@ async function sendGuildInviteLookup(
   if (invite.inviter) {
     embed.addFields([
       { name: 'Inviter:', value: formatUser(invite.inviter), inline: true },
+    ])
+
+    components.addComponents([
+      new ButtonBuilder()
+        .setEmoji('📫')
+        .setLabel('Lookup Inviter')
+        .setStyle(ButtonStyle.Primary)
+        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}`),
     ])
   }
 
@@ -493,10 +533,9 @@ async function sendGuildInviteLookup(
   }
 
   // TODO: add in blank fields to align things? do i even bother?
-
   // There's also the welcome screen but meh
 
-  interaction.editReply({ embeds: [embed] })
+  interaction.editReply({ embeds: [embed], components: [components] })
 }
 
 /**
@@ -505,7 +544,7 @@ async function sendGuildInviteLookup(
  * @param invite The invite to send data for
  */
 async function sendGroupDMInviteLookup(
-  interaction: CommandInteraction,
+  interaction: LookupInteraction,
   invite: Invite,
 ): Promise<void> {
   const { code, guild } = invite
@@ -520,6 +559,7 @@ async function sendGroupDMInviteLookup(
 
   const createdAt = snowflakeToDate(invite.channel.id)
 
+  const components = new ActionRowBuilder<ButtonBuilder>()
   const embed = new EmbedBuilder()
     .setTitle(`:incoming_envelope:  Group DM Invite: ${code}`)
     .setThumbnail(invite.channel.iconURL({ size: 4096 }))
@@ -540,7 +580,7 @@ async function sendGroupDMInviteLookup(
       },
       {
         name: 'GDM Created At:',
-        value: formatCreatedAt(createdAt),
+        value: formatDate(createdAt),
       },
     ])
 
@@ -548,16 +588,24 @@ async function sendGroupDMInviteLookup(
     embed.addFields([
       {
         name: 'Invite Expires At:',
-        value: formatExpiresAt(invite.expiresAt),
+        value: formatDate(invite.expiresAt),
       },
     ])
   }
 
   if (invite.inviter) {
     embed.addFields([{ name: 'Inviter:', value: formatUser(invite.inviter) }])
+
+    components.addComponents([
+      new ButtonBuilder()
+        .setEmoji('📫')
+        .setLabel('Lookup Inviter')
+        .setStyle(ButtonStyle.Primary)
+        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}`),
+    ])
   }
 
-  interaction.editReply({ embeds: [embed] })
+  interaction.editReply({ embeds: [embed], components: [components] })
 }
 
 /**
@@ -565,14 +613,10 @@ async function sendGroupDMInviteLookup(
  * @param interaction The interaction to reply to
  * @param widget The widget to pull information from
  */
-function sendGuildWidgetLookup(
-  interaction: CommandInteraction,
-  widget: Widget,
-) {
+function sendGuildWidgetLookup(interaction: LookupInteraction, widget: Widget) {
   const created = snowflakeToDate(widget.id)
   const embed = new EmbedBuilder()
-    // The docs specify that `.name` is a string and exists, but the types don't. Bug?
-    .setTitle(`Guild: ${(widget as unknown as { name: string }).name}`)
+    .setTitle(`Guild: ${widget.name}`)
     .addFields([
       { name: 'ID:', value: widget.id, inline: true },
       {
@@ -590,7 +634,7 @@ function sendGuildWidgetLookup(
         value: `${widget.presenceCount.toLocaleString()} online`,
         inline: true,
       },
-      { name: 'Guild Created At:', value: formatCreatedAt(created) },
+      { name: 'Guild Created At:', value: formatDate(created) },
     ])
     .setFooter({
       text: 'Source: Guild Widget',
@@ -605,7 +649,7 @@ function sendGuildWidgetLookup(
  * @param preview The guild preview to display info for
  */
 function sendGuildPreviewLookup(
-  interaction: CommandInteraction,
+  interaction: LookupInteraction,
   preview: GuildPreview,
 ) {
   const {
@@ -627,7 +671,7 @@ function sendGuildPreviewLookup(
           `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
         inline: true,
       },
-      { name: 'Guild Created At:', value: formatCreatedAt(preview.createdAt) },
+      { name: 'Guild Created At:', value: formatDate(preview.createdAt) },
     ])
     .setFooter({
       text: 'Source: Guild Preview',
@@ -679,7 +723,7 @@ function sendGuildPreviewLookup(
 }
 
 /**
- * Format a colletion of emojis into a string for display
+ * Format a collection of emojis into a string for display
  * @param emojis GuildPreview emojis as a Collection
  * @returns A string representation of the emojis
  */
@@ -717,14 +761,14 @@ function formatStickers(stickers: Collection<string, Sticker>): string {
 }
 
 /**
- * Trims a string to the last occurance of a substring
+ * Trims a string to the last occurrence of a substring
  *
  * @example
  * trimToLast('abcdefg', 'd') // 'abc'
  *
  * @param string The string to trim
- * @param substring The substring to trim at the last occurance of
- * @returns The string, trimmed right before the last occurance
+ * @param substring The substring to trim at the last occurrence of
+ * @returns The string, trimmed right before the last occurrence
  */
 function trimToLast(string: string, substring: string): string {
   const index = string.lastIndexOf(substring)
@@ -743,13 +787,24 @@ function snowflakeToDate(snowflake: string): Date {
   return new Date(Number(SnowflakeUtil.deconstruct(snowflake).timestamp))
 }
 
-// TODO: global time util
-function formatCreatedAt(date: Date): string {
-  return date.toString()
-}
+function formatDate(date: Date): string {
+  const now = Date.now()
+  const then = date.getTime()
+  let msTime = 0
+  let relativeString = '?'
 
-function formatExpiresAt(date: Date): string {
-  return date.toString()
+  if (now < then) {
+    msTime = then - now
+    relativeString = 'left'
+  } else {
+    msTime = now - then
+    relativeString = 'ago'
+  }
+
+  return `${prettyMilliseconds(msTime)} ${relativeString} (${time(
+    date,
+    'R',
+  )})\n${date.toString()}`
 }
 
 /** A map of GuildVerificationLevel to displayable strings */
@@ -768,3 +823,66 @@ const NSFWLevelMap: Record<GuildNSFWLevel, string> = {
   [GuildNSFWLevel.Safe]: 'Safe',
   [GuildNSFWLevel.AgeRestricted]: 'Age Restricted',
 }
+
+// function formatGuildFeatures(features: `${GuildFeature}`[]): APIEmbedField[] {
+//   const feats = features.sort().map((f) => GuildFeaturesMap[f])
+//   const half = Math.floor(feats.length / 2)
+
+//   return [
+//     {
+//       name: 'Features:',
+//       value: feats.slice(0, half).join('\n'),
+//       inline: true,
+//     },
+//     {
+//       name: '\u200b',
+//       value: feats.slice(half).join('\n'),
+//       inline: true,
+//     },
+//   ]
+// }
+
+// const GuildFeaturesMap: Record<`${GuildFeature}`, string> = {
+//   ANIMATED_BANNER: '<:NitroBoostLvl3:749064368620306433> Animated Banner',
+//   ANIMATED_ICON: '<:NitroBoostLvl1:775420929525153792> Animated Icon',
+//   APPLICATION_COMMAND_PERMISSIONS_V2:
+//     '<:IconLock:811926230735126558> Application Command Permissions V2',
+//   AUTO_MODERATION: '<:AutoMod:1053486337174548561> Auto Moderation',
+//   BANNER: '<:MessageAttachment:807680293992529921> Banner',
+//   COMMUNITY: '<:IconCommunityPublic:775848533298905130> Community',
+//   CREATOR_MONETIZABLE_PROVISIONAL:
+//     '<:StageTicket:863856607602802688> Creator Monetizable Provisional',
+//   CREATOR_STORE_PAGE: '<:StageTicket:863856607602802688> Creator Store Page',
+//   DEVELOPER_SUPPORT_SERVER:
+//     '<:BadgeActiveDeveloper:1040391864651628595> Developer Support Server',
+//   DISCOVERABLE: '<:ServerDiscoveryIcon:749064370318999673> Discoverable',
+//   FEATURABLE: '<:WumpusStar:863856607317590057> Featurable',
+//   HAS_DIRECTORY_ENTRY:
+//     '<:ServerSchoolHub:882897417152917525> Has Directory Entry',
+//   HUB: '<:ServerSchoolHub:882897417152917525> Hub',
+//   INVITE_SPLASH: '<:NitroBoostLvl1:775420929525153792> Invite Splash',
+//   INVITES_DISABLED: '<:StatusDnd:714833495524114464> Invites Disabled',
+//   LINKED_TO_HUB: '<:ServerSchoolHub:882897417152917525> Linked To Hub',
+//   MEMBER_VERIFICATION_GATE_ENABLED:
+//     '<:IconMembershipGating:780017824550092840> Member Verification Gate Enabled',
+//   MONETIZATION_ENABLED:
+//     '<:StageTicket:863856607602802688> Monetization Enabled',
+//   MORE_STICKERS: ':MessageSticker:753338258963824801> More Stickers',
+//   NEWS: '<:ChannelAnnouncements:779042577114202122> News',
+//   PARTNERED: ':ServerPartnered:842194494161027100> Partnered',
+//   PREVIEW_ENABLED: '<:Wumpus_Lurk:993229751114272899> Preview Enabled',
+//   PRIVATE_THREADS: '<:ChannelThreadPrivate:842224739275898921> Private Threads',
+//   RELAY_ENABLED: '🏃 Relay Enabled',
+//   ROLE_ICONS: '<:IconRole:826477127209320534> Role Icons',
+//   ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE:
+//     ':StageTicket:863856607602802688> Role Subscriptions Available',
+//   ROLE_SUBSCRIPTIONS_ENABLED:
+//     '<:StageTicket:863856607602802688> Role Subscriptions Enabled',
+//   TICKETED_EVENTS_ENABLED:
+//     '<:StageTicket:863856607602802688> Ticketed Events Enabled',
+//   VANITY_URL: '<:NitroBoostLvl3:749064368620306433> Vanity Url',
+//   VERIFIED: '<:ServerVerifiedBlurple:973611114543841301> Verified',
+//   VIP_REGIONS: '<:VCIconUnmuted:837072274766823456> VIP Regions',
+//   WELCOME_SCREEN_ENABLED:
+//     '<:WumpusWave:719708131990437958> Welcome Screen Enabled',
+// }
