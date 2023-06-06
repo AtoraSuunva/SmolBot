@@ -128,7 +128,7 @@ export async function respondWithPaginatedWarnings(
 
   collector.on('collect', async (interaction) => {
     if (interaction.user.id !== interaction.user.id) {
-      interaction.reply({
+      await interaction.reply({
         content: 'You cannot use this button',
         ephemeral: true,
       })
@@ -146,7 +146,7 @@ export async function respondWithPaginatedWarnings(
   })
 
   collector.on('end', () => {
-    interaction.editReply({
+    void interaction.editReply({
       components: [],
     })
   })

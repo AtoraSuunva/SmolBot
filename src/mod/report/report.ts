@@ -50,7 +50,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
   )
 
   if (typeof config === 'string') {
-    interaction.reply({
+    await interaction.reply({
       content: config,
       ephemeral: true,
     })
@@ -93,7 +93,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
   try {
     await sendReport(config, interaction.user, embeds)
 
-    interaction.reply({
+    await interaction.reply({
       content:
         "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
@@ -101,7 +101,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    interaction.reply({
+    await interaction.reply({
       content: `Failed to send report: ${msg}`,
       ephemeral: true,
     })

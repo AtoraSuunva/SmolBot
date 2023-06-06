@@ -54,7 +54,7 @@ const SWEEP_LIFETIME = 3 * HOUR
 const editSweeper = (value: EditStoreEntry) =>
   Date.now() - value.lastEditTimestamp > SWEEP_LIFETIME
 
-async function handleMessageUpdate(
+function handleMessageUpdate(
   oldMessage: Message | PartialMessage,
   newMessage: Message | PartialMessage,
 ) {
@@ -97,11 +97,11 @@ function runUneditSlashCommand(interaction: ChatInputCommandInteraction) {
   return runUnedit(interaction, messageID, false)
 }
 
-function runUneditContextMenu(
+async function runUneditContextMenu(
   interaction: MessageContextMenuCommandInteraction,
   message: Message,
 ) {
-  runUnedit(interaction, message.id, true)
+  await runUnedit(interaction, message.id, true)
 }
 
 function runUnedit(

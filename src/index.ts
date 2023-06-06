@@ -49,5 +49,5 @@ const sleetClient = new SleetClient({
 // `registerOnlyInGuilds` solves that, but we need a way to pass which guild(s) to the commands
 // `devGuild` option in sleet? `registerOnlyInGuilds: ['devGuild']`?
 sleetClient.addModules(modules)
-sleetClient.putCommands()
+await sleetClient.putCommands()
 sleetClient.login()

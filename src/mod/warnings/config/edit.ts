@@ -71,7 +71,7 @@ async function runWarningsConfigEdit(interaction: ChatInputCommandInteraction) {
   })
 
   if (oldConfig && !oldConfig.archiveEnabled && archiveEnabled) {
-    markWarningArchiveDirty(guild.id, true)
+    await markWarningArchiveDirty(guild.id, true)
   }
 
   const warning =

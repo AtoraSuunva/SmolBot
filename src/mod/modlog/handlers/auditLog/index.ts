@@ -40,13 +40,13 @@ async function guildAuditLogEntryCreate(
     case AuditLogEvent.ChannelCreate:
     case AuditLogEvent.ChannelDelete:
     case AuditLogEvent.ChannelUpdate:
-      logChannelModifed(auditLogEntry as ChannelAuditLog, auditInfo)
+      await logChannelModifed(auditLogEntry as ChannelAuditLog, auditInfo)
       break
 
     case AuditLogEvent.MemberBanAdd:
     case AuditLogEvent.MemberBanRemove:
     case AuditLogEvent.MemberKick:
-      logMemberBanKick(auditLogEntry as BanAuditLog, auditInfo)
+      await logMemberBanKick(auditLogEntry as BanAuditLog, auditInfo)
       break
   }
 }

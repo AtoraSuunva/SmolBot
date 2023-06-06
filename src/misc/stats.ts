@@ -48,28 +48,34 @@ async function runStats(
 
   const modules = this.sleet.modules.size
   const uptime = client.readyAt
-  const created = client.user?.createdAt ?? null
+  const created = client.user.createdAt
 
-  const embed = new EmbedBuilder().setTitle('Stats').addFields([
-    { name: 'Guilds:', value: guildCount.toLocaleString(), inline: true },
-    { name: 'Members:', value: memberCount.toLocaleString(), inline: true },
-    { name: 'Users Cached:', value: userCount.toLocaleString(), inline: true },
-    { name: 'Channels:', value: channelCount.toLocaleString(), inline: true },
-    { name: 'Emojis Cached:', value: emojis.toLocaleString(), inline: true },
-    { name: 'Modules Loaded:', value: modules.toLocaleString(), inline: true },
-    { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
-    { name: 'Created:', value: createTimestamps(created), inline: true },
-  ])
-
-  if (client.user) {
-    embed.setAuthor({
+  const embed = new EmbedBuilder()
+    .setTitle('Stats')
+    .addFields([
+      { name: 'Guilds:', value: guildCount.toLocaleString(), inline: true },
+      { name: 'Members:', value: memberCount.toLocaleString(), inline: true },
+      {
+        name: 'Users Cached:',
+        value: userCount.toLocaleString(),
+        inline: true,
+      },
+      { name: 'Channels:', value: channelCount.toLocaleString(), inline: true },
+      { name: 'Emojis Cached:', value: emojis.toLocaleString(), inline: true },
+      {
+        name: 'Modules Loaded:',
+        value: modules.toLocaleString(),
+        inline: true,
+      },
+      { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
+      { name: 'Created:', value: createTimestamps(created), inline: true },
+    ])
+    .setAuthor({
       name: `${client.user.tag} (${client.user.id})`,
     })
+    .setThumbnail(client.user.displayAvatarURL())
 
-    embed.setThumbnail(client.user.displayAvatarURL())
-  }
-
-  interaction.reply({ embeds: [embed] })
+  await interaction.reply({ embeds: [embed] })
 }
 
 /**

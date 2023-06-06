@@ -55,7 +55,7 @@ export async function logChannelModifed(
   const execUser = executor ? formatUser(executor) : 'Unknown User'
   const message = `${channelText} ${verb} by ${execUser}`
 
-  channel.send(
+  await channel.send(
     formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],

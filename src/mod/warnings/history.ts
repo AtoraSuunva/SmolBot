@@ -55,7 +55,7 @@ async function warningHistoryRun(interaction: ChatInputCommandInteraction) {
     iconURL: user.displayAvatarURL(),
   }
 
-  respondWithPaginatedWarnings(interaction, fetchWarnings, {
+  await respondWithPaginatedWarnings(interaction, fetchWarnings, {
     formatAuthor: () => formattedUser,
     formatTitle: () => `Warning #${warningID} history`,
     formatDescription: () => null,

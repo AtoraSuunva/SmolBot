@@ -95,7 +95,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
 
-  markWarningArchiveDirty(guild.id)
+  await markWarningArchiveDirty(guild.id)
 
   const embed = new EmbedBuilder().setTitle('Edited Warning').addFields([
     formatWarningToField(newWarning, config, {

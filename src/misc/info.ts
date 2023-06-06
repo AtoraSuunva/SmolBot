@@ -32,14 +32,10 @@ const cpuLoadIntervals = [1, 5, 15]
 /** Get the info! */
 async function runInfo(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
-
-  if (interaction.client.user) {
-    embed.setAuthor({
+    .setAuthor({
       name: `${interaction.client.user.tag} (${interaction.client.user.id})`,
     })
-
-    embed.setThumbnail(interaction.client.user.displayAvatarURL())
-  }
+    .setThumbnail(interaction.client.user.displayAvatarURL())
 
   const owner = getOwner(interaction)
   const ownerString = formatOwner(owner)
@@ -63,7 +59,7 @@ async function runInfo(interaction: ChatInputCommandInteraction) {
     { name: 'Memory Usage', value: memoryString, inline: true },
   ])
 
-  interaction.reply({
+  await interaction.reply({
     embeds: [embed],
   })
 }
@@ -80,7 +76,7 @@ function formatBytes(bytes: number, decimals = 2): string {
     dm = decimals + 1 || 3,
     sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
     i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
 
 /** Details about who the owner is, and if they're a team */
@@ -93,7 +89,7 @@ interface OwnerDetails {
 
 /** Get the current owner of the bot/application */
 function getOwner(interaction: CommandInteraction): OwnerDetails {
-  const owner = interaction.client.application?.owner ?? null
+  const owner = interaction.client.application.owner
 
   if (owner instanceof User) {
     return {

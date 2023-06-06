@@ -48,7 +48,7 @@ async function handleGuildMemberRemove(
     })
     .setTimestamp(new Date())
 
-  channel.send({
+  await channel.send({
     content: formatLog(
       '📤',
       'Member Remove',

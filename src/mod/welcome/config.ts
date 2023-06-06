@@ -145,7 +145,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   // Can be empty
   const ignoreRolesOption = await getRoles(interaction, 'ignore_roles')
   const ignoreRoles =
-    ignoreRolesOption?.map((role) => role.id).join(',') || null
+    ignoreRolesOption?.map((role) => role.id).join(',') ?? null
   // Can be unset
   const reactWith = getEmoji(interaction, 'react_with')
   const reactWithOption = interaction.options.get('react_with')

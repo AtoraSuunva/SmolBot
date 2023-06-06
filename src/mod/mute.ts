@@ -243,11 +243,12 @@ function unmuteAction(
 
 const storedMutes = new Map<string, string[]>()
 
-async function storeRoles(member: GuildMember): Promise<Role[]> {
+// TODO: store in DB?
+function storeRoles(member: GuildMember): Promise<Role[]> {
   const previous = storedMutes.get(member.id) ?? []
   const roles = member.roles.cache.filter(validRole).map((r) => r.id)
   storedMutes.set(member.id, [...previous, ...roles])
-  return member.roles.cache.toJSON()
+  return Promise.resolve(member.roles.cache.toJSON())
 }
 
 async function restoreRoles(

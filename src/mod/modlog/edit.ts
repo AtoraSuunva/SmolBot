@@ -159,7 +159,7 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
 
   const channelID = channel?.id ?? oldSettings?.channelID
   if (!channelID) {
-    interaction.reply({
+    await interaction.reply({
       content: 'Please specify a channel to log to.',
       ephemeral: true,
     })
@@ -200,7 +200,7 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
 
   clearCacheFor(guild)
 
-  interaction.reply({
+  await interaction.reply({
     content: `New settings:\n${formatConfig(guild, mergedSettings)}`,
   })
 }

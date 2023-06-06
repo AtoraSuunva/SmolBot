@@ -51,19 +51,19 @@ export const lookup = new SleetSlashCommand(
 
 const LOOKUP_ID = 'lookup'
 
-function interactionCreate(interaction: Interaction) {
+async function interactionCreate(interaction: Interaction) {
   if (
     interaction.isButton() &&
     interaction.customId.startsWith(`${LOOKUP_ID}:`)
   ) {
     const [, data] = interaction.customId.split(':')
-    lookupAndRespond(interaction, data)
+    await lookupAndRespond(interaction, data)
   }
 }
 
-function runLookup(interaction: ChatInputCommandInteraction) {
+async function runLookup(interaction: ChatInputCommandInteraction) {
   const data = interaction.options.getString('data', true)
-  lookupAndRespond(interaction, data)
+  await lookupAndRespond(interaction, data)
 }
 
 type LookupInteraction = ChatInputCommandInteraction | ButtonInteraction
@@ -116,10 +116,13 @@ async function lookupAndRespond(interaction: LookupInteraction, data: string) {
     }
   }
 
-  interaction.editReply(`Failed to do lookup, got:\n> ${String(error)}`)
+  await interaction.editReply(`Failed to do lookup, got:\n> ${String(error)}`)
 }
 
-type GuildExists = { exists: boolean; message: string }
+interface GuildExists {
+  exists: boolean
+  message: string
+}
 type GuildData = GuildExists | GuildPreview | Widget
 
 /**
@@ -304,6 +307,7 @@ async function sendUserLookup(
   }
 
   if (user.banner) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     embed.setImage(user.bannerURL({ size: 4096 })!)
   }
 
@@ -351,7 +355,7 @@ async function sendUserLookup(
     embed.addFields([{ name: 'Bot Details:', value: formattedDetails }])
   }
 
-  interaction.editReply({ embeds: [embed] })
+  await interaction.editReply({ embeds: [embed] })
 }
 
 const ONLINE = '<:i_online:468214881623998464>'
@@ -484,11 +488,13 @@ async function sendGuildInviteLookup(
   const images: string[] = []
 
   if (guild.splash) {
-    images.push(`[Splash](${guild.splashURL({ size: 4096 })})`)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    images.push(`[Splash](${guild.splashURL({ size: 4096 })!})`)
   }
 
   if (guild.banner) {
-    images.push(`[Banner](${guild.bannerURL({ size: 4096 })})`)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    images.push(`[Banner](${guild.bannerURL({ size: 4096 })!})`)
   }
 
   if (images.length > 0) {
@@ -517,7 +523,7 @@ async function sendGuildInviteLookup(
   if (guild.premiumSubscriptionCount !== null) {
     embed.addFields({
       name: 'Boosts:',
-      value: guild.premiumSubscriptionCount?.toLocaleString() ?? '0',
+      value: guild.premiumSubscriptionCount.toLocaleString(),
       inline: true,
     })
   }
@@ -535,7 +541,7 @@ async function sendGuildInviteLookup(
   // TODO: add in blank fields to align things? do i even bother?
   // There's also the welcome screen but meh
 
-  interaction.editReply({ embeds: [embed], components: [components] })
+  await interaction.editReply({ embeds: [embed], components: [components] })
 }
 
 /**
@@ -550,11 +556,13 @@ async function sendGroupDMInviteLookup(
   const { code, guild } = invite
 
   if (guild) {
-    return void interaction.editReply('Not a group DM invite!')
+    await interaction.editReply('Not a group DM invite!')
+    return
   }
 
   if (!invite.channel || invite.channel.type !== ChannelType.GroupDM) {
-    return void interaction.editReply('Failed to fetch group DM channel!')
+    await interaction.editReply('Failed to fetch group DM channel!')
+    return
   }
 
   const createdAt = snowflakeToDate(invite.channel.id)
@@ -569,7 +577,7 @@ async function sendGroupDMInviteLookup(
     .addFields([
       {
         name: 'Group DM Info:',
-        value: invite.channel?.name ?? 'unknown group dm',
+        value: invite.channel.name ?? 'unknown group dm',
         inline: true,
       },
       {
@@ -605,7 +613,7 @@ async function sendGroupDMInviteLookup(
     ])
   }
 
-  interaction.editReply({ embeds: [embed], components: [components] })
+  await interaction.editReply({ embeds: [embed], components: [components] })
 }
 
 /**
@@ -613,7 +621,10 @@ async function sendGroupDMInviteLookup(
  * @param interaction The interaction to reply to
  * @param widget The widget to pull information from
  */
-function sendGuildWidgetLookup(interaction: LookupInteraction, widget: Widget) {
+async function sendGuildWidgetLookup(
+  interaction: LookupInteraction,
+  widget: Widget,
+) {
   const created = snowflakeToDate(widget.id)
   const embed = new EmbedBuilder()
     .setTitle(`Guild: ${widget.name}`)
@@ -640,7 +651,7 @@ function sendGuildWidgetLookup(interaction: LookupInteraction, widget: Widget) {
       text: 'Source: Guild Widget',
     })
 
-  interaction.editReply({ embeds: [embed] })
+  await interaction.editReply({ embeds: [embed] })
 }
 
 /**
@@ -648,7 +659,7 @@ function sendGuildWidgetLookup(interaction: LookupInteraction, widget: Widget) {
  * @param interaction The interaction to reply to
  * @param preview The guild preview to display info for
  */
-function sendGuildPreviewLookup(
+async function sendGuildPreviewLookup(
   interaction: LookupInteraction,
   preview: GuildPreview,
 ) {
@@ -704,12 +715,14 @@ function sendGuildPreviewLookup(
   const images: string[] = []
 
   if (preview.splash) {
-    const splash = preview.splashURL({ size: 4096 })
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const splash = preview.splashURL({ size: 4096 })!
     images.push(`[Splash](${splash})`)
   }
 
   if (preview.discoverySplash) {
-    const discoverySplash = preview.discoverySplashURL({ size: 4096 })
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const discoverySplash = preview.discoverySplashURL({ size: 4096 })!
     images.push(`[Discovery Splash](${discoverySplash})`)
   }
 
@@ -719,7 +732,7 @@ function sendGuildPreviewLookup(
     ])
   }
 
-  interaction.editReply({ embeds: [embed] })
+  await interaction.editReply({ embeds: [embed] })
 }
 
 /**
@@ -804,7 +817,7 @@ function formatDate(date: Date): string {
   return `${prettyMilliseconds(msTime)} ${relativeString} (${time(
     date,
     'R',
-  )})\n${date.toString()}`
+  )})\n${date}`
 }
 
 /** A map of GuildVerificationLevel to displayable strings */

@@ -30,9 +30,9 @@ async function warningsExportRun(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply()
 
   const archive = await csvArchiveForGuild(guild.id)
-  await defer
 
-  interaction.editReply({
+  await defer
+  await interaction.editReply({
     content: 'Exported Warnings',
     files: [archive],
   })
@@ -56,11 +56,11 @@ async function archiveAllDirtyGuilds(client: Client) {
   for (const guildID of guilds) {
     const config = await fetchWarningConfigFor(guildID)
 
-    if (!config || !config.archiveEnabled || !config.archiveChannel) continue
+    if (!config?.archiveEnabled || !config.archiveChannel) continue
 
     const channel = await client.channels.fetch(config.archiveChannel)
 
-    if (!channel || !channel.isTextBased()) continue
+    if (!channel?.isTextBased()) continue
 
     const archive = await csvArchiveForGuild(guildID)
 
@@ -69,7 +69,7 @@ async function archiveAllDirtyGuilds(client: Client) {
       files: [archive],
     })
 
-    markWarningArchiveDirty(guildID, true, false)
+    await markWarningArchiveDirty(guildID, true, false)
 
     await setTimeout(WAIT_BETWEEN_EXPORTS)
   }

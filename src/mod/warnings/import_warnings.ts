@@ -18,7 +18,7 @@ import {
 } from '@sapphire/shapeshift'
 import { prisma } from '../../util/db.js'
 
-// Seperate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
+// Separate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
 export const importWarnings = new SleetSlashCommand(
   {
     name: 'import_warnings',
@@ -44,7 +44,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
   const file = interaction.options.getAttachment('file', true)
 
   if (file.contentType?.split(';')[0]?.trim() !== 'text/csv') {
-    interaction.reply('Expected a .csv file')
+    await interaction.reply('Expected a .csv file')
     return
   }
 
@@ -54,7 +54,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
 
   if (!response.body || !response.ok) {
     await defer
-    interaction.editReply('Failed to fetch file')
+    await interaction.editReply('Failed to fetch file')
     return
   }
 
@@ -91,7 +91,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     if (validated.isErr()) {
       console.error(validated.error)
       await defer
-      interaction.editReply(
+      await interaction.editReply(
         `You have an invalid row in your csv:\n${codeBlock(
           'js',
           JSON.stringify(formatBaseError(validated.error), null, 2),
@@ -104,7 +104,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
       if (validated.value.guildID !== guild.id) {
         // This *SHOULDN'T* happen, but just in case because this would be REALLY bad
         await defer
-        interaction.editReply(
+        await interaction.editReply(
           `You have an invalid row in your csv:\n${codeBlock(
             'js',
             'guildID must be the same as the guild the command was called in',
@@ -128,7 +128,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
   // TODO: when I finally migrate to postgres, use `await prisma.warning.createMany`
 
   await defer
-  interaction.editReply(`Imported warnings (${created} added)`)
+  await interaction.editReply(`Imported warnings (${created} added)`)
 }
 
 const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
@@ -147,7 +147,7 @@ const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
     validUntil: s.string.reshape(reshapeToDate).nullable,
   })
 
-function reshapeToNumber(value: string): Result<number, Error> {
+function reshapeToNumber(value: string): Result<number> {
   const parsed = parseInt(value, 10)
 
   if (Number.isNaN(parsed)) {
@@ -157,7 +157,7 @@ function reshapeToNumber(value: string): Result<number, Error> {
   return Result.ok(parsed)
 }
 
-function reshapeToBoolean(value: string): Result<boolean, Error> {
+function reshapeToBoolean(value: string): Result<boolean> {
   switch (value.toLowerCase()) {
     case 'true':
       return Result.ok(true)
@@ -168,7 +168,7 @@ function reshapeToBoolean(value: string): Result<boolean, Error> {
   }
 }
 
-function reshapeToDate(value: string): Result<Date, Error> {
+function reshapeToDate(value: string): Result<Date> {
   const parsed = new Date(value)
 
   if (Number.isNaN(parsed.getTime())) {
@@ -196,6 +196,7 @@ function formatBaseError(error: BaseError): Record<string, unknown> {
       }),
     }
   } else if ('toJSON' in error && typeof error.toJSON === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return error.toJSON()
   }
 

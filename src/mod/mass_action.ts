@@ -75,8 +75,8 @@ interface ActionFail {
 type ActionUser = (guild: Guild, user: User, reason: string) => Promise<unknown>
 type CheckMember = (member: GuildMember) => boolean
 
-function runMassBan(interaction: ChatInputCommandInteraction) {
-  runMassAction(
+async function runMassBan(interaction: ChatInputCommandInteraction) {
+  await runMassAction(
     interaction,
     'ban',
     'banned',
@@ -85,8 +85,8 @@ function runMassBan(interaction: ChatInputCommandInteraction) {
   )
 }
 
-function runMassKick(interaction: ChatInputCommandInteraction) {
-  runMassAction(
+async function runMassKick(interaction: ChatInputCommandInteraction) {
+  await runMassAction(
     interaction,
     'kick',
     'kicked',
@@ -125,7 +125,7 @@ async function runMassAction(
     let fail: string | null = null
 
     if (member) {
-      if (checkMember && !checkMember(member)) {
+      if (!checkMember(member)) {
         fail = `I cannot ${action} this user`
       } else if (
         !isOwner &&

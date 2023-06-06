@@ -11,7 +11,7 @@ export const fields = new SleetSlashSubcommand(
   },
 )
 
-function runHelp(interaction: ChatInputCommandInteraction) {
+async function runHelp(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder().setTitle('Welcome Help').addFields([
     {
       name: 'message',
@@ -42,7 +42,7 @@ function runHelp(interaction: ChatInputCommandInteraction) {
     },
   ])
 
-  interaction.reply({
+  await interaction.reply({
     ephemeral: true,
     embeds: [embed],
   })

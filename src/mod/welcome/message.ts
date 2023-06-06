@@ -33,7 +33,7 @@ const supported = [
 const messageInfo = `There is (some) support for dynamic welcome message content:\n${supported}`
 
 function runMessage(interaction: ChatInputCommandInteraction) {
-  interaction.reply({
+  return interaction.reply({
     ephemeral: true,
     content: messageInfo,
   })

@@ -108,7 +108,7 @@ async function getPossibleInvites(
       i.uses !== null &&
       i.uses > 0 &&
       // And if it's new (not cached) OR has more uses than the cached version
-      (!ci || (ci.uses && i.uses > ci?.uses))
+      (!ci || (ci.uses && i.uses > ci.uses))
     )
   })
 }
@@ -118,8 +118,9 @@ function formatInviters(invites: InviteCollection): string {
     .map((i) => {
       const inviter = i.inviter ? formatUser(i.inviter) : '<null>'
       const maxUses = i.maxUses ? `/${i.maxUses}` : ''
+      const uses = i.uses ? ` [\`${i.uses}${maxUses}\`]` : ''
 
-      return `${inviter} {\`${i.code}\`} [\`${i.uses}${maxUses}\`]`
+      return `${inviter} {\`${i.code}\`}${uses}`
     })
     .join(', ')
 }

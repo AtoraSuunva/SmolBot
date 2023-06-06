@@ -50,7 +50,7 @@ async function runDelete(
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
 
-  interaction.editReply({
+  await interaction.editReply({
     content: 'Are you sure? You **CANNOT** undo this!!!',
     components: [row],
   })
@@ -60,16 +60,16 @@ async function runDelete(
     time: 2 * MINUTE,
   })
 
-  collector.on('collect', (i) => {
+  collector.on('collect', async (i) => {
     if (i.user.id === interaction.user.id) {
-      deleteWelcomeSettingsFrom(guild, i)
-      interaction.editReply({
+      await deleteWelcomeSettingsFrom(guild, i)
+      await interaction.editReply({
         content: `Welcome config deleted. Requested by ${interaction.user}`,
         components: [],
       })
       collector.stop()
     } else {
-      i.reply({
+      await i.reply({
         ephemeral: true,
         content: `Only ${interaction.user} can confirm this deletion.`,
       })
@@ -78,7 +78,7 @@ async function runDelete(
 
   collector.on('end', (_collected, reason) => {
     if (reason === 'time') {
-      interaction.editReply({
+      void interaction.editReply({
         content: 'Deletion timed out',
         components: [],
       })
@@ -109,7 +109,7 @@ async function deleteWelcomeSettingsFrom(
   welcomeCache.delete(guild.id)
 
   await defer
-  interaction.editReply({
+  await interaction.editReply({
     content: 'Welcome config deleted.',
   })
 }

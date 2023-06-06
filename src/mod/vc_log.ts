@@ -109,14 +109,14 @@ async function handleVoiceStateUpdate(
   if (!oldState.member) return
 
   const channel = oldState.guild.channels.cache.get(vcConfig.channelID)
-  if (!channel || !channel.isTextBased()) return
+  if (!channel?.isTextBased()) return
 
   if (!oldState.channelId && newState.channelId) {
     return sendLog(
       channel,
       '📥',
       'Join',
-      `${formatUser(oldState.member)} joined ${newState.channel}`,
+      `${formatUser(oldState.member)} joined ${String(newState.channel)}`,
     )
   }
 
@@ -125,7 +125,7 @@ async function handleVoiceStateUpdate(
       channel,
       '📤',
       'Left',
-      `${formatUser(oldState.member)} left ${oldState.channel}`,
+      `${formatUser(oldState.member)} left ${String(oldState.channel)}`,
     )
   }
 
@@ -134,9 +134,9 @@ async function handleVoiceStateUpdate(
       channel,
       '⏩',
       'Move',
-      `${formatUser(oldState.member)} moved ${oldState.channel} => ${
-        newState.channel
-      }`,
+      `${formatUser(oldState.member)} moved ${String(
+        oldState.channel,
+      )} => ${String(newState.channel)}`,
     )
   }
 
@@ -145,7 +145,9 @@ async function handleVoiceStateUpdate(
       channel,
       '🔴',
       'Live',
-      `${formatUser(oldState.member)} started streaming in ${oldState.channel}`,
+      `${formatUser(oldState.member)} started streaming in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -154,7 +156,9 @@ async function handleVoiceStateUpdate(
       channel,
       '⏹️',
       'Dead',
-      `${formatUser(oldState.member)} stopped streaming in ${oldState.channel}`,
+      `${formatUser(oldState.member)} stopped streaming in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -163,9 +167,9 @@ async function handleVoiceStateUpdate(
       channel,
       '📱',
       'YCam',
-      `${formatUser(oldState.member)} started their camera in ${
-        oldState.channel
-      }`,
+      `${formatUser(oldState.member)} started their camera in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -174,9 +178,9 @@ async function handleVoiceStateUpdate(
       channel,
       '📵',
       'XCam',
-      `${formatUser(oldState.member)} stopped their camera in ${
-        oldState.channel
-      }`,
+      `${formatUser(oldState.member)} stopped their camera in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -185,9 +189,9 @@ async function handleVoiceStateUpdate(
       channel,
       '🙉',
       'Deaf',
-      `${formatUser(oldState.member)} was server deafened in ${
-        oldState.channel
-      }`,
+      `${formatUser(oldState.member)} was server deafened in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -196,9 +200,9 @@ async function handleVoiceStateUpdate(
       channel,
       '🔊',
       'Hear',
-      `${formatUser(oldState.member)} stopped being server deafened in ${
-        oldState.channel
-      }`,
+      `${formatUser(oldState.member)} stopped being server deafened in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -207,7 +211,9 @@ async function handleVoiceStateUpdate(
       channel,
       '🙊',
       'Mute',
-      `${formatUser(oldState.member)} was server muted in ${oldState.channel}`,
+      `${formatUser(oldState.member)} was server muted in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -216,9 +222,9 @@ async function handleVoiceStateUpdate(
       channel,
       '🎙️',
       'Talk',
-      `${formatUser(oldState.member)} stopped being server muted in ${
-        oldState.channel
-      }`,
+      `${formatUser(oldState.member)} stopped being server muted in ${String(
+        oldState.channel,
+      )}`,
     )
   }
 
@@ -247,7 +253,7 @@ function padExpressions(str: TemplateStringsArray, ...args: unknown[]) {
   return str
     .map(
       (v, i) =>
-        v + (args[i] !== undefined ? (args[i] + '').padStart(2, '0') : ''),
+        v + (args[i] !== undefined ? String(args[i]).padStart(2, '0') : ''),
     )
     .join('')
 }

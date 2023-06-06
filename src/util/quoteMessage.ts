@@ -36,64 +36,63 @@ export async function quoteMessage(
   switch (message.type) {
     // Crosspost flag...
     case MessageType.ChannelPinnedMessage:
-      await quoteChannelPinnedMessage(message, embed)
+      quoteChannelPinnedMessage(message, embed)
       break
     case MessageType.UserJoin:
-      await quoteUserJoin(message, embed)
+      quoteUserJoin(message, embed)
       break
     case MessageType.GuildBoost:
-      await quoteGuildBoost(message, embed)
+      quoteGuildBoost(message, embed)
       break
     case MessageType.GuildBoostTier1:
-      await quoteGuildBoostTier(message, embed, 1)
+      quoteGuildBoostTier(message, embed, 1)
       break
     case MessageType.GuildBoostTier2:
-      await quoteGuildBoostTier(message, embed, 2)
+      quoteGuildBoostTier(message, embed, 2)
       break
     case MessageType.GuildBoostTier3:
-      await quoteGuildBoostTier(message, embed, 3)
+      quoteGuildBoostTier(message, embed, 3)
       break
     case MessageType.ChannelFollowAdd:
-      await quoteChannelFollowAdd(message, embed)
+      quoteChannelFollowAdd(message, embed)
       break
     case MessageType.GuildDiscoveryDisqualified:
-      await quoteGuildDiscoveryDisqualified(message, embed)
+      quoteGuildDiscoveryDisqualified(message, embed)
       break
     case MessageType.GuildDiscoveryRequalified:
-      await quoteGuildDiscoveryRequalified(message, embed)
+      quoteGuildDiscoveryRequalified(message, embed)
       break
     case MessageType.GuildDiscoveryGracePeriodInitialWarning:
-      await quoteGuildDiscoveryGracePeriodInitialWarning(message, embed)
+      quoteGuildDiscoveryGracePeriodInitialWarning(message, embed)
       break
     case MessageType.GuildDiscoveryGracePeriodFinalWarning:
-      await quoteGuildDiscoveryGracePeriodFinalWarning(message, embed)
+      quoteGuildDiscoveryGracePeriodFinalWarning(message, embed)
       break
     case MessageType.Reply:
       await quoteReply(message, embed)
       break
     case MessageType.ThreadCreated:
     case MessageType.ThreadStarterMessage:
-      await quoteThreadCreateMessage(message, embed)
+      quoteThreadCreateMessage(message, embed)
       break
     case MessageType.AutoModerationAction:
-      await quoteAutoModerationAction(message, embed)
+      quoteAutoModerationAction(message, embed)
       break
   }
 
   const imgEmbed =
-    message.attachments.find((e) => 'height' in e && 'width' in e) ||
+    message.attachments.find((e) => 'height' in e && 'width' in e) ??
     message.embeds.find((e) => e.image)
 
-  if (imgEmbed && imgEmbed.url) {
+  if (imgEmbed?.url) {
     embed.setImage(imgEmbed.url)
   }
 
-  const attachmentCount =
-    message.attachments.size - (imgEmbed && imgEmbed.url ? 1 : 0)
+  const attachmentCount = message.attachments.size - (imgEmbed?.url ? 1 : 0)
 
   if (attachmentCount > 0) {
     embed.setDescription(
-      embed.data.description + ` **+ ${attachmentCount} attachment(s)**`,
+      `${embed.data.description ?? ''} **+ ${attachmentCount} attachment(s)**`,
     )
   }
 
@@ -105,17 +104,23 @@ export async function quoteMessage(
   return embeds
 }
 
-async function quoteChannelPinnedMessage(
-  message: Message,
-  embed: EmbedBuilder,
-) {
+type PathPart<T extends string | undefined> = T extends string ? `/${T}` : ''
+function optionalPathPart<T extends string | undefined>(
+  pathPart: T,
+): PathPart<T> {
+  return (typeof pathPart === 'string' ? `/${pathPart}` : '') as PathPart<T>
+}
+
+function quoteChannelPinnedMessage(message: Message, embed: EmbedBuilder) {
   let messageLink = 'a message'
 
   if (message.reference) {
     const { guildId, channelId, messageId } = message.reference
     messageLink = hyperlink(
       'a message',
-      `https://discordapp.com/channels/${guildId}/${channelId}/${messageId}`,
+      `https://discordapp.com/channels${optionalPathPart(
+        guildId,
+      )}/${channelId}${optionalPathPart(messageId)}`,
     )
   }
 
@@ -124,32 +129,36 @@ async function quoteChannelPinnedMessage(
   )
 }
 
-async function quoteUserJoin(message: Message, embed: EmbedBuilder) {
+function quoteUserJoin(message: Message, embed: EmbedBuilder) {
   embed.setDescription(`${message.author} has joined the server.`)
 }
 
-async function quoteGuildBoost(message: Message, embed: EmbedBuilder) {
+function quoteGuildBoost(message: Message, embed: EmbedBuilder) {
   embed.setDescription(`${message.author} just boosted the server!`)
 }
 
-async function quoteGuildBoostTier(
+function quoteGuildBoostTier(
   message: Message,
   embed: EmbedBuilder,
   tier: number,
 ) {
   embed.setDescription(
-    `${message.author} just boosted the server! ${message.guild?.name} has achieved **tier ${tier}**!`,
+    `${message.author} just boosted the server! ${
+      message.guild?.name ?? '<Unknown Server>'
+    } has achieved **tier ${tier}**!`,
   )
 }
 
-async function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
+function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
   let followLink = message.content
 
   if (message.reference) {
     const { guildId, channelId } = message.reference
     followLink = hyperlink(
       message.content,
-      `https://discordapp.com/channels/${guildId}/${channelId}`,
+      `https://discordapp.com/channels${optionalPathPart(
+        guildId,
+      )}/${channelId}`,
     )
   }
 
@@ -158,7 +167,7 @@ async function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
   )
 }
 
-async function quoteGuildDiscoveryDisqualified(
+function quoteGuildDiscoveryDisqualified(
   _message: Message,
   embed: EmbedBuilder,
 ) {
@@ -167,7 +176,7 @@ async function quoteGuildDiscoveryDisqualified(
   )
 }
 
-async function quoteGuildDiscoveryRequalified(
+function quoteGuildDiscoveryRequalified(
   _message: Message,
   embed: EmbedBuilder,
 ) {
@@ -176,7 +185,7 @@ async function quoteGuildDiscoveryRequalified(
   )
 }
 
-async function quoteGuildDiscoveryGracePeriodInitialWarning(
+function quoteGuildDiscoveryGracePeriodInitialWarning(
   _message: Message,
   embed: EmbedBuilder,
 ) {
@@ -185,7 +194,7 @@ async function quoteGuildDiscoveryGracePeriodInitialWarning(
   )
 }
 
-async function quoteGuildDiscoveryGracePeriodFinalWarning(
+function quoteGuildDiscoveryGracePeriodFinalWarning(
   _message: Message,
   embed: EmbedBuilder,
 ) {
@@ -236,24 +245,23 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
   ])
 }
 
-async function quoteThreadCreateMessage(message: Message, embed: EmbedBuilder) {
+function quoteThreadCreateMessage(message: Message, embed: EmbedBuilder) {
   let threadLink = message.content
 
   if (message.reference) {
     const { guildId, channelId } = message.reference
     threadLink = hyperlink(
       threadLink,
-      `https://discordapp.com/channels/${guildId}/${channelId}`,
+      `https://discordapp.com/channels${optionalPathPart(
+        guildId,
+      )}/${channelId}`,
     )
   }
 
   embed.setDescription(`${message.author} started a thread: ${threadLink}`)
 }
 
-async function quoteAutoModerationAction(
-  message: Message,
-  embed: EmbedBuilder,
-) {
+function quoteAutoModerationAction(message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     `${message.author} triggered AutoMod. Details follow below:`,
   )

@@ -56,7 +56,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
 
   if (!revertTo) {
     const versions = warningHistory.map((w) => w.version).join(', ')
-    interaction.reply({
+    await interaction.reply({
       content: `No version ${version} found for warning #${warningID} version ${version}\nAvailable versions: ${versions}`,
       ephemeral: true,
     })
@@ -76,7 +76,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
 
   const newWarning = await updateWarning(guild.id, mergedWarning)
 
-  markWarningArchiveDirty(guild.id)
+  await markWarningArchiveDirty(guild.id)
 
   const embed = new EmbedBuilder()
     .setTitle('Reverted Warning')
@@ -92,7 +92,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
       }),
     ])
 
-  interaction.reply({
+  await interaction.reply({
     embeds: [embed],
   })
 }
