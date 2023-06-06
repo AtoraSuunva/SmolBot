@@ -63,7 +63,11 @@ export function formatTime(timestamp: Date = new Date()): string {
 
 type SendPayload = Parameters<TextChannel['send']>[0]
 
-export async function sendToModLog(guild: Guild, payload: SendPayload, checker: ConfigChecker = () => true) {
+export async function sendToModLog(
+  guild: Guild,
+  payload: SendPayload,
+  checker: ConfigChecker = () => true,
+) {
   const config = await getValidatedConfigFor(guild, checker)
 
   if (!config) return

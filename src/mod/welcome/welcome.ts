@@ -14,6 +14,7 @@ import { deleteCommand } from './delete.js'
 import { fields } from './fields.js'
 import { formatMessage, message } from './message.js'
 import { formatLog, sendToModLog } from '../modlog/utils.js'
+import { mark_joined } from './mark_joined.js'
 
 export const welcome = new SleetSlashCommand(
   {
@@ -21,7 +22,7 @@ export const welcome = new SleetSlashCommand(
     description: 'Manage the welcome message',
     dm_permission: false,
     default_member_permissions: ['ManageGuild'],
-    options: [fields, message, deleteCommand, config],
+    options: [fields, message, deleteCommand, config, mark_joined],
   },
   {
     guildMemberAdd: handleGuildMemberAdd,
