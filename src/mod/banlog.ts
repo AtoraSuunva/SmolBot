@@ -43,7 +43,7 @@ export const banlog = new SleetSlashCommand(
   },
 )
 
-function runBanlog(interaction: ChatInputCommandInteraction) {
+async function runBanlog(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser('user', true)
   const reason = interaction.options.getString('reason', true)
   const type = interaction.options.getString('type', false) ?? 'Ban'
@@ -57,7 +57,7 @@ function runBanlog(interaction: ChatInputCommandInteraction) {
     `**Responsible Moderator**: ${responsible.tag}`,
   ].join('\n')
 
-  interaction.reply({
+  await interaction.reply({
     ephemeral: true,
     content: codeBlock(log),
   })

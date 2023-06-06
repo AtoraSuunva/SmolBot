@@ -66,7 +66,7 @@ async function logToChannel(
 
   const channel = await interaction.guild?.channels.fetch(logChannelId)
 
-  if (!channel || !channel.isTextBased()) {
+  if (!channel?.isTextBased()) {
     return
   }
 
@@ -124,7 +124,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
 
   if (!ephemeral) {
     await defer
-    interaction.editReply({
+    await interaction.editReply({
       content: `Locking thread ${thread} for "${reason}"...`,
     })
   }
@@ -147,7 +147,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   } catch (error) {
     await defer
     return interaction.editReply({
-      content: `An error occurred while locking the thread: ${error}`,
+      content: `An error occurred while locking the thread: ${String(error)}`,
     })
   }
 

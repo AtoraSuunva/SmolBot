@@ -26,11 +26,11 @@ export function formatConfig<Config extends Record<string, Values>>(
         key = 'channel'
         value = `#${
           guild.channels.cache.get(value as string)?.name ??
-          `unknown-channel (${value})`
+          `unknown-channel (${String(value)})`
         }`
       }
 
-      return `${key.padEnd(longest, ' ')} = ${value}`
+      return `${key.padEnd(longest, ' ')} = ${String(value)}`
     })
     .join('\n')
 

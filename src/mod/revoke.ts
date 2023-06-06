@@ -74,8 +74,8 @@ async function runBanRevoke(ban: GuildBan): Promise<void> {
 
   const embed = formatInviteEmbed(user, revoked)
 
-  if (logChannel && logChannel.isTextBased()) {
-    logChannel.send({ embeds: [embed] })
+  if (logChannel?.isTextBased()) {
+    await logChannel.send({ embeds: [embed] })
   }
 }
 
@@ -118,7 +118,9 @@ function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
       [
         `[${i.code}]`,
         `[#${i.channel?.name ?? 'unknown channel'}] `,
-        `Uses: <${i.uses}/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}>, `,
+        i.uses !== null && i.maxUses !== null
+          ? `Uses: <${i.uses}/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}>, `
+          : '',
         i.createdAt ? `Created: ${i.createdAt.toLocaleString()}, ` : '',
         i.expiresAt
           ? `Expires: ${i.expiresAt.toLocaleString()}`

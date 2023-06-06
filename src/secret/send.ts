@@ -51,10 +51,7 @@ async function runSend(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  if (
-    !interaction.client.user ||
-    !channel.permissionsFor(interaction.client.user)?.has('SendMessages')
-  ) {
+  if (!channel.permissionsFor(interaction.client.user)?.has('SendMessages')) {
     return interaction.reply({
       ephemeral: true,
       content: `I do not have permission to send messages in ${channel}`,

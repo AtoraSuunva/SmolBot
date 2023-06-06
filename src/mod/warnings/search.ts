@@ -54,7 +54,7 @@ export const warningsSearch = new SleetSlashSubcommand(
   },
 )
 
-function warningsViewRun(interaction: ChatInputCommandInteraction) {
+async function warningsViewRun(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser('user')
   const reason = interaction.options.getString('reason')
   const modNote = interaction.options.getString('mod_note')
@@ -82,7 +82,7 @@ function warningsViewRun(interaction: ChatInputCommandInteraction) {
       }
     : null
 
-  respondWithPaginatedWarnings(interaction, fetchWarnings, {
+  await respondWithPaginatedWarnings(interaction, fetchWarnings, {
     formatAuthor: () => formattedUser,
     showUserOnWarning: !user,
     modView: true,

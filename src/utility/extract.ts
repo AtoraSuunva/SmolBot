@@ -80,14 +80,14 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
     const text = (await fetch(extractFrom).then((r) => r.text())).trim()
 
     if (text.length === 0) {
-      interaction.reply({
+      return interaction.reply({
         ephemeral: true,
         content: 'There was no text to extract',
       })
     }
 
     if (text.length > limit) {
-      interaction.reply({
+      return interaction.reply({
         ephemeral: true,
         content: `The text is too long to extract (${text.length} characters of ${limit} max)`,
       })
@@ -96,9 +96,9 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
     await interaction.reply(
       `Extracting ${text.length} characters from <${extractFrom}>`,
     )
-    splitSend(interaction.channel, text, { code: true })
+    await splitSend(interaction.channel, text, { code: true })
   } catch (e) {
-    interaction.reply({
+    return interaction.reply({
       ephemeral: true,
       content: `Failed to extract text from the provided url.\n${
         e instanceof Error ? e.message : String(e)
@@ -117,25 +117,23 @@ function getRawUrl(url: string): string {
       .filter((a) => !!a)
       .pop() !== 'raw'
   )
-    return url.endsWith('/') ? url + 'raw' : url + '/raw'
+    return url.endsWith('/') ? `${url}raw` : `${url}/raw`
 
-  if (/https?:\/\/pastebin.com\/(?!raw)/.test(url))
-    return (
-      'https://pastebin.com/raw/' +
-      url
-        .split('/')
-        .filter((a) => !!a)
-        .pop()
-    )
+  if (/https?:\/\/pastebin.com\/(?!raw)/.test(url)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return `https://pastebin.com/raw/${url
+      .split('/')
+      .filter((a) => !!a)
+      .pop()!}`
+  }
 
-  if (/https?:\/\/hastebin.com\/(?!raw)/.test(url))
-    return (
-      'https://hastebin.com/raw/' +
-      url
-        .split('/')
-        .filter((a) => !!a)
-        .pop()
-    )
+  if (/https?:\/\/hastebin.com\/(?!raw)/.test(url)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return `https://hastebin.com/raw/${url
+      .split('/')
+      .filter((a) => !!a)
+      .pop()!}`
+  }
 
   return url
 }
@@ -179,7 +177,7 @@ async function splitSend(
 
   content.match(whitespaceSplitRegex)?.forEach((v) => splits.push(v))
 
-  if (splits[0] === undefined) channel.send('`[Empty Message]`')
+  if (splits.length === 0) await channel.send('`[Empty Message]`')
 
   for (const split of splits) {
     if (code) {

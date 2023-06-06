@@ -293,7 +293,7 @@ export async function markWarningArchiveDirty(
     },
   })
 
-  if (!lastDirty || !lastDirty.isDirty) {
+  if (!lastDirty?.isDirty) {
     return updateDirty()
   }
 

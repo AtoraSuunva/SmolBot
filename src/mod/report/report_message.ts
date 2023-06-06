@@ -33,7 +33,7 @@ async function runReportMessage(
   const guild = await getGuild(interaction, true)
 
   if (!message.inGuild()) {
-    interaction.reply({
+    await interaction.reply({
       content: 'You can only report messages from servers.',
       ephemeral: true,
     })
@@ -45,7 +45,7 @@ async function runReportMessage(
   )
 
   if (typeof config === 'string') {
-    interaction.reply({
+    await interaction.reply({
       content: config,
       ephemeral: true,
     })
@@ -141,7 +141,7 @@ async function runReportMessage(
   try {
     await sendReport(config, interaction.user, embeds)
 
-    modalInteraction.reply({
+    await modalInteraction.reply({
       content:
         "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
@@ -149,7 +149,7 @@ async function runReportMessage(
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    modalInteraction.reply({
+    await modalInteraction.reply({
       content: `Failed to send report: ${msg}`,
       ephemeral: true,
     })

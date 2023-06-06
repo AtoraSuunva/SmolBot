@@ -38,7 +38,7 @@ async function handleGuildMemberAdd(member: GuildMember) {
   if (member.user.bot) return
   if (member.pending) return
 
-  handleJoin(member)
+  return handleJoin(member)
 }
 
 async function handleGuildMemberUpdate(
@@ -46,7 +46,7 @@ async function handleGuildMemberUpdate(
   newMember: GuildMember,
 ) {
   if (oldMember.pending && !newMember.pending) {
-    handleJoin(newMember)
+    return handleJoin(newMember)
   }
 }
 
@@ -68,9 +68,9 @@ async function handleMessageCreate(message: Message) {
   // We need to know who is "new" (including rejoins) and we should try to welcome on message
   // This could be another table for persistance (ie. someone joins, bot dies, bot comes back,
   // they send a message), but for now, meh, it's fine, and I'd need to cache it anyway.
-  if (!newJoins || !newJoins.has(member.id)) return
+  if (!newJoins?.has(member.id)) return
 
-  handleJoin(member, message.channel, message)
+  return handleJoin(member, message.channel, message)
 }
 
 async function handleJoin(
@@ -134,7 +134,11 @@ async function handleJoin(
       `${formatUser(member)} in ${sendChannel} at ${sentMessage.url}`,
     )
 
-    sendToModLog(member.guild, modLogMsg, (config) => config.memberWelcome)
+    await sendToModLog(
+      member.guild,
+      modLogMsg,
+      (config) => config.memberWelcome,
+    )
   }
 
   if (reactWith && message) {
@@ -142,7 +146,7 @@ async function handleJoin(
     message.react(reactWith).catch(() => void 0)
   }
 
-  addJoin(member.guild.id, member.id)
+  await addJoin(member.guild.id, member.id)
 }
 
 async function resolveTextBasedChannel(
@@ -151,13 +155,13 @@ async function resolveTextBasedChannel(
 ): Promise<GuildTextBasedChannel | null> {
   const cachedChannel = guild.channels.cache.get(channelID)
 
-  if (cachedChannel && cachedChannel.isTextBased()) {
+  if (cachedChannel?.isTextBased()) {
     return cachedChannel
   }
 
   const channel = await guild.channels.fetch(channelID)
 
-  if (channel && channel.isTextBased()) {
+  if (channel?.isTextBased()) {
     return channel
   }
 

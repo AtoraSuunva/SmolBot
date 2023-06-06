@@ -49,7 +49,7 @@ function runTimeoutButton(interaction: ChatInputCommandInteraction) {
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(timeoutButton)
 
-  interaction.reply({
+  return interaction.reply({
     content: message,
     components: [row],
   })
@@ -67,12 +67,12 @@ async function handleInteractionCreate(interaction: Interaction) {
       try {
         await member.timeout(time * SECOND, 'Timeout Button [funny]')
 
-        interaction.reply({
+        await interaction.reply({
           content: `You have been timed out for ${time} seconds`,
           ephemeral: true,
         })
       } catch {
-        interaction.reply({
+        await interaction.reply({
           content: 'Failed to time you out, pretend it happened.',
           ephemeral: true,
         })

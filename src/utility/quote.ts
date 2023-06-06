@@ -44,7 +44,7 @@ async function handleMessageCreate(message: Message) {
       message.content,
     )
 
-    message.reply({
+    return message.reply({
       embeds,
       allowedMentions: { parse: [], repliedUser: false },
     })
@@ -62,10 +62,10 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
       interaction.user,
       messageLink,
     )
-    interaction.reply({ embeds })
+    return interaction.reply({ embeds })
   } catch (e) {
     console.error(e)
-    interaction.reply({
+    return interaction.reply({
       ephemeral: true,
       content: e instanceof Error ? e.message : String(e),
     })

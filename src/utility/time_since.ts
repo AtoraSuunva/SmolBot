@@ -37,11 +37,10 @@ function runTimeSince(interaction: ChatInputCommandInteraction) {
   const parsedDate = Date.parse(date)
 
   if (Number.isNaN(parsedDate)) {
-    interaction.reply({
+    return interaction.reply({
       content: 'Could not parse date, try `yyyy-mm-dd`.',
       ephemeral: true,
     })
-    return
   }
 
   const dateSeconds = parsedDate / 1_000

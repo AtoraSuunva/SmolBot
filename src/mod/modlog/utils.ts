@@ -35,11 +35,11 @@ export async function getValidatedConfigFor(
 ): Promise<{ config: ModLogConfig; channel: GuildTextBasedChannel } | null> {
   const config = await getConfigFor(guild)
 
-  if (!config || !config.enabled || !checker(config)) return null
+  if (!config?.enabled || !checker(config)) return null
 
   const channel = guild.channels.cache.get(config.channelID)
 
-  if (!channel || !channel.isTextBased()) return null
+  if (!channel?.isTextBased()) return null
 
   return { config, channel }
 }
@@ -85,7 +85,7 @@ function padExpressions(
       (v, i) =>
         v +
         (expressions[i] !== undefined
-          ? (expressions[i] + '').padStart(2, '0')
+          ? String(expressions[i]).padStart(2, '0')
           : ''),
     )
     .join('')

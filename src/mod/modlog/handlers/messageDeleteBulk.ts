@@ -51,7 +51,7 @@ async function handleMessageDeleteBulk(
       u
         ? `${formatUser(u, {
             mention: false,
-          })} \`[${messagesPerUser.get(u)}]\``
+          })} \`[${messagesPerUser.get(u) ?? 0}]\``
         : 'Unknown User',
     )
     .join(', ')
@@ -77,7 +77,7 @@ async function handleMessageDeleteBulk(
   if (attachmentUrl) {
     const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
 
-    sentMessage.edit({
+    await sentMessage.edit({
       content: `${sentMessage.content}\n<${generateArchiveUrl(
         channelId,
         attachmentId,
@@ -103,7 +103,9 @@ function messageLog(
     }); ` +
     ('name' in firstMessage.channel
       ? `#${firstMessage.channel.name} (${firstMessage.channel.id})`
-      : `@${firstMessage.channel.recipient?.tag} (${firstMessage.channel.recipient?.id})`) +
+      : `@${firstMessage.channel.recipient?.tag ?? 'unknown?'} (${
+          firstMessage.channel.recipient?.id ?? 'unknown?'
+        })`) +
     ']\n' +
     mentionArray(authors, 'tag') +
     mentionArray(users, 'tag') +
@@ -157,13 +159,18 @@ function mentionArray<V extends { id: string }, N extends keyof V>(
   key: N,
 ): string {
   return `[${Array.from(set)
-    .map((s) => `${s[key]} (${s.id})`)
+    .map((s) => `${String(s[key])} (${s.id})`)
     .join('; ')}]\n`
 }
 
 function channelMentions(set: Set<Channel>): string {
   return `[${Array.from(set)
-    .map((s) => `${'name' in s ? s.name : s.recipient?.tag} (${s.id})`)
+    .map(
+      (s) =>
+        `${('name' in s ? s.name : s.recipient?.tag) ?? 'unknown channel'} (${
+          s.id
+        })`,
+    )
     .join('; ')}]\n`
 }
 

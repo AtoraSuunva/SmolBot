@@ -13,16 +13,16 @@ export const furrygen = new SleetSlashCommand(
 )
 
 /** Generate a fursona */
-function runFurrygen(interaction: ChatInputCommandInteraction) {
+async function runFurrygen(interaction: ChatInputCommandInteraction) {
   const lines: string[] = []
 
   for (const field of fieldList) {
     const val = arrayPick(fields[field as keyof typeof fields])
-    const endVal = typeof val === 'function' ? val() : val
-    lines.push(`${field.padEnd(maxFieldLength)} :: ${endVal}`)
+    const formattedVal = typeof val === 'function' ? val() : val ?? 'None'
+    lines.push(`${field.padEnd(maxFieldLength)} :: ${formattedVal}`)
   }
 
-  interaction.reply({
+  await interaction.reply({
     content: `Here is your assigned fursona!`,
     embeds: [
       {

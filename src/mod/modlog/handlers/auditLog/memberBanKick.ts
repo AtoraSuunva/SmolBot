@@ -48,7 +48,7 @@ export async function logMemberBanKick(
 
   const message = `${targetUser} ${verb} by ${execUser}${reason}`
 
-  channel.send({
+  await channel.send({
     content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],

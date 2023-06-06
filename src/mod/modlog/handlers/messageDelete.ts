@@ -7,6 +7,7 @@ import {
   GuildAuditLogsFetchOptions,
   AttachmentPayload,
   escapeCodeBlock,
+  EmbedType,
 } from 'discord.js'
 import { basename } from 'node:path'
 import { editStore } from '../../unedit.js'
@@ -37,7 +38,7 @@ async function messageDelete(message: Message | PartialMessage) {
       message.channel
     } at \`${formatTime(message.createdAt)}\``
 
-    channel.send(formatLog('🗑️', 'Message deleted', msg))
+    await channel.send(formatLog('🗑️', 'Message deleted', msg))
     return
   }
 
@@ -59,7 +60,7 @@ async function messageDelete(message: Message | PartialMessage) {
     const auditEntry = auditLog.entries.first()
 
     if (
-      auditEntry?.target?.id === message.author.id &&
+      auditEntry?.target.id === message.author.id &&
       auditEntry.extra.channel.id === message.channel.id &&
       auditEntry.extra.count === 1 &&
       auditEntry.id !== lastEntry
@@ -118,7 +119,10 @@ async function messageDelete(message: Message | PartialMessage) {
     })
   }
 
-  channel.send({ content: formatLog('🗑️', 'Message Deleted', msg), files })
+  await channel.send({
+    content: formatLog('🗑️', 'Message Deleted', msg),
+    files,
+  })
 }
 
 export function messageToLog(
@@ -130,7 +134,7 @@ export function messageToLog(
     includeEmbed = false,
   } = {},
 ): string {
-  const embed = message.embeds.find((e) => e.data.type === 'rich')
+  const embed = message.embeds.find((e) => e.data.type === EmbedType.Rich)
   const richEmbed = embed?.toJSON()
 
   return (

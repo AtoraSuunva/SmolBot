@@ -39,7 +39,7 @@ async function runReportUnblock(interaction: ChatInputCommandInteraction) {
   })
 
   if (!reportBlock) {
-    interaction.reply({
+    await interaction.reply({
       content: `${formatUser(
         user,
       )} is not blocked from using the report command.`,
@@ -54,7 +54,7 @@ async function runReportUnblock(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  interaction.reply({
+  await interaction.reply({
     content: `${formatUser(user)} was unblocked from using the report command.`,
   })
 }

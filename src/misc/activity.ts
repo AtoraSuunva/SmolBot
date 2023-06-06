@@ -10,7 +10,7 @@ import { isOwnerGuard, SleetContext, SleetSlashCommand } from 'sleetcord'
 import { MINUTE } from '../util/constants.js'
 
 /** Our status list needs a type and name to apply */
-type Status = Pick<ActivityOptions, 'name' | 'type'>
+type Status = Required<Pick<ActivityOptions, 'name' | 'type'>>
 
 /**
  * Valid choices for activities that bots can set
@@ -119,7 +119,7 @@ let timeout: NodeJS.Timeout
 const timeoutDelay = 15 * MINUTE // in ms
 
 /** Run a timeout to change the bot's status on READY and every couple mins */
-async function runReady(client: Client) {
+function runReady(client: Client) {
   const status = getRandomStatus()
   client.user?.setActivity(status)
   timeout = setTimeout(() => runReady(client), timeoutDelay)
@@ -130,20 +130,13 @@ async function runActivity(
   this: SleetContext,
   interaction: ChatInputCommandInteraction,
 ) {
-  isOwnerGuard(interaction)
-
-  if (!interaction.client.user) {
-    return interaction.reply({
-      ephemeral: true,
-      content: 'The client user is not ready or available!',
-    })
-  }
+  await isOwnerGuard(interaction)
 
   const name = interaction.options.getString('name')
   const type = interaction.options.getInteger('type') as Exclude<
     ActivityOptions['type'],
     undefined
-  >
+  > | null
 
   let activity: Status
   clearTimeout(timeout)
@@ -153,12 +146,13 @@ async function runActivity(
     activity = getRandomStatus()
     timeout = setTimeout(() => runReady(interaction.client), timeoutDelay)
   } else {
-    const act: ActivityOptions = {}
-
-    if (name !== null) act.name = name
-    if (type !== null) act.type = type
-
-    activity = act
+    const previousActivity = interaction.client.user.presence.activities[0]
+    activity = {
+      type:
+        type ??
+        (previousActivity.type as Exclude<ActivityType, ActivityType.Custom>),
+      name: name ?? previousActivity.name,
+    }
   }
 
   interaction.client.user.setActivity(activity)
@@ -201,7 +195,7 @@ const reverseActivityTypesMap: Record<
  * @returns The formatted string
  */
 function formatStatus(status: Status): string {
-  const activityType = reverseActivityTypesMap[status.type ?? 0]
+  const activityType = reverseActivityTypesMap[status.type]
   const activity = activityType ? `**${activityType}** ` : ''
   return `${activity}${status.name}`
 }

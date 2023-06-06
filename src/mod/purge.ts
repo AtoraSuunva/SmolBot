@@ -230,7 +230,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
     }
   }
 
-  interaction.editReply({
+  await interaction.editReply({
     content: `🗑️ Deleted ${deletedCount} message${
       deletedCount === 1 ? '' : 's'
     }...`,
@@ -316,7 +316,10 @@ function filterMessages(
   })
 }
 
-type HasTimestamp = { createdTimestamp: number }
+interface HasTimestamp {
+  createdTimestamp: number
+}
+
 /**
  * Comparison function for two messages, sorting by youngest first
  * @param first First message to compare

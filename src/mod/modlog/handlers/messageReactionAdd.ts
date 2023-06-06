@@ -63,7 +63,7 @@ async function kickMember(
   return `Kicked '${userId}' requested by ${formatUser(executor)}`
 }
 
-export const actions: Record<string, ReactionAction> = {
+export const actions = {
   '🔨': async (guild, userId, executor) => {
     try {
       await guild.bans.create(userId, {
@@ -79,13 +79,9 @@ export const actions: Record<string, ReactionAction> = {
   },
   '👢': kickMember,
   '🥾': kickMember,
-  ℹ️: async (_guild, userId) => {
-    return userId
-  },
-  '📝': async (_guild, userId) => {
-    return `<@${userId}>`
-  },
-}
+  ℹ️: (_guild, userId) => Promise.resolve(userId),
+  '📝': (_guild, userId) => Promise.resolve(`<@${userId}>`),
+} satisfies Record<string, ReactionAction>
 
 async function handleMessageReactionAdd(
   messageReaction: MessageReaction | PartialMessageReaction,
@@ -98,7 +94,7 @@ async function handleMessageReactionAdd(
     : messageReaction.message
 
   if (!message.inGuild()) return
-  if (message.author.id !== message.client.user?.id) return
+  if (message.author.id !== message.client.user.id) return
 
   const conf = await getValidatedConfigFor(
     message.guild,
@@ -115,12 +111,12 @@ async function handleMessageReactionAdd(
   const { id } = logMatch.groups as unknown as LogMatchGroups
 
   if (!messageReaction.emoji.name) return
+  if (!(messageReaction.emoji.name in actions)) return
 
-  const action = actions[messageReaction.emoji.name]
-  if (!action) return
+  const action = actions[messageReaction.emoji.name as keyof typeof actions]
 
   const resolvedUser = user.partial ? await user.fetch() : user
-
   const result = await action(message.guild, id, resolvedUser)
-  channel.send(result)
+
+  await channel.send(result)
 }

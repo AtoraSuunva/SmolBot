@@ -94,7 +94,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   }
 
   if (!interaction.inGuild()) {
-    interaction.reply({
+    await interaction.reply({
       content: 'You can only use report buttons in servers.',
       ephemeral: true,
     })
@@ -108,7 +108,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   })
 
   if (!report || report.guildID !== interaction.guildId) {
-    interaction.reply({
+    await interaction.reply({
       content: 'That report does not exist.',
       ephemeral: true,
     })
@@ -120,7 +120,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
     .catch(() => null)
 
   if (!user) {
-    interaction.reply({
+    await interaction.reply({
       content: 'That user is invalid or does not exist.',
       ephemeral: true,
     })
@@ -296,7 +296,7 @@ async function blockReportUser(
       originalMessage.components,
     )
 
-    originalMessage.edit({
+    void originalMessage.edit({
       components: newComponents,
     })
 
@@ -409,7 +409,7 @@ async function unblockReportUser(
       originalMessage.components,
     )
 
-    originalMessage.edit({
+    void originalMessage.edit({
       components: newComponents,
     })
 
