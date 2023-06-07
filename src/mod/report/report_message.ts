@@ -10,7 +10,7 @@ import {
   TextInputStyle,
   time,
 } from 'discord.js'
-import { SleetMessageCommand, getGuild } from 'sleetcord'
+import { SleetMessageCommand, formatUser, getGuild } from 'sleetcord'
 import { MINUTE } from '../../util/constants.js'
 import { quoteMessage } from '../../util/quoteMessage.js'
 import { fetchConfig } from './manage/config.js'
@@ -108,7 +108,9 @@ async function runReportMessage(
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
   const footer: EmbedFooterOptions = {
-    text: `Reported by ${isAnon ? 'Anonymous' : interaction.user.tag}`,
+    text: `Reported by ${
+      isAnon ? 'Anonymous' : formatUser(interaction.user, { markdown: false })
+    }`,
   }
 
   if (!isAnon) {

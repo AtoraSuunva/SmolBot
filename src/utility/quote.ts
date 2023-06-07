@@ -9,7 +9,7 @@ import {
   ChatInputCommandInteraction,
   ApplicationCommandOptionType,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, formatUser } from 'sleetcord'
 import { quoteMessage } from '../util/quoteMessage.js'
 
 export const quote = new SleetSlashCommand(
@@ -137,7 +137,7 @@ async function getQuoteFor(
   const [quote, ...extraEmbeds] = await quoteMessage(message)
 
   quote.setFooter({
-    text: `Quoted by ${user.tag}`,
+    text: `Quoted by ${formatUser(user, { markdown: false, id: false })}`,
   })
 
   return [quote, ...extraEmbeds]

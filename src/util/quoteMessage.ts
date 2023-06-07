@@ -1,4 +1,5 @@
 import { Message, EmbedBuilder, MessageType, hyperlink } from 'discord.js'
+import { formatUser } from 'sleetcord'
 
 // TODO: "X followed <server #channel>" messages only have channel ID, not guild ID. how to link?
 // TODO: Show attachments (as links? as just count?)
@@ -17,7 +18,9 @@ export async function quoteMessage(
 
   const embed = new EmbedBuilder()
     .setAuthor({
-      name: `${message.author.tag} - #${message.channel.name}`,
+      name: `${formatUser(message.author, { markdown: false, id: false })} - #${
+        message.channel.name
+      }`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
     })
@@ -239,7 +242,10 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
 
   embed.addFields([
     {
-      name: `Reply to ${reference.author.tag}`,
+      name: `Reply to ${formatUser(reference.author, {
+        markdown: false,
+        id: false,
+      })}`,
       value: `[${shortContent}](${reference.url})`,
     },
   ])

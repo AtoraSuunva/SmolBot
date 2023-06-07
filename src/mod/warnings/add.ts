@@ -83,7 +83,7 @@ async function warningsAddRun(interaction: ChatInputCommandInteraction) {
       guildID: guild.id,
       warningID: nextWarningID,
       version: 1,
-      user: user.tag,
+      user: formatUser(user, { markdown: false }),
       userID: user.id,
       reason,
       permanent,

@@ -74,7 +74,9 @@ async function runSoftban(interaction: ChatInputCommandInteraction) {
   const users = await getUsers(interaction, 'users', true)
   const deleteMessages = interaction.options.getInteger('delete_messages') ?? 1
   const reason = interaction.options.getString('reason') ?? 'No reason provided'
-  const formattedReason = `Softban by ${interaction.user.tag} for: ${reason}`
+  const formattedReason = `Softban by ${formatUser(interaction.user, {
+    markdown: false,
+  })} for: ${reason}`
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   const guild = await getGuild(interaction, true)

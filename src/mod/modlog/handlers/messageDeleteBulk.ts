@@ -103,9 +103,14 @@ function messageLog(
     }); ` +
     ('name' in firstMessage.channel
       ? `#${firstMessage.channel.name} (${firstMessage.channel.id})`
-      : `@${firstMessage.channel.recipient?.tag ?? 'unknown?'} (${
-          firstMessage.channel.recipient?.id ?? 'unknown?'
-        })`) +
+      : `@${
+          firstMessage.channel.recipient
+            ? formatUser(firstMessage.channel.recipient, {
+                markdown: false,
+                bidirectional: false,
+              })
+            : '<unknown>'
+        }`) +
     ']\n' +
     mentionArray(authors, 'tag') +
     mentionArray(users, 'tag') +
@@ -167,9 +172,17 @@ function channelMentions(set: Set<Channel>): string {
   return `[${Array.from(set)
     .map(
       (s) =>
-        `${('name' in s ? s.name : s.recipient?.tag) ?? 'unknown channel'} (${
-          s.id
-        })`,
+        `${
+          'name' in s
+            ? s.name
+            : s.recipient
+            ? formatUser(s.recipient, {
+                markdown: false,
+                id: false,
+                bidirectional: false,
+              })
+            : 'unknown channel'
+        } (${s.id})`,
     )
     .join('; ')}]\n`
 }

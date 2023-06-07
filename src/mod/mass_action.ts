@@ -109,7 +109,9 @@ async function runMassAction(
   const users = await getUsers(interaction, 'users', true)
   const userReason =
     interaction.options.getString('reason') ?? 'No reason provided'
-  const reason = `Mass ${action} by ${interaction.user.tag}: ${userReason}`
+  const reason = `Mass ${action} by ${formatUser(interaction.user, {
+    markdown: false,
+  })}: ${userReason}`
 
   const interactionMember = await guild.members.fetch(interaction.user.id)
   const isOwner = interactionMember.id === guild.ownerId

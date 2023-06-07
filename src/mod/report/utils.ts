@@ -25,7 +25,7 @@ import {
   hyperlink,
 } from 'discord.js'
 import { MINUTE } from '../../util/constants.js'
-import { getGuild } from 'sleetcord'
+import { formatUser, getGuild } from 'sleetcord'
 
 const REPORT = 'report'
 
@@ -209,7 +209,9 @@ async function replyToReport(
   const guild = await getGuild(interaction, true)
 
   const footer: EmbedFooterOptions = {
-    text: `Reply from ${isAnon ? guild.name : interaction.user.tag}`,
+    text: `Reply from ${
+      isAnon ? guild.name : formatUser(interaction.user, { markdown: false })
+    }`,
   }
 
   const guildIcon = guild.iconURL()

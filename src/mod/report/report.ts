@@ -5,7 +5,7 @@ import {
   EmbedBuilder,
   EmbedFooterOptions,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { formatUser, getGuild, SleetSlashCommand } from 'sleetcord'
 import { fetchConfig, report_config } from './manage/config.js'
 import { sendReport } from './utils.js'
 import { report_message } from './report_message.js'
@@ -62,7 +62,11 @@ async function runReport(interaction: ChatInputCommandInteraction) {
   const attachment = interaction.options.getAttachment('attachment')
 
   const footer: EmbedFooterOptions = {
-    text: `Reported by ${anonymous ? 'Anonymous' : interaction.user.tag}`,
+    text: `Reported by ${
+      anonymous
+        ? 'Anonymous'
+        : formatUser(interaction.user, { markdown: false })
+    }`,
   }
 
   if (!anonymous) {

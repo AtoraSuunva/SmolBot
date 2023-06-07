@@ -115,7 +115,9 @@ async function messageDelete(message: Message | PartialMessage) {
     files.push({
       name: 'message.txt',
       attachment: Buffer.from(messageContent),
-      description: `Deleted Message by ${message.author.tag}`,
+      description: `Deleted Message by ${formatUser(message.author, {
+        markdown: false,
+      })}`,
     })
   }
 
@@ -141,7 +143,13 @@ export function messageToLog(
     `[${formatTime(message.editedAt ?? message.createdAt)}]` +
     (id ? '(' + message.id + ') ' : '') +
     `${
-      username ? escapeCodeBlock(message.author.tag) + ' :' : ''
+      username
+        ? formatUser(message.author, {
+            markdown: false,
+            id: false,
+            bidirectional: false,
+          }) + ' :'
+        : ''
     } ${escapeCodeBlock(message.content)}` +
     `${
       includeAttachments && message.attachments.size > 0

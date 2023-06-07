@@ -6,7 +6,7 @@ import {
   time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetSlashCommand, SleetContext } from 'sleetcord'
+import { SleetSlashCommand, SleetContext, formatUser } from 'sleetcord'
 
 /**
  * Get some stats about the bot, for now this includes:
@@ -71,7 +71,7 @@ async function runStats(
       { name: 'Created:', value: createTimestamps(created), inline: true },
     ])
     .setAuthor({
-      name: `${client.user.tag} (${client.user.id})`,
+      name: formatUser(client.user, { markdown: false }),
     })
     .setThumbnail(client.user.displayAvatarURL())
 
