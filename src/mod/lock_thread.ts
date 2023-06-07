@@ -77,7 +77,9 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   const thread =
     (await getChannel(interaction, 'thread')) ?? interaction.channel
   const reason = interaction.options.getString('reason', true)
-  const formattedReason = `Locked by ${interaction.user.tag}: ${reason}`
+  const formattedReason = `Locked by ${formatUser(interaction.user, {
+    markdown: false,
+  })}: ${reason}`
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
 
   if (interaction.channel?.isThread() && interaction.channel.locked) {

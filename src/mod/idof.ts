@@ -2,10 +2,24 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   codeBlock,
+  escapeMarkdown,
   Guild,
   GuildMember,
 } from 'discord.js'
-import { AutocompleteHandler, getGuild, SleetSlashCommand } from 'sleetcord'
+import {
+  AutocompleteHandler,
+  formatUser,
+  getGuild,
+  SleetSlashCommand,
+} from 'sleetcord'
+
+interface MemberMatch {
+  name: string
+  value: string
+  username: string
+  nickname: string | null
+  id: string
+}
 
 const userAutocomplete: AutocompleteHandler<string> = async ({
   interaction,
@@ -52,14 +66,34 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   } else if (matches.length === 1) {
     return interaction.reply(matches[0].id)
   } else {
-    const formattedMatches = codeBlock(
-      matches.map((m) => `${m.name} (${m.id})`).join('\n'),
-    )
-
     return interaction.reply(
-      `Multiple users found matching "${user}":\n${formattedMatches}`,
+      `Multiple users found matching "${escapeMarkdown(user)}":\n${tableFormat(
+        matches,
+      )}`,
     )
   }
+}
+
+function tableFormat(members: MemberMatch[]) {
+  const longestName = Math.max(...members.map((m) => m.username.length))
+  const longestId = Math.max(...members.map((m) => m.id.length))
+
+  const header = `| ${'Username'.padEnd(longestName, ' ')} | ${'ID'.padEnd(
+    longestId,
+    ' ',
+  )} | Nickname `
+  const separator = `| ${'-'.repeat(longestName)} | ${'-'.repeat(
+    longestId,
+  )} | ${'-'.repeat(8)} `
+
+  const rows = members.map((m) => {
+    // +1 for the bidirectional marker character thing
+    const name = m.username.padEnd(longestName + 1, ' ')
+    const id = m.id.padEnd(longestId, ' ')
+    return `| ${name} | ${id} | ${m.nickname ?? ''}`
+  })
+
+  return codeBlock('md', `${header}\n${separator}\n${rows.join('\n')}`)
 }
 
 async function fetchMembers(guild: Guild) {
@@ -72,7 +106,7 @@ async function fetchMembers(guild: Guild) {
 }
 
 // Limit the number of autocomplete options returned
-const MAX_MATCHES = 10
+const MAX_MATCHES = 25
 
 /**
  * Try to match a query against every member in a guild, returning possible matches
@@ -85,7 +119,7 @@ async function matchMembers(
   guild: Guild,
   query: string,
   tryExactMatch = false,
-) {
+): Promise<MemberMatch[]> {
   const lowerValue = query.toLowerCase()
   const members = await fetchMembers(guild)
 
@@ -93,29 +127,34 @@ async function matchMembers(
 
   for (const m of members.values()) {
     if (tryExactMatch && m.user.tag === query) {
-      return [
-        {
-          name: `${m.user.tag}${
-            m.nickname ? ` (Nickname: ${m.nickname})` : ''
-          }`,
-          value: m.user.tag,
-          id: m.user.id,
-        },
-      ]
+      return [formatSuggestion(m)]
     }
 
     if (
       m.user.tag.toLowerCase().includes(lowerValue) ||
-      !!m.nickname?.toLowerCase().includes(lowerValue)
+      m.nickname?.toLowerCase().includes(lowerValue)
     ) {
       matches.push(m)
       if (matches.length >= MAX_MATCHES) break
     }
   }
 
-  return matches.map((m) => ({
-    name: `${m.user.tag}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
+  return matches
+    .map(formatSuggestion)
+    .sort((a, b) => a.username.localeCompare(b.username))
+}
+
+function formatSuggestion(m: GuildMember): MemberMatch {
+  const formattedUser = formatUser(m.user, {
+    id: false,
+    markdown: false,
+  })
+
+  return {
+    name: `${formattedUser}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
     value: m.user.tag,
+    username: formattedUser,
+    nickname: m.nickname,
     id: m.user.id,
-  }))
+  }
 }

@@ -1,9 +1,11 @@
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  GuildMember,
+  User,
   codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, makeChoices } from 'sleetcord'
+import { SleetSlashCommand, formatUser, makeChoices } from 'sleetcord'
 
 const typeChoices = makeChoices(['Ban', 'Unban', 'Kick', 'Mute'])
 
@@ -43,6 +45,12 @@ export const banlog = new SleetSlashCommand(
   },
 )
 
+const userLog = (user: User | GuildMember) =>
+  formatUser(user, {
+    markdown: false,
+    mention: true,
+  })
+
 async function runBanlog(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser('user', true)
   const reason = interaction.options.getString('reason', true)
@@ -52,9 +60,9 @@ async function runBanlog(interaction: ChatInputCommandInteraction) {
 
   const log = [
     `**${type}**`,
-    `**User:** ${user.tag} (${user.id})`,
+    `**User:** ${userLog(user)}`,
     `**Reason:** ${reason}`,
-    `**Responsible Moderator**: ${responsible.tag}`,
+    `**Responsible Moderator**: ${userLog(responsible)}`,
   ].join('\n')
 
   await interaction.reply({

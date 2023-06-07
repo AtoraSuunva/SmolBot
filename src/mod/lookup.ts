@@ -8,7 +8,6 @@ import {
   User,
   UserFlags,
   Widget,
-  escapeInlineCode,
   ChatInputCommandInteraction,
   codeBlock,
   GuildPreviewEmoji,
@@ -289,7 +288,10 @@ async function sendUserLookup(
     return void interaction.editReply('Did not find info for that user.')
   }
 
-  const rawUser = '``' + escapeInlineCode(user.tag) + '``'
+  const rawUser =
+    '``' +
+    formatUser(user, { markdown: false, id: false, bidirectional: false }) +
+    '``'
   const badges = getUserBadgeEmojis(user)
   const formattedBadges =
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
@@ -324,7 +326,6 @@ async function sendUserLookup(
       const availability = rpc.bot_public ? 'Public' : 'Private'
       details.push(
         `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}`,
-        '\n',
         `**${availability}** [(Invite)](${oAuthUrl(
           rpc.id,
           rpc.install_params?.permissions ?? '0',
@@ -817,7 +818,7 @@ function formatDate(date: Date): string {
   return `${prettyMilliseconds(msTime)} ${relativeString} (${time(
     date,
     'R',
-  )})\n${date}`
+  )})\n${time(date, 'F')}`
 }
 
 /** A map of GuildVerificationLevel to displayable strings */
