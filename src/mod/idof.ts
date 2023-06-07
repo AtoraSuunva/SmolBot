@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   codeBlock,
+  escapeCodeBlock,
   escapeMarkdown,
   Guild,
   GuildMember,
@@ -93,7 +94,9 @@ function tableFormat(members: MemberMatch[]) {
     return `| ${name} | ${id} | ${m.nickname ?? ''}`
   })
 
-  return codeBlock('md', `${header}\n${separator}\n${rows.join('\n')}`)
+  return codeBlock(
+    escapeCodeBlock(`${header}\n${separator}\n${rows.join('\n')}`),
+  )
 }
 
 async function fetchMembers(guild: Guild) {
