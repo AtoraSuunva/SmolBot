@@ -24,6 +24,7 @@ import {
   Interaction,
   ButtonInteraction,
   time,
+  escapeInlineCode,
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
@@ -290,7 +291,14 @@ async function sendUserLookup(
 
   const rawUser =
     '``' +
-    formatUser(user, { markdown: false, id: false, bidirectional: false }) +
+    escapeInlineCode(
+      formatUser(user, {
+        markdown: false,
+        id: false,
+        bidirectional: false,
+        escape: false,
+      }),
+    ) +
     '``'
   const badges = getUserBadgeEmojis(user)
   const formattedBadges =
