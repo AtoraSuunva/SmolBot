@@ -41,8 +41,8 @@ dependencies:
     specifier: ~8.0.0
     version: 8.0.0
   sleetcord:
-    specifier: ~0.10.2
-    version: 0.10.2
+    specifier: ~0.11.0
+    version: 0.11.0
   undici:
     specifier: ~5.22.1
     version: 5.22.1
@@ -1992,8 +1992,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /sleetcord@0.10.2:
-    resolution: {integrity: sha512-rDixTqoSu1rwRoX/Qh0YV8xCpKY7NYvEC6jQPTEBWHES+l3ZKZqtSDWdlxxjYKRNEzyH2mr5t2jSEzieS4kpyw==}
+  /sleetcord@0.11.0:
+    resolution: {integrity: sha512-7rKWTZljGxwSnoe45GKp/EgKHdXooa/lfuNASQjRtf6mkv0UUT770BfLej/Ss7q19I/CLFFpeOPme+oSuiueiw==}
     dependencies:
       '@discordjs/rest': 1.7.1
       discord-api-types: 0.37.43
