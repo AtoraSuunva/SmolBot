@@ -210,7 +210,9 @@ async function replyToReport(
 
   const footer: EmbedFooterOptions = {
     text: `Reply from ${
-      isAnon ? guild.name : formatUser(interaction.user, { markdown: false })
+      isAnon
+        ? guild.name
+        : formatUser(interaction.user, { markdown: false, escape: false })
     }`,
   }
 

@@ -305,12 +305,18 @@ async function sendUserLookup(
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
 
   const embed = new EmbedBuilder()
-    .setTitle(formatUser(user, { id: false, markdown: false }))
+    .setTitle(formatUser(user, { id: false, markdown: false, escape: false }))
     .setThumbnail(user.displayAvatarURL({ size: 4096 }))
     .setDescription(
       `**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
     )
     .addFields([{ name: 'Created at:', value: formatDate(user.createdAt) }])
+
+  if (user.discriminator === '0') {
+    embed.setAuthor({
+      name: '<Global User in the future>',
+    })
+  }
 
   if (typeof user.accentColor === 'number') {
     embed.setColor(user.accentColor)

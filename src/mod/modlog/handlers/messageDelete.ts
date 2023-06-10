@@ -117,6 +117,7 @@ async function messageDelete(message: Message | PartialMessage) {
       attachment: Buffer.from(messageContent),
       description: `Deleted Message by ${formatUser(message.author, {
         markdown: false,
+        escape: false,
       })}`,
     })
   }
@@ -148,6 +149,7 @@ export function messageToLog(
             markdown: false,
             id: false,
             bidirectional: false,
+            escape: false,
           }) + ' :'
         : ''
     } ${escapeCodeBlock(message.content)}` +

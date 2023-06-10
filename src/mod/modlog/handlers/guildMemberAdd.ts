@@ -53,9 +53,7 @@ async function guildMemberAdd(member: GuildMember) {
   const conf = await getValidatedConfigFor(guild, (config) => config.memberAdd)
   if (!conf) return
   const { config, channel } = conf
-
-  const msg = `${formatUser(member.user)} ${member.user}`
-
+  const msg = formatUser(member.user, { mention: true })
   const userCreatedAt = Date.now() - member.user.createdTimestamp
 
   const newAccount =

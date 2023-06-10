@@ -103,7 +103,7 @@ async function warningsAddRun(interaction: ChatInputCommandInteraction) {
     fetchPaginatedWarnings(guildID, config, currentPage, filters)
 
   const formattedUser = {
-    name: formatUser(user, { markdown: false }),
+    name: formatUser(user, { markdown: false, escape: false }),
     iconURL: user.displayAvatarURL(),
   }
 

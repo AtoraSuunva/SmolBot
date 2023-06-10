@@ -107,7 +107,7 @@ function messageLog(
           firstMessage.channel.recipient
             ? formatUser(firstMessage.channel.recipient, {
                 markdown: false,
-                bidirectional: false,
+                escape: false,
               })
             : '<unknown>'
         }`) +
@@ -180,6 +180,7 @@ function channelMentions(set: Set<Channel>): string {
                 markdown: false,
                 id: false,
                 bidirectional: false,
+                escape: false,
               })
             : 'unknown channel'
         } (${s.id})`,

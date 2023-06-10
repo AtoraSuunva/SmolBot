@@ -137,7 +137,11 @@ async function getQuoteFor(
   const [quote, ...extraEmbeds] = await quoteMessage(message)
 
   quote.setFooter({
-    text: `Quoted by ${formatUser(user, { markdown: false, id: false })}`,
+    text: `Quoted by ${formatUser(user, {
+      markdown: false,
+      id: false,
+      escape: false,
+    })}`,
   })
 
   return [quote, ...extraEmbeds]

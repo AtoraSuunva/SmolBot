@@ -77,7 +77,7 @@ async function warningsViewRun(interaction: ChatInputCommandInteraction) {
 
   const formattedUser = user
     ? {
-        name: formatUser(user, { markdown: false }),
+        name: formatUser(user, { markdown: false, escape: false }),
         iconURL: user.displayAvatarURL(),
       }
     : null
