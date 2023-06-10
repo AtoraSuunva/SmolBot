@@ -33,7 +33,10 @@ const cpuLoadIntervals = [1, 5, 15]
 async function runInfo(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
     .setAuthor({
-      name: formatUser(interaction.client.user, { markdown: false }),
+      name: formatUser(interaction.client.user, {
+        markdown: false,
+        escape: false,
+      }),
     })
     .setThumbnail(interaction.client.user.displayAvatarURL())
 

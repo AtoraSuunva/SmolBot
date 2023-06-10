@@ -49,6 +49,7 @@ const userLog = (user: User | GuildMember) =>
   formatUser(user, {
     markdown: false,
     mention: true,
+    escape: false,
   })
 
 async function runBanlog(interaction: ChatInputCommandInteraction) {

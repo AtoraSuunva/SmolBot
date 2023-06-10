@@ -18,9 +18,11 @@ export async function quoteMessage(
 
   const embed = new EmbedBuilder()
     .setAuthor({
-      name: `${formatUser(message.author, { markdown: false, id: false })} - #${
-        message.channel.name
-      }`,
+      name: `${formatUser(message.author, {
+        markdown: false,
+        id: false,
+        escape: false,
+      })} - #${message.channel.name}`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
     })
@@ -245,6 +247,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
       name: `Reply to ${formatUser(reference.author, {
         markdown: false,
         id: false,
+        escape: false,
       })}`,
       value: `[${shortContent}](${reference.url})`,
     },

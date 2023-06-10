@@ -71,7 +71,7 @@ async function runStats(
       { name: 'Created:', value: createTimestamps(created), inline: true },
     ])
     .setAuthor({
-      name: formatUser(client.user, { markdown: false }),
+      name: formatUser(client.user, { markdown: false, escape: false }),
     })
     .setThumbnail(client.user.displayAvatarURL())
 

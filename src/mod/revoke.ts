@@ -11,7 +11,6 @@ import {
   botHasPermissionsGuard,
   formatUser,
   getGuild,
-  getUser,
   inGuildGuard,
   SleetSlashCommand,
 } from 'sleetcord'
@@ -46,7 +45,7 @@ async function runRevoke(
   await interaction.deferReply()
 
   const guild = await getGuild(interaction, true)
-  const user = await getUser(interaction, 'from', true)
+  const user = interaction.options.getUser('from', true)
 
   const revoked = await revokeInvitesFor(guild, user)
   const embed = formatInviteEmbed(user, revoked)
@@ -135,7 +134,7 @@ function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
 
   return new EmbedBuilder()
     .setAuthor({
-      name: formatUser(user, { markdown: false }),
+      name: formatUser(user, { markdown: false, escape: false }),
       iconURL: user.displayAvatarURL(),
     })
     .setColor('#f44336')

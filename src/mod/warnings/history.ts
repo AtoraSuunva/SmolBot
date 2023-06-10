@@ -51,7 +51,7 @@ async function warningHistoryRun(interaction: ChatInputCommandInteraction) {
     fetchPaginatedWarningHistory(guildID, warningID, currentPage)
 
   const formattedUser = {
-    name: formatUser(user, { markdown: false }),
+    name: formatUser(user, { markdown: false, escape: false }),
     iconURL: user.displayAvatarURL(),
   }
 

@@ -59,7 +59,9 @@ async function kickMember(
     )} (Missing permissions)`
   }
 
-  await member.kick(`Kicked by ${formatUser(executor, { markdown: false })}`)
+  await member.kick(
+    `Kicked by ${formatUser(executor, { markdown: false, escape: false })}`,
+  )
   return `Kicked '${userId}' requested by ${formatUser(executor)}`
 }
 
@@ -67,7 +69,10 @@ export const actions = {
   '🔨': async (guild, userId, executor) => {
     try {
       await guild.bans.create(userId, {
-        reason: `Banned by ${formatUser(executor, { markdown: false })}`,
+        reason: `Banned by ${formatUser(executor, {
+          markdown: false,
+          escape: false,
+        })}`,
       })
     } catch (e) {
       return `Could not ban '${userId}' requested by ${formatUser(

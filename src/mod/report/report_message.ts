@@ -109,7 +109,9 @@ async function runReportMessage(
 
   const footer: EmbedFooterOptions = {
     text: `Reported by ${
-      isAnon ? 'Anonymous' : formatUser(interaction.user, { markdown: false })
+      isAnon
+        ? 'Anonymous'
+        : formatUser(interaction.user, { markdown: false, escape: false })
     }`,
   }
 
