@@ -35,6 +35,8 @@ export const unedit = new SleetSlashCommand(
 export const unedit_message = new SleetMessageCommand(
   {
     name: 'Unedit Message',
+    default_member_permissions: ['ManageMessages'],
+    dm_permission: false,
   },
   {
     run: runUneditContextMenu,
