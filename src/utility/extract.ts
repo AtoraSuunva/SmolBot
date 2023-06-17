@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { fetch } from 'undici'
 import { SleetSlashCommand } from 'sleetcord'
+import { setTimeout } from 'timers/promises'
 
 export const extract = new SleetSlashCommand(
   {
@@ -51,7 +52,7 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
     return interaction.reply({
       ephemeral: true,
       content:
-        "Failed to get the channel you're running this command in, try again later?",
+        "Failed to get the channel you're running this command in, try again later?\nIf this is a private thread, either give me `Manage Thread` permissions or `@`mention to add me to this thread.",
     })
   }
 
@@ -180,15 +181,12 @@ async function splitSend(
   if (splits.length === 0) await channel.send('`[Empty Message]`')
 
   for (const split of splits) {
-    if (code) {
-      await channel.send(codeBlock(cleanCodeBlockContent(split)))
-    } else {
-      await channel.send(split)
-    }
-    await sleep(500)
-  }
-}
+    const content = code ? codeBlock(cleanCodeBlockContent(split)) : split
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms))
+    await channel.send({
+      content,
+      allowedMentions: { parse: [] },
+    })
+    await setTimeout(500)
+  }
 }
