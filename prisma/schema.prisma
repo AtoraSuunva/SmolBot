@@ -4,6 +4,8 @@
 generator client {
   provider = "prisma-client-js"
   previewFeatures = ["jsonProtocol"]
+  // See https://github.com/prisma/prisma/issues/19729, watch in case this changes
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
