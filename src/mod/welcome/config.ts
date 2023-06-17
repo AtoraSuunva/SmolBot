@@ -8,7 +8,6 @@ import {
   Constants,
   EmbedBuilder,
 } from 'discord.js'
-import getEmojiRegex from 'emoji-regex'
 import {
   getGuild,
   getRoles,
@@ -103,7 +102,7 @@ function getOptionCount(interaction: CommandInteraction): number {
   return allOptions.length
 }
 
-const unicodeEmojiRegex = getEmojiRegex()
+const unicodeEmojiRegex = /\p{RGI_Emoji}/gv
 const discordEmojiRegex = /<(?<animated>a)?:(?<name>\w{2,}):(?<id>\d+)>/
 
 function getEmoji(

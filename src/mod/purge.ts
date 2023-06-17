@@ -18,7 +18,6 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
-import emojiRegexFactory from 'emoji-regex'
 
 export const purge = new SleetSlashCommand(
   {
@@ -369,11 +368,11 @@ function isBot(message: Message): boolean {
   return message.author.bot
 }
 
-const emojiRegex = emojiRegexFactory()
+const unicodeEmojiRegex = /\p{RGI_Emoji}/gv
 const discordEmojiRegex = /<a?:\w+:\d+>/g
 
 function hasCountEmoji(message: Message, maxEmoji: number): boolean {
-  const unicodeEmojis = message.content.match(emojiRegex)?.length ?? 0
+  const unicodeEmojis = message.content.match(unicodeEmojiRegex)?.length ?? 0
   const discordEmojis = message.content.match(discordEmojiRegex)?.length ?? 0
   return unicodeEmojis + discordEmojis >= maxEmoji
 }
@@ -381,7 +380,7 @@ function hasCountEmoji(message: Message, maxEmoji: number): boolean {
 function hasOnlyEmoji(message: Message): boolean {
   return (
     message.content
-      .replaceAll(emojiRegex, '')
+      .replaceAll(unicodeEmojiRegex, '')
       .replaceAll(discordEmojiRegex, '')
       .trim() === ''
   )
