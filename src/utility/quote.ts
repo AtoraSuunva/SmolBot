@@ -42,6 +42,7 @@ async function handleMessageCreate(message: Message) {
       message.client,
       message.author,
       message.content,
+      true, // ignore <bracketed links>
     )
 
     return message.reply({
@@ -73,12 +74,14 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
 }
 
 const messageLinkRegex =
-  /https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?<guildId>\d+)\/(?<channelId>\d+)\/(?<messageId>\d+)/i
+  /(?<lBracket><)?https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?<guildId>\d+)\/(?<channelId>\d+)\/(?<messageId>\d+)(?<rBracket>>)?/i
 
 interface MessageLinkMatches {
   guildId: string
   channelId: string
   messageId: string
+  lBracket?: string
+  rBracket?: string
 }
 
 function getMessageLinkIds(str: string): MessageLinkMatches | null {
@@ -92,6 +95,8 @@ function getMessageLinkIds(str: string): MessageLinkMatches | null {
     guildId: matches.groups.guildId,
     channelId: matches.groups.channelId,
     messageId: matches.groups.messageId,
+    lBracket: matches.groups.lBracket,
+    rBracket: matches.groups.rBracket,
   }
 }
 
@@ -99,11 +104,16 @@ async function getQuoteFor(
   client: Client,
   user: User,
   content: string,
+  ignoreBracketedLinks = false,
 ): Promise<EmbedBuilder[]> {
   const matches = getMessageLinkIds(content)
 
   if (!matches) {
-    throw new Error('Invalid message link')
+    throw new Error("Couldn't parse a message link")
+  }
+
+  if (ignoreBracketedLinks && matches.lBracket && matches.rBracket) {
+    throw new Error('Link was surrounded by <brackets> and ignored')
   }
 
   const { guildId, channelId, messageId } = matches
