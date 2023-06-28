@@ -32,6 +32,7 @@
     "env-var": "~7.3.1",
     "humanize-duration": "~3.28.0",
     "pino": "~8.14.1",
+    "pino-dev": "^4.0.2",
     "pretty-ms": "~8.0.0",
     "sleetcord": "~0.15.0",
     "undici": "~5.22.1"
@@ -45,7 +46,6 @@
     "eslint": "~8.43.0",
     "eslint-config-prettier": "~8.8.0",
     "eslint-plugin-import": "~2.27.5",
-    "pino-dev": "^4.0.2",
     "prettier": "~2.8.8",
     "prisma": "~4.16.1",
     "typescript": "~5.1.5"
