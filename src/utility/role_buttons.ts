@@ -14,7 +14,8 @@ import { SleetSlashCommand, getGuild } from 'sleetcord'
 export const role_buttons = new SleetSlashCommand(
   {
     name: 'role_buttons',
-    description: 'Manage the role buttons',
+    description:
+      'Create a set of buttons for users to add/remove roles from themselves',
     dm_permission: false,
     default_member_permissions: ['ManageGuild'],
     options: [
@@ -27,14 +28,13 @@ export const role_buttons = new SleetSlashCommand(
       },
       {
         name: 'description',
-        description:
-          'Override the default description in the embed (default: "Use one of the buttons...")',
+        description: 'Add a description to the role buttons (default: None)',
         type: ApplicationCommandOptionType.String,
       },
       {
-        name: 'no_embed',
+        name: 'embed',
         description:
-          'Disable the embed and just send the buttons (default: false)',
+          'Show an embed with a description and list of roles (default: true)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -70,10 +70,8 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
       : await guild.members.fetch(interaction.member.user.id)
 
   const roles = interaction.options.getString('roles', true)
-  const description =
-    interaction.options.getString('description') ??
-    'Use one of the buttons below to add or remove a role from yourself.'
-  const noEmbed = interaction.options.getBoolean('no_embed') ?? false
+  const description = interaction.options.getString('description') ?? ''
+  const includeEmbed = interaction.options.getBoolean('embed') ?? true
   const onlyOne = interaction.options.getBoolean('only_one') ?? false
 
   const userHighestRolePosition = member.roles.highest.position
@@ -111,11 +109,11 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
       )
     } else if (roleObj.position >= userHighestRolePosition) {
       fails.push(
-        `You cannot add ${roleObj.name} as an assignable role as it is higher than your highest role.`,
+        `You cannot add ${roleObj.name} as an assignable role as it is higher than or equal to your highest role.`,
       )
     } else if (roleObj.position >= botHighestRolePosition) {
       fails.push(
-        `You cannot add ${roleObj.name} as an assignable role as it is higher than my highest role.`,
+        `You cannot add ${roleObj.name} as an assignable role as it is higher than or equal to my highest role.`,
       )
     } else if (roleObj.managed) {
       fails.push(
@@ -170,7 +168,8 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
   ])
 
   await interaction.channel?.send({
-    embeds: noEmbed ? [] : [embed],
+    content: includeEmbed ? '' : description,
+    embeds: includeEmbed ? [embed] : [],
     components: rows,
   })
 
