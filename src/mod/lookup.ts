@@ -179,9 +179,9 @@ async function tryFetchGuildPreview(
   }
 }
 
-const rpcUrl = (app: string) =>
+const rpcURL = (app: string) =>
   `https://discord.com/api/applications/${app}/rpc`
-const oAuthUrl = (app: string, permissions: string, scopes: string[]) =>
+const oAuthURL = (app: string, permissions: string, scopes: string[]) =>
   `https://discord.com/oauth2/authorize?client_id=${app}&permissions=${permissions}&scope=${encodeURIComponent(
     scopes.join(' '),
   )}`
@@ -193,7 +193,7 @@ const oAuthUrl = (app: string, permissions: string, scopes: string[]) =>
  * @throws Error if the application is not a bot or doesn't exist, *or* if the bot is old enough that bot ID != application ID
  */
 async function fetchRPCDetails(app: string): Promise<APIApplication> {
-  const res = await fetch(rpcUrl(app))
+  const res = await fetch(rpcURL(app))
 
   if (res.status === 404) {
     throw new Error('No application found or snowflake incorrect.')
@@ -304,6 +304,7 @@ async function sendUserLookup(
   const formattedBadges =
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
 
+  const components: ActionRowBuilder<ButtonBuilder>[] = []
   const embed = new EmbedBuilder()
     .setTitle(formatUser(user, { id: false, markdown: false, escape: false }))
     .setThumbnail(user.displayAvatarURL({ size: 4096 }))
@@ -333,26 +334,48 @@ async function sendUserLookup(
     const details: string[] = []
 
     if (verifiedBot) {
-      details.push(`${Badges.VerifiedBot} **Verified Bot**`)
+      details.push(`${Badges.VerifiedBot} **Verified Bot**\n`)
     }
 
     if (rpc) {
+      const row = new ActionRowBuilder<ButtonBuilder>()
+      components.push(row)
+
+      const inviteURL = oAuthURL(
+        rpc.id,
+        rpc.install_params?.permissions ?? '0',
+        rpc.install_params?.scopes ?? ['bot'],
+      )
+      row.addComponents([
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('Invite')
+          .setURL(inviteURL),
+      ])
+
       const availability = rpc.bot_public ? 'Public' : 'Private'
+
       details.push(
-        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}`,
-        `**${availability}** [(Invite)](${oAuthUrl(
-          rpc.id,
-          rpc.install_params?.permissions ?? '0',
-          rpc.install_params?.scopes ?? ['bot'],
-        )})`,
+        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}\n`,
+        `**${availability} Bot**`,
       )
 
       if (rpc.terms_of_service_url) {
-        details.push(`[Terms of Service](${rpc.terms_of_service_url})`)
+        row.addComponents([
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('Terms of Service')
+            .setURL(rpc.terms_of_service_url),
+        ])
       }
 
       if (rpc.privacy_policy_url) {
-        details.push(`[Privacy Policy](${rpc.privacy_policy_url})`)
+        row.addComponents([
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('Privacy Policy')
+            .setURL(rpc.privacy_policy_url),
+        ])
       }
 
       if (rpc.guild_id) {
@@ -360,17 +383,24 @@ async function sendUserLookup(
       }
 
       if (rpc.tags) {
-        details.push(`**Tags:** \`${rpc.tags.join(', ')}\``)
+        details.push(`**Tags:** ${rpc.tags.map((t) => `\`${t}\``).join(', ')}`)
       }
+
+      row.addComponents([
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('RPC Details')
+          .setURL(rpcURL(rpc.id)),
+      ])
     } else {
       details.push('No RPC information available. This bot is likely too old.')
     }
 
-    const formattedDetails = details.join('\n')
+    const formattedDetails = details.join('\n').trim()
     embed.addFields([{ name: 'Bot Details:', value: formattedDetails }])
   }
 
-  await interaction.editReply({ embeds: [embed] })
+  await interaction.editReply({ components, embeds: [embed] })
 }
 
 const ONLINE = '<:i_online:468214881623998464>'
