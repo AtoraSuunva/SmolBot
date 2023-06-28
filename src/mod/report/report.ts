@@ -6,9 +6,10 @@ import {
   EmbedFooterOptions,
 } from 'discord.js'
 import { formatUser, getGuild, SleetSlashCommand } from 'sleetcord'
-import { fetchConfig, report_config } from './manage/config.js'
+import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'
 import { report_message } from './report_message.js'
+import { report_manage } from './manage/index.js'
 
 export const report = new SleetSlashCommand(
   {
@@ -39,7 +40,7 @@ export const report = new SleetSlashCommand(
   {
     run: runReport,
   },
-  [report_message, report_config],
+  [report_message, report_manage],
 )
 
 async function runReport(interaction: ChatInputCommandInteraction) {
