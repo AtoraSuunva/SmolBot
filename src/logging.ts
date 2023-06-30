@@ -23,6 +23,7 @@ if (USE_PINO_PRETTY) {
 const baseLogger = createLogger(loggerOptions)
 export const logger = baseLogger.child({ module: 'main' })
 export const djsLogger = baseLogger.child({ module: 'discord.js' })
+const djsName = { name: 'discord.js' }
 
 export const logging = new SleetModule(
   {
@@ -51,49 +52,89 @@ export const logging = new SleetModule(
           } `,
         )
       })
-      djsLogger.info('Client is ready!')
+      djsLogger.info(djsName, 'Client is ready!')
     },
-    error: (error) => {
+    error(error) {
       djsLogger.error({ ...moduleName(), error })
     },
-    warn: (warning) => {
+    warn(warning) {
       djsLogger.warn(moduleName(), warning)
     },
-    debug: (debug) => {
+    debug(debug) {
       djsLogger.trace(moduleName(), debug)
     },
     shardReady(shardId, unavailableGuilds) {
       const unavailable = unavailableGuilds
         ? ` with ${unavailableGuilds.size} unavailable guilds`
         : ''
-      djsLogger.info(`Shard ${shardId} ready${unavailable}`)
+      djsLogger.info(djsName, `Shard ${shardId} ready${unavailable}`)
     },
     shardDisconnect(closeEvent, shardId) {
       djsLogger.warn(
+        djsName,
         `Shard ${shardId} disconnected with code ${closeEvent.code}`,
       )
     },
     shardReconnecting(shardId) {
-      djsLogger.info(`Shard ${shardId} reconnecting`)
+      djsLogger.info(djsName, `Shard ${shardId} reconnecting`)
     },
     shardResume(shardId, replayedEvents) {
-      djsLogger.info(`Shard ${shardId} resumed with ${replayedEvents} events`)
+      djsLogger.info(
+        djsName,
+        `Shard ${shardId} resumed with ${replayedEvents} events`,
+      )
     },
     shardError(error, shardId) {
-      djsLogger.error(error, `Shard ${shardId} errored`)
+      djsLogger.error(
+        { ...djsName, ...error },
+        `Shard ${shardId} errored: ${error.message}`,
+      )
+    },
+    guildCreate(guild) {
+      const info = [
+        `name: ${guild.name}`,
+        `id: ${guild.id}`,
+        `owner: ${guild.ownerId}`,
+        `members: ${guild.memberCount}`,
+      ].join(', ')
+      djsLogger.info(
+        { ...moduleName(), guildId: guild.id },
+        `Joined guild (${info})`,
+      )
+    },
+    guildDelete(guild) {
+      const info = [
+        `name: ${guild.name}`,
+        `id: ${guild.id}`,
+        `owner: ${guild.ownerId}`,
+        `members: ${guild.memberCount}`,
+      ].join(', ')
+      djsLogger.info(
+        { ...moduleName(), guildId: guild.id },
+        `Left guild (${info})`,
+      )
     },
 
-    sleetWarn: (warning) => {
+    sleetError(error) {
+      logger.error({ ...moduleName(), error }, error)
+    },
+    sleetWarn(warning) {
       logger.warn(moduleName(), warning)
     },
-    sleetDebug: (debug) => {
+    sleetDebug(debug) {
       logger.debug(moduleName(), debug)
     },
-    applicationInteractionError: (error) => {
-      logger.error({ ...moduleName(), error })
+    applicationInteractionError(_module, _interaction, error) {
+      logger.error(
+        { ...moduleName(), error },
+        error instanceof Error ? error.message : String(error),
+      )
     },
-    autocompleteInteractionError: (error) => {
-      logger.error({ ...moduleName(), error })
+    autocompleteInteractionError(_module, _interaction, error) {
+      logger.error(
+        { ...moduleName(), error },
+        error instanceof Error ? error.message : String(error),
+      )
     },
     // interactionCreate(interaction) {
     //   const str = interactionToString(interaction)
