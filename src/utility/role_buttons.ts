@@ -91,12 +91,17 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
   }
 
   const fails: string[] = []
-  const embed = new EmbedBuilder().setDescription(
-    description +
-      (onlyOne ? '\n\nYou can only have **one** role at a time.' : ''),
-  )
+  const embed = new EmbedBuilder()
   const rows: ActionRowBuilder<ButtonBuilder>[] = []
   const fields: string[] = []
+
+  const desc =
+    description +
+    (onlyOne ? '\n\nYou can only have **one** role at a time.' : '')
+
+  if (desc) {
+    embed.setDescription(desc)
+  }
 
   let row = new ActionRowBuilder<ButtonBuilder>()
 
@@ -127,7 +132,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
 
       const button = new ButtonBuilder()
         .setCustomId(`${ROLE_BUTTON_ID}:${roleObj.id}:${onlyOne}`)
-        .setLabel(roleObj.name)
+        .setLabel(role.description ?? roleObj.name)
         .setStyle(ButtonStyle.Secondary)
 
       const buttonEmoji = role.emote ?? role.emoji
