@@ -42,14 +42,44 @@ export const logging = new SleetModule(
         djsLogger.warn(moduleName(), 'Ratelimited: %o', rateLimitInfo)
       })
       this.client.rest.on('response', (request, response) => {
+        const path = `${request.method} ${censorPath(request.path)} ${
+          response.statusCode
+        }`
+
+        const ratelimit = {
+          remaining: response.headers['x-ratelimit-remaining'],
+          limit: response.headers['x-ratelimit-limit'],
+          resetAfter: response.headers['x-ratelimit-reset-after'],
+        }
+
+        const ratelimitLine = ratelimit.remaining
+          ? `[${ratelimit.remaining}/${ratelimit.limit} (${ratelimit.resetAfter}s)]`
+          : ''
+        let body = ''
+
+        if (response.statusCode >= 400) {
+          const bodyBuilder = []
+          if (request.method !== 'GET') {
+            bodyBuilder.push('\nRequest:\n')
+            bodyBuilder.push(JSON.stringify(request.data.body, null, 2))
+            // unfortunately there's no easy way to clone the response body without consuming it because it's some weird undici thing
+            // there's a commit that does allow you to override `makeRequest` with native `fetch` that returns a cloneable response
+            // but it doesn't seem to be there in the latest release
+            // see https://github.com/discordjs/discord.js/commit/cdaa0a36f586459f1e5ede868c4250c7da90455c
+            // bodyBuilder.push('\nResponse:\n')
+          }
+
+          response
+
+          body = bodyBuilder.join('')
+        }
+
         djsLogger.debug(
           {
             ...moduleName(),
             type: 'rest',
           },
-          `${request.method} ${censorPath(request.path)} ${
-            response.statusCode
-          } `,
+          `${path} ${ratelimitLine}${body}`,
         )
       })
       djsLogger.info(djsName, 'Client is ready!')
