@@ -586,7 +586,10 @@ async function sendGuildInviteLookup(
   // TODO: add in blank fields to align things? do i even bother?
   // There's also the welcome screen but meh
 
-  await interaction.editReply({ embeds: [embed], components: [components] })
+  await interaction.editReply({
+    embeds: [embed],
+    components: components.components.length > 0 ? [components] : [],
+  })
 }
 
 /**
@@ -658,7 +661,10 @@ async function sendGroupDMInviteLookup(
     ])
   }
 
-  await interaction.editReply({ embeds: [embed], components: [components] })
+  await interaction.editReply({
+    embeds: [embed],
+    components: components.components.length > 0 ? [components] : [],
+  })
 }
 
 /**
