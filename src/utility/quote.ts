@@ -87,7 +87,7 @@ interface MessageLinkMatches {
 function getMessageLinkIds(str: string): MessageLinkMatches | null {
   const matches = str.match(messageLinkRegex)
 
-  if (!matches || matches.groups === undefined) {
+  if (matches?.groups === undefined) {
     return null
   }
 
