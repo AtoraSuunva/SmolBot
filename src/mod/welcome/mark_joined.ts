@@ -63,7 +63,7 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
   const toEdit = new Set<User>()
   const members = await guild.members.fetch()
 
-  if (!users || roles || invert) {
+  if (!users || !!roles || invert) {
     const userSet = new Set(users?.map((u) => u.id) ?? [])
     const roleSet = new Set(roles?.map((r) => r.id) ?? [])
 

@@ -122,7 +122,9 @@ const timeoutDelay = 15 * MINUTE // in ms
 function runReady(client: Client) {
   const status = getRandomStatus()
   client.user?.setActivity(status)
-  timeout = setTimeout(() => runReady(client), timeoutDelay)
+  timeout = setTimeout(() => {
+    runReady(client)
+  }, timeoutDelay)
 }
 
 /** Either set a new random status, or set it to the one the user specified */
@@ -144,7 +146,9 @@ async function runActivity(
   if (type === null && name === null) {
     // Set a random one
     activity = getRandomStatus()
-    timeout = setTimeout(() => runReady(interaction.client), timeoutDelay)
+    timeout = setTimeout(() => {
+      runReady(interaction.client)
+    }, timeoutDelay)
   } else {
     const previousActivity = interaction.client.user.presence.activities[0]
     activity = {
