@@ -7,6 +7,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild, getRoles, getUsers } from 'sleetcord'
 import { prisma } from '../../util/db.js'
+import { Prisma } from '@prisma/client'
 
 export const mark_joined = new SleetSlashSubcommand(
   {
@@ -50,6 +51,8 @@ export const mark_joined = new SleetSlashSubcommand(
   },
 )
 
+const CHUNK_SIZE = 5000
+
 async function runMarkJoined(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   const users = await getUsers(interaction, 'users', false)
@@ -83,9 +86,19 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
   }
 
   const toEditArray = Array.from(toEdit.values())
+  const toEditLength = toEditArray.length
+
+  if (toEditLength === 0) {
+    await defer
+    await interaction.editReply({
+      content: 'No users to mark.',
+    })
+
+    return
+  }
 
   const files: AttachmentPayload[] =
-    toEditArray.length === 0
+    toEditLength === 0
       ? []
       : [
           {
@@ -104,7 +117,7 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
     await defer
 
     await interaction.editReply({
-      content: `Would mark ${toEditArray.length} users as ${
+      content: `Would mark ${toEditLength.toLocaleString()} users as ${
         remove ? 'never having joined' : 'having joined'
       }.`,
       files,
@@ -122,29 +135,56 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
         },
       },
     })
+    await defer
   } else {
-    const inserts = toEditArray.map((user) =>
-      prisma.welcomeJoins.upsert({
-        where: {
-          guildID_userID: {
-            guildID: guild.id,
-            userID: user.id,
-          },
-        },
-        create: {
-          guildID: guild.id,
-          userID: user.id,
-        },
-        update: {},
-      }),
-    )
+    const chunkCount = Math.max(1, Math.ceil(toEditLength / CHUNK_SIZE))
+    let completed = 0
 
-    await prisma.$transaction(inserts)
+    for (let chunk = 0; chunk < chunkCount; chunk += 1) {
+      const chunkEnd = Math.min(toEditLength, (chunk + 1) * CHUNK_SIZE)
+      const inserts: Prisma.PrismaPromise<unknown>[] = []
+
+      for (let i = chunk * CHUNK_SIZE; i < chunkEnd; i += 1) {
+        const user = toEditArray[i]
+
+        inserts.push(
+          prisma.welcomeJoins.upsert({
+            where: {
+              guildID_userID: {
+                guildID: guild.id,
+                userID: user.id,
+              },
+            },
+            create: {
+              guildID: guild.id,
+              userID: user.id,
+            },
+            update: {},
+          }),
+        )
+      }
+
+      // It's possible that with many "split" transactions like this, we could end up in a weird state
+      // if an error occurs, where only some members were actually added
+      // but trying to do everything in a single transaction means 0 progress report (bad UX) *and* keeps
+      // the transaction open for a long time (possibly bad for the database?) which can cause a timeout
+      // The *worst case* of an "incomplete" transaction isn't that bad, since it just means some users
+      // aren't marked as having joined and shows there's a bigger bug at play (bad!!! We should alert about this)
+      await prisma.$transaction(inserts)
+      completed += inserts.length
+
+      if (chunk !== chunkCount) {
+        await defer
+        await interaction.editReply({
+          content: `Marking ${toEditLength.toLocaleString()} users as having joined... (${completed.toLocaleString()}/${toEditLength.toLocaleString()})`,
+        })
+      }
+    }
   }
 
   await defer
   await interaction.editReply({
-    content: `Marked ${toEditArray.length} users as ${
+    content: `Marked ${toEditLength.toLocaleString()} users as ${
       remove ? 'never having joined' : 'having joined'
     }.`,
     files,
