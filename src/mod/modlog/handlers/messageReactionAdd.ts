@@ -93,22 +93,28 @@ async function handleMessageReactionAdd(
   user: User | PartialUser,
 ) {
   if (user.bot) return
+  if (!messageReaction.message.guildId) return
 
-  const message = messageReaction.message.partial
-    ? await messageReaction.message.fetch()
-    : messageReaction.message
-
-  if (!message.inGuild()) return
-  if (message.author.id !== message.client.user.id) return
+  // TODO: tryFetchGuild
+  const guild = messageReaction.client.guilds.cache.get(
+    messageReaction.message.guildId,
+  )
+  if (!guild) return
 
   const conf = await getValidatedConfigFor(
-    message.guild,
+    guild,
     (config) => config.reactionActions,
   )
   if (!conf) return
 
   const { channel } = conf
-  if (message.channel.id !== channel.id) return
+  if (messageReaction.message.channelId !== channel.id) return
+
+  const message = messageReaction.message.partial
+    ? await messageReaction.message.fetch()
+    : messageReaction.message
+
+  if (message.author.id !== message.client.user.id) return
 
   const logMatch = message.content.match(logRegex)
   if (!logMatch) return
@@ -121,7 +127,7 @@ async function handleMessageReactionAdd(
   const action = actions[messageReaction.emoji.name as keyof typeof actions]
 
   const resolvedUser = user.partial ? await user.fetch() : user
-  const result = await action(message.guild, id, resolvedUser)
+  const result = await action(guild, id, resolvedUser)
 
   await channel.send(result)
 }
