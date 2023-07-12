@@ -123,34 +123,23 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
       },
     })
   } else {
-    // Not in SQLite :(
-    // prisma.welcomeJoins.createMany({
-    //   data: toEditArray.map((u) => ({
-    //     guildID: guild.id,
-    //     userID: u.id,
-    //   })),
-    //   skipDuplicates: true,
-    // })
-
-    for (const user of toEditArray) {
-      try {
-        await prisma.welcomeJoins.upsert({
-          where: {
-            guildID_userID: {
-              guildID: guild.id,
-              userID: user.id,
-            },
-          },
-          create: {
+    const inserts = toEditArray.map((user) =>
+      prisma.welcomeJoins.upsert({
+        where: {
+          guildID_userID: {
             guildID: guild.id,
             userID: user.id,
           },
-          update: {},
-        })
-      } catch {
-        // ignore
-      }
-    }
+        },
+        create: {
+          guildID: guild.id,
+          userID: user.id,
+        },
+        update: {},
+      }),
+    )
+
+    await prisma.$transaction(inserts)
   }
 
   await defer
