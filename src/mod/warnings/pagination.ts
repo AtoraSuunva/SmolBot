@@ -65,9 +65,9 @@ export async function respondWithPaginatedWarnings(
     ephemeral = false,
   } = options
 
-  const defer = !interaction.deferred
-    ? interaction.deferReply({ ephemeral })
-    : Promise.resolve()
+  if (!interaction.deferred) {
+    await interaction.deferReply({ ephemeral })
+  }
 
   const guild = await getGuild(interaction, true)
   const config = await fetchWarningConfigFor(guild.id, true)
@@ -117,7 +117,6 @@ export async function respondWithPaginatedWarnings(
   }
 
   const reply = await searchPages(currentPage)
-  await defer
   const message = await interaction.editReply(reply)
 
   const collector = message.createMessageComponentCollector({
@@ -126,23 +125,23 @@ export async function respondWithPaginatedWarnings(
     idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
-  collector.on('collect', async (interaction) => {
-    if (interaction.user.id !== interaction.user.id) {
-      await interaction.reply({
-        content: 'You cannot use this button',
+  collector.on('collect', async (buttonInteraction) => {
+    if (buttonInteraction.user.id !== interaction.user.id) {
+      await buttonInteraction.reply({
+        content: 'Only the user who searched can use this button',
         ephemeral: true,
       })
       return
     }
 
-    if (interaction.customId === 'warnings:paginated:prev') {
+    if (buttonInteraction.customId === 'warnings:paginated:prev') {
       currentPage--
-    } else if (interaction.customId === 'warnings:paginated:next') {
+    } else if (buttonInteraction.customId === 'warnings:paginated:next') {
       currentPage++
     }
 
     const res = await searchPages(currentPage)
-    await interaction.update(res)
+    await buttonInteraction.update(res)
   })
 
   collector.on('end', () => {
