@@ -6,6 +6,7 @@ import {
   CommandInteractionOption,
   Interaction,
 } from 'discord.js'
+import { prisma } from './util/db.js'
 
 const NODE_ENV = env.get('NODE_ENV').required().asString()
 const USE_PINO_PRETTY = env.get('USE_PINO_PRETTY').required().asBool()
@@ -33,13 +34,17 @@ export const logging = new SleetModule(
     ready(this: SleetContext) {
       this.client.rest.on('invalidRequestWarning', (invalidRequestInfo) => {
         djsLogger.warn(
-          moduleName(),
+          { ...moduleName(), type: 'invalid-request' },
           'Invalid Request Warning: %o',
           invalidRequestInfo,
         )
       })
       this.client.rest.on('rateLimited', (rateLimitInfo) => {
-        djsLogger.warn(moduleName(), 'Ratelimited: %o', rateLimitInfo)
+        djsLogger.warn(
+          { ...moduleName(), type: 'ratelimit' },
+          'Ratelimited: %o',
+          rateLimitInfo,
+        )
       })
       this.client.rest.on('response', (request, response) => {
         const path = `${request.method} ${censorPath(request.path)} ${
@@ -69,8 +74,6 @@ export const logging = new SleetModule(
             // bodyBuilder.push('\nResponse:\n')
           }
 
-          response
-
           body = bodyBuilder.join('')
         }
 
@@ -82,41 +85,47 @@ export const logging = new SleetModule(
           `${path} ${ratelimitLine}${body}`,
         )
       })
-      djsLogger.info(djsName, 'Client is ready!')
+      djsLogger.info({ djsName, type: 'client-ready' }, 'Client is ready!')
     },
     error(error) {
-      djsLogger.error({ ...moduleName(), error })
+      djsLogger.error({ ...moduleName(), error, type: 'djs-error' })
     },
     warn(warning) {
-      djsLogger.warn(moduleName(), warning)
+      djsLogger.warn({ ...moduleName(), type: 'djs-warn' }, warning)
     },
     debug(debug) {
-      djsLogger.trace(moduleName(), debug)
+      djsLogger.trace({ ...moduleName(), type: 'djs-debug' }, debug)
     },
     shardReady(shardId, unavailableGuilds) {
       const unavailable = unavailableGuilds
         ? ` with ${unavailableGuilds.size} unavailable guilds`
         : ''
-      djsLogger.info(djsName, `Shard ${shardId} ready${unavailable}`)
+      djsLogger.info(
+        { ...djsName, type: 'shard-ready' },
+        `Shard ${shardId} ready${unavailable}`,
+      )
     },
     shardDisconnect(closeEvent, shardId) {
       djsLogger.warn(
-        djsName,
+        { ...djsName, type: 'shard-disconnect' },
         `Shard ${shardId} disconnected with code ${closeEvent.code}`,
       )
     },
     shardReconnecting(shardId) {
-      djsLogger.info(djsName, `Shard ${shardId} reconnecting`)
+      djsLogger.info(
+        { ...djsName, type: 'shard-reconnecting' },
+        `Shard ${shardId} reconnecting`,
+      )
     },
     shardResume(shardId, replayedEvents) {
       djsLogger.info(
-        djsName,
+        { ...djsName, type: 'shard-resume' },
         `Shard ${shardId} resumed with ${replayedEvents} events`,
       )
     },
     shardError(error, shardId) {
       djsLogger.error(
-        { ...djsName, ...error },
+        { ...djsName, ...error, type: 'shard-error' },
         `Shard ${shardId} errored: ${error.message}`,
       )
     },
@@ -128,7 +137,7 @@ export const logging = new SleetModule(
         `members: ${guild.memberCount}`,
       ].join(', ')
       djsLogger.info(
-        { ...moduleName(), guildId: guild.id },
+        { ...moduleName(), type: 'guild-create', guildId: guild.id },
         `Joined guild (${info})`,
       )
     },
@@ -140,29 +149,29 @@ export const logging = new SleetModule(
         `members: ${guild.memberCount}`,
       ].join(', ')
       djsLogger.info(
-        { ...moduleName(), guildId: guild.id },
+        { ...moduleName(), type: 'guild-delete', guildId: guild.id },
         `Left guild (${info})`,
       )
     },
 
     sleetError(error) {
-      logger.error({ ...moduleName(), error }, error)
+      logger.error({ ...moduleName(), type: 'sleet-error', error }, error)
     },
     sleetWarn(warning) {
-      logger.warn(moduleName(), warning)
+      logger.warn({ ...moduleName(), type: 'sleet-warn' }, warning)
     },
     sleetDebug(debug) {
-      logger.debug(moduleName(), debug)
+      logger.debug({ ...moduleName(), type: 'sleet-debug' }, debug)
     },
     applicationInteractionError(_module, _interaction, error) {
       logger.error(
-        { ...moduleName(), error },
+        { ...moduleName(), type: 'interaction-error', error },
         error instanceof Error ? error.message : String(error),
       )
     },
     autocompleteInteractionError(_module, _interaction, error) {
       logger.error(
-        { ...moduleName(), error },
+        { ...moduleName(), type: 'autocomplete-error', error },
         error instanceof Error ? error.message : String(error),
       )
     },
@@ -180,7 +189,7 @@ export const logging = new SleetModule(
       logger.debug(
         {
           name: module.name,
-          type: 'interaction-handle',
+          type: 'run-module',
           userId: interaction.user.id,
           interactionId: interaction.id,
         },
@@ -191,6 +200,7 @@ export const logging = new SleetModule(
       logger.info(
         {
           name: module.name,
+          type: 'load-module',
           qualifiedName: qualifiedName,
         },
         'Loaded module',
@@ -200,6 +210,7 @@ export const logging = new SleetModule(
       logger.info(
         {
           name: module.name,
+          type: 'unload-module',
           qualifiedName: qualifiedName,
         },
         'Unloaded module',
@@ -207,6 +218,44 @@ export const logging = new SleetModule(
     },
   },
 )
+
+/** Warn if a query took longer than X ms */
+const QUERY_TOO_LONG_WARNING = 2_000
+
+prisma.$on('query', (e) => {
+  logger.debug(
+    { ...moduleName(), type: 'query', duration: e.duration },
+    `${e.query}; (Took ${e.duration}ms)`,
+  )
+
+  if (e.duration > QUERY_TOO_LONG_WARNING) {
+    logger.warn(
+      { ...moduleName(), type: 'query-too-long', duration: e.duration },
+      `${e.query}; (Took ${e.duration}ms)`,
+    )
+  }
+})
+
+prisma.$on('info', (e) => {
+  logger.info(
+    { ...moduleName(), type: 'prisma-info' },
+    `${e.message} (Target ${e.target})`,
+  )
+})
+
+prisma.$on('warn', (e) => {
+  logger.warn(
+    { ...moduleName(), type: 'prisma-warn' },
+    `${e.message} (Target ${e.target})`,
+  )
+})
+
+prisma.$on('error', (e) => {
+  logger.error(
+    { ...moduleName(), type: 'prisma-error' },
+    `${e.message} (Target ${e.target})`,
+  )
+})
 
 function moduleName(): { name: string } | undefined {
   const module = runningModuleStore.getStore()
@@ -265,7 +314,7 @@ const optionTypeToString: Record<ApplicationCommandOptionType, string> = {
  * /command [option1<String>: value1] [option2<Integer>: value2]
  * /command sub_command [focused*<String>: value]
  * // Right click commands (message or user)
- * >command [Message (1233123123333): hello i am...]
+ * >command [Message (1233123123333): hello everybody my name is markiplier...]
  * >command [User (91298392100299): atorasuunva]
  * // Buttons/select menus/modals
  * [Button (custom-id)]
