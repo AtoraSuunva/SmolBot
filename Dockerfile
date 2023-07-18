@@ -7,6 +7,7 @@ RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
+COPY /patches ./patches/
 RUN pnpx prisma generate && pnpm run build
 
 
@@ -17,6 +18,7 @@ RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
 COPY --from=dev-build /home/node/app/dist ./dist/
 COPY --from=dev-build /home/node/app/prisma ./prisma/
+COPY --from=dev-build /home/node/app/patches ./patches/
 RUN pnpm install --prod --frozen-lockfile
 
 
