@@ -1,8 +1,10 @@
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  CommandInteraction,
   GuildMember,
   Role,
+  UserContextMenuCommandInteraction,
 } from 'discord.js'
 import {
   botHasPermissionsGuard,
@@ -11,6 +13,7 @@ import {
   getMembers,
   inGuildGuard,
   SleetSlashCommand,
+  SleetUserCommand,
 } from 'sleetcord'
 
 const mutedRoles = [
@@ -49,7 +52,18 @@ export const mute = new SleetSlashCommand(
     ],
   },
   {
-    run: (i) => runMute(i, 'mute'),
+    run: (i) => handleChatInput(i, 'mute'),
+  },
+)
+
+export const mute_menu = new SleetUserCommand(
+  {
+    name: 'Mute',
+    default_member_permissions: ['ManageRoles'],
+    dm_permission: false,
+  },
+  {
+    run: (i) => handleUserCommand(i, 'mute'),
   },
 )
 
@@ -79,9 +93,22 @@ export const unmute = new SleetSlashCommand(
     ],
   },
   {
-    run: (i) => runMute(i, 'unmute'),
+    run: (i) => handleChatInput(i, 'unmute'),
   },
 )
+
+export const unmute_menu = new SleetUserCommand(
+  {
+    name: 'Unmute',
+    default_member_permissions: ['ManageRoles'],
+    dm_permission: false,
+  },
+  {
+    run: (i) => handleUserCommand(i, 'unmute'),
+  },
+)
+
+export const muteCommands = [mute, mute_menu, unmute, unmute_menu]
 
 type MuteAction = 'mute' | 'unmute'
 
@@ -99,9 +126,43 @@ interface ActionResult {
   failed: MuteFail[]
 }
 
-async function runMute(
+async function handleChatInput(
   interaction: ChatInputCommandInteraction,
   action: MuteAction,
+) {
+  inGuildGuard(interaction)
+  const members = await getMembers(interaction, 'members', true)
+  const reason = interaction.options.getString('reason') ?? 'No reason given'
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+
+  return runMute(interaction, action, members, reason, ephemeral)
+}
+
+async function handleUserCommand(
+  interaction: UserContextMenuCommandInteraction,
+  action: MuteAction,
+) {
+  inGuildGuard(interaction)
+  const guild = await getGuild(interaction, true)
+  const target = interaction.targetMember
+
+  const members = [
+    target instanceof GuildMember
+      ? target
+      : await guild.members.fetch(interaction.targetId),
+  ]
+  const reason = 'Context menu mute'
+  const ephemeral = false
+
+  return runMute(interaction, action, members, reason, ephemeral)
+}
+
+async function runMute(
+  interaction: CommandInteraction,
+  action: MuteAction,
+  members: GuildMember[],
+  reason: string,
+  ephemeral: boolean,
 ): Promise<unknown> {
   inGuildGuard(interaction)
   const guild = await getGuild(interaction, true)
@@ -109,10 +170,6 @@ async function runMute(
   await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
-
-  const members = await getMembers(interaction, 'members', true)
-  const reason = interaction.options.getString('reason') ?? 'No reason given'
-  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   const interactionMember = await guild.members.fetch(interaction.user.id)
   const me = await guild.members.fetchMe()
