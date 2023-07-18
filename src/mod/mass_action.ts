@@ -5,6 +5,7 @@ import {
   GuildMember,
   User,
 } from 'discord.js'
+import pluralize from 'pluralize'
 import {
   getUsers,
   inGuildGuard,
@@ -171,20 +172,14 @@ async function runMassAction(
 
   if (success.length > 0) {
     output.push(
-      `Successfully ${actioned} ${success.length} ${plural(
-        'user',
-        success.length,
-      )}:`,
+      `Successfully ${actioned} ${pluralize('user', success.length, true)}:`,
     )
     output.push(formattedSuccess)
   }
 
   if (failure.length > 0) {
     output.push(
-      `Failed to ${action} ${failure.length} ${plural(
-        'user',
-        failure.length,
-      )}:`,
+      `Failed to ${action} ${pluralize('user', failure.length, true)}:`,
     )
     output.push(formattedFailure)
   }
@@ -208,8 +203,4 @@ async function runMassAction(
       ephemeral,
     })
   }
-}
-
-function plural(word: string, count: number): string {
-  return `${word}${count === 1 ? '' : 's'}`
 }
