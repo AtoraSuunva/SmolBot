@@ -4,7 +4,7 @@ import { lock_thread } from './lock_thread.js'
 import { lookup } from './lookup.js'
 import { mass_ban, mass_kick } from './mass_action.js'
 import { modlog } from './modlog/modlog.js'
-import { mute, unmute } from './mute.js'
+import { muteCommands } from './mute.js'
 import { purge } from './purge.js'
 import { report } from './report/report.js'
 import { revoke } from './revoke.js'
@@ -25,8 +25,7 @@ export const modModules = [
   lookup,
   mass_ban,
   mass_kick,
-  mute,
-  unmute,
+  ...muteCommands,
   purge,
   revoke,
   softban,
