@@ -1,0 +1,42 @@
+diff --git a/package.json b/package.json
+index 17f972321737e82c6f07534b0fe70a75fd740a57..44496b51520a1216b527804736845a53e479f4fa 100644
+--- a/package.json
++++ b/package.json
+@@ -10,10 +10,17 @@
+   "browser": "./lib/umd/bundle.js",
+   "exports": {
+     ".": {
+-      "import": "./lib/esm/bundle.js",
+-      "require": "./lib/umd/bundle.js"
++      "import": {
++        "types": "./types/index.d.ts",
++        "default": "./lib/esm/bundle.js"
++      },
++      "require": {
++        "types": "./types/index.d.cts",
++        "default": "./lib/umd/bundle.js"
++      }
+     },
+     "./lib/umd/bundle.js": {
++      "types": "./types/index.d.cts",
+       "require": "./lib/umd/bundle.js"
+     },
+     "./src/": "./src/",
+diff --git a/types/index.d.cts b/types/index.d.cts
+new file mode 100644
+index 0000000000000000000000000000000000000000..28eb3745562977ecc38c84a20f4e4ed0efd74f98
+--- /dev/null
++++ b/types/index.d.cts
+@@ -0,0 +1,12 @@
++import ComparePoint from "./ComparePoint.js";
++import * as Dice from "./dice/index.js";
++import DiceRoll from "./DiceRoll.js";
++import DiceRoller from "./DiceRoller.js";
++import * as Exceptions from "./exceptions/index.js";
++import exportFormats from "./utilities/ExportFormats.js";
++import * as Modifiers from "./modifiers/index.js";
++import * as NumberGenerator from "./utilities/NumberGenerator.js";
++import Parser from "./parser/Parser.js";
++import * as Results from "./results/index.js";
++import RollGroup from "./RollGroup.js";
++export { ComparePoint, Dice, DiceRoll, DiceRoller, Exceptions, exportFormats, Modifiers, NumberGenerator, Parser, Results, RollGroup };
