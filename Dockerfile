@@ -3,11 +3,11 @@ FROM node:20-bookworm-slim as dev-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
+COPY /patches ./patches/
 RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
-COPY /patches ./patches/
 RUN pnpx prisma generate && pnpm run build
 
 
