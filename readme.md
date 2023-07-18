@@ -1,10 +1,20 @@
-# Smol Bot
+# Smol Bot (& RobotOtter)
 
 Various (mostly) moderation- or utility-focused commands I've needed, in a Discord bot.
 
-Acts somewhat as a staging enviroment for some features, but mostly for more niche commands I've needed.
+Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were made because of my own requirements. You are free to invite and use the "public" version [RobotOtter](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0). You cannot invite Smol Bot.
 
 > ⚠️ This is currently a very WIP version. Many things will break, setup will be hard. It's best to just look at the codebase for now
+
+## RobotOtter?
+
+**tl;dr: This repo *IS* RobotOtter's source code!**
+
+RobotOtter used to be an ancient mod-like bot with misc commands that I maintained. I've partially given up on maintaining it, instead investing my work into Smol Bot, which then ended up superseding RobotOtter in literally every feature. In the end I decided might as well just run RobotOtter off Smol Bot's codebase (which supported all the exact same mod features) and only have to maintain 3 bots instead of 4. Smol Bot is also significantly more advanced in a bunch of ways.
+
+# [Add RobotOtter to Server](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0)
+
+[Support Server](https://discord.gg/8K3uCfb) - [Privacy Policy](./privacy.md) - [Terms of Service](./tos.md)
 
 ## Setup
 

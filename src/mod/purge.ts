@@ -9,6 +9,7 @@ import {
   Snowflake,
   User,
 } from 'discord.js'
+import pluralize from 'pluralize'
 import {
   botHasPermissionsGuard,
   getMentionables,
@@ -230,9 +231,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.editReply({
-    content: `🗑️ Deleted ${deletedCount} message${
-      deletedCount === 1 ? '' : 's'
-    }...`,
+    content: `🗑️ Deleted ${pluralize('message', deletedCount, true)}...`,
   })
 }
 
