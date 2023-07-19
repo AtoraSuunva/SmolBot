@@ -3,7 +3,6 @@ FROM node:20-bookworm-slim as dev-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
-COPY /patches ./patches/
 RUN pnpm install --frozen-lockfile
 COPY src/ ./src/
 COPY tsconfig.json ./
@@ -18,7 +17,6 @@ RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
 COPY --from=dev-build /home/node/app/dist ./dist/
 COPY --from=dev-build /home/node/app/prisma ./prisma/
-COPY --from=dev-build /home/node/app/patches ./patches/
 RUN pnpm install --prod --frozen-lockfile
 
 
