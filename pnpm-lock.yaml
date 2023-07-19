@@ -4,15 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@dice-roller/rpg-dice-roller@5.4.0':
-    hash: hezit6hawzggsof5tnvcmis2te
-    path: patches/@dice-roller__rpg-dice-roller@5.4.0.patch
-
 dependencies:
   '@dice-roller/rpg-dice-roller':
-    specifier: ^5.4.0
-    version: 5.4.0(patch_hash=hezit6hawzggsof5tnvcmis2te)
+    specifier: ^5.4.1
+    version: 5.4.1
   '@prisma/client':
     specifier: ~5.0.0
     version: 5.0.0(prisma@5.0.0)
@@ -114,14 +109,13 @@ packages:
       regenerator-runtime: 0.13.11
     dev: false
 
-  /@dice-roller/rpg-dice-roller@5.4.0(patch_hash=hezit6hawzggsof5tnvcmis2te):
-    resolution: {integrity: sha512-o+Tpe++w+RA+0OpN2iYW2iT8lvsJ7f27lWf9E5jqihMIoddv8dxfgVvSuwj7zN/7meCXR9sV1MwxRwoBk2fy9A==}
+  /@dice-roller/rpg-dice-roller@5.4.1:
+    resolution: {integrity: sha512-Tbi/ej65KoHhUPlb/zlj+V/4gMNhF3W6fP+KBF7+mHgFUWnJ1ADKHKHe4jygwn1y8pRlLDAprYCEvQTK2FoRgg==}
     engines: {node: '>=18.0'}
     dependencies:
       mathjs: 11.8.2
       random-js: 2.1.0
     dev: false
-    patched: true
 
   /@discordjs/builders@1.6.3:
     resolution: {integrity: sha512-CTCh8NqED3iecTNuiz49mwSsrc2iQb4d0MjMdmS/8pb69Y4IlzJ/DIy/p5GFlgOrFbNO2WzMHkWKQSiJ3VNXaw==}
