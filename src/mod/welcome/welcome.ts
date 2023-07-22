@@ -128,10 +128,15 @@ async function handleJoin(
     })
     const sentMessage = await sendChannel.send(msg)
 
+    const firstMessage =
+      message && message.channelId !== sentMessage.channelId
+        ? `, first message at ${message.channel}`
+        : ''
+
     const modLogMsg = formatLog(
       '👋',
       'Member Welcome',
-      `${formatUser(member)} in ${sendChannel} at ${sentMessage.url}`,
+      `${formatUser(member)} at ${sentMessage.url}${firstMessage}`,
     )
 
     await sendToModLog(
