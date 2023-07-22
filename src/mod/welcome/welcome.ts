@@ -130,7 +130,7 @@ async function handleJoin(
 
     const firstMessage =
       message && message.channelId !== sentMessage.channelId
-        ? `, first message at ${message.channel}`
+        ? ` first message at ${message.url}`
         : ''
 
     const modLogMsg = formatLog(
