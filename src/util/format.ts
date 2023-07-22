@@ -63,6 +63,11 @@ function snakeCase(str: string): string {
     .trim()
 }
 
+interface PluralOptions {
+  includeCount?: boolean
+  boldNumber?: boolean
+}
+
 /**
  * A simple wrapper around the npm pluralize package, to include the count by default and to use `toLocaleString` for the count
  * @param str The string to pluralize
@@ -73,9 +78,15 @@ function snakeCase(str: string): string {
 export function plural(
   str: string,
   count: number,
-  includeCount = true,
+  { includeCount = true, boldNumber = true }: PluralOptions = {},
 ): string {
-  return `${includeCount ? `${count.toLocaleString()} ` : ''}${pluralize(
+  let numberFormat = (n: number) => n.toLocaleString()
+
+  if (boldNumber) {
+    numberFormat = (num) => `**${num.toLocaleString()}**`
+  }
+
+  return `${includeCount ? `${numberFormat(count)} ` : ''}${pluralize(
     str,
     count,
   )}`

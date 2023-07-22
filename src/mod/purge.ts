@@ -9,7 +9,6 @@ import {
   Snowflake,
   User,
 } from 'discord.js'
-import pluralize from 'pluralize'
 import {
   botHasPermissionsGuard,
   getMentionables,
@@ -19,6 +18,7 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
+import { plural } from '../util/format.js'
 
 export const purge = new SleetSlashCommand(
   {
@@ -231,7 +231,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.editReply({
-    content: `🗑️ Deleted ${pluralize('message', deletedCount, true)}...`,
+    content: `🗑️ Deleted ${plural('message', deletedCount)}...`,
   })
 }
 
