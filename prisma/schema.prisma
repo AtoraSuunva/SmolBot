@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // See https://github.com/prisma/prisma/issues/19729, watch in case this changes
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
@@ -67,22 +67,22 @@ model ModLogConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
   enabled   Boolean  @default(false)
 
-  memberAdd         Boolean @map("member_add") @default(false)
-  memberAddNew      Int     @map("member_add_new") @default(0)
-  memberAddInvite   Boolean @map("member_add_invite") @default(false)
-  memberWelcome     Boolean @map("member_welcome") @default(false)
-  memberRemove      Boolean @map("member_remove") @default(false)
-  memberRemoveRoles Boolean @map("member_remove_roles") @default(false)
-  memberBan         Boolean @map("member_ban") @default(false)
-  memberUnban       Boolean @map("member_unban") @default(false)
-  userUpdate        String  @map("user_update") @default("None")
-  messageDelete     Boolean @map("message_delete") @default(false)
-  messageDeleteBulk Boolean @map("message_delete_bulk") @default(false)
-  channelCreate     Boolean @map("channel_create") @default(false)
-  channelDelete     Boolean @map("channel_delete") @default(false)
-  channelUpdate     Boolean @map("channel_update") @default(false)
-  reactionActions   Boolean @map("reaction_actions") @default(false)
-  automodAction     Boolean @map("automod_action") @default(false)
+  memberAdd         Boolean @default(false) @map("member_add")
+  memberAddNew      Int     @default(0) @map("member_add_new")
+  memberAddInvite   Boolean @default(false) @map("member_add_invite")
+  memberWelcome     Boolean @default(false) @map("member_welcome")
+  memberRemove      Boolean @default(false) @map("member_remove")
+  memberRemoveRoles Boolean @default(false) @map("member_remove_roles")
+  memberBan         Boolean @default(false) @map("member_ban")
+  memberUnban       Boolean @default(false) @map("member_unban")
+  userUpdate        String  @default("None") @map("user_update")
+  messageDelete     Boolean @default(false) @map("message_delete")
+  messageDeleteBulk Boolean @default(false) @map("message_delete_bulk")
+  channelCreate     Boolean @default(false) @map("channel_create")
+  channelDelete     Boolean @default(false) @map("channel_delete")
+  channelUpdate     Boolean @default(false) @map("channel_update")
+  reactionActions   Boolean @default(false) @map("reaction_actions")
+  automodAction     Boolean @default(false) @map("automod_action")
 }
 
 model WarningConfig {
@@ -118,22 +118,32 @@ model Warning {
 }
 
 model AutomodConfig {
-  guildID   String   @id @map("guild_id")
+  guildID String  @id @map("guild_id")
   // Message to prepend to the automod trigger message
   prepend String?
 }
 
 model AutomodRule {
-  ruleID  Int    @id @map("rule_id")
-  guildID String @map("guild_id")
+  ruleID     Int     @id @map("rule_id")
+  guildID    String  @map("guild_id")
   // Discriminator between rule types, bot-set
-  type String
+  type       String
   // Name shown to admins when viewing rules
-  name String
+  name       String
   // Message shown to users when rule is triggered
-  message String
-  // Punishment(s) to apply
-  punishment String
-  // Paramters the rule takes, as JSON
+  message    String
+  // Action to apply
+  action     String
+  // Whether to delete the message(s) that triggered the rule
+  delete     Boolean
+  // Parameters the rule takes, as JSON
   parameters String
+}
+
+model AutomaticDehoist {
+  guildID         String   @id @map("guild_id")
+  enabled         Boolean
+  hoistCharacters String   @map("hoist_characters")
+  dehoistPrepend  String   @map("dehoist_prepend")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 }
