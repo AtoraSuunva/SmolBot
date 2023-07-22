@@ -5,7 +5,6 @@ import {
   GuildMember,
   User,
 } from 'discord.js'
-import pluralize from 'pluralize'
 import {
   getUsers,
   inGuildGuard,
@@ -14,6 +13,7 @@ import {
   tryFetchMember,
   formatUser,
 } from 'sleetcord'
+import { plural } from '../util/format.js'
 
 export const mass_ban = new SleetSlashCommand(
   {
@@ -171,16 +171,12 @@ async function runMassAction(
   const output: string[] = []
 
   if (success.length > 0) {
-    output.push(
-      `Successfully ${actioned} ${pluralize('user', success.length, true)}:`,
-    )
+    output.push(`Successfully ${actioned} ${plural('user', success.length)}:`)
     output.push(formattedSuccess)
   }
 
   if (failure.length > 0) {
-    output.push(
-      `Failed to ${action} ${pluralize('user', failure.length, true)}:`,
-    )
+    output.push(`Failed to ${action} ${plural('user', failure.length)}:`)
     output.push(formattedFailure)
   }
 

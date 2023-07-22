@@ -2,8 +2,8 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
-import pluralize from 'pluralize'
 import { SleetSlashCommand } from 'sleetcord'
+import { plural } from '../util/format.js'
 
 export const flip = new SleetSlashCommand(
   {
@@ -63,11 +63,10 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
     await interaction.reply(`I flipped a coin and got ${result} ${coin}!`)
   } else {
     await interaction.reply(
-      `I flipped ${pluralize('coin', count, true)} and got ${pluralize(
+      `I flipped ${plural('coin', count)} and got ${plural(
         'head',
         headCount,
-        true,
-      )} and ${pluralize('tail', tailCount, true)}!\n${results.join(', ')}`,
+      )} and ${plural('tail', tailCount)}!\n${results.join(', ')}`,
     )
   }
 }

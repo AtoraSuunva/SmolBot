@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import pluralize from 'pluralize'
+import { plural } from '../util/format.js'
 
 export const choose = new SleetSlashCommand(
   {
@@ -64,10 +64,9 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
 
   if (options.length > MAX_OPTIONS) {
     await interaction.reply(
-      `You can't give me more than ${MAX_OPTIONS} options! You gave ${pluralize(
+      `You can't give me more than ${MAX_OPTIONS} options! You gave ${plural(
         'option',
         options.length,
-        true,
       )}.`,
     )
     return
@@ -75,10 +74,9 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
 
   if (pickCount > options.length) {
     await interaction.reply(
-      `You can't pick ${pluralize('option', pickCount, true)} from ${pluralize(
+      `You can't pick ${plural('option', pickCount)} from ${plural(
         'option',
         options.length,
-        true,
       )}!`,
     )
     return

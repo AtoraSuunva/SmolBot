@@ -13,20 +13,20 @@ const sleetClient = new SleetClient({
   },
   client: {
     intents: [
-      GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
-      GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMessageReactions,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildModeration, // For Audit Log Events
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.MessageContent,
     ],
     partials: [
-      Partials.User,
-      Partials.GuildMember,
-      Partials.Reaction,
-      Partials.Message,
       Partials.Channel,
+      Partials.GuildMember,
+      Partials.Message,
+      Partials.Reaction,
+      Partials.User,
     ],
   },
 })

@@ -6,7 +6,7 @@ import {
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from '../util/constants.js'
 import { setTimeout } from 'timers/promises'
-import pluralize from 'pluralize'
+import { plural } from '../util/format.js'
 
 export const count_members = new SleetSlashCommand(
   {
@@ -31,8 +31,12 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
   const nameContains = interaction.options.getString('name_contains')
 
   if (!nameContains) {
+    const count = guild.memberCount
     return interaction.reply(
-      `There are **${guild.memberCount.toLocaleString()}** members in this guild.`,
+      `There ${plural('is', count, { includeCount: false })} ${plural(
+        'member',
+        count,
+      )} in this guild.`,
     )
   }
 
@@ -55,9 +59,8 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
   ).size
 
   return interaction.editReply(
-    `**${count.toLocaleString()}** ${pluralize('member', count)} ${pluralize(
-      'has',
-      count,
-    )} **"${escapeMarkdown(nameContains)}"** in their name.`,
+    `${plural('member', count)} ${plural('has', count, {
+      includeCount: false,
+    })} **"${escapeMarkdown(nameContains)}"** in their name.`,
   )
 }
