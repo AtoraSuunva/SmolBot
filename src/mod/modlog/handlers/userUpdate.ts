@@ -74,6 +74,7 @@ async function fetchUserInGuild(
   user: User,
 ): Promise<GuildMember | null> {
   try {
+    // TODO: optimize this, since it would fetch the member in EVERY guild the bot is in
     return await guild.members.fetch(user)
   } catch {
     return null

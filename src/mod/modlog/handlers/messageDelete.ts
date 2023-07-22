@@ -45,6 +45,8 @@ async function messageDelete(message: Message | PartialMessage) {
   let executor, reason
 
   if (message.guild.members.me?.permissions.has('ViewAuditLog')) {
+    // TODO: maybe listen to audit logs separately and keep a "cache" of delete logs to associate them?
+    // Would have to deal with fuzzy timings, but would cut down on GETs
     const fetchOpts: GuildAuditLogsFetchOptions<AuditLogEvent.MessageDelete> = {
       type: AuditLogEvent.MessageDelete,
       limit: 1,
