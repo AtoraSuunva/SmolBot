@@ -2,22 +2,28 @@
 FROM node:20-bookworm-slim as dev-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY pnpm-lock.yaml ./
+RUN pnpm fetch
+COPY package.json ./
+RUN pnpm install --frozen-lockfile --offline
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
-RUN pnpx prisma generate && pnpm run build
+RUN pnpm exec prisma generate && pnpm run build
+COPY /resources ./resources/
 
 
 # Step that only pulls in (production) deps required to run the app
 FROM node:20-bookworm-slim as prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
-COPY --from=dev-build /home/node/app/package.json /home/node/app/pnpm-lock.yaml ./
-COPY --from=dev-build /home/node/app/dist ./dist/
+COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
+COPY --from=dev-build /home/node/app/node_modules ./node_modules/
+COPY --from=dev-build /home/node/app/package.json ./
 COPY --from=dev-build /home/node/app/prisma ./prisma/
 RUN pnpm install --prod --frozen-lockfile
+COPY --from=dev-build /home/node/app/dist ./dist/
+COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
