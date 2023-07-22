@@ -4,7 +4,7 @@ Various (mostly) moderation- or utility-focused commands I've needed, in a Disco
 
 Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were made because of my own requirements. You are free to invite and use the "public" version [RobotOtter](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0). You cannot invite Smol Bot.
 
-> ⚠️ This is currently a very WIP version. Many things will break, setup will be hard. It's best to just look at the codebase for now
+> ⚠️ This is currently still a WIP. Most things are pretty stable, but nothing's guaranteed.
 
 ## RobotOtter?
 
@@ -23,10 +23,11 @@ While open-source, Smol Bot isn't really designed to be ran anywhere. If you're 
 ### .env requirements
 ```sh
 NODE_ENV=development # or production
-TOKEN=discord bot token
-APPLICATION_ID=discord application id
+TOKEN=<discord bot token>
+APPLICATION_ID=<discord application id>
 USE_PINO_PRETTY=true # or false for default pino logs
 DATABASE_URL="file:./db/dev.db" # or anywhere else you want an sqlite db to be
+ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the activities you want the bot to show
 ```
 
 ### Running
