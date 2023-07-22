@@ -1,4 +1,6 @@
+import { automod } from './automod/automod.js'
 import { banlog } from './banlog.js'
+import { dehoist } from './dehoist.js'
 import { idof } from './idof.js'
 import { lock_thread } from './lock_thread.js'
 import { lookup } from './lookup.js'
@@ -15,21 +17,23 @@ import { warnings } from './warnings/warnings.js'
 import { welcome } from './welcome/welcome.js'
 
 export const modModules = [
-  modlog,
-  report,
-  warnings,
-  welcome,
+  ...muteCommands,
+  automod,
   banlog,
+  dehoist,
   idof,
   lock_thread,
   lookup,
   mass_ban,
   mass_kick,
-  ...muteCommands,
+  modlog,
   purge,
+  report,
   revoke,
   softban,
-  unedit,
   unedit_message,
+  unedit,
   vc_log,
+  warnings,
+  welcome,
 ]
