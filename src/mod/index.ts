@@ -1,4 +1,4 @@
-import { automod } from './automod/automod.js'
+// import { automod } from './automod/automod.js'
 import { banlog } from './banlog.js'
 import { dehoist } from './dehoist.js'
 import { idof } from './idof.js'
@@ -18,7 +18,7 @@ import { welcome } from './welcome/welcome.js'
 
 export const modModules = [
   ...muteCommands,
-  automod,
+  // automod,
   banlog,
   dehoist,
   idof,
