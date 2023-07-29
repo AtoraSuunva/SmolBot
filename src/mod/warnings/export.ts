@@ -11,7 +11,7 @@ import {
   markWarningArchiveDirty,
 } from './utils.js'
 import { setTimeout, setInterval } from 'timers/promises'
-import { MINUTE, SECOND } from '../../util/constants.js'
+import { MINUTE, SECOND } from 'sleetcord-common'
 import { stringify } from 'csv-stringify'
 
 export const warningsExport = new SleetSlashSubcommand(

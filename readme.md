@@ -12,7 +12,7 @@ Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were 
 
 RobotOtter used to be an ancient mod-like bot with misc commands that I maintained. I've partially given up on maintaining it, instead investing my work into Smol Bot, which then ended up superseding RobotOtter in literally every feature. In the end I decided might as well just run RobotOtter off Smol Bot's codebase (which supported all the exact same mod features) and only have to maintain 3 bots instead of 4. Smol Bot is also significantly more advanced in a bunch of ways.
 
-# [Add RobotOtter to Server](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0)
+# [Add RobotOtter to Server](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot%20applications.commands&permissions=0)
 
 [Support Server](https://discord.gg/8K3uCfb) - [Privacy Policy](./privacy.md) - [Terms of Service](./tos.md)
 
@@ -34,7 +34,7 @@ ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the
 
 ```sh
 # Migrate the database if needed
-pnpx prisma migrate deploy
+pnpm prisma migrate deploy
 ```
 
 ```sh

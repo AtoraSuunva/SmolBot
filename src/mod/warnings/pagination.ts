@@ -10,7 +10,7 @@ import {
   InteractionEditReplyOptions,
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
-import { MINUTE } from '../../util/constants.js'
+import { MINUTE } from 'sleetcord-common'
 import {
   formatWarningToField,
   fetchWarningConfigFor,

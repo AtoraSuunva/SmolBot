@@ -1,4 +1,4 @@
-import { logging } from './logging.js'
+import { logging, rollbarLogger } from 'sleetcord-common'
 import { miscModules } from './misc/index.js'
 import { modModules } from './mod/index.js'
 import { secretModules } from './secret/index.js'
@@ -11,4 +11,5 @@ export const modules: SleetModule[] = [
   ...secretModules,
   ...utilityModules,
   logging,
+  rollbarLogger,
 ]

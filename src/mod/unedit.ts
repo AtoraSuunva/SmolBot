@@ -9,7 +9,7 @@ import {
   PartialMessage,
 } from 'discord.js'
 import { SleetSlashCommand, isLikelyID, SleetMessageCommand } from 'sleetcord'
-import { HOUR } from '../util/constants.js'
+import { HOUR } from 'sleetcord-common'
 
 export const unedit = new SleetSlashCommand(
   {

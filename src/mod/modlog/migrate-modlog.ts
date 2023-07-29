@@ -1,5 +1,5 @@
 import { ChannelType, Client, GatewayIntentBits, Partials } from 'discord.js'
-import { logger } from '../../logging.js'
+import { baseLogger } from 'sleetcord-common'
 import { Prisma } from '@prisma/client'
 import { SleetClient, SleetModule } from 'sleetcord'
 import env from 'env-var'
@@ -13,6 +13,8 @@ const migrate_modlog = new SleetModule(
     ready: runMigrateModlog,
   },
 )
+
+const logger = baseLogger.child({ module: 'migrate-modlog' })
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
