@@ -4,7 +4,7 @@ import {
   escapeMarkdown,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
-import { SECOND } from '../util/constants.js'
+import { SECOND } from 'sleetcord-common'
 import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'
 

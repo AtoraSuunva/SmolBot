@@ -24,7 +24,7 @@ import {
   codeBlock,
   hyperlink,
 } from 'discord.js'
-import { MINUTE } from '../../util/constants.js'
+import { MINUTE } from 'sleetcord-common'
 import { formatUser, getGuild } from 'sleetcord'
 
 const REPORT = 'report'

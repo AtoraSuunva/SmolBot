@@ -7,7 +7,7 @@ import {
   Interaction,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
-import { SECOND } from '../util/constants.js'
+import { SECOND } from 'sleetcord-common'
 
 export const timeout_button = new SleetSlashCommand(
   {

@@ -6,7 +6,7 @@ import {
 } from '@prisma/client'
 import { APIEmbedField, time } from 'discord.js'
 import { PreRunError } from 'sleetcord'
-import { DAY, MINUTE } from '../../util/constants.js'
+import { DAY, MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 
 export const MAX_PER_PAGE = 5

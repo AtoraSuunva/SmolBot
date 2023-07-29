@@ -8,7 +8,7 @@ import {
   ComponentType,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
-import { MINUTE } from '../../util/constants.js'
+import { MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 

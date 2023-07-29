@@ -8,7 +8,7 @@ import {
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
-import { HOUR } from '../../../util/constants.js'
+import { HOUR } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
 import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
 
