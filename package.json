@@ -37,6 +37,7 @@
     "pino-dev": "^4.0.2",
     "pluralize": "^8.0.0",
     "pretty-ms": "~8.0.0",
+    "rollbar": "^2.26.2",
     "sleetcord": "0.15.2",
     "sleetcord-common": "^1.1.0",
     "undici": "~5.22.1"
