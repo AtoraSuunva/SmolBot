@@ -20,7 +20,7 @@ export type ChannelAuditLog = GuildAuditLogsEntry<
   | AuditLogEvent.ChannelUpdate
 >
 
-export async function logChannelModifed(
+export async function logChannelModified(
   auditLogEntry: ChannelAuditLog,
   { channel, config, guild }: AuditInfo,
 ) {
@@ -37,7 +37,7 @@ export async function logChannelModifed(
 
   // TODO: can we somehow get the parent channel of a deleted channel?
   // *maybe* since we *should* have it in cache? but how to we cache it without storing a whole bunch of extra data?
-  const modifedChannel =
+  const modifiedChannel =
     auditLogEntry.target instanceof BaseChannel ||
     auditLogEntry.action === AuditLogEvent.ChannelDelete
       ? (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel) // If target is a channel or if the channel was deleted, use the target
@@ -50,7 +50,7 @@ export async function logChannelModifed(
     auditLogEntry.executorId,
     guild,
   )
-  const channelText = formatChannel(modifedChannel)
+  const channelText = formatChannel(modifiedChannel)
   const verb = LogVerb[auditLogEntry.action]
   const execUser = executor ? formatUser(executor) : 'Unknown User'
   const message = `${channelText} ${verb} by ${execUser}`
