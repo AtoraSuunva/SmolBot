@@ -2,6 +2,7 @@ import { GatewayIntentBits, Partials } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
 import { modules } from './modules.js'
+import './util/dbLogging.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()

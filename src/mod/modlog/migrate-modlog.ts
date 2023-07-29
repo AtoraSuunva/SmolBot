@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { SleetClient, SleetModule } from 'sleetcord'
 import env from 'env-var'
 import { prisma } from '../../util/db.js'
+import '../../util/dbLogging.js'
 
 const migrate_modlog = new SleetModule(
   {
@@ -132,49 +133,80 @@ const settingsTemplate = [
 }[]
 
 async function runMigrateModlog(client: Client) {
-  const oauthGuilds = await client.guilds.fetch()
+  let lastGuildId = 0n
 
-  for (const oauthGuild of oauthGuilds.values()) {
-    const guild =
-      client.guilds.cache.get(oauthGuild.id) ?? (await oauthGuild.fetch())
-    const channels = await guild.channels.fetch()
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
+  while (true) {
+    const oauthGuilds = await client.guilds.fetch({
+      after: lastGuildId.toString(),
+    })
 
-    for (const channel of channels.values()) {
-      if (
-        !channel ||
-        channel.type === ChannelType.GuildCategory ||
-        !channel.isTextBased() ||
-        channel.isVoiceBased() ||
-        !channel.topic ||
-        channel.topic === ''
-      ) {
-        continue
-      }
+    const guildCount = oauthGuilds.size
+    let doneGuilds = 0
 
-      const lowerTopic = channel.topic.toLowerCase()
-      const lines = lowerTopic.split('\n')
-
-      if (!lines.includes(modlogSentinel)) {
-        continue
-      }
-
+    for (const oauthGuild of oauthGuilds.values()) {
+      doneGuilds++
       logger.info(
-        `Migrating modlog settings for ${oauthGuild.name} (${oauthGuild.id}) from ${channel.name} (${channel.id})`,
+        `(${doneGuilds}/${guildCount}) Checking ${oauthGuild.name} (${oauthGuild.id})`,
       )
-      const settings = parseFromTopic(lines)
 
-      const upsert: Prisma.ModLogConfigCreateInput = {
-        guildID: oauthGuild.id,
-        channelID: channel.id,
-        enabled: true,
-        ...settings,
+      const guild =
+        client.guilds.cache.get(oauthGuild.id) ?? (await oauthGuild.fetch())
+      const channels = await guild.channels.fetch()
+
+      for (const channel of channels.values()) {
+        if (
+          !channel ||
+          channel.type === ChannelType.GuildCategory ||
+          !channel.isTextBased() ||
+          channel.isVoiceBased() ||
+          !channel.topic ||
+          channel.topic === ''
+        ) {
+          continue
+        }
+
+        const lowerTopic = channel.topic.toLowerCase()
+        const lines = lowerTopic.split('\n')
+
+        if (!lines.includes(modlogSentinel)) {
+          continue
+        }
+
+        logger.info(
+          `Migrating modlog settings for ${oauthGuild.name} (${oauthGuild.id}) from ${channel.name} (${channel.id})`,
+        )
+        const settings = parseFromTopic(lines)
+
+        logger.info(`Settings: ${JSON.stringify(settings)}`)
+
+        const upsert: Prisma.ModLogConfigCreateInput = {
+          guildID: oauthGuild.id,
+          channelID: channel.id,
+          enabled: true,
+          ...settings,
+        }
+
+        await prisma.modLogConfig.upsert({
+          where: { guildID: oauthGuild.id },
+          create: upsert,
+          update: upsert,
+        })
+
+        logger.info(`Migration for ${oauthGuild.id} completed successfully`)
+
+        const id = BigInt(oauthGuild.id)
+
+        if (id > lastGuildId) {
+          lastGuildId = id
+        }
+
+        break
       }
+    }
 
-      await prisma.modLogConfig.upsert({
-        where: { guildID: oauthGuild.id },
-        create: upsert,
-        update: upsert,
-      })
+    if (guildCount < 200) {
+      break
     }
   }
 
@@ -216,8 +248,6 @@ function parseFromTopic(topic: string[]): ModlogParse {
       }
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {})
-
-  logger.info(`Settings: ${JSON.stringify(settings)}`)
 
   return settings as ModlogParse
 }
