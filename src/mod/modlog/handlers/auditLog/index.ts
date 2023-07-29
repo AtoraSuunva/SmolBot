@@ -7,7 +7,7 @@ import {
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
 import { getValidatedConfigFor } from '../../utils.js'
-import { ChannelAuditLog, logChannelModifed } from './channelModify.js'
+import { ChannelAuditLog, logChannelModified } from './channelModify.js'
 import { ModLogConfig } from '@prisma/client'
 import { BanAuditLog, logMemberBanKick } from './memberBanKick.js'
 
@@ -40,7 +40,7 @@ async function guildAuditLogEntryCreate(
     case AuditLogEvent.ChannelCreate:
     case AuditLogEvent.ChannelDelete:
     case AuditLogEvent.ChannelUpdate:
-      await logChannelModifed(auditLogEntry as ChannelAuditLog, auditInfo)
+      await logChannelModified(auditLogEntry as ChannelAuditLog, auditInfo)
       break
 
     case AuditLogEvent.MemberBanAdd:
