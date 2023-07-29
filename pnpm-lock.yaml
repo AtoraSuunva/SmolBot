@@ -50,6 +50,9 @@ dependencies:
   pretty-ms:
     specifier: ~8.0.0
     version: 8.0.0
+  rollbar:
+    specifier: ^2.26.2
+    version: 2.26.2
   sleetcord:
     specifier: 0.15.2
     version: 0.15.2
