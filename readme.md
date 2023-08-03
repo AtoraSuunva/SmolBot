@@ -28,6 +28,7 @@ APPLICATION_ID=<discord application id>
 USE_PINO_PRETTY=true # or false for default pino logs
 DATABASE_URL="file:./db/dev.db" # or anywhere else you want an sqlite db to be
 ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the activities you want the bot to show
+ROLLBAR_ACCESS_TOKEN=<access token> # A rollbar access token, if wanted
 ```
 
 ### Running
