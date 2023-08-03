@@ -1,4 +1,4 @@
-import { GatewayIntentBits, Partials } from 'discord.js'
+import { GatewayIntentBits, Partials, RESTOptions } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
 import { modules } from './modules.js'
@@ -13,6 +13,11 @@ const sleetClient = new SleetClient({
     applicationId: APPLICATION_ID,
   },
   client: {
+    rest: {
+      // I hate types sometimes, the native fetch works, but then plays bad with everything else
+      // that involves streams
+      makeRequest: fetch as unknown as RESTOptions['makeRequest'],
+    },
     intents: [
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessageReactions,

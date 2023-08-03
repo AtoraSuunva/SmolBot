@@ -17,7 +17,7 @@ import {
 interface MemberMatch {
   name: string
   value: string
-  username: string
+  formatted: string
   nickname: string | null
   id: string
 }
@@ -76,7 +76,7 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
 }
 
 function tableFormat(members: MemberMatch[]) {
-  const longestName = Math.max(...members.map((m) => m.username.length))
+  const longestName = Math.max(...members.map((m) => m.formatted.length))
   const longestId = Math.max(...members.map((m) => m.id.length))
 
   const header = `| ${'Username'.padEnd(longestName, ' ')} | ${'ID'.padEnd(
@@ -89,7 +89,8 @@ function tableFormat(members: MemberMatch[]) {
 
   const rows = members.map((m) => {
     // +1 for the bidirectional marker character thing
-    const name = m.username.padEnd(longestName + 1, ' ')
+    const bidiCount = (m.formatted.match(/\u200e/g) ?? []).length
+    const name = m.formatted.padEnd(longestName + bidiCount, ' ')
     const id = m.id.padEnd(longestId, ' ')
     return `| ${name} | ${id} | ${m.nickname ?? ''}`
   })
@@ -129,11 +130,15 @@ async function matchMembers(
   const matches: GuildMember[] = []
 
   for (const m of members.values()) {
-    if (tryExactMatch && m.user.tag === query) {
+    if (
+      tryExactMatch &&
+      (m.user.globalName === query || m.user.tag === query)
+    ) {
       return [formatSuggestion(m)]
     }
 
     if (
+      !!m.user.globalName?.toLowerCase().includes(lowerValue) ||
       m.user.tag.toLowerCase().includes(lowerValue) ||
       m.nickname?.toLowerCase().includes(lowerValue)
     ) {
@@ -144,7 +149,7 @@ async function matchMembers(
 
   return matches
     .map(formatSuggestion)
-    .sort((a, b) => a.username.localeCompare(b.username))
+    .sort((a, b) => a.formatted.localeCompare(b.formatted))
 }
 
 function formatSuggestion(m: GuildMember): MemberMatch {
@@ -156,8 +161,8 @@ function formatSuggestion(m: GuildMember): MemberMatch {
 
   return {
     name: `${formattedUser}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
-    value: m.user.tag,
-    username: formattedUser,
+    value: m.user.globalName ?? m.user.tag,
+    formatted: formattedUser,
     nickname: m.nickname,
     id: m.user.id,
   }

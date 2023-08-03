@@ -50,9 +50,9 @@ export function hashEmbeds(message: Message): Promise<string[]> {
         return hashStream(response.body)
       }),
     )
-      .then((attachmentHashes) =>
-        resolve([...embedHashes, ...attachmentHashes]),
-      )
+      .then((attachmentHashes) => {
+        resolve([...embedHashes, ...attachmentHashes])
+      })
       .catch(reject)
   })
 

@@ -1,4 +1,4 @@
-import { codeBlock, Guild } from 'discord.js'
+import { codeBlock, escapeCodeBlock, Guild } from 'discord.js'
 import pluralize from 'pluralize'
 
 type Values = string | number | boolean | Date | null | undefined
@@ -90,4 +90,38 @@ export function plural(
     str,
     count,
   )}`
+}
+
+/**
+ * Formats an array of objects as a table, using the keys of the first object as the columns
+ * @param data An array of objects you want to format as a table
+ * @returns A string formatted as a (markdown) table
+ */
+export function formatAsTable<T extends object>(data: T[]): string {
+  if (data.length === 0) {
+    return 'No data'
+  }
+
+  const columns = Object.keys(data[0]) as (keyof T)[]
+  const longestColumnData = columns.map((c) =>
+    Math.max(String(c).length, ...data.map((d) => String(d[c]).length)),
+  )
+
+  const header = `| ${columns
+    .map((c, i) => String(c).padEnd(longestColumnData[i], ' '))
+    .join(' | ')}`
+
+  const separator = `| ${longestColumnData
+    .map((l) => '-'.repeat(l))
+    .join(' | ')}`
+
+  const rows = data.map((d) => {
+    return `| ${columns
+      .map((c, i) => String(d[c]).padEnd(longestColumnData[i], ' '))
+      .join(' | ')}`
+  })
+
+  return codeBlock(
+    escapeCodeBlock(`${header}\n${separator}\n${rows.join('\n')}`),
+  )
 }
