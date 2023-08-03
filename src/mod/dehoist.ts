@@ -173,7 +173,8 @@ async function dehoistMembers(
 
     try {
       if (!member.manageable) continue
-      await member.setNickname(dehoistPrepend + member.displayName, 'Dehoist')
+      const newNick = (dehoistPrepend + member.displayName).substring(0, 32)
+      await member.setNickname(newNick, 'Dehoist')
       dehoisted++
     } catch {
       failed++
