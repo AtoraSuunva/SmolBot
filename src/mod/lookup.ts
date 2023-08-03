@@ -291,14 +291,7 @@ async function sendUserLookup(
 
   const rawUser =
     '``' +
-    escapeInlineCode(
-      formatUser(user, {
-        markdown: false,
-        id: false,
-        bidirectional: false,
-        escape: false,
-      }),
-    ) +
+    escapeInlineCode(user.discriminator === '0' ? user.username : user.tag) +
     '``'
   const badges = getUserBadgeEmojis(user)
   const formattedBadges =
@@ -306,16 +299,21 @@ async function sendUserLookup(
 
   const components: ActionRowBuilder<ButtonBuilder>[] = []
   const embed = new EmbedBuilder()
-    .setTitle(formatUser(user, { id: false, markdown: false, escape: false }))
+    .setTitle(
+      user.discriminator === '0'
+        ? user.username
+        : formatUser(user, { id: false, markdown: false, escape: false }),
+      // Use format user to add in the bidi control characters before the #
+    )
     .setThumbnail(user.displayAvatarURL({ size: 4096 }))
     .setDescription(
-      `**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
+      `${user}\n**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
     )
     .addFields([{ name: 'Created at:', value: formatDate(user.createdAt) }])
 
-  if (user.discriminator === '0') {
+  if (user.globalName) {
     embed.setAuthor({
-      name: '<Global User in the future>',
+      name: user.globalName,
     })
   }
 
