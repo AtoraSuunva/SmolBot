@@ -1,9 +1,6 @@
 import { Message, EmbedBuilder, MessageType, hyperlink } from 'discord.js'
 import { formatUser } from 'sleetcord'
 
-// TODO: "X followed <server #channel>" messages only have channel ID, not guild ID. how to link?
-// TODO: Show attachments (as links? as just count?)
-
 /** Number of lines before quote content becomes cut */
 const MAX_QUOTE_LINES = 10
 /** Number of characters before replied message content becomes cut */
@@ -168,7 +165,7 @@ function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
   }
 
   embed.setDescription(
-    `${message.author} has added ${followLink} to this channel.`,
+    `${message.author} has added ${followLink} to this channel. Its most important updates will show up here.`,
   )
 }
 
