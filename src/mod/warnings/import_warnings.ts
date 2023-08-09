@@ -7,7 +7,7 @@ import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { parse } from 'csv-parse'
 import { Readable } from 'stream'
 import { fetch } from 'undici'
-import { Prisma, Warning } from '@prisma/client'
+import { Prisma, PrismaPromise, Warning } from '@prisma/client'
 import {
   s,
   Result,
@@ -82,8 +82,8 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
 
   const parseStream = Readable.fromWeb(response.body).pipe(parser)
 
-  const rows: Prisma.WarningCreateInput[] = []
-  let created = 0
+  const creates: PrismaPromise<unknown>[] = []
+  let count = 0
 
   for await (const record of parseStream) {
     const validated = warningCreateValidator.run(record)
@@ -99,8 +99,6 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
       )
       return
     } else if (validated.isOk()) {
-      rows.push(validated.value)
-
       if (validated.value.guildID !== guild.id) {
         // This *SHOULDN'T* happen, but just in case because this would be REALLY bad
         await defer
@@ -113,22 +111,16 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
         return
       }
 
-      // TODO: this sucks use createMany instead when I use postgres (aka I can be bothered to set it up in docker)
-      try {
-        await prisma.warning.create({
-          data: validated.value,
-        })
-        created++
-      } catch (e) {
-        // assume it's just a conflict lol (please just be a conflict)
-      }
+      creates.push(prisma.warning.create({
+        data: validated.value,
+      }))
+      count++
     }
   }
 
-  // TODO: when I finally migrate to postgres, use `await prisma.warning.createMany`
-
+  await prisma.$transaction(creates)
   await defer
-  await interaction.editReply(`Imported warnings (${created} added)`)
+  await interaction.editReply(`Imported warnings (${count.toLocaleString()} added)`)
 }
 
 const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
@@ -145,7 +137,7 @@ const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
     modNote: s.string.lengthLessThan(256).nullable,
     createdAt: s.string.reshape(reshapeToDate),
     validUntil: s.string.reshape(reshapeToDate).nullable,
-  })
+  }).strict
 
 function reshapeToNumber(value: string): Result<number> {
   const parsed = parseInt(value, 10)
