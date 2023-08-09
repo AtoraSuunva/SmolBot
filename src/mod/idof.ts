@@ -105,7 +105,6 @@ async function fetchMembers(guild: Guild) {
     return guild.members.cache
   }
 
-  // TODO: cache invalidation strategy? if joins/leaves not accounted for
   return guild.members.fetch()
 }
 

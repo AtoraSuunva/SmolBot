@@ -121,7 +121,7 @@ export async function updateWarning(
   guildID: string,
   newWarning: Warning,
 ): Promise<Warning> {
-  // Transaction since we shouldn't be abble to mark the old warning as expired while erroring on the new warning
+  // Transaction since we shouldn't be able to mark the old warning as expired while erroring on the new warning
   return await prisma.$transaction(async (tx) => {
     // Mark the old warning as having expired just now
     await tx.warning.updateMany({
