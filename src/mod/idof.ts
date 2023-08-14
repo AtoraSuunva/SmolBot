@@ -13,11 +13,13 @@ import {
   getGuild,
   SleetSlashCommand,
 } from 'sleetcord'
+import { tableFormat } from '../util/format.js'
 
 interface MemberMatch {
   name: string
   value: string
-  formatted: string
+  globalName: string | null
+  username: string
   nickname: string | null
   id: string
 }
@@ -68,35 +70,27 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
     return interaction.reply(matches[0].id)
   } else {
     return interaction.reply(
-      `Multiple users found matching "${escapeMarkdown(user)}":\n${tableFormat(
+      `Multiple users found matching "${escapeMarkdown(user)}":\n${resultFormat(
         matches,
       )}`,
     )
   }
 }
 
-function tableFormat(members: MemberMatch[]) {
-  const longestName = Math.max(...members.map((m) => m.formatted.length))
-  const longestId = Math.max(...members.map((m) => m.id.length))
-
-  const header = `| ${'Username'.padEnd(longestName, ' ')} | ${'ID'.padEnd(
-    longestId,
-    ' ',
-  )} | Nickname `
-  const separator = `| ${'-'.repeat(longestName)} | ${'-'.repeat(
-    longestId,
-  )} | ${'-'.repeat(8)} `
-
-  const rows = members.map((m) => {
-    // +1 for the bidirectional marker character thing
-    const bidiCount = (m.formatted.match(/\u200e/g) ?? []).length
-    const name = m.formatted.padEnd(longestName + bidiCount, ' ')
-    const id = m.id.padEnd(longestId, ' ')
-    return `| ${name} | ${id} | ${m.nickname ?? ''}`
-  })
-
+function resultFormat(data: MemberMatch[]): string {
   return codeBlock(
-    escapeCodeBlock(`${header}\n${separator}\n${rows.join('\n')}`),
+    escapeCodeBlock(
+      tableFormat(data, {
+        keys: ['username', 'globalName', 'id', 'nickname'],
+        columnsNames: {
+          username: 'Username',
+          globalName: 'Global Name',
+          id: 'ID',
+          nickname: 'Nickname',
+        },
+        showNullish: false,
+      }),
+    ),
   )
 }
 
@@ -148,7 +142,7 @@ async function matchMembers(
 
   return matches
     .map(formatSuggestion)
-    .sort((a, b) => a.formatted.localeCompare(b.formatted))
+    .sort((a, b) => a.username.localeCompare(b.username))
 }
 
 function formatSuggestion(m: GuildMember): MemberMatch {
@@ -161,7 +155,8 @@ function formatSuggestion(m: GuildMember): MemberMatch {
   return {
     name: `${formattedUser}${m.nickname ? ` (Nickname: ${m.nickname})` : ''}`,
     value: m.user.globalName ?? m.user.tag,
-    formatted: formattedUser,
+    globalName: m.user.globalName,
+    username: m.user.tag,
     nickname: m.nickname,
     id: m.user.id,
   }
