@@ -64,10 +64,10 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
 
   if (options.length > MAX_OPTIONS) {
     await interaction.reply(
-      `You can't give me more than ${MAX_OPTIONS} options! You gave ${plural(
+      `You can't give me more than ${plural(
         'option',
-        options.length,
-      )}.`,
+        MAX_OPTIONS,
+      )}! You gave ${plural('option', options.length)}.`,
     )
     return
   }

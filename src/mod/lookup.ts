@@ -29,6 +29,7 @@ import {
 import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 import prettyMilliseconds from 'pretty-ms'
+import { plural } from '../util/format.js'
 
 export const lookup = new SleetSlashCommand(
   {
@@ -683,7 +684,7 @@ async function sendGuildWidgetLookup(
       },
       {
         name: 'Channels:',
-        value: `${widget.channels.size} channels`,
+        value: plural('channel', widget.channels.size),
         inline: true,
       },
       {

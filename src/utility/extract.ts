@@ -9,6 +9,7 @@ import {
 import { fetch } from 'undici'
 import { SleetSlashCommand } from 'sleetcord'
 import { setTimeout } from 'timers/promises'
+import { plural } from '../util/format.js'
 
 export const extract = new SleetSlashCommand(
   {
@@ -90,12 +91,15 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
     if (text.length > limit) {
       return interaction.reply({
         ephemeral: true,
-        content: `The text is too long to extract (${text.length} characters of ${limit} max)`,
+        content: `The text is too long to extract (${plural(
+          'character',
+          text.length,
+        )} of **${limit}** max)`,
       })
     }
 
     await interaction.reply(
-      `Extracting ${text.length} characters from <${extractFrom}>`,
+      `Extracting ${plural('character', text.length)} from <${extractFrom}>`,
     )
     await splitSend(interaction.channel, text, { code: true })
   } catch (e) {

@@ -8,6 +8,7 @@ import {
 import { SleetSlashSubcommand, getGuild, getRoles, getUsers } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Prisma } from '@prisma/client'
+import { plural } from '../../util/format.js'
 
 export const mark_joined = new SleetSlashSubcommand(
   {
@@ -117,7 +118,7 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
     await defer
 
     await interaction.editReply({
-      content: `Would mark ${toEditLength.toLocaleString()} users as ${
+      content: `Would mark ${plural('user', toEditLength)} as ${
         remove ? 'never having joined' : 'having joined'
       }.`,
       files,
@@ -176,7 +177,10 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
       if (chunk !== chunkCount) {
         await defer
         await interaction.editReply({
-          content: `Marking ${toEditLength.toLocaleString()} users as having joined... (${completed.toLocaleString()}/${toEditLength.toLocaleString()})`,
+          content: `Marking ${plural(
+            'user',
+            toEditLength,
+          )} as having joined... (${completed.toLocaleString()}/${toEditLength.toLocaleString()})`,
         })
       }
     }
@@ -184,7 +188,7 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
 
   await defer
   await interaction.editReply({
-    content: `Marked ${toEditLength.toLocaleString()} users as ${
+    content: `Marked ${plural('user', toEditLength)} as ${
       remove ? 'never having joined' : 'having joined'
     }.`,
     files,

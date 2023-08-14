@@ -36,7 +36,7 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
 
   if (count > MAX_COINS) {
     await interaction.reply(
-      `I can't flip more than ${MAX_COINS} coins at once!`,
+      `I can't flip more than ${plural('coin', MAX_COINS)} at once!`,
     )
     return
   }
