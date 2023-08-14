@@ -1,4 +1,4 @@
-import { codeBlock, escapeCodeBlock, Guild } from 'discord.js'
+import { codeBlock, Guild } from 'discord.js'
 import pluralize from 'pluralize'
 
 type Values = string | number | boolean | Date | null | undefined
@@ -92,36 +92,60 @@ export function plural(
   )}`
 }
 
+export interface TableFormatOptions<T> {
+  /** The keys to show, by default all keys of the first object */
+  keys?: (keyof T)[]
+  /** Map column names (taken from keys) to something else, usually `keyName` => `Key Name` */
+  columnsNames?: Partial<Record<keyof T, string>>
+  /** Whether to show "nullish" (null | undefined) values as-is or as empty cells, default true (show as-is) */
+  showNullish?: boolean
+}
+
 /**
- * Formats an array of objects as a table, using the keys of the first object as the columns
- * @param data An array of objects you want to format as a table
- * @returns A string formatted as a (markdown) table
+ * Format an array of objects as a markdown table, with the keys (configurable) as the columns
+ * and with appropriate padding
+ * @param data The data to format
+ * @param options Options for formatting
+ * @returns A formatted table, as a string
  */
-export function formatAsTable<T extends object>(data: T[]): string {
-  if (data.length === 0) {
-    return 'No data'
+export function tableFormat<T extends object>(
+  data: T[],
+  options?: TableFormatOptions<T>,
+): string {
+  const keys = options?.keys ?? (Object.keys(data[0]) as (keyof T)[])
+  const columnNames =
+    options?.columnsNames ?? ({} as Record<keyof T, string | undefined>)
+  const showNullish = options?.showNullish ?? true
+
+  const header: string[] = []
+  const separator: string[] = []
+  const rows: string[] = []
+
+  for (const key of keys) {
+    const name: string = columnNames[key] ?? String(key)
+    const longest = Math.max(
+      name.length,
+      ...data.map((d) => String(d[key]).length),
+    )
+    header.push(name.padEnd(longest, ' '))
+    separator.push('-'.repeat(longest))
   }
 
-  const columns = Object.keys(data[0]) as (keyof T)[]
-  const longestColumnData = columns.map((c) =>
-    Math.max(String(c).length, ...data.map((d) => String(d[c]).length)),
-  )
+  for (const d of data) {
+    rows.push(
+      keys
+        .map((k) => {
+          let r: string | null | undefined = d[k]
 
-  const header = `| ${columns
-    .map((c, i) => String(c).padEnd(longestColumnData[i], ' '))
-    .join(' | ')}`
+          if (!showNullish && (r === null || r === undefined)) {
+            r = ''
+          }
 
-  const separator = `| ${longestColumnData
-    .map((l) => '-'.repeat(l))
-    .join(' | ')}`
+          return String(r).padEnd(header[keys.indexOf(k)].length, ' ')
+        })
+        .join(' | '),
+    )
+  }
 
-  const rows = data.map((d) => {
-    return `| ${columns
-      .map((c, i) => String(d[c]).padEnd(longestColumnData[i], ' '))
-      .join(' | ')}`
-  })
-
-  return codeBlock(
-    escapeCodeBlock(`${header}\n${separator}\n${rows.join('\n')}`),
-  )
+  return `${header.join(' | ')}\n${separator.join(' | ')}\n${rows.join('\n')}`
 }
