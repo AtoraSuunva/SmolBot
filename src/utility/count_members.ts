@@ -1,12 +1,28 @@
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  Collection,
+  GuildMember,
   escapeMarkdown,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'
+
+const checkChoices = makeChoices([
+  'username',
+  'nickname',
+  'global name',
+  'display name',
+  'any name',
+])
+type CheckChoice = (typeof checkChoices)[number]['value']
+
+const intlList = new Intl.ListFormat('en', {
+  style: 'long',
+  type: 'disjunction',
+})
 
 export const count_members = new SleetSlashCommand(
   {
@@ -19,6 +35,24 @@ export const count_members = new SleetSlashCommand(
         description: "Count members who's name contains this string",
         type: ApplicationCommandOptionType.String,
       },
+      {
+        name: 'name_equals',
+        description: "Count members who's name is this exact string",
+        type: ApplicationCommandOptionType.String,
+      },
+      {
+        name: 'only_check',
+        description:
+          "Only check this part of a user's name (default: any name)",
+        type: ApplicationCommandOptionType.String,
+        choices: checkChoices,
+      },
+      {
+        name: 'case_sensitive',
+        description:
+          'Whether to check the name case sensitively (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
     ],
   },
   {
@@ -29,8 +63,15 @@ export const count_members = new SleetSlashCommand(
 async function runCountMembers(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   const nameContains = interaction.options.getString('name_contains')
+  const nameEquals = interaction.options.getString('name_equals')
+  const onlyCheck: CheckChoice =
+    (interaction.options.getString('only_check') as CheckChoice | null) ??
+    'any name'
+  const caseSensitive =
+    interaction.options.getBoolean('case_sensitive') ?? false
 
-  if (!nameContains) {
+  // No filtering required
+  if (!nameContains && !nameEquals) {
     const count = guild.memberCount
     return interaction.reply(
       `There ${plural('is', count, { includeCount: false })} ${plural(
@@ -53,14 +94,83 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
     )
   }
 
-  const nameContainsLower = nameContains.toLowerCase()
-  const count = members.filter((member) =>
-    member.user.username.toLowerCase().includes(nameContainsLower),
-  ).size
+  let count = 0
+  const checks: string[] = []
+  const getName = getMemberNameForCheckChoice(onlyCheck)
+  const choiceDisplay = displayChoice(onlyCheck)
+  const sensitivity = caseSensitive ? '' : ' (case insensitive)'
+
+  if (nameContains) {
+    const toCheck = caseSensitive ? nameContains : nameContains.toLowerCase()
+    count += countMembersMatching(members, getName, caseSensitive, (name) =>
+      name.includes(toCheck),
+    )
+    checks.push(`**"${escapeMarkdown(nameContains)}"**${sensitivity} in their ${choiceDisplay}`)
+  }
+
+  if (nameEquals) {
+    const toCheck = caseSensitive ? nameEquals : nameEquals.toLowerCase()
+    count += countMembersMatching(
+      members,
+      getName,
+      caseSensitive,
+      (name) => name === toCheck,
+    )
+    checks.push(`**"${escapeMarkdown(nameEquals)}"**${sensitivity} as their ${choiceDisplay}`)
+  }
 
   return interaction.editReply(
     `${plural('member', count)} ${plural('has', count, {
       includeCount: false,
-    })} **"${escapeMarkdown(nameContains)}"** in their name.`,
+    })} ${intlList.format(checks)}.`,
   )
+}
+
+type MemberNameGetter = (member: GuildMember) => string[]
+type MemberNameFilter = (memberName: string) => boolean
+
+function countMembersMatching(
+  members: Collection<string, GuildMember>,
+  getName: MemberNameGetter,
+  caseSensitive: boolean,
+  filter: MemberNameFilter,
+): number {
+  return members.filter((m) =>
+    getName(m).some((name) =>
+      filter(caseSensitive ? name : name.toLowerCase()),
+    ),
+  ).size
+}
+
+function getMemberNameForCheckChoice(choice: CheckChoice): MemberNameGetter {
+  switch (choice) {
+    case 'username':
+      return (member) => [member.user.username]
+
+    case 'nickname':
+      return (member) => (member.nickname ? [member.nickname] : [])
+
+    case 'display name':
+      return (member) => [member.user.displayName]
+
+    case 'global name':
+      return (member) => (member.user.globalName ? [member.user.globalName] : [])
+
+    case 'any name':
+      return (member) => [
+        ...(member.nickname ? [member.nickname] : []),
+        ...(member.user.globalName ? [member.user.globalName] : []),
+        member.user.username,
+      ]
+  }
+}
+
+function displayChoice(choice: CheckChoice): string {
+  switch (choice) {
+    case 'any name':
+      return 'nickname, global name, or username'
+
+    default:
+      return choice
+  }
 }
