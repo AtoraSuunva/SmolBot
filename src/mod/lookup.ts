@@ -835,7 +835,7 @@ function trimToLast(string: string, substring: string): string {
   if (index === -1) {
     return string
   }
-  return string.substring(0, index)
+  return `${string.substring(0, index)}...`
 }
 
 /**
