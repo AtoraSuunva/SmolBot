@@ -98,8 +98,7 @@ function getAllOptions(
  * @returns The number of options specified
  */
 function getOptionCount(interaction: CommandInteraction): number {
-  const allOptions = getAllOptions(interaction.options.data)
-  return allOptions.length
+  return getAllOptions(interaction.options.data).length
 }
 
 const unicodeEmojiRegex = /\p{RGI_Emoji}/gv
