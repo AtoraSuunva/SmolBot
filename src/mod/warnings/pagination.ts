@@ -17,6 +17,7 @@ import {
   MAX_PER_PAGE,
   PaginatedWarnings,
 } from './utils.js'
+import { plural } from '../../util/format.js'
 
 export type WarningFetcher = (
   guildID: string,
@@ -44,7 +45,10 @@ function defaultFormatAuthor(): EmbedAuthorOptions | null {
 }
 
 function defaultFormatTitle(result: PaginatedWarnings): string | null {
-  return `${result.counts.total} warnings, ${result.counts.expired} expired`
+  const exp = result.counts.expired
+  return `${plural('warning', result.counts.total)}${
+    exp > 0 ? `, ${exp} expired` : ''
+  }`
 }
 
 function defaultFormatDescription(): string | null {

@@ -17,6 +17,7 @@ import {
   CombinedPropertyError,
 } from '@sapphire/shapeshift'
 import { prisma } from '../../util/db.js'
+import { plural } from '../../util/format.js'
 
 // Separate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
 export const importWarnings = new SleetSlashCommand(
@@ -111,16 +112,18 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
         return
       }
 
-      creates.push(prisma.warning.create({
-        data: validated.value,
-      }))
+      creates.push(
+        prisma.warning.create({
+          data: validated.value,
+        }),
+      )
       count++
     }
   }
 
   await prisma.$transaction(creates)
   await defer
-  await interaction.editReply(`Imported warnings (${count.toLocaleString()} added)`)
+  await interaction.editReply(`Imported ${plural('warning', count)}`)
 }
 
 const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =

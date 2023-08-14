@@ -105,7 +105,11 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
     count += countMembersMatching(members, getName, caseSensitive, (name) =>
       name.includes(toCheck),
     )
-    checks.push(`**"${escapeMarkdown(nameContains)}"**${sensitivity} in their ${choiceDisplay}`)
+    checks.push(
+      `**"${escapeMarkdown(
+        nameContains,
+      )}"**${sensitivity} in their ${choiceDisplay}`,
+    )
   }
 
   if (nameEquals) {
@@ -116,7 +120,11 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
       caseSensitive,
       (name) => name === toCheck,
     )
-    checks.push(`**"${escapeMarkdown(nameEquals)}"**${sensitivity} as their ${choiceDisplay}`)
+    checks.push(
+      `**"${escapeMarkdown(
+        nameEquals,
+      )}"**${sensitivity} as their ${choiceDisplay}`,
+    )
   }
 
   return interaction.editReply(
@@ -154,7 +162,8 @@ function getMemberNameForCheckChoice(choice: CheckChoice): MemberNameGetter {
       return (member) => [member.user.displayName]
 
     case 'global name':
-      return (member) => (member.user.globalName ? [member.user.globalName] : [])
+      return (member) =>
+        member.user.globalName ? [member.user.globalName] : []
 
     case 'any name':
       return (member) => [

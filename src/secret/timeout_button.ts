@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+import { plural } from '../util/format.js'
 
 export const timeout_button = new SleetSlashCommand(
   {
@@ -45,7 +46,7 @@ function runTimeoutButton(interaction: ChatInputCommandInteraction) {
   const timeoutButton = new ButtonBuilder()
     .setStyle(ButtonStyle.Danger)
     .setCustomId(`timeout_button:${time}`)
-    .setLabel(`Timeout for ${time} seconds`)
+    .setLabel(`Timeout for ${plural('second', time, { boldNumber: false })}`)
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(timeoutButton)
 
@@ -68,7 +69,7 @@ async function handleInteractionCreate(interaction: Interaction) {
         await member.timeout(time * SECOND, 'Timeout Button [funny]')
 
         await interaction.reply({
-          content: `You have been timed out for ${time} seconds`,
+          content: `You have been timed out for ${plural('second', time)}`,
           ephemeral: true,
         })
       } catch {

@@ -11,6 +11,7 @@ import {
 } from 'discord.js'
 import { basename } from 'node:path'
 import { editStore } from '../../unedit.js'
+import { plural } from '../../../util/format.js'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -103,7 +104,7 @@ async function messageDelete(message: Message | PartialMessage) {
     `(${message.id}) from ${formatUser(message.author)} in ${message.channel}` +
     (executor ? ` by ${formatUser(executor)}` : '') +
     (reason ? ` for "${reason}"` : '') +
-    (editsLog.length > 1 ? `, **${editsLog.length}** revisions` : '') +
+    (editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : '') +
     '\n' +
     (attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
