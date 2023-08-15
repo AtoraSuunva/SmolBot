@@ -60,16 +60,17 @@ export const idof = new SleetSlashCommand(
 )
 
 async function runIdof(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply()
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
   const matches = await matchMembers(guild, user, true)
 
   if (matches.length === 0) {
-    return interaction.reply(`No users found matching "${user}"`)
+    return interaction.editReply(`No users found matching "${user}"`)
   } else if (matches.length === 1) {
-    return interaction.reply(matches[0].id)
+    return interaction.editReply(matches[0].id)
   } else {
-    return interaction.reply(
+    return interaction.editReply(
       `Multiple users found matching "${escapeMarkdown(user)}":\n${resultFormat(
         matches,
       )}`,
