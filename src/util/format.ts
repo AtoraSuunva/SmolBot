@@ -99,6 +99,8 @@ export interface TableFormatOptions<T> {
   columnsNames?: Partial<Record<keyof T, string>>
   /** Whether to show "nullish" (null | undefined) values as-is or as empty cells, default true (show as-is) */
   showNullish?: boolean
+  /** Truncate the table if it would go over this amount of characters (extra rows are dropped) */
+  characterLimit?: number
 }
 
 /**
@@ -116,6 +118,8 @@ export function tableFormat<T extends object>(
   const columnNames =
     options?.columnsNames ?? ({} as Record<keyof T, string | undefined>)
   const showNullish = options?.showNullish ?? true
+  const characterLimit = options?.characterLimit ?? Infinity
+  let currentLength = 0
 
   const header: string[] = []
   const separator: string[] = []
@@ -131,21 +135,32 @@ export function tableFormat<T extends object>(
     separator.push('-'.repeat(longest))
   }
 
+  const joinedHeader = header.join(' | ')
+  currentLength += joinedHeader.length + 1 // +1 for the newline
+  const joinedSeparator = separator.join(' | ')
+  currentLength += joinedSeparator.length + 1 // +1 for the newline
+
   for (const d of data) {
-    rows.push(
-      keys
-        .map((k) => {
-          let r: string | null | undefined = d[k]
+    const newRow = keys
+      .map((k) => {
+        let r: string | null | undefined = d[k]
 
-          if (!showNullish && (r === null || r === undefined)) {
-            r = ''
-          }
+        if (!showNullish && (r === null || r === undefined)) {
+          r = ''
+        }
 
-          return String(r).padEnd(header[keys.indexOf(k)].length, ' ')
-        })
-        .join(' | '),
-    )
+        return String(r).padEnd(header[keys.indexOf(k)].length, ' ')
+      })
+      .join(' | ')
+
+    currentLength += newRow.length + 1 // +1 for the newline
+    if (currentLength > characterLimit) break
+
+    rows.push(newRow)
   }
 
-  return `${header.join(' | ')}\n${separator.join(' | ')}\n${rows.join('\n')}`
+  return `${joinedHeader}\n${joinedSeparator}\n${rows.join('\n')}`.substring(
+    0,
+    characterLimit,
+  )
 }

@@ -90,6 +90,7 @@ function resultFormat(data: MemberMatch[]): string {
           nickname: 'Nickname',
         },
         showNullish: false,
+        characterLimit: 1900,
       }),
     ),
   )
