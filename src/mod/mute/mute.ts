@@ -268,9 +268,14 @@ async function runMute(
 
   if (config.logChannelID) {
     const logChannel = guild.channels.cache.get(config.logChannelID)
+
     if (logChannel?.isTextBased()) {
+      const byLine = `By ${formatUser(interactionMember)} in ${
+        interaction.channel
+      }`
+
       await logChannel.send({
-        content,
+        content: `${content}\n${byLine}`,
         allowedMentions: { parse: [] },
       })
     }
