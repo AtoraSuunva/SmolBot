@@ -9,8 +9,8 @@ import {
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
-import { notNullish } from '../../../util/format.js'
 import { messageToLog } from './messageDelete.js'
+import { notNullish } from 'sleetcord-common'
 
 export const logMessageDeleteBulk = new SleetModule(
   {

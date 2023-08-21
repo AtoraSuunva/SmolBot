@@ -16,13 +16,13 @@ export const view = new SleetSlashSubcommand(
 async function handleView(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
-  const settings = await prisma.modLogConfig.findFirst({
+  const config = await prisma.modLogConfig.findFirst({
     where: {
       guildID: guild.id,
     },
   })
 
-  if (!settings) {
+  if (!config) {
     await interaction.reply({
       content: 'No modlog settings found',
       ephemeral: true,
@@ -30,8 +30,8 @@ async function handleView(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  const formattedSettings = formatConfig(guild, settings)
+  const formattedConfig = formatConfig({ config, guild })
   await interaction.reply({
-    content: formattedSettings,
+    content: formattedConfig,
   })
 }

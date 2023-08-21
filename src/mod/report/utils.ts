@@ -24,7 +24,7 @@ import {
   codeBlock,
   hyperlink,
 } from 'discord.js'
-import { MINUTE } from 'sleetcord-common'
+import { MINUTE, notNullish } from 'sleetcord-common'
 import { formatUser, getGuild } from 'sleetcord'
 
 const REPORT = 'report'
@@ -482,12 +482,16 @@ function changeBlockButtonTo(
 
   return from.map((row) =>
     new ActionRowBuilder<ButtonBuilder>().addComponents(
-      row.components.map((component) =>
-        component.customId?.endsWith(oldCommand) &&
-        component.type === ComponentType.Button
-          ? newButton
-          : new ButtonBuilder(component.data),
-      ),
+      row.components
+        .map((component) =>
+          component.customId?.endsWith(oldCommand) &&
+          component.type === ComponentType.Button
+            ? newButton
+            : component.data.type === ComponentType.Button
+            ? new ButtonBuilder(component.data)
+            : null,
+        )
+        .filter(notNullish),
     ),
   )
 }

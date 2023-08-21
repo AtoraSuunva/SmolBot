@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   CommandInteraction,
+  Guild,
   GuildMember,
   Role,
   UserContextMenuCommandInteraction,
@@ -15,6 +16,8 @@ import {
   SleetSlashCommand,
   SleetUserCommand,
 } from 'sleetcord'
+import { prisma } from '../../util/db.js'
+import { Prisma } from '@prisma/client'
 
 const mutedRoles = [
   'muted',
@@ -171,17 +174,26 @@ async function runMute(
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
+  const config: Prisma.MuteConfigGetPayload<true> =
+    (await prisma.muteConfig.findUnique({
+      where: {
+        guildID: guild.id,
+      },
+    })) ?? {
+      guildID: guild.id,
+      logChannelID: null,
+      roleID: null,
+    }
+
   const interactionMember = await guild.members.fetch(interaction.user.id)
   const me = await guild.members.fetchMe()
   const userHighestRole = interactionMember.roles.highest
   const myHighestRole = me.roles.highest
-  const mutedRole = guild.roles.cache.find((r) =>
-    mutedRoles.includes(r.name.toLowerCase()),
-  )
+  const mutedRole = findMutedRole(guild, config.roleID)
 
   if (!mutedRole) {
     return interaction.reply({
-      content: `No muted role found, set up a role with one of the following names: \`${mutedRoles.join(
+      content: `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
         '`, `',
       )}\``,
       ephemeral: true,
@@ -252,8 +264,23 @@ async function runMute(
   const fail =
     totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
 
+  const content = `**${capitalAction}:**${succ}${fail}`
+
+  if (config.logChannelID) {
+    const logChannel = guild.channels.cache.get(config.logChannelID)
+    if (logChannel?.isTextBased()) {
+      await logChannel.send({
+        content,
+        allowedMentions: { parse: [] },
+      })
+    }
+  }
+
   await deferReply
-  return interaction.editReply(`**${capitalAction}:**${succ}${fail}`)
+  return interaction.editReply({
+    content,
+    allowedMentions: { parse: [] },
+  })
 }
 
 function muteAction(
@@ -298,14 +325,11 @@ function unmuteAction(
   return Promise.all(actions).then(() => ({ succeeded, failed }))
 }
 
-const storedMutes = new Map<string, string[]>()
-
-// TODO: store in DB?
-function storeRoles(member: GuildMember): Promise<Role[]> {
-  const previous = storedMutes.get(member.id) ?? []
+async function storeRoles(member: GuildMember): Promise<Role[]> {
+  const previous = (await fetchStoredRoles(member)) ?? []
   const roles = member.roles.cache.filter(validRole).map((r) => r.id)
-  storedMutes.set(member.id, [...previous, ...roles])
-  return Promise.resolve(member.roles.cache.toJSON())
+  await setStoredRoles(member, [...previous, ...roles])
+  return member.roles.cache.toJSON()
 }
 
 async function restoreRoles(
@@ -313,7 +337,7 @@ async function restoreRoles(
   mutedRole: Role,
   reason?: string,
 ): Promise<Role[]> {
-  const roles = storedMutes.get(member.id) ?? []
+  const roles = (await fetchStoredRoles(member)) ?? []
 
   // Resolve all the roles in case one of them has since been deleted or something
   const resolvedStoredRoles = await Promise.all(
@@ -334,7 +358,7 @@ async function restoreRoles(
 
   await member.roles.remove(mutedRole, reason)
   await member.roles.add(applyRoles, reason)
-  storedMutes.delete(member.id)
+  await deleteStoredRoles(member)
   return applyRoles
 }
 
@@ -381,4 +405,62 @@ function formatRoles(roles: Role[]): string {
     .sort((a, b) => b.position - a.position)
     .map((r) => r.toString())
     .join(', ')
+}
+
+const ROLE_SEPARATOR = ' '
+
+async function fetchStoredRoles(member: GuildMember): Promise<string[] | null> {
+  const ids = await prisma.memberMutes.findUnique({
+    select: {
+      previousRoles: true,
+    },
+    where: {
+      guildID_userID: {
+        guildID: member.guild.id,
+        userID: member.user.id,
+      },
+    },
+  })
+
+  return ids?.previousRoles.split(ROLE_SEPARATOR) ?? null
+}
+
+function setStoredRoles(member: GuildMember, roles: string[]) {
+  const previousRoles = roles.join(ROLE_SEPARATOR)
+
+  return prisma.memberMutes.upsert({
+    where: {
+      guildID_userID: {
+        guildID: member.guild.id,
+        userID: member.user.id,
+      },
+    },
+    create: {
+      guildID: member.guild.id,
+      userID: member.user.id,
+      previousRoles,
+    },
+    update: {
+      previousRoles,
+    },
+  })
+}
+
+function deleteStoredRoles(member: GuildMember) {
+  return prisma.memberMutes.delete({
+    where: {
+      guildID_userID: {
+        guildID: member.guild.id,
+        userID: member.user.id,
+      },
+    },
+  })
+}
+
+function findMutedRole(guild: Guild, roleID: string | null): Role | null {
+  return (
+    guild.roles.cache.find((r) => roleID === r.id) ??
+    guild.roles.cache.find((r) => mutedRoles.includes(r.name.toLowerCase())) ??
+    null
+  )
 }

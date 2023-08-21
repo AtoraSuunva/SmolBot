@@ -151,13 +151,13 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
   const reactionActions = options.getBoolean('reaction_actions')
   const automodAction = options.getBoolean('automod_action')
 
-  const oldSettings = await prisma.modLogConfig.findFirst({
+  const oldConfig = await prisma.modLogConfig.findFirst({
     where: {
       guildID: guild.id,
     },
   })
 
-  const channelID = channel?.id ?? oldSettings?.channelID
+  const channelID = channel?.id ?? oldConfig?.channelID
   if (!channelID) {
     await interaction.reply({
       content: 'Please specify a channel to log to.',
@@ -166,41 +166,45 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  const mergedSettings: Omit<ModLogConfig, 'updatedAt'> = {
+  const mergedConfig: Omit<ModLogConfig, 'updatedAt'> = {
     guildID: guild.id,
-    enabled: enabled ?? oldSettings?.enabled ?? false,
+    enabled: enabled ?? oldConfig?.enabled ?? false,
     channelID,
-    memberAdd: memberAdd ?? oldSettings?.memberAdd ?? false,
-    memberAddNew: memberAddNew ?? oldSettings?.memberAddNew ?? 0,
-    memberAddInvite: memberAddInvite ?? oldSettings?.memberAddInvite ?? false,
-    memberWelcome: memberWelcome ?? oldSettings?.memberWelcome ?? false,
-    memberRemove: memberRemove ?? oldSettings?.memberRemove ?? false,
+    memberAdd: memberAdd ?? oldConfig?.memberAdd ?? false,
+    memberAddNew: memberAddNew ?? oldConfig?.memberAddNew ?? 0,
+    memberAddInvite: memberAddInvite ?? oldConfig?.memberAddInvite ?? false,
+    memberWelcome: memberWelcome ?? oldConfig?.memberWelcome ?? false,
+    memberRemove: memberRemove ?? oldConfig?.memberRemove ?? false,
     memberRemoveRoles:
-      memberRemoveRoles ?? oldSettings?.memberRemoveRoles ?? false,
-    memberBan: memberBan ?? oldSettings?.memberBan ?? false,
-    memberUnban: memberUnban ?? oldSettings?.memberUnban ?? false,
-    userUpdate: userUpdate ?? oldSettings?.userUpdate ?? UserUpdate.None,
-    messageDelete: messageDelete ?? oldSettings?.messageDelete ?? false,
+      memberRemoveRoles ?? oldConfig?.memberRemoveRoles ?? false,
+    memberBan: memberBan ?? oldConfig?.memberBan ?? false,
+    memberUnban: memberUnban ?? oldConfig?.memberUnban ?? false,
+    userUpdate: userUpdate ?? oldConfig?.userUpdate ?? UserUpdate.None,
+    messageDelete: messageDelete ?? oldConfig?.messageDelete ?? false,
     messageDeleteBulk:
-      messageDeleteBulk ?? oldSettings?.messageDeleteBulk ?? false,
-    channelCreate: channelCreate ?? oldSettings?.channelCreate ?? false,
-    channelDelete: channelDelete ?? oldSettings?.channelDelete ?? false,
-    channelUpdate: channelUpdate ?? oldSettings?.channelUpdate ?? false,
-    reactionActions: reactionActions ?? oldSettings?.reactionActions ?? false,
-    automodAction: automodAction ?? oldSettings?.automodAction ?? false,
+      messageDeleteBulk ?? oldConfig?.messageDeleteBulk ?? false,
+    channelCreate: channelCreate ?? oldConfig?.channelCreate ?? false,
+    channelDelete: channelDelete ?? oldConfig?.channelDelete ?? false,
+    channelUpdate: channelUpdate ?? oldConfig?.channelUpdate ?? false,
+    reactionActions: reactionActions ?? oldConfig?.reactionActions ?? false,
+    automodAction: automodAction ?? oldConfig?.automodAction ?? false,
   }
 
   await prisma.modLogConfig.upsert({
     where: {
       guildID: guild.id,
     },
-    update: mergedSettings,
-    create: mergedSettings,
+    update: mergedConfig,
+    create: mergedConfig,
   })
 
   clearCacheFor(guild)
 
   await interaction.reply({
-    content: `New settings:\n${formatConfig(guild, mergedSettings)}`,
+    content: `New settings:\n${formatConfig({
+      config: mergedConfig,
+      oldConfig,
+      guild,
+    })}`,
   })
 }

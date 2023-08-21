@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
-import { formatConfig } from '../../../util/format.js'
+import { channelFormatter, formatConfig } from '../../../util/format.js'
 
 export const warningsConfigView = new SleetSlashSubcommand(
   {
@@ -28,7 +28,13 @@ async function runWarningsConfigView(interaction: ChatInputCommandInteraction) {
     })
   } else {
     await interaction.reply({
-      content: `Current configuration:\n${formatConfig(guild, config)}`,
+      content: `Current configuration:\n${formatConfig({
+        config,
+        guild,
+        formatters: {
+          archiveChannel: channelFormatter,
+        },
+      })}`,
     })
   }
 }
