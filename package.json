@@ -37,8 +37,8 @@
     "pluralize": "^8.0.0",
     "pretty-ms": "~8.0.0",
     "rollbar": "^2.26.2",
-    "sleetcord": "0.16.0",
-    "sleetcord-common": "^2.2.0",
+    "sleetcord": "0.16.1",
+    "sleetcord-common": "^2.3.0",
     "undici": "^5.23.0"
   },
   "devDependencies": {

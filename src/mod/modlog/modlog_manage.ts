@@ -4,10 +4,11 @@ import {
   ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
+import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { clearCacheFor } from './utils.js'
+import { getOptionCount } from 'sleetcord-common'
 
 export enum UserUpdate {
   None = 'None',
@@ -23,10 +24,11 @@ const userUpdateChoices = makeChoices([
   UserUpdate.Both,
 ])
 
-export const edit = new SleetSlashSubcommand(
+export const modlog_manage = new SleetSlashCommand(
   {
-    name: 'edit',
-    description: 'Edit the modlog',
+    name: 'modlog_manage',
+    description: 'View or edit the modlog config',
+    default_member_permissions: ['ManageGuild'],
     options: [
       {
         name: 'enabled',
@@ -125,12 +127,36 @@ export const edit = new SleetSlashSubcommand(
     ],
   },
   {
-    run: handleEdit,
+    run: runModlogConfig,
   },
 )
 
-async function handleEdit(interaction: ChatInputCommandInteraction) {
+async function runModlogConfig(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
+
+  const oldConfig = await prisma.modLogConfig.findFirst({
+    where: {
+      guildID: guild.id,
+    },
+  })
+
+  // No options specified, show the current config
+  if (getOptionCount(interaction) === 0) {
+    if (!oldConfig) {
+      return interaction.reply({
+        content:
+          "You don't have an existing modlog config, use `/modlog_manage` with options to create one.",
+      })
+    } else {
+      return interaction.reply({
+        content: `Current config:\n${formatConfig({
+          config: oldConfig,
+          guild,
+        })}`,
+      })
+    }
+  }
+
   const { options } = interaction
   const enabled = options.getBoolean('enabled')
   const channel = options.getChannel('channel')
@@ -150,12 +176,6 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
   const channelDelete = options.getBoolean('channel_delete')
   const reactionActions = options.getBoolean('reaction_actions')
   const automodAction = options.getBoolean('automod_action')
-
-  const oldConfig = await prisma.modLogConfig.findFirst({
-    where: {
-      guildID: guild.id,
-    },
-  })
 
   const channelID = channel?.id ?? oldConfig?.channelID
   if (!channelID) {
@@ -200,8 +220,8 @@ async function handleEdit(interaction: ChatInputCommandInteraction) {
 
   clearCacheFor(guild)
 
-  await interaction.reply({
-    content: `New settings:\n${formatConfig({
+  return interaction.reply({
+    content: `Modlog Config:\n${formatConfig({
       config: mergedConfig,
       oldConfig,
       guild,

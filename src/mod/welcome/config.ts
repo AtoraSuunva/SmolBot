@@ -3,8 +3,6 @@ import {
   APIEmbedField,
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
-  CommandInteraction,
-  CommandInteractionOption,
   Constants,
   EmbedBuilder,
 } from 'discord.js'
@@ -16,6 +14,7 @@ import {
 } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
+import { getOptionCount } from 'sleetcord-common'
 
 type NewWelcomeSettings = Prisma.WelcomeSettingsCreateInput | null
 
@@ -73,34 +72,6 @@ export const config = new SleetSlashSubcommand(
   },
 )
 
-function isSubcommandOption(option: CommandInteractionOption): boolean {
-  return [
-    ApplicationCommandOptionType.Subcommand,
-    ApplicationCommandOptionType.SubcommandGroup,
-  ].includes(option.type)
-}
-
-function getAllOptions(
-  options: readonly CommandInteractionOption[],
-): CommandInteractionOption[] {
-  return options.flatMap((option) => {
-    if (isSubcommandOption(option)) {
-      return option.options ? getAllOptions(option.options) : []
-    }
-    return option
-  })
-}
-
-/**
- * Checks how many options the user specified for the interaction,
- * excluding subcommands and subcommand groups
- * @param interaction The interaction to check
- * @returns The number of options specified
- */
-function getOptionCount(interaction: CommandInteraction): number {
-  return getAllOptions(interaction.options.data).length
-}
-
 const unicodeEmojiRegex = /\p{RGI_Emoji}/gv
 const discordEmojiRegex = /<(?<animated>a)?:(?<name>\w{2,}):(?<id>\d+)>/
 
@@ -134,6 +105,33 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply()
 
   const guild = await getGuild(interaction, true)
+
+  const oldConfig = await prisma.welcomeSettings.findUnique({
+    where: {
+      guildID: guild.id,
+    },
+  })
+
+  await defer
+
+  // No options specified, show the current settings
+  if (getOptionCount(interaction) === 0) {
+    if (!oldConfig) {
+      return interaction.editReply({
+        content:
+          "You don't have an existing welcome config, use `/welcome config` with options to create one.",
+      })
+    } else {
+      const embed = createWelcomeEmbed(oldConfig)
+      return interaction.editReply({
+        content: 'These are your current settings',
+        embeds: [embed],
+      })
+    }
+  }
+
+  // Settings specified, edit the current settings
+
   const message = interaction.options.getString('message')
   // Can be unset
   const channel = await getTextBasedChannel(interaction, 'channel')
@@ -148,37 +146,11 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   const reactWith = getEmoji(interaction, 'react_with')
   const reactWithOption = interaction.options.get('react_with')
 
-  const welcome = await prisma.welcomeSettings.findUnique({
-    where: {
-      guildID: guild.id,
-    },
-  })
-
-  await defer
-
-  // No options specified, show the current settings
-  if (getOptionCount(interaction) === 0) {
-    if (!welcome) {
-      return interaction.editReply({
-        content:
-          "You don't have an existing welcome config, use `/welcome config` with options to create one.",
-      })
-    } else {
-      const embed = createWelcomeEmbed(welcome)
-      return interaction.editReply({
-        content: 'These are your current settings',
-        embeds: [embed],
-      })
-    }
-  }
-
-  // Settings specified, edit the current settings
-
   // Clone the old welcome so we can show a diff
-  let newWelcome: NewWelcomeSettings = structuredClone(welcome)
+  let newWelcome: NewWelcomeSettings = structuredClone(oldConfig)
   const changes: string[] = []
 
-  if (!welcome || !newWelcome) {
+  if (!oldConfig || !newWelcome) {
     // No previous welcome, create a new one
     newWelcome = {
       guildID: guild.id,
@@ -210,7 +182,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   }
 
   // There's an old config and no changes were made
-  if (welcome && changes.length === 0) {
+  if (oldConfig && changes.length === 0) {
     return interaction.editReply({
       content: 'No changes made, failed to parse your options',
     })
@@ -226,7 +198,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
 
   welcomeCache.set(guild.id, updatedWelcome)
 
-  const oldSettings = createWelcomeEmbed(welcome).setFooter({
+  const oldSettings = createWelcomeEmbed(oldConfig).setFooter({
     text: 'Old settings',
   })
   const newSettings = createWelcomeEmbed(updatedWelcome, changes).setFooter({

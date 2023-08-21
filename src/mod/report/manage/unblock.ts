@@ -5,7 +5,7 @@ import {
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 
-export const report_unblock = new SleetSlashSubcommand(
+export const report_manage_unblock = new SleetSlashSubcommand(
   {
     name: 'unblock',
     description: 'Unblock a user from using the report command.',

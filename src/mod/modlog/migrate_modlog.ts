@@ -8,7 +8,7 @@ import '../../util/dbLogging.js'
 
 const migrate_modlog = new SleetModule(
   {
-    name: 'migrate-modlog',
+    name: 'migrate_modlog',
   },
   {
     ready: runMigrateModlog,

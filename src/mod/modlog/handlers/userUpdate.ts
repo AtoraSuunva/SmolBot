@@ -1,7 +1,7 @@
 import { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
-import { UserUpdate } from '../edit.js'
+import { UserUpdate } from '../modlog_manage.js'
 
 export const logUserUpdate = new SleetModule(
   {

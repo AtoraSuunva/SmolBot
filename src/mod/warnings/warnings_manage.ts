@@ -4,15 +4,17 @@ import {
   ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { getGuild, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../../../util/db.js'
-import { channelFormatter, formatConfig } from '../../../util/format.js'
-import { markWarningArchiveDirty } from '../utils.js'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { prisma } from '../../util/db.js'
+import { channelFormatter, formatConfig } from '../../util/format.js'
+import { markWarningArchiveDirty } from './utils.js'
+import { getOptionCount } from 'sleetcord-common'
 
-export const warningsConfigEdit = new SleetSlashSubcommand(
+export const warnings_manage = new SleetSlashCommand(
   {
-    name: 'edit',
-    description: 'Configure the warnings system',
+    name: 'warnings_manage',
+    description: 'View or edit the warnings system config',
+    default_member_permissions: ['ManageGuild'],
     options: [
       {
         name: 'expires_after',
@@ -37,23 +39,44 @@ export const warningsConfigEdit = new SleetSlashSubcommand(
     ],
   },
   {
-    run: runWarningsConfigEdit,
+    run: runWarningsManage,
   },
 )
 
-async function runWarningsConfigEdit(interaction: ChatInputCommandInteraction) {
+async function runWarningsManage(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
-  const { options } = interaction
-
-  const expiresAfter = options.getInteger('expires_after')
-  const archiveEnabled = options.getBoolean('archive_enabled')
-  const archiveChannel = options.getChannel('archive_channel')
 
   const oldConfig = await prisma.warningConfig.findUnique({
     where: {
       guildID: guild.id,
     },
   })
+
+  // No options specified, show the current config
+  if (getOptionCount(interaction) === 0) {
+    if (!oldConfig) {
+      return interaction.reply({
+        content:
+          "You don't have an existing warning config, use `/warnings_manage` with options to create one.",
+      })
+    } else {
+      return interaction.reply({
+        content: `Current config:\n${formatConfig({
+          config: oldConfig,
+          guild,
+          formatters: {
+            archiveChannel: channelFormatter,
+          },
+        })}`,
+      })
+    }
+  }
+
+  const { options } = interaction
+
+  const expiresAfter = options.getInteger('expires_after')
+  const archiveEnabled = options.getBoolean('archive_enabled')
+  const archiveChannel = options.getChannel('archive_channel')
 
   const mergedConfig: Omit<WarningConfig, 'updatedAt'> = {
     guildID: guild.id,
@@ -79,8 +102,8 @@ async function runWarningsConfigEdit(interaction: ChatInputCommandInteraction) {
       ? '⚠️ You enabled archiving, but did not specify an archive channel. Warnings will NOT be archived!!!\n'
       : ''
 
-  await interaction.reply({
-    content: `New configuration:\n${warning}${formatConfig({
+  return interaction.reply({
+    content: `New config:\n${warning}${formatConfig({
       config: mergedConfig,
       oldConfig,
       guild,
