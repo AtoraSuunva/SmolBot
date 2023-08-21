@@ -50,7 +50,7 @@ async function runReportConfig(interaction: ChatInputCommandInteraction) {
   const messageArg = interaction.options.getString('message')
   const message = messageArg?.toLowerCase() === 'none' ? '' : messageArg
 
-  const currentConfig = await prisma.reportConfig.findUnique({
+  const oldConfig = await prisma.reportConfig.findUnique({
     where: {
       guildID: guild.id,
     },
@@ -61,9 +61,9 @@ async function runReportConfig(interaction: ChatInputCommandInteraction) {
       guildID: guild.id,
     },
     update: {
-      enabled: enabled ?? currentConfig?.enabled ?? false,
-      channelID: channel?.id ?? currentConfig?.channelID ?? null,
-      message: message ?? currentConfig?.message ?? '',
+      enabled: enabled ?? oldConfig?.enabled ?? false,
+      channelID: channel?.id ?? oldConfig?.channelID ?? null,
+      message: message ?? oldConfig?.message ?? '',
     },
     create: {
       guildID: guild.id,
@@ -88,10 +88,11 @@ async function runReportConfig(interaction: ChatInputCommandInteraction) {
   const warningsMessage = warnings.length > 0 ? `\n${warnings.join('\n')}` : ''
 
   await interaction.reply({
-    content: `Report config updated.\n${formatConfig(
+    content: `Report config updated.\n${formatConfig({
+      config: newConfig,
+      oldConfig,
       guild,
-      newConfig,
-    )}${warningsMessage}`,
+    })}${warningsMessage}`,
     allowedMentions: { parse: [] },
   })
 }

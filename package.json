@@ -9,7 +9,7 @@
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
-    "lint:fix": "eslint src/ --fix && prettier --write src/ && tsc --noEmit"
+    "lint:fix": "eslint src/ --fix && prettier --write src/ && prisma format && tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
     "convert-units": "~2.3.4",
     "csv-parse": "^5.4.0",
     "csv-stringify": "^6.4.0",
-    "discord.js": "~14.12.1",
+    "discord.js": "~14.13.0",
     "dotenv": "~16.3.1",
     "env-var": "~7.3.1",
     "pino": "~8.15.0",
@@ -38,19 +38,19 @@
     "pretty-ms": "~8.0.0",
     "rollbar": "^2.26.2",
     "sleetcord": "0.16.0",
-    "sleetcord-common": "^2.1.0",
+    "sleetcord-common": "^2.2.0",
     "undici": "^5.23.0"
   },
   "devDependencies": {
     "@types/convert-units": "^2.3.6",
-    "@types/node": "~20.5.0",
+    "@types/node": "~20.5.1",
     "@types/pluralize": "^0.0.30",
     "@typescript-eslint/eslint-plugin": "~6.4.0",
     "@typescript-eslint/parser": "~6.4.0",
     "eslint": "~8.47.0",
     "eslint-config-prettier": "~9.0.0",
-    "eslint-plugin-import": "~2.28.0",
-    "prettier": "~3.0.1",
+    "eslint-plugin-import": "~2.28.1",
+    "prettier": "~3.0.2",
     "prisma": "~5.1.1",
     "typescript": "~5.1.6"
   }

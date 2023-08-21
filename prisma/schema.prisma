@@ -147,3 +147,18 @@ model AutomaticDehoist {
   dehoistPrepend  String   @map("dehoist_prepend")
   updatedAt       DateTime @updatedAt @map("updated_at")
 }
+
+model MuteConfig {
+  guildID      String  @id @map("guild_id")
+  roleID       String? @map("role_id")
+  logChannelID String? @map("log_channel_id")
+}
+
+model MemberMutes {
+  guildID       String   @map("guild_id")
+  userID        String   @map("user_id")
+  previousRoles String   @map("previous_roles")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@id([guildID, userID])
+}

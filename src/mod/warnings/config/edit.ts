@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
-import { formatConfig } from '../../../util/format.js'
+import { channelFormatter, formatConfig } from '../../../util/format.js'
 import { markWarningArchiveDirty } from '../utils.js'
 
 export const warningsConfigEdit = new SleetSlashSubcommand(
@@ -80,9 +80,13 @@ async function runWarningsConfigEdit(interaction: ChatInputCommandInteraction) {
       : ''
 
   await interaction.reply({
-    content: `New configuration:\n${warning}${formatConfig(
+    content: `New configuration:\n${warning}${formatConfig({
+      config: mergedConfig,
+      oldConfig,
       guild,
-      mergedConfig,
-    )}`,
+      formatters: {
+        archiveChannel: channelFormatter,
+      },
+    })}`,
   })
 }
