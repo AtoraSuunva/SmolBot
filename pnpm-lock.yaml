@@ -51,11 +51,11 @@ dependencies:
     specifier: ^2.26.2
     version: 2.26.2
   sleetcord:
-    specifier: 0.16.0
-    version: 0.16.0(discord.js@14.13.0)
+    specifier: 0.16.1
+    version: 0.16.1(discord.js@14.13.0)
   sleetcord-common:
-    specifier: ^2.2.0
-    version: 2.2.0(discord.js@14.13.0)(env-var@7.3.1)(pino@8.15.0)(pretty-ms@8.0.0)(rollbar@2.26.2)(sleetcord@0.16.0)
+    specifier: ^2.3.0
+    version: 2.3.0(discord.js@14.13.0)(env-var@7.3.1)(pino@8.15.0)(pretty-ms@8.0.0)(rollbar@2.26.2)(sleetcord@0.16.1)
   undici:
     specifier: ^5.23.0
     version: 5.23.0
@@ -800,8 +800,8 @@ packages:
     resolution: {integrity: sha512-X4CDiMnDbA3s3RaUXWXmgAIbY1uxab3fqe3qwzg5XutR3wjqi7M3IkgQbsIBzpqBN2YWr/Qdv7JrFRqSgb4TFg==}
     dev: false
 
-  /discord-api-types@0.37.51:
-    resolution: {integrity: sha512-tdmdH98t3zgjQF6zwOHl0OB/PCBiE4aVsNTuN7m0PfU2jOLx3lNoU6xTeFALntUtlIxN80GTr9RPQR4t7msjSg==}
+  /discord-api-types@0.37.54:
+    resolution: {integrity: sha512-xNO6yzEMfpVSVUa6lOOzgLDy3Gyd8yuBAozGQdjpW9VjRq2Ccboz4FhTrd5v4Hw7pbkCKwnHvddjIYrX0INkUQ==}
     dev: false
 
   /discord.js@14.13.0:
@@ -2187,8 +2187,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /sleetcord-common@2.2.0(discord.js@14.13.0)(env-var@7.3.1)(pino@8.15.0)(pretty-ms@8.0.0)(rollbar@2.26.2)(sleetcord@0.16.0):
-    resolution: {integrity: sha512-QqCm88sUWDoOeL5Q6UJbH/82YeglsOUqS48efLHxA8mLE8ZYC138B1VMRysFd/8LWYqe42x7wJ876yFTgt0uzw==}
+  /sleetcord-common@2.3.0(discord.js@14.13.0)(env-var@7.3.1)(pino@8.15.0)(pretty-ms@8.0.0)(rollbar@2.26.2)(sleetcord@0.16.1):
+    resolution: {integrity: sha512-gf5pfPEqaa/6wxrRXcp+FeSLoLlrSdSjXCRB71tLKxxotyh+2aoav9yIkqtKoLJquLLg0RlaqmaDVFX78gQ5KA==}
     peerDependencies:
       discord.js: ^14.13.0
       env-var: ^7.3.1
@@ -2202,15 +2202,15 @@ packages:
       pino: 8.15.0
       pretty-ms: 8.0.0
       rollbar: 2.26.2
-      sleetcord: 0.16.0(discord.js@14.13.0)
+      sleetcord: 0.16.1(discord.js@14.13.0)
     dev: false
 
-  /sleetcord@0.16.0(discord.js@14.13.0):
-    resolution: {integrity: sha512-O57enf6G+ijJgnHzTo1EDYPRFnDd0xNH0Yd9tose59LKWRnJnwGFrwUqy6GbaA6x3ihV6/SxBlyZdDkLnO+lKQ==}
+  /sleetcord@0.16.1(discord.js@14.13.0):
+    resolution: {integrity: sha512-egV475FQ3DgsxoPgltVduSyEIcLHriphH8MQWLsCN2BhRIocpy6SscWoJKZcl53Kktmrn8FncHdICl/c7KCmpg==}
     peerDependencies:
       discord.js: ^14.12.1
     dependencies:
-      discord-api-types: 0.37.51
+      discord-api-types: 0.37.54
       discord.js: 14.13.0
       tseep: 1.1.1
     dev: false

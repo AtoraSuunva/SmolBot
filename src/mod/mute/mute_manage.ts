@@ -7,6 +7,7 @@ import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { Prisma } from '@prisma/client'
+import { getOptionCount } from 'sleetcord-common'
 
 export const mute_manage = new SleetSlashCommand(
   {
@@ -41,15 +42,33 @@ export const mute_manage = new SleetSlashCommand(
 
 async function runMuteManage(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
-  const role = interaction.options.getRole('role')
-  const logChannel = interaction.options.getChannel('log_channel')
-  const unset = interaction.options.getString('unset')
 
   const oldConfig = await prisma.muteConfig.findUnique({
     where: {
       guildID: guild.id,
     },
   })
+
+  // No options specified, show the current config
+  if (getOptionCount(interaction) === 0) {
+    if (!oldConfig) {
+      return interaction.reply({
+        content:
+          "You don't have an existing mute config, use `/mute_manage` with options to create one.",
+      })
+    } else {
+      return interaction.reply({
+        content: `Current config:\n${formatConfig({
+          config: oldConfig,
+          guild,
+        })}`,
+      })
+    }
+  }
+
+  const role = interaction.options.getRole('role')
+  const logChannel = interaction.options.getChannel('log_channel')
+  const unset = interaction.options.getString('unset')
 
   const toUpsert: Omit<Prisma.MuteConfigCreateInput, 'guildID'> = {
     roleID: unset === 'role' ? null : role?.id ?? oldConfig?.roleID ?? null,
@@ -74,7 +93,7 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
 
   const config = formatConfig({ config: newConfig, oldConfig, guild })
 
-  await interaction.reply({
-    content: config,
+  return interaction.reply({
+    content: `Mute config:\n${config}`,
   })
 }

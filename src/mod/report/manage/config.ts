@@ -11,11 +11,12 @@ import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 import { formatConfig } from '../../../util/format.js'
 import { handleReportButtonInteraction } from '../utils.js'
+import { getOptionCount } from 'sleetcord-common'
 
-export const report_config = new SleetSlashSubcommand(
+export const report_manage_config = new SleetSlashSubcommand(
   {
     name: 'config',
-    description: 'Configure the report system',
+    description: 'View or edit the report system config',
     options: [
       {
         name: 'enabled',
@@ -37,24 +38,41 @@ export const report_config = new SleetSlashSubcommand(
     ],
   },
   {
-    run: runReportConfig,
+    run: runReportManage,
     interactionCreate: handleReportButtonInteraction,
   },
 )
 
-async function runReportConfig(interaction: ChatInputCommandInteraction) {
+async function runReportManage(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
-
-  const enabled = interaction.options.getBoolean('enabled')
-  const channel = interaction.options.getChannel('channel')
-  const messageArg = interaction.options.getString('message')
-  const message = messageArg?.toLowerCase() === 'none' ? '' : messageArg
 
   const oldConfig = await prisma.reportConfig.findUnique({
     where: {
       guildID: guild.id,
     },
   })
+
+  // No options specified, show the current config
+  if (getOptionCount(interaction) === 0) {
+    if (!oldConfig) {
+      return interaction.reply({
+        content:
+          "You don't have an existing report config, use `/report_manage config` with options to create one.",
+      })
+    } else {
+      return interaction.reply({
+        content: `Current config:\n${formatConfig({
+          config: oldConfig,
+          guild,
+        })}`,
+      })
+    }
+  }
+
+  const enabled = interaction.options.getBoolean('enabled')
+  const channel = interaction.options.getChannel('channel')
+  const messageArg = interaction.options.getString('message')
+  const message = messageArg?.toLowerCase() === 'none' ? '' : messageArg
 
   const newConfig = await prisma.reportConfig.upsert({
     where: {
@@ -87,7 +105,7 @@ async function runReportConfig(interaction: ChatInputCommandInteraction) {
 
   const warningsMessage = warnings.length > 0 ? `\n${warnings.join('\n')}` : ''
 
-  await interaction.reply({
+  return interaction.reply({
     content: `Report config updated.\n${formatConfig({
       config: newConfig,
       oldConfig,
