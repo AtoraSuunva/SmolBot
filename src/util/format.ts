@@ -190,16 +190,16 @@ export function tableFormat<T extends object>(
   const joinedSeparator = separator.join(' | ')
   currentLength += joinedSeparator.length + 1 // +1 for the newline
 
-  for (const d of data) {
+  for (const row of data) {
     const newRow = keys
       .map((k) => {
-        let r: string | null | undefined = d[k]
+        let value: unknown = row[k]
 
-        if (!showNullish && (r === null || r === undefined)) {
-          r = ''
+        if (!showNullish && (value === null || value === undefined)) {
+          value = ''
         }
 
-        return String(r).padEnd(header[keys.indexOf(k)].length, ' ')
+        return String(value).padEnd(header[keys.indexOf(k)].length, ' ')
       })
       .join(' | ')
 
