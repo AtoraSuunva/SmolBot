@@ -42,11 +42,11 @@
     "undici": "^5.23.0"
   },
   "devDependencies": {
-    "@types/convert-units": "^2.3.6",
-    "@types/node": "~20.5.7",
+    "@types/convert-units": "^2.3.7",
+    "@types/node": "~20.5.9",
     "@types/pluralize": "^0.0.30",
-    "@typescript-eslint/eslint-plugin": "~6.5.0",
-    "@typescript-eslint/parser": "~6.5.0",
+    "@typescript-eslint/eslint-plugin": "~6.6.0",
+    "@typescript-eslint/parser": "~6.6.0",
     "eslint": "~8.48.0",
     "eslint-config-prettier": "~9.0.0",
     "eslint-plugin-import": "~2.28.1",
