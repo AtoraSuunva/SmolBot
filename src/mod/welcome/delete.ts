@@ -94,11 +94,13 @@ async function deleteWelcomeSettingsFrom(
     ephemeral: true,
   })
 
-  await prisma.welcomeSettings.delete({
-    where: {
-      guildID: guild.id,
-    },
-  })
+  await prisma.welcomeSettings
+    .delete({
+      where: {
+        guildID: guild.id,
+      },
+    })
+    .catch()
 
   await prisma.welcomeJoins.deleteMany({
     where: {
