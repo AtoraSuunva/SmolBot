@@ -83,6 +83,21 @@ async function runVCLogConfig(interaction: ChatInputCommandInteraction) {
 async function runDisableVClog(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   const guildID = guild.id
+
+  const vcConfig = await prisma.voiceLogConfig.findUnique({
+    where: {
+      guildID,
+    },
+  })
+
+  if (!vcConfig) {
+    await interaction.reply({
+      content: 'VC logging is not configured',
+      ephemeral: true,
+    })
+    return
+  }
+
   await prisma.voiceLogConfig.delete({
     where: {
       guildID,
