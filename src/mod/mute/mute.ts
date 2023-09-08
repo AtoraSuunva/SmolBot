@@ -452,12 +452,10 @@ function setStoredRoles(member: GuildMember, roles: string[]) {
 }
 
 function deleteStoredRoles(member: GuildMember) {
-  return prisma.memberMutes.delete({
+  return prisma.memberMutes.deleteMany({
     where: {
-      guildID_userID: {
-        guildID: member.guild.id,
-        userID: member.user.id,
-      },
+      guildID: member.guild.id,
+      userID: member.user.id,
     },
   })
 }
