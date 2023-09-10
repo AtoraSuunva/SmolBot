@@ -9,7 +9,6 @@ import {
   escapeCodeBlock,
   EmbedType,
 } from 'discord.js'
-import { basename } from 'node:path'
 import { editStore } from '../../unedit.js'
 import { plural } from '../../../util/format.js'
 
@@ -88,14 +87,9 @@ async function messageDelete(message: Message | PartialMessage) {
     ),
   )
   const attachProxy = message.attachments.map(
-    (a) =>
-      a.url.replace(
-        'https://cdn.discordapp.com',
-        '<https://media.discordapp.net',
-      ) + '>',
+    (a) => `[${a.name}](<${a.proxyURL}>)`,
   )
-
-  const stickers = message.stickers.map((s) => `${s.name} (<${s.url}>)`)
+  const stickers = message.stickers.map((s) => `[${s.name}](<${s.url}>)`)
 
   const messageContent = editsLog.join('\n')
   const isTooLong = messageContent.length > 2000
@@ -158,8 +152,7 @@ export function messageToLog(
     } ${escapeCodeBlock(message.content)}` +
     `${
       includeAttachments && message.attachments.size > 0
-        ? ' | Attach: ' +
-          message.attachments.map((a) => basename(a.url)).join(' ; ')
+        ? ' | Attach: ' + message.attachments.map((a) => a.name).join(' ; ')
         : ''
     }` +
     `${
