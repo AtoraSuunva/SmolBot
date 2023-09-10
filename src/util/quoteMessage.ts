@@ -1,5 +1,12 @@
-import { Message, EmbedBuilder, MessageType, hyperlink } from 'discord.js'
+import {
+  Message,
+  EmbedBuilder,
+  MessageType,
+  hyperlink,
+  Attachment,
+} from 'discord.js'
 import { formatUser } from 'sleetcord'
+import { plural } from './format.js'
 
 /** Number of lines before quote content becomes cut */
 const MAX_QUOTE_LINES = 10
@@ -14,6 +21,7 @@ export async function quoteMessage(
   const quoteContent = formatQuoteContent(message.content)
 
   const embed = new EmbedBuilder()
+    .setURL(message.url)
     .setAuthor({
       name: `${formatUser(message.author, {
         markdown: false,
@@ -82,31 +90,63 @@ export async function quoteMessage(
       break
   }
 
-  const imgEmbed =
-    message.attachments.find((e) => 'height' in e && 'width' in e) ??
-    message.embeds.find((e) => e.image)
+  const listedAttachments: Attachment[] = []
+  // Can't have more than 4 images tiled together in a single embed, so any more than that we just add into a field
+  let attachedImagesCount = 0
 
-  if (imgEmbed?.url) {
-    embed.setImage(imgEmbed.url)
+  for (const [, attachment] of message.attachments) {
+    if (attachedImagesCount < 4 && isImageAttachment(attachment)) {
+      attachedImagesCount++
+      // You can embed multiple (up to 4) images in a single embed by sending multiple embeds with the same URL
+      if (!embed.data.image) {
+        embed.setImage(attachment.url)
+      } else {
+        embeds.push(
+          new EmbedBuilder().setURL(message.url).setImage(attachment.url),
+        )
+      }
+    } else {
+      // For non-image attachments (or additional images after 4), we can just add them as fields
+      listedAttachments.push(attachment)
+    }
   }
 
-  const attachmentCount = message.attachments.size - (imgEmbed?.url ? 1 : 0)
-
-  if (attachmentCount > 0) {
-    embed.setDescription(
-      `${embed.data.description ?? ''} **+ ${attachmentCount} attachment(s)**`,
-    )
+  if (listedAttachments.length > 0) {
+    embed.addFields([
+      {
+        name: `+${plural('Attachment', listedAttachments.length)}`,
+        value: listedAttachments
+          .map((a) => `[${a.name}](<${a.proxyURL}>)`)
+          .join(', '),
+      },
+    ])
   }
 
   if (message.embeds[0]) {
-    const msgEmbed = EmbedBuilder.from(message.embeds[0])
-    embeds.push(msgEmbed)
+    // Some embeds (like twitter embeds) use multiple embeds to have multiple images in 1 embed
+    // You can tell by if they share the same Url, so just check that to get them all
+    const embedUrl = message.embeds[0].url
+
+    if (embedUrl) {
+      embeds.push(
+        ...message.embeds
+          .filter((e) => e.image && e.url === embedUrl)
+          .map((e) => EmbedBuilder.from(e)),
+      )
+    } else {
+      embeds.push(EmbedBuilder.from(message.embeds[0]))
+    }
   }
 
   return embeds
 }
 
+function isImageAttachment(attachment: Attachment): boolean {
+  return attachment.contentType?.startsWith('image/') ?? false
+}
+
 type PathPart<T extends string | undefined> = T extends string ? `/${T}` : ''
+
 function optionalPathPart<T extends string | undefined>(
   pathPart: T,
 ): PathPart<T> {
