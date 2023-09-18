@@ -1,6 +1,6 @@
 # Smol Bot & RobotOtter Privacy Policy
 
-Last Updated & Effective as of: July 17, 2023
+Last Updated & Effective as of: September 18, 2023
 
 For Discord Bots: Smol Bot#6975 (205164225625194496) & RobotOtter#2318 (189078368522600449)
 
@@ -11,7 +11,7 @@ Smol Bot and RobotOtter are bots running the same codebase, but with Smol Bot as
 The Bot stores the following data, for the following reasons:
 
 - Configuration data for the Welcome, Report, Voice Channel Logging, Mod Log, Warning, and Automod features as provided by guild admins
-- User IDs (_not_ usernames) are stored for the following features:
+- User IDs (*not* usernames) are stored for the following features:
   - Which users had ever joined a guild for the "avoid welcoming rejoins" feature, IF:
     - the feature was enabled by guild admins, and the user joined the guild; or
     - guild admins added the user manually to the list.
@@ -22,12 +22,14 @@ The Bot stores the following data, for the following reasons:
 
 Interactions and options provided are logged for debugging purposes.
 
-[Rollbar](https://rollbar.com) is used for error tracking. Data collected when an error occurs:
+[Sentry](https://sentry.io) is used for error tracking. Data collected when an error occurs:
 
 - `error`: The error message and stack trace
 - `interaction`: The interaction + options used (ex. `/search [site<string>: example.com] [tags<string>: foo bar]`)
+- `module`: The module that errored
+- Local stack variables
 
-Errors reported to Rollbar are deleted after 30 days.
+Errors reported to Sentry are deleted after 90 days.
 
 Config data for a guild is stored for 10 days after The Bot is removed from a guild, unless the bot is re-invited.
 
