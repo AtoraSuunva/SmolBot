@@ -8,8 +8,6 @@ services:
     init: true
     env_file:
       - .env
-    environment:
-      NODE_ENV: development # for now, until I have good prod logging
     volumes:
       - db-data:/home/node/app/prisma/db
 
