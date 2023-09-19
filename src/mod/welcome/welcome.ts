@@ -178,11 +178,18 @@ async function addJoin(guildID: string, userID: string) {
   set.delete(userID)
   newMembers.set(guildID, set)
 
-  return await prisma.welcomeJoins.create({
-    data: {
+  return await prisma.welcomeJoins.upsert({
+    where: {
+      guildID_userID: {
+        guildID,
+        userID,
+      },
+    },
+    create: {
       guildID,
       userID,
     },
+    update: {},
   })
 }
 
