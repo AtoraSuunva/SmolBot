@@ -92,9 +92,8 @@ async function messageDelete(message: Message | PartialMessage) {
   const stickers = message.stickers.map((s) => `[${s.name}](<${s.url}>)`)
 
   const messageContent = editsLog.join('\n')
-  const isTooLong = messageContent.length > 2000
 
-  const msg =
+  let msg =
     `(${message.id}) from ${formatUser(message.author)} in ${message.channel}` +
     (executor ? ` by ${formatUser(executor)}` : '') +
     (reason ? ` for "${reason}"` : '') +
@@ -103,20 +102,24 @@ async function messageDelete(message: Message | PartialMessage) {
     (attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
       : '') +
-    (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '') +
-    (isTooLong ? '' : '```\n' + messageContent + '\n```')
+    (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '')
+
+  // +8 for the codeblock
+  const deletedMessageLength = messageContent.length + 8
 
   const files: AttachmentPayload[] = []
 
-  if (isTooLong) {
+  if (deletedMessageLength + msg.length > 2000) {
     files.push({
-      name: 'message.txt',
+      name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
       attachment: Buffer.from(messageContent),
       description: `Deleted Message by ${formatUser(message.author, {
         markdown: false,
         escape: false,
       })}`,
     })
+  } else {
+    msg += `\`\`\`\n${messageContent}\`\`\``
   }
 
   await channel.send({
