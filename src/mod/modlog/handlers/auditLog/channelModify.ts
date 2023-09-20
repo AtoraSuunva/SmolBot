@@ -9,8 +9,6 @@ import {
 import { formatLog } from '../../utils.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { AuditInfo, resolveUser } from './index.js'
-import { Sentry } from 'sleetcord-common'
-import { inspect } from 'util'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
   AuditLogEvent,
@@ -47,18 +45,10 @@ export async function logChannelModified(
   const executor = await resolveUser(
     auditLogEntry.executor,
     auditLogEntry.executorId,
-    guild,
+    guild.client,
   )
   const channelText = formatChannel(modifiedChannel)
   const verb = LogVerb[auditLogEntry.action]
-
-  Sentry.configureScope((scope) =>
-    scope.setExtra('executor', inspect(executor)),
-  )
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (executor?.username === null) {
-    console.dir(executor)
-  }
   const execUser = executor ? formatUser(executor) : 'Unknown User'
   const changelog = auditLogEntry.changes
     .map((change) => {
