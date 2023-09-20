@@ -32,14 +32,14 @@ export async function logMemberBanKick(
   const executor = await resolveUser(
     auditLogEntry.executor,
     auditLogEntry.executorId,
-    guild,
+    guild.client,
   )
   const execUser = executor ? formatUser(executor) : 'Unknown User'
 
   const target = await resolveUser(
     auditLogEntry.target,
     auditLogEntry.targetId,
-    guild,
+    guild.client,
   )
   const targetUser = target ? formatUser(target) : 'Unknown User'
 
