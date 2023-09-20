@@ -3,12 +3,12 @@ import {
   ChatInputCommandInteraction,
   codeBlock,
   escapeCodeBlock,
-  escapeMarkdown,
   Guild,
   GuildMember,
 } from 'discord.js'
 import {
   AutocompleteHandler,
+  escapeAllMarkdown,
   formatUser,
   getGuild,
   SleetSlashCommand,
@@ -71,9 +71,9 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
     return interaction.editReply(matches[0].id)
   } else {
     return interaction.editReply(
-      `Multiple users found matching "${escapeMarkdown(user)}":\n${resultFormat(
-        matches,
-      )}`,
+      `Multiple users found matching "${escapeAllMarkdown(
+        user,
+      )}":\n${resultFormat(matches)}`,
     )
   }
 }

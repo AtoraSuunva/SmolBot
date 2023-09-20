@@ -15,11 +15,11 @@ dependencies:
     specifier: ^3.9.2
     version: 3.9.2
   '@sentry/integrations':
-    specifier: ^7.69.0
-    version: 7.69.0
+    specifier: ^7.70.0
+    version: 7.70.0
   '@sentry/node':
-    specifier: ^7.69.0
-    version: 7.69.0
+    specifier: ^7.70.0
+    version: 7.70.0
   '@sentry/profiling-node':
     specifier: ^1.2.1
     version: 1.2.1
@@ -38,9 +38,6 @@ dependencies:
   discord.js:
     specifier: ~14.13.0
     version: 14.13.0
-  dotenv:
-    specifier: ~16.3.1
-    version: 16.3.1
   env-var:
     specifier: ~7.4.1
     version: 7.4.1
@@ -57,14 +54,14 @@ dependencies:
     specifier: ~8.0.0
     version: 8.0.0
   sleetcord:
-    specifier: 0.18.0
-    version: 0.18.0(discord.js@14.13.0)
+    specifier: 1.2.0
+    version: 1.2.0(discord.js@14.13.0)
   sleetcord-common:
-    specifier: ^3.2.0
-    version: 3.2.0(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.18.0)
+    specifier: ^4.1.0
+    version: 4.1.0(prisma@5.3.1)
   undici:
-    specifier: ^5.24.0
-    version: 5.24.0
+    specifier: ^5.25.1
+    version: 5.25.1
 
 devDependencies:
   '@sentry/cli':
@@ -74,8 +71,8 @@ devDependencies:
     specifier: ^2.3.7
     version: 2.3.7
   '@types/node':
-    specifier: ~20.6.2
-    version: 20.6.2
+    specifier: ~20.6.3
+    version: 20.6.3
   '@types/pluralize':
     specifier: ^0.0.30
     version: 0.0.30
@@ -337,13 +334,13 @@ packages:
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
     dev: false
 
-  /@sentry-internal/tracing@7.69.0:
-    resolution: {integrity: sha512-4BgeWZUj9MO6IgfO93C9ocP3+AdngqujF/+zB2rFdUe+y9S6koDyUC7jr9Knds/0Ta72N/0D6PwhgSCpHK8s0Q==}
+  /@sentry-internal/tracing@7.70.0:
+    resolution: {integrity: sha512-SpbE6wZhs6QwG2ORWCt8r28o1T949qkWx/KeRTCdK4Ub95PQ3Y3DgnqD8Wz//3q50Wt6EZDEibmz4t067g6PPg==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.69.0
-      '@sentry/types': 7.69.0
-      '@sentry/utils': 7.69.0
+      '@sentry/core': 7.70.0
+      '@sentry/types': 7.70.0
+      '@sentry/utils': 7.70.0
       tslib: 2.6.2
     dev: false
 
@@ -372,6 +369,15 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@sentry/core@7.70.0:
+    resolution: {integrity: sha512-voUsGVM+jwRp99AQYFnRvr7sVd2tUhIMj1L6F42LtD3vp7t5ZnKp3NpXagtFW2vWzXESfyJUBhM0qI/bFvn7ZA==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.70.0
+      '@sentry/utils': 7.70.0
+      tslib: 2.6.2
+    dev: false
+
   /@sentry/hub@7.69.0:
     resolution: {integrity: sha512-71TQ7P5de9+cdW1ETGI9wgi2VNqfyWaM3cnUvheXaSjPRBrr6mhwoaSjo+GGsiwx97Ob9DESZEIhdzcLupzkFA==}
     engines: {node: '>=8'}
@@ -382,25 +388,25 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@sentry/integrations@7.69.0:
-    resolution: {integrity: sha512-FEFtFqXuCo9+L7bENZxFpEAlIODwHl6FyW/DwLfniy9jOXHU7BhP/oICLrFE5J7rh1gNY7N/8VlaiQr3hCnS/g==}
+  /@sentry/integrations@7.70.0:
+    resolution: {integrity: sha512-ffIEuiElROzl4IpYX0O7vtPaadXVycPtyjq86YTHjd2TUFcYuQTPBm5UjEVE0/sSNNCdfWYxNThU/fVyq93l1g==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.69.0
-      '@sentry/utils': 7.69.0
+      '@sentry/types': 7.70.0
+      '@sentry/utils': 7.70.0
       localforage: 1.10.0
       tslib: 2.6.2
     dev: false
 
-  /@sentry/node@7.69.0:
-    resolution: {integrity: sha512-T0NgPcmDQvEuz5hy6aEhXghTHHTWsiP3IWoeEAakDBHAXmtpT6lYFQZgb5AiEOt9F5KO/G/1yH3YYdpDAnKhPw==}
+  /@sentry/node@7.70.0:
+    resolution: {integrity: sha512-GeGlnu3QnJX0GN2FvZ3E31e48ZhRzEpREyC0Wa4BRvYHnyiGvsQjo/0RKeq6vvlggRhVnuoMg/jESyUmdntrAA==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/tracing': 7.69.0
-      '@sentry/core': 7.69.0
-      '@sentry/types': 7.69.0
-      '@sentry/utils': 7.69.0
-      cookie: 0.4.2
+      '@sentry-internal/tracing': 7.70.0
+      '@sentry/core': 7.70.0
+      '@sentry/types': 7.70.0
+      '@sentry/utils': 7.70.0
+      cookie: 0.5.0
       https-proxy-agent: 5.0.1
       lru_map: 0.3.3
       tslib: 2.6.2
@@ -416,7 +422,7 @@ packages:
     dependencies:
       '@sentry/core': 7.69.0
       '@sentry/hub': 7.69.0
-      '@sentry/node': 7.69.0
+      '@sentry/node': 7.70.0
       '@sentry/types': 7.69.0
       '@sentry/utils': 7.69.0
       detect-libc: 2.0.2
@@ -431,11 +437,24 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
+  /@sentry/types@7.70.0:
+    resolution: {integrity: sha512-rY4DqpiDBtXSk4MDNBH3dwWqfPbNBI/9GA7Y5WJSIcObBtfBKp0fzYliHJZD0pgM7d4DPFrDn42K9Iiumgymkw==}
+    engines: {node: '>=8'}
+    dev: false
+
   /@sentry/utils@7.69.0:
     resolution: {integrity: sha512-4eBixe5Y+0EGVU95R4NxH3jkkjtkE4/CmSZD4In8SCkWGSauogePtq6hyiLsZuP1QHdpPb9Kt0+zYiBb2LouBA==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.69.0
+      tslib: 2.6.2
+    dev: false
+
+  /@sentry/utils@7.70.0:
+    resolution: {integrity: sha512-0cChMH0lsGp+5I3D4wOHWwjFN19HVrGUs7iWTLTO5St3EaVbdeLbI1vFXHxMxvopbwgpeZafbreHw/loIdZKpw==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.70.0
       tslib: 2.6.2
     dev: false
 
@@ -456,8 +475,8 @@ packages:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: true
 
-  /@types/node@20.6.2:
-    resolution: {integrity: sha512-Y+/1vGBHV/cYk6OI1Na/LHzwnlNCAfU3ZNGrc1LdRe/LAIbdDPTTv/HU3M7yXN448aTVDq3eKRm2cg7iKLb8gw==}
+  /@types/node@20.6.3:
+    resolution: {integrity: sha512-HksnYH4Ljr4VQgEy2lTStbCKv/P590tmPe5HqOnv9Gprffgv5WXAY+Y5Gqniu0GGqeTCUdBnzC3QSrzPkBkAMA==}
 
   /@types/pluralize@0.0.30:
     resolution: {integrity: sha512-kVww6xZrW/db5BR9OqiT71J9huRdQ+z/r+LbDuT7/EK50mCmj5FoaIARnVv0rvjUS/YpDox0cDU9lpQT011VBA==}
@@ -470,7 +489,7 @@ packages:
   /@types/ws@8.5.5:
     resolution: {integrity: sha512-lwhs8hktwxSjf9UaZ9tG5M03PGogvFaH8gUgLNbN9HKIg0dvv6q+gkSuJ8HN4/VbyxkuLzCjlN7GquQ0gUJfIg==}
     dependencies:
-      '@types/node': 20.6.2
+      '@types/node': 20.6.3
     dev: false
 
   /@typescript-eslint/eslint-plugin@6.7.2(@typescript-eslint/parser@6.7.2)(eslint@8.49.0)(typescript@5.2.2):
@@ -944,8 +963,8 @@ packages:
       lodash.keys: 2.3.0
     dev: false
 
-  /cookie@0.4.2:
-    resolution: {integrity: sha512-aSWTXFzaKWkvHO1Ny/s+ePFpvKsPnjc551iI41v3ny/ow6tBG5Vd+FuqGNhh1LxOmVzOlGUriIlOaokOvhaStA==}
+  /cookie@0.5.0:
+    resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
     engines: {node: '>= 0.6'}
     dev: false
 
@@ -1068,11 +1087,6 @@ packages:
     dependencies:
       esutils: 2.0.3
     dev: true
-
-  /dotenv@16.3.1:
-    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
-    engines: {node: '>=12'}
-    dev: false
 
   /eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
@@ -2790,32 +2804,27 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /sleetcord-common@3.2.0(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.18.0):
-    resolution: {integrity: sha512-noGKXC4B35Faz/eVk6ARU6ow5birYNFgCg9r8pjrLA2JNqFSChQWPWKWZ0iaJ63nmUdMBfACAU8Ouq/ZasVDDg==}
-    peerDependencies:
-      '@prisma/client': ^5.3.1
-      '@sentry/integrations': ^7.69.0
-      '@sentry/node': ^7.69.0
-      '@sentry/profiling-node': ^1.2.1
-      discord.js: ^14.13.0
-      env-var: ^7.4.1
-      pino: ^8.15.1
-      pretty-ms: ^8.0.0
-      sleetcord: ^0.18.0
+  /sleetcord-common@4.1.0(prisma@5.3.1):
+    resolution: {integrity: sha512-pWg0qyfgoht+wgHAvUekNHgQksUFtAta+JCFrLs0ZG/O8h4Y2DXqBZ1UjDPKNrbNpaKCNsGaRYoF5/9G+LWgiQ==}
     dependencies:
       '@prisma/client': 5.3.1(prisma@5.3.1)
-      '@sentry/integrations': 7.69.0
-      '@sentry/node': 7.69.0
+      '@sentry/integrations': 7.70.0
+      '@sentry/node': 7.70.0
       '@sentry/profiling-node': 1.2.1
       discord.js: 14.13.0
       env-var: 7.4.1
       pino: 8.15.1
       pretty-ms: 8.0.0
-      sleetcord: 0.18.0(discord.js@14.13.0)
+      sleetcord: 1.2.0(discord.js@14.13.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - prisma
+      - supports-color
+      - utf-8-validate
     dev: false
 
-  /sleetcord@0.18.0(discord.js@14.13.0):
-    resolution: {integrity: sha512-+BblX3SjfZwDZfZfYvpSU/NUhNwUDqhynyDc2TzKdmrsMayCjvUX35q0hGTth7XzcCGAKdw9Qe/guaR8nwh7aw==}
+  /sleetcord@1.2.0(discord.js@14.13.0):
+    resolution: {integrity: sha512-H1k9WGqztMnBvXD8wtgeb8KBtAXj88LJbTMOV5eL1JbRLJKNz0j/jGUxGGMw51cpWRkFv49e9XFTumStClAD6A==}
     peerDependencies:
       discord.js: ^14.12.1
     dependencies:
@@ -3105,8 +3114,8 @@ packages:
       busboy: 1.6.0
     dev: false
 
-  /undici@5.24.0:
-    resolution: {integrity: sha512-OKlckxBjFl0oXxcj9FU6oB8fDAaiRUq+D8jrFWGmOfI/gIyjk/IeS75LMzgYKUaeHzLUcYvf9bbJGSrUwTfwwQ==}
+  /undici@5.25.1:
+    resolution: {integrity: sha512-nTw6b2G2OqP6btYPyghCgV4hSwjJlL/78FMJatVLCa3otj6PCOQSt6dVtYt82OtNqFz8XsnJ+vsXLADPXjPhqw==}
     engines: {node: '>=14.0'}
     dependencies:
       busboy: 1.6.0

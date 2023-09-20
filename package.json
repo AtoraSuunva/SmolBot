@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start:dev": "tsc --build && node -r dotenv/config dist/index.js",
+    "start:dev": "tsc --build && node --env-file=.env dist/index.js",
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
@@ -22,33 +22,35 @@
   "bugs": {
     "url": "https://github.com/AtoraSuunva/smolbot/issues"
   },
+  "engines": {
+    "node": ">=20.6.0"
+  },
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.4.1",
     "@prisma/client": "~5.3.1",
     "@sapphire/shapeshift": "^3.9.2",
-    "@sentry/integrations": "^7.69.0",
-    "@sentry/node": "^7.69.0",
+    "@sentry/integrations": "^7.70.0",
+    "@sentry/node": "^7.70.0",
     "@sentry/profiling-node": "^1.2.1",
     "char-info": "^0.3.2",
     "convert-units": "~2.3.4",
     "csv-parse": "^5.5.0",
     "csv-stringify": "^6.4.2",
     "discord.js": "~14.13.0",
-    "dotenv": "~16.3.1",
     "env-var": "~7.4.1",
     "pino": "~8.15.1",
     "pino-dev": "^4.0.2",
     "pluralize": "^8.0.0",
     "pretty-ms": "~8.0.0",
-    "sleetcord": "0.18.0",
-    "sleetcord-common": "^3.2.0",
-    "undici": "^5.24.0"
+    "sleetcord": "1.2.0",
+    "sleetcord-common": "^4.1.0",
+    "undici": "^5.25.1"
   },
   "devDependencies": {
     "@sentry/cli": "^2.20.7",
     "@types/convert-units": "^2.3.7",
-    "@types/node": "~20.6.2",
+    "@types/node": "~20.6.3",
     "@types/pluralize": "^0.0.30",
     "@typescript-eslint/eslint-plugin": "~6.7.2",
     "@typescript-eslint/parser": "~6.7.2",
