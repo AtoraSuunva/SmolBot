@@ -26,7 +26,6 @@ import {
   time,
   escapeInlineCode,
 } from 'discord.js'
-import { fetch } from 'undici'
 import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 import prettyMilliseconds from 'pretty-ms'
 import { plural } from '../util/format.js'

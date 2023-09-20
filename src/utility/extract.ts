@@ -6,7 +6,6 @@ import {
   GuildMember,
   TextBasedChannel,
 } from 'discord.js'
-import { fetch } from 'undici'
 import { SleetSlashCommand } from 'sleetcord'
 import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'

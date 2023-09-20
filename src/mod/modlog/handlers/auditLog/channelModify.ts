@@ -5,10 +5,9 @@ import {
   GuildAuditLogsEntry,
   GuildBasedChannel,
   NonThreadGuildBasedChannel,
-  escapeMarkdown,
 } from 'discord.js'
 import { formatLog } from '../../utils.js'
-import { formatUser } from 'sleetcord'
+import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { AuditInfo, resolveUser } from './index.js'
 import { Sentry } from 'sleetcord-common'
 import { inspect } from 'util'
@@ -129,7 +128,7 @@ function formatChannel(
       ? ` in ${formatChannel(channel.parent)}`
       : ''
 
-  return `**${escapeMarkdown(channel.name)}** (${channel.id}) [\`${
+  return `**${escapeAllMarkdown(channel.name)}** (${channel.id}) [\`${
     ChannelTypeNames[channel.type]
   }\`]${parent}`
 }

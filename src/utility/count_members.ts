@@ -3,9 +3,13 @@ import {
   ChatInputCommandInteraction,
   Collection,
   GuildMember,
-  escapeMarkdown,
 } from 'discord.js'
-import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
+import {
+  escapeAllMarkdown,
+  getGuild,
+  makeChoices,
+  SleetSlashCommand,
+} from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'
@@ -106,7 +110,7 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
       name.includes(toCheck),
     )
     checks.push(
-      `**"${escapeMarkdown(
+      `**"${escapeAllMarkdown(
         nameContains,
       )}"**${sensitivity} in their ${choiceDisplay}`,
     )
@@ -121,7 +125,7 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
       (name) => name === toCheck,
     )
     checks.push(
-      `**"${escapeMarkdown(
+      `**"${escapeAllMarkdown(
         nameEquals,
       )}"**${sensitivity} as their ${choiceDisplay}`,
     )

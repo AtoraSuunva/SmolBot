@@ -2,12 +2,16 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   Constants,
-  escapeMarkdown,
   PrivateThreadChannel,
   PublicThreadChannel,
   ThreadEditOptions,
 } from 'discord.js'
-import { formatUser, getChannel, SleetSlashCommand } from 'sleetcord'
+import {
+  escapeAllMarkdown,
+  formatUser,
+  getChannel,
+  SleetSlashCommand,
+} from 'sleetcord'
 
 export const lock_thread = new SleetSlashCommand(
   {
@@ -58,7 +62,7 @@ async function logToChannel(
   if (!logChannelId) return
 
   const formattedReason = [
-    `**Locked Thread:** ${escapeMarkdown(thread.name)}`,
+    `**Locked Thread:** ${escapeAllMarkdown(thread.name)}`,
     `**Locked By:** ${formatUser(interaction.user)}`,
     thread.url,
     `**Reason:** ${reason}`,

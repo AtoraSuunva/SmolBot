@@ -68,7 +68,7 @@ If you prefer/need to re-build the image (ie. you've changed the code), you can 
 
 ### Installing dependencies yourself
 
-You'll need Node.js (I think at least v18, but I only test using v20), pnpm, patience, and prayers.
+You'll need Node.js (At **least** >=20.6.0), pnpm, patience, and prayers.
 
 Assuming you have Node.js and pnpm installed and working:
 
