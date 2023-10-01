@@ -104,8 +104,8 @@ async function messageDelete(message: Message | PartialMessage) {
       : '') +
     (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '')
 
-  // +8 for the codeblock
-  const deletedMessageLength = messageContent.length + 8
+  // +250 to give us some more headroom
+  const deletedMessageLength = messageContent.length + 250
 
   const files: AttachmentPayload[] = []
 
