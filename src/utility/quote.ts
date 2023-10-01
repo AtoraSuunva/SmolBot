@@ -33,7 +33,14 @@ export const quote = new SleetSlashCommand(
 )
 
 async function handleMessageCreate(message: Message) {
-  if (message.author.bot || !message.inGuild()) {
+  if (
+    message.author.bot ||
+    !message.inGuild() ||
+    !message.guild.members.me ||
+    !message.channel
+      .permissionsFor(message.guild.members.me)
+      .has('SendMessages')
+  ) {
     return
   }
 
