@@ -172,6 +172,7 @@ async function runMute(
 
   await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
+  const deferReply = interaction.deferReply({ ephemeral })
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
   const config: Prisma.MuteConfigGetPayload<true> =
@@ -192,19 +193,19 @@ async function runMute(
   const mutedRole = findMutedRole(guild, config.roleID)
 
   if (!mutedRole) {
-    return interaction.reply({
+    await deferReply
+    return interaction.editReply({
       content: `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
         '`, `',
       )}\``,
-      ephemeral: true,
     })
   }
 
   const isOwner = interactionMember.id === guild.ownerId
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
-    return interaction.reply({
+    await deferReply
+    return interaction.editReply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
-      ephemeral: true,
     })
   }
 
@@ -242,9 +243,9 @@ async function runMute(
   }
 
   if (toMute.length === 0) {
-    return interaction.reply({
+    await deferReply
+    return interaction.editReply({
       content: `No valid users to ${action}.\n${formatFails(earlyFailed)}`,
-      ephemeral: true,
     })
   }
 
@@ -253,8 +254,6 @@ async function runMute(
   const { succeeded, failed } = await (action === 'mute'
     ? muteAction(toMute, mutedRole, formattedReason)
     : unmuteAction(toMute, mutedRole, formattedReason))
-
-  const deferReply = interaction.deferReply({ ephemeral })
 
   const totalFails = [...earlyFailed, ...failed]
   const succ =
