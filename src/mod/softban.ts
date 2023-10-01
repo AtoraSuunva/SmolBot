@@ -79,6 +79,8 @@ async function runSoftban(interaction: ChatInputCommandInteraction) {
   })} for: ${reason}`
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
+  const deferReply = interaction.deferReply({ ephemeral })
+
   const guild = await getGuild(interaction, true)
   const me = await guild.members.fetchMe()
   const interactionMember = interaction.member as GuildMember
@@ -118,13 +120,11 @@ async function runSoftban(interaction: ChatInputCommandInteraction) {
   }
 
   if (toBan.length === 0) {
-    return interaction.reply({
-      ephemeral: true,
+    await deferReply
+    return interaction.editReply({
       content: `No valid users to softban.\n${formatFails(earlyFailed)}`,
     })
   }
-
-  await interaction.deferReply({ ephemeral })
 
   const context: BanContext = {
     guild,
@@ -143,6 +143,7 @@ async function runSoftban(interaction: ChatInputCommandInteraction) {
   const fail =
     totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
 
+  await deferReply
   return interaction.editReply(`**Softbanned**${succ}${fail}`)
 }
 
