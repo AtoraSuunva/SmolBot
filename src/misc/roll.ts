@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  AttachmentPayload,
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
@@ -76,8 +77,20 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     )
   }
 
+  let content = result.join('\n')
+  const files: AttachmentPayload[] = []
+
+  if (result.length > 2000) {
+    files.push({
+      name: 'roll.txt',
+      attachment: Buffer.from(content),
+    })
+    content = 'Your roll result was too big! Check the file for the result.'
+  }
+
   return interaction.reply({
-    content: result.join('\n'),
+    content,
+    files,
     ephemeral,
   })
 }
