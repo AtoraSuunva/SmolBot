@@ -1,13 +1,13 @@
 import { GatewayIntentBits, Options, Partials, RESTOptions } from 'discord.js'
 import env from 'env-var'
 import { SleetClient, SleetModuleEventHandlers } from 'sleetcord'
-import { modules } from './modules.js'
 import {
   Sentry,
   getModuleRunner,
   initDBLogging,
   initSentry,
 } from 'sleetcord-common'
+import { modules } from './modules.js'
 import { prisma } from './util/db.js'
 
 async function main() {
@@ -15,7 +15,7 @@ async function main() {
   const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
   const GIT_COMMIT_SHA = env.get('GIT_COMMIT_SHA').asString() ?? 'development'
 
-  await initSentry({
+  initSentry({
     release: GIT_COMMIT_SHA,
     tracesSampler(samplingContext) {
       const { name, op } = samplingContext.transactionContext
