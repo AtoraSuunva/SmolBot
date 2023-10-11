@@ -1,4 +1,5 @@
 // import { automod } from './automod/automod.js'
+import { maliciousFile } from './automod/maliciousFile.js'
 import { banlog } from './banlog.js'
 import { dehoist } from './dehoist.js'
 import { idof } from './idof.js'
@@ -26,6 +27,7 @@ export const modModules = [
   idof,
   lock_thread,
   lookup,
+  maliciousFile,
   mass_ban,
   mass_kick,
   purge,
