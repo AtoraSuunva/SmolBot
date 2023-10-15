@@ -3,9 +3,9 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
-import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { respondWithPaginatedWarnings, WarningFetcher } from './pagination.js'
+import { WarningFetcher, respondWithPaginatedWarnings } from './pagination.js'
 import { fetchPaginatedWarnings } from './utils.js'
 
 export const warningsAdd = new SleetSlashSubcommand(
@@ -58,41 +58,43 @@ async function warningsAddRun(interaction: ChatInputCommandInteraction) {
   const permanent = interaction.options.getBoolean('permanent', false) ?? false
   const voidWarning = interaction.options.getBoolean('void', false) ?? false
 
-  // So to create a new warning, we need to:
-  // 0. Figure out the next warning ID to use in this guild
-  // 1. Create a new warning that's warningID + 1
+  await prisma.$transaction(async (tx) => {
+    // So to create a new warning, we need to:
+    // 0. Figure out the next warning ID to use in this guild
+    // 1. Create a new warning that's warningID + 1
 
-  // 0.
-  const latestWarningIDInGuild = await prisma.warning.findFirst({
-    select: {
-      warningID: true,
-    },
-    where: {
-      guildID: guild.id,
-    },
-    orderBy: {
-      warningID: 'desc',
-    },
-  })
+    // 0.
+    const latestWarningIDInGuild = await tx.warning.findFirst({
+      select: {
+        warningID: true,
+      },
+      where: {
+        guildID: guild.id,
+      },
+      orderBy: {
+        warningID: 'desc',
+      },
+    })
 
-  const nextWarningID = (latestWarningIDInGuild?.warningID ?? 0) + 1
+    const nextWarningID = (latestWarningIDInGuild?.warningID ?? 0) + 1
 
-  // 1.
-  await prisma.warning.create({
-    data: {
-      guildID: guild.id,
-      warningID: nextWarningID,
-      version: 1,
-      user: formatUser(user, { markdown: false, id: false }),
-      userID: user.id,
-      reason,
-      permanent,
-      void: voidWarning,
-      modNote,
-      moderatorID: interaction.user.id,
-      // This specifically needs to be null, it's how we tell which version of the warning is the latest
-      validUntil: null,
-    },
+    // 1.
+    await tx.warning.create({
+      data: {
+        guildID: guild.id,
+        warningID: nextWarningID,
+        version: 1,
+        user: formatUser(user, { markdown: false, id: false }),
+        userID: user.id,
+        reason,
+        permanent,
+        void: voidWarning,
+        modNote,
+        moderatorID: interaction.user.id,
+        // This specifically needs to be null, it's how we tell which version of the warning is the latest
+        validUntil: null,
+      },
+    })
   })
 
   const filters = {
