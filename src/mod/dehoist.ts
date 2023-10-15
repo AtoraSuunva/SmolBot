@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -10,9 +11,8 @@ import {
   getGuild,
   getMembers,
 } from 'sleetcord'
-import { plural } from '../util/format.js'
 import { prisma } from '../util/db.js'
-import { Prisma } from '@prisma/client'
+import { plural } from '../util/format.js'
 
 export const dehoist = new SleetSlashCommand(
   {
@@ -51,7 +51,7 @@ export const dehoist = new SleetSlashCommand(
   {
     run: runDehoist,
     guildMemberAdd: checkToDehoist,
-    guildMemberUpdate: (_, newMember) => checkToDehoist(newMember),
+    guildMemberUpdate: checkGuildMemberUpdate,
     guildMemberAvailable: checkToDehoist,
   },
 )
@@ -139,7 +139,18 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
   )
 }
 
+async function checkGuildMemberUpdate(
+  oldMember: GuildMember | PartialGuildMember,
+  newMember: GuildMember,
+) {
+  if (oldMember.partial || oldMember.displayName !== newMember.displayName) {
+    await checkToDehoist(newMember)
+  }
+}
+
 async function checkToDehoist(member: GuildMember | PartialGuildMember) {
+  if (!member.manageable) return
+
   const guild = member.guild
   const settings = await prisma.automaticDehoist.findUnique({
     where: { guildID: guild.id },
@@ -172,7 +183,6 @@ async function dehoistMembers(
     if (!force && !hoistCharacters.includes(member.displayName[0])) continue
 
     try {
-      if (!member.manageable) continue
       const newNick = (dehoistPrepend + member.displayName).substring(0, 32)
       await member.setNickname(newNick, 'Dehoist')
       dehoisted++
