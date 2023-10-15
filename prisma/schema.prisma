@@ -124,20 +124,20 @@ model AutomodConfig {
 }
 
 model AutomodRule {
-  ruleID     Int     @id @map("rule_id")
-  guildID    String  @map("guild_id")
+  ruleID      Int     @id @map("rule_id")
+  guildID     String  @map("guild_id")
   // Discriminator between rule types, bot-set
-  type       String
-  // Name shown to admins when viewing rules
-  name       String
+  type        String
+  // Description shown to admins when viewing rules
+  description String  @map("name")
   // Message shown to users when rule is triggered
-  message    String
+  message     String
   // Action to apply
-  action     String
+  action      String
   // Whether to delete the message(s) that triggered the rule
-  delete     Boolean
+  delete      Boolean
   // Parameters the rule takes, as JSON
-  parameters String
+  parameters  String
 }
 
 model AutomaticDehoist {
@@ -161,4 +161,41 @@ model MemberMutes {
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@id([guildID, userID])
+}
+
+model ActionLogConfig {
+  guildID            String   @id @map("guild_id")
+  logBans            Boolean  @map("log_bans")
+  logUnbans          Boolean  @map("log_unbans")
+  logKicks           Boolean  @map("log_kicks")
+  logTimeouts        Boolean  @map("log_timeouts")
+  logTimeoutRemovals Boolean  @map("log_timeout_removals")
+  logChannelID       String?  @map("log_channel_id")
+  archiveEnabled     Boolean  @default(false) @map("archive_enabled")
+  archiveChannel     String?  @map("archive_channel")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+}
+
+model ActionLogDirtyTracker {
+  guildID      String   @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty      Boolean  @map("is_dirty")
+}
+
+model ActionLog {
+  guildID  String @map("guild_id")
+  actionID Int    @map("action_id")
+  version  Int
+
+  action      String
+  userID      String?   @map("user_id")
+  reason      String?
+  reasonByID  String?   @map("reason_by_id")
+  moderatorID String?   @map("moderator_id")
+  channelID   String    @map("channel_id")
+  messageID   String?   @map("message_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, actionID, version])
 }
