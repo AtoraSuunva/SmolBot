@@ -242,6 +242,8 @@ async function formatPageToFields(
   guild: Guild,
   actionLogs: ActionLog[],
 ): Promise<APIEmbedField[]> {
+  // TODO: some way to detect when the output would be too long and split it
+  // but how? and how to do it without breaking pagination?
   return (
     await Promise.all(
       actionLogs.map(
@@ -262,6 +264,9 @@ async function formatPageToFields(
     )
   ).map((al) => ({
     name: `Version #${al.version}`,
-    value: formatToLog(al),
+    value: formatToLog(al, {
+      reason: true,
+      reasonBy: true,
+    }),
   }))
 }
