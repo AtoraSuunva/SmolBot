@@ -162,26 +162,30 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
         const channel = guild.channels.cache.get(action.channelID)
 
         if (channel?.isTextBased()) {
-          await channel.messages.edit(action.messageID, {
-            content: formatToLog({
-              id: action.actionID,
-              version: action.version,
-              action: action.action as ActionLogEntry['action'],
-              user: action.userID
-                ? await guild.client.users.fetch(action.userID)
-                : null,
-              reason: action.reason,
-              reasonBy: action.reasonByID
-                ? await guild.client.users.fetch(action.reasonByID)
-                : null,
-              responsibleModerator: action.moderatorID
-                ? await guild.client.users.fetch(action.moderatorID)
-                : null,
-            }),
-            allowedMentions: {
-              parse: [],
-            },
-          })
+          await channel.messages
+            .edit(action.messageID, {
+              content: formatToLog({
+                id: action.actionID,
+                version: action.version,
+                action: action.action as ActionLogEntry['action'],
+                user: action.userID
+                  ? await guild.client.users.fetch(action.userID)
+                  : null,
+                reason: action.reason,
+                reasonBy: action.reasonByID
+                  ? await guild.client.users.fetch(action.reasonByID)
+                  : null,
+                responsibleModerator: action.moderatorID
+                  ? await guild.client.users.fetch(action.moderatorID)
+                  : null,
+              }),
+              allowedMentions: {
+                parse: [],
+              },
+            })
+            .catch(() => {
+              // ignore
+            })
         }
       }
 
