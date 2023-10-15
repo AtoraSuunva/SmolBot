@@ -141,6 +141,18 @@ export function plural(
   )}`
 }
 
+/**
+ * Capitalizes a string from "this" => "This" or "hello world" => "Hello World"
+ * @param str The string to capitalize
+ * @returns The string, capitalized
+ */
+export function capitalize(str: string): string {
+  return str
+    .split(' ')
+    .map((s) => s[0].toLocaleUpperCase() + s.slice(1))
+    .join(' ')
+}
+
 export interface TableFormatOptions<T> {
   /** The keys to show, by default all keys of the first object */
   keys?: (keyof T)[]
