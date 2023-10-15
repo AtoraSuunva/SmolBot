@@ -305,30 +305,36 @@ async function editAction(
     }
 
     const log = formatToLog(entry)
-    await logChannel
-      .send({
-        content: log,
-        allowedMentions: {
-          parse: [],
-        },
-      })
-      .then((message) =>
-        prisma.actionLog.update({
-          where: {
-            guildID_actionID_version: {
-              guildID: guild.id,
-              actionID: oldAction.actionID,
-              version: oldAction.version + 1,
+
+    try {
+      await logChannel
+        .send({
+          content: log,
+          allowedMentions: {
+            parse: [],
+          },
+        })
+        .then((message) =>
+          prisma.actionLog.update({
+            where: {
+              guildID_actionID_version: {
+                guildID: guild.id,
+                actionID: oldAction.actionID,
+                version: oldAction.version + 1,
+              },
             },
-          },
-          data: {
-            messageID: message.id,
-          },
-        }),
-      )
-      .catch(() => {
-        // ignore, probably can't send
-      })
+            data: {
+              messageID: message.id,
+            },
+          }),
+        )
+    } catch (e) {
+      return {
+        id: actionID,
+        success: false,
+        message: `Failed to log action to channel: ${e}`,
+      }
+    }
 
     return {
       id: actionID,
@@ -359,12 +365,20 @@ async function editAction(
     }
   }
 
-  await channel.messages.edit(oldAction.messageID, {
-    content: formatToLog(entry),
-    allowedMentions: {
-      parse: [],
-    },
-  })
+  try {
+    await channel.messages.edit(oldAction.messageID, {
+      content: formatToLog(entry),
+      allowedMentions: {
+        parse: [],
+      },
+    })
+  } catch (e) {
+    return {
+      id: actionID,
+      success: false,
+      message: `Failed to edit message: ${e}`,
+    }
+  }
 
   return {
     id: actionID,
