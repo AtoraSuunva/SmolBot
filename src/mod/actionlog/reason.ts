@@ -122,6 +122,7 @@ export const actionReason = new SleetSlashCommand(
         description: 'The reason for the warning',
         type: ApplicationCommandOptionType.String,
         required: true,
+        max_length: 1500,
       },
       {
         name: 'ephemeral',

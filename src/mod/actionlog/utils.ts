@@ -20,24 +20,55 @@ const userLog = (user: User | GuildMember) =>
     mention: true,
   })
 
-export function formatToLog(entry: ActionLogEntry): string {
-  const log = [
-    `**${capitalize(entry.action)}** | Case ${entry.id}`,
-    `**User:** ${entry.user ? userLog(entry.user) : 'unknown user'}`,
-    `**Reason:** ${entry.reason ?? 'no reason provided'}`,
-  ]
+export interface LogFormatOptions {
+  headerLine?: boolean
+  user?: boolean
+  reason?: boolean
+  reasonBy?: boolean
+  responsibleModerator?: boolean
+}
 
-  if (entry.reasonBy && entry.reasonBy.id !== entry.responsibleModerator?.id) {
+export function formatToLog(
+  entry: ActionLogEntry,
+  options: LogFormatOptions = {
+    headerLine: true,
+    user: true,
+    reason: true,
+    reasonBy: true,
+    responsibleModerator: true,
+  },
+): string {
+  const log: string[] = []
+
+  if (options.headerLine) {
+    log.push(`**${capitalize(entry.action)}** | Case ${entry.id}`)
+  }
+
+  if (options.user) {
+    log.push(`**User:** ${entry.user ? userLog(entry.user) : 'unknown user'}`)
+  }
+
+  if (options.reason) {
+    log.push(`**Reason:** ${entry.reason ?? 'no reason provided'}`)
+  }
+
+  if (
+    options.reasonBy &&
+    entry.reasonBy &&
+    entry.reasonBy.id !== entry.responsibleModerator?.id
+  ) {
     log.push(`**Reason by:** ${userLog(entry.reasonBy)}`)
   }
 
-  log.push(
-    `**Responsible Moderator**: ${
-      entry.responsibleModerator
-        ? userLog(entry.responsibleModerator)
-        : 'unknown moderator'
-    }`,
-  )
+  if (options.responsibleModerator) {
+    log.push(
+      `**Responsible Moderator**: ${
+        entry.responsibleModerator
+          ? userLog(entry.responsibleModerator)
+          : 'unknown moderator'
+      }`,
+    )
+  }
 
   return log.join('\n')
 }
