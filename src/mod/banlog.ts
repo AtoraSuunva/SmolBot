@@ -7,7 +7,13 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, makeChoices } from 'sleetcord'
 
-const typeChoices = makeChoices(['Ban', 'Unban', 'Kick', 'Mute'])
+const typeChoices = makeChoices([
+  'Ban',
+  'Unban',
+  'Kick',
+  'Timeout',
+  'Timeout Removed',
+])
 
 /** Creates a banlog in case pollr is down goddamn again or something */
 export const banlog = new SleetSlashCommand(
@@ -47,9 +53,7 @@ export const banlog = new SleetSlashCommand(
 
 const userLog = (user: User | GuildMember) =>
   formatUser(user, {
-    markdown: false,
     mention: true,
-    escape: false,
   })
 
 async function runBanlog(interaction: ChatInputCommandInteraction) {
