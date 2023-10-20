@@ -10,13 +10,13 @@ import {
   User,
 } from 'discord.js'
 import {
+  Mentionable,
+  PreRunError,
+  SleetSlashCommand,
   botHasPermissionsGuard,
   getMentionables,
   getTextBasedChannel,
   inGuildGuard,
-  Mentionable,
-  PreRunError,
-  SleetSlashCommand,
 } from 'sleetcord'
 import { plural } from '../util/format.js'
 
@@ -32,7 +32,7 @@ export const purge = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Integer,
         description: 'The number of messages to purge (default: 100)',
         min_value: 1,
-        max_value: 100,
+        max_value: 300,
       },
       {
         name: 'content',
