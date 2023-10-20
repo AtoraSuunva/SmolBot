@@ -63,7 +63,9 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply()
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
-  const matches = await matchMembers(guild, user, true)
+  const matches = await matchMembers(guild, user, {
+    shortCircuitOnExactMatch: true,
+  })
 
   if (matches.length === 0) {
     return interaction.editReply(`No users found matching "${user}"`)
@@ -107,6 +109,20 @@ async function fetchMembers(guild: Guild) {
 // Limit the number of autocomplete options returned
 const MAX_MATCHES = 25
 
+type Matcher = (string: string, query: string) => boolean
+
+interface MatchMemberOptions {
+  matcher?: Matcher
+  limit?: number
+  caseSensitive?: boolean
+  matchNickname?: boolean
+  shortCircuitOnExactMatch?: boolean
+}
+
+function partialMatcher(string: string, query: string): boolean {
+  return string.includes(query)
+}
+
 /**
  * Try to match a query against every member in a guild, returning possible matches
  * @param guild The guild to search
@@ -117,28 +133,47 @@ const MAX_MATCHES = 25
 async function matchMembers(
   guild: Guild,
   query: string,
-  tryExactMatch = false,
+  {
+    matcher = partialMatcher,
+    limit = MAX_MATCHES,
+    caseSensitive = false,
+    matchNickname = true,
+    shortCircuitOnExactMatch = false,
+  }: MatchMemberOptions = {},
 ): Promise<MemberMatch[]> {
-  const lowerValue = query.toLowerCase()
+  const matchQuery = caseSensitive ? query : query.toLowerCase()
   const members = await fetchMembers(guild)
-
   const matches: GuildMember[] = []
 
+  limit = Math.min(limit, MAX_MATCHES)
+
   for (const m of members.values()) {
+    const globalName = m.user.globalName
+      ? caseSensitive
+        ? m.user.globalName
+        : m.user.globalName.toLowerCase()
+      : null
+    const tag = caseSensitive ? m.user.tag : m.user.tag.toLowerCase()
+    const nickname = m.nickname
+      ? caseSensitive
+        ? m.nickname
+        : m.nickname.toLowerCase()
+      : null
+
     if (
-      tryExactMatch &&
-      (m.user.globalName === query || m.user.tag === query)
+      shortCircuitOnExactMatch &&
+      (globalName === matchQuery || tag === matchQuery)
     ) {
       return [formatSuggestion(m)]
     }
 
     if (
-      !!m.user.globalName?.toLowerCase().includes(lowerValue) ||
-      m.user.tag.toLowerCase().includes(lowerValue) ||
-      m.nickname?.toLowerCase().includes(lowerValue)
+      (!!globalName && matcher(globalName, matchQuery)) ||
+      matcher(tag, matchQuery) ||
+      (matchNickname && matcher(nickname ?? '', matchQuery))
     ) {
       matches.push(m)
-      if (matches.length >= MAX_MATCHES) break
+      if (matches.length >= limit) break
     }
   }
 
