@@ -49,7 +49,7 @@ export function formatToLog(
   }
 
   if (options.reason) {
-    log.push(`**Reason:** ${entry.reason ?? 'no reason provided'}`)
+    log.push(`**Reason:** ${entry.reason ?? '*No reason provided.*'}`)
   }
 
   if (
@@ -65,7 +65,7 @@ export function formatToLog(
       `**Responsible Moderator**: ${
         entry.responsibleModerator
           ? userLog(entry.responsibleModerator)
-          : 'unknown moderator'
+          : '*Unknown moderator*'
       }`,
     )
   }

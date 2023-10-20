@@ -176,17 +176,19 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   }
 
   const log: string[] = []
-  const successes = results.filter((result) => result.success).length
+  const successes = results.filter((result) => result.success)
 
-  if (successes === 1) {
-    log.push(`Reasoned action #${results[0].id} with:\n> ${reason}`)
-    await markActionlogArchiveDirty(guild.id)
-  } else if (successes > 0) {
-    log.push(`Reasoned ${plural('action', successes)} with:\n> ${reason}`)
+  if (successes.length > 0) {
+    const formattedAction =
+      successes.length === 1
+        ? `action #${successes[0].id}`
+        : plural('action', successes.length)
+
+    log.push(`Changed reason for ${formattedAction} to${formatReason(reason)}`)
     await markActionlogArchiveDirty(guild.id)
   }
 
-  const failures = results.length - successes
+  const failures = results.length - successes.length
 
   if (failures > 0) {
     log.push(
@@ -213,6 +215,14 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
     content,
     files,
   })
+}
+
+function formatReason(reason: string): string {
+  if (reason.includes('\n')) {
+    return `:\n> ${reason.replace(/\n/g, '\n> ')}`
+  } else {
+    return ` "${reason}"`
+  }
 }
 
 interface EditActionLogSuccess {
