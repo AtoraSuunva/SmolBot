@@ -141,7 +141,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
   const actionString = interaction.options.getString('action_id', true)
-  const reason = interaction.options.getString('reason', true)
+  const reason = interaction.options.getString('reason', true).trim()
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   await interaction.deferReply({
