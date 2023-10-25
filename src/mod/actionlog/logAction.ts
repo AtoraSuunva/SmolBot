@@ -54,7 +54,7 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
     id: 0,
     action: type,
     user: auditLogEntry.target,
-    reason: auditLogEntry.reason,
+    reason: auditLogEntry.reason?.trim() ?? null,
     reasonBy: auditLogEntry.executor,
     responsibleModerator: auditLogEntry.executor,
   }
