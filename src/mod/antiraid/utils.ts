@@ -15,7 +15,7 @@ export enum AntiRaidActions {
 }
 
 export const antiRaidChoices: APIApplicationCommandOptionChoice<string>[] =
-  makeChoices(Object.keys(AntiRaidActions).filter((k) => typeof k === 'string'))
+  makeChoices(Object.values(AntiRaidActions))
 
 export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   {
