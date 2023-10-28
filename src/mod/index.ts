@@ -1,5 +1,6 @@
 // import { automod } from './automod/automod.js'
 import { actionLogModules } from './actionlog/index.js'
+import { antiraidModules } from './antiraid/index.js'
 import { maliciousFile } from './automod/maliciousFile.js'
 import { banlog } from './banlog.js'
 import { dehoist } from './dehoist.js'
@@ -20,6 +21,7 @@ import { welcome } from './welcome/welcome.js'
 
 export const modModules = [
   ...actionLogModules,
+  ...antiraidModules,
   ...modlogModules,
   ...muteModules,
   ...warningsModules,
