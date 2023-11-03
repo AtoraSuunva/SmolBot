@@ -5,7 +5,7 @@ import {
   GuildMember,
 } from 'discord.js'
 import pluralize from 'pluralize'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import {
   AntiRaidActions,
@@ -61,16 +61,21 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
     'no_profile_picture_weight',
     false,
   )
+  const reason = interaction.options.getString('reason', false)
+  const logChannel = interaction.options.getChannel('log_channel', false)
+  const reset = interaction.options.getBoolean('reset', false)
 
   await interaction.deferReply()
 
-  const config = await getAntiRaidConfigOrDefault(guild)
+  const config = await getAntiRaidConfigOrDefault(guild, reset === true)
 
   const mergedConfig: Prisma.AntiRaidConfigCreateInput = {
     guildID: guild.id,
     enabled: true,
     action: action ?? config.action,
     threshold: threshold ?? config.threshold,
+    reason: reason ?? config.reason,
+    logChannelID: logChannel?.id ?? config.logChannelID,
     timeoutDuration: timeoutDuration ?? config.timeoutDuration,
     accountAgeLimitMin: accountAgeLimitMin ?? config.accountAgeLimitMin,
     accountAgeLimitMax: accountAgeLimitMax ?? config.accountAgeLimitMax,
@@ -90,7 +95,14 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
   }
 
   const formattedResult = results
-    .map((r) => `${r.member.user.tag} (${r.weight}) - ${r.action}`)
+    .map(
+      (r) =>
+        `${formatUser(r.member, {
+          id: true,
+          markdown: false,
+          escape: false,
+        })} (${r.weight} weight >= ${config.threshold}) - ${r.action}`,
+    )
     .join('\n')
 
   await interaction.editReply({
@@ -119,6 +131,24 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
     await interaction.editReply({
       content: 'Applied actions',
     })
+
+    const logChannel = config.logChannelID
+      ? await guild.channels.fetch(config.logChannelID)
+      : null
+
+    if (logChannel?.isTextBased()) {
+      await logChannel.send({
+        content: `${formatUser(
+          interaction.user,
+        )} applied actions for ${pluralize('user', results.length)}`,
+        files: [
+          {
+            name: 'result.txt',
+            attachment: Buffer.from(formattedResult),
+          },
+        ],
+      })
+    }
   }
 }
 
@@ -132,7 +162,21 @@ async function handleGuildMemberAdd(member: GuildMember) {
   if (result.length === 0) return
 
   await applyAction(result[0], config)
+
+  const logChannel = config.logChannelID
+    ? await member.guild.channels.fetch(config.logChannelID)
+    : null
+
+  if (logChannel?.isTextBased()) {
+    await logChannel.send({
+      content: `${formatUser(member, { id: true, mention: true })} got ${
+        result[0].action
+      } for ${result[0].weight} weight (over ${config.threshold})`,
+    })
+  }
 }
+
+const DEFAULT_REASON = 'Anti-raid triggered'
 
 async function applyAction(
   result: MemberCheckResult,
@@ -142,11 +186,14 @@ async function applyAction(
     case AntiRaidActions.None:
       break
     case AntiRaidActions.Kick:
-      return result.member.kick('Anti-raid')
+      return result.member.kick(config.reason ?? DEFAULT_REASON)
     case AntiRaidActions.Ban:
-      return result.member.ban({ reason: 'Anti-raid' })
+      return result.member.ban({ reason: config.reason ?? DEFAULT_REASON })
     case AntiRaidActions.Timeout:
-      return result.member.timeout(config.timeoutDuration, 'Anti-raid')
+      return result.member.timeout(
+        config.timeoutDuration,
+        config.reason ?? DEFAULT_REASON,
+      )
   }
 
   return null

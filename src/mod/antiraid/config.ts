@@ -53,16 +53,21 @@ async function handleRunConfig(interaction: ChatInputCommandInteraction) {
     'no_profile_picture_weight',
     false,
   )
+  const reason = interaction.options.getString('reason', false)
+  const logChannel = interaction.options.getChannel('log_channel', false)
+  const reset = interaction.options.getBoolean('reset', false)
 
   await interaction.deferReply()
 
-  const config = await getAntiRaidConfigOrDefault(guild)
+  const config = await getAntiRaidConfigOrDefault(guild, reset === true)
 
   const mergedConfig: Prisma.AntiRaidConfigCreateInput = {
     guildID: guild.id,
     enabled: enabled ?? config.enabled,
     action: action ?? config.action,
     threshold: threshold ?? config.threshold,
+    reason: reason ?? config.reason,
+    logChannelID: logChannel?.id ?? config.logChannelID,
     timeoutDuration: timeoutDuration ?? config.timeoutDuration,
     accountAgeLimitMin: accountAgeLimitMin ?? config.accountAgeLimitMin,
     accountAgeLimitMax: accountAgeLimitMax ?? config.accountAgeLimitMax,

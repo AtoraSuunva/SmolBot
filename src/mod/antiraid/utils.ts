@@ -2,6 +2,7 @@ import {
   APIApplicationCommandBasicOption,
   APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
+  Constants,
   Guild,
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
@@ -66,17 +67,40 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
     description: 'The weight applied to users without a profile picture',
     type: ApplicationCommandOptionType.Number,
   },
+  {
+    name: 'reason',
+    description:
+      'The reason for the action, add `[no-log]` to not log the action in the actionlog',
+    type: ApplicationCommandOptionType.String,
+  },
+  {
+    name: 'log_channel',
+    description: 'The channel to log actions to',
+    type: ApplicationCommandOptionType.Channel,
+    channel_types: Constants.GuildTextBasedChannelTypes,
+  },
+  {
+    name: 'reset',
+    description:
+      'Reset the antiraid config to default, applying any specified configs after',
+    type: ApplicationCommandOptionType.Boolean,
+  },
 ]
 
-export async function getAntiRaidConfigOrDefault(guild: Guild) {
-  const config = await prisma.antiRaidConfig.findUnique({
-    where: {
-      guildID: guild.id,
-    },
-  })
+export async function getAntiRaidConfigOrDefault(
+  guild: Guild,
+  forceDefault = false,
+) {
+  if (!forceDefault) {
+    const config = await prisma.antiRaidConfig.findUnique({
+      where: {
+        guildID: guild.id,
+      },
+    })
 
-  if (config) {
-    return config
+    if (config) {
+      return config
+    }
   }
 
   return prisma.antiRaidConfig.create({
@@ -85,6 +109,8 @@ export async function getAntiRaidConfigOrDefault(guild: Guild) {
       enabled: false,
       action: AntiRaidActions.None,
       threshold: 10,
+      reason: null,
+      logChannelID: null,
       timeoutDuration: 60,
       accountAgeLimitMin: 0,
       accountAgeLimitMax: 10,
