@@ -211,6 +211,12 @@ export async function resolveIDs(
     return []
   }
 
+  const autocompleteResult = idResolvable.match(/^#(\d+) \[\w+\] —.*$/)
+
+  if (autocompleteResult) {
+    return [parseInt(autocompleteResult[1], 10)]
+  }
+
   if (idResolvable.match(/^\d+$/)) {
     const number = parseInt(idResolvable, 10)
 
