@@ -133,11 +133,11 @@ export const actionReason = new SleetSlashCommand(
     ],
   },
   {
-    run: warningsEditRun,
+    run: reasonRun,
   },
 )
 
-async function warningsEditRun(interaction: ChatInputCommandInteraction) {
+async function reasonRun(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
   const actionString = interaction.options.getString('action_id', true)
@@ -148,8 +148,16 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
     ephemeral,
   })
 
-  const actionIDs = await resolveIDs(guild, actionString)
-  const config = await fetchActionLogConfigFor(guild.id, true)
+  let actionIDs: number[]
+
+  try {
+    actionIDs = await resolveIDs(guild, actionString)
+  } catch (err) {
+    await interaction.editReply({
+      content: `Failed to parse action ID: ${err}`,
+    })
+    return
+  }
 
   if (actionIDs.length === 0) {
     await interaction.editReply({
@@ -157,6 +165,8 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
     })
     return
   }
+
+  const config = await fetchActionLogConfigFor(guild.id, true)
 
   const results: EditActionLog[] = []
 
