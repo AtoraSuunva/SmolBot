@@ -10,9 +10,9 @@ import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markActionlogArchiveDirty } from './utils.js'
 
-export const actionlog_manage = new SleetSlashSubcommand(
+export const actionlog_config = new SleetSlashSubcommand(
   {
-    name: 'manage',
+    name: 'config',
     description: 'View or edit the action logging system config',
     options: [
       {
@@ -62,11 +62,11 @@ export const actionlog_manage = new SleetSlashSubcommand(
     ],
   },
   {
-    run: runActionlogManage,
+    run: runActionlogConfig,
   },
 )
 
-async function runActionlogManage(interaction: ChatInputCommandInteraction) {
+async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
   const oldConfig = await prisma.actionLogConfig.findUnique({
@@ -80,7 +80,7 @@ async function runActionlogManage(interaction: ChatInputCommandInteraction) {
     if (!oldConfig) {
       return interaction.reply({
         content:
-          "You don't have an existing action log config, use `/actionlog_manage` with options to create one.",
+          "You don't have an existing action log config, use `/actionlog_config` with options to create one.",
       })
     } else {
       return interaction.reply({
