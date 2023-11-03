@@ -40,6 +40,14 @@ async function guildAuditLogEntryCreate(
 }
 
 async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
+  // Ignore logs from the bot if they contain `[no-log]` in the reason
+  if (
+    auditLogEntry.executorId === guild.client.user.id &&
+    auditLogEntry.reason?.includes('[no-log]')
+  ) {
+    return
+  }
+
   const config = await fetchActionLogConfigFor(guild.id, false)
   const logChannelID = config?.logChannelID
   if (!logChannelID) return

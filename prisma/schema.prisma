@@ -206,6 +206,8 @@ model AntiRaidConfig {
   action          String
   timeoutDuration Int     @map("timeout_duration")
   threshold       Float
+  reason          String?
+  logChannelID    String? @map("log_channel_id")
 
   accountAgeLimitMin     Float @map("account_age_limit_min")
   accountAgeLimitMax     Float @map("account_age_limit_max")
