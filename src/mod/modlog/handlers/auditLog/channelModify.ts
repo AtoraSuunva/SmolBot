@@ -6,8 +6,8 @@ import {
   GuildBasedChannel,
   NonThreadGuildBasedChannel,
 } from 'discord.js'
-import { formatLog } from '../../utils.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
+import { formatLog } from '../../utils.js'
 import { AuditInfo, resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
@@ -39,8 +39,8 @@ export async function logChannelModified(
     auditLogEntry.action === AuditLogEvent.ChannelDelete
       ? (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel) // If target is a channel or if the channel was deleted, use the target
       : auditLogEntry.targetId
-      ? await guild.channels.fetch(auditLogEntry.targetId) // Try to fetch the channel
-      : auditLogEntry.targetId // Give up and use just the ID
+        ? await guild.channels.fetch(auditLogEntry.targetId) // Try to fetch the channel
+        : auditLogEntry.targetId // Give up and use just the ID
 
   const executor = await resolveUser(
     auditLogEntry.executor,
@@ -136,4 +136,5 @@ const ChannelTypeNames: Record<ChannelType, string> = {
   [ChannelType.GuildVoice]: 'Voice',
   [ChannelType.PrivateThread]: 'Private Thread',
   [ChannelType.PublicThread]: 'Public Thread',
+  [ChannelType.GuildMedia]: 'Media',
 }
