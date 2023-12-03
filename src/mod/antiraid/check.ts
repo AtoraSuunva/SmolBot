@@ -6,12 +6,14 @@ import {
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
-import { notNullish } from 'sleetcord-common'
+import { baseLogger, notNullish } from 'sleetcord-common'
 import {
   AntiRaidActions,
   antiRaidOptions,
   getAntiRaidConfigOrDefault,
 } from './utils.js'
+
+const antiraidLogger = baseLogger.child({ module: 'antiraid' })
 
 export const antiraid_check = new SleetSlashSubcommand(
   {
@@ -120,10 +122,12 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
   if (shouldApply) {
     await Promise.all(results.map((r) => applyAction(r, mergedConfig))).catch(
       async (e) => {
-        console.error(e)
+        antiraidLogger.error(e, 'Error applying actions')
 
         await interaction.editReply({
-          content: 'An error occurred while applying the actions',
+          content: `An error occurred while applying the actions:\n\`\`\`${String(
+            e,
+          )}\`\`\``,
         })
       },
     )

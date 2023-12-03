@@ -1,23 +1,26 @@
+import { Prisma, PrismaPromise, Warning } from '@prisma/client'
+import {
+  BaseError,
+  CombinedError,
+  CombinedPropertyError,
+  ObjectValidator,
+  Result,
+  s,
+} from '@sapphire/shapeshift'
+import { parse } from 'csv-parse'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   codeBlock,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
-import { parse } from 'csv-parse'
+import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { baseLogger } from 'sleetcord-common'
 import { Readable } from 'stream'
 import { fetch } from 'undici'
-import { Prisma, PrismaPromise, Warning } from '@prisma/client'
-import {
-  s,
-  Result,
-  ObjectValidator,
-  BaseError,
-  CombinedError,
-  CombinedPropertyError,
-} from '@sapphire/shapeshift'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'
+
+const importWarningsLogger = baseLogger.child({ module: 'import_warnings' })
 
 // Separate command since this is potentially abusive, someone could import a LOT of garbage data or falsify new warnings with other mods as responsible
 export const importWarnings = new SleetSlashCommand(
@@ -90,7 +93,11 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     const validated = warningCreateValidator.run(record)
 
     if (validated.isErr()) {
-      console.error(validated.error)
+      importWarningsLogger.error(
+        validated.error,
+        'Invalid warning record %o',
+        record,
+      )
       await defer
       await interaction.editReply(
         `You have an invalid row in your csv:\n${codeBlock(

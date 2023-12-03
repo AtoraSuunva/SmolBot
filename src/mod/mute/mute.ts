@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -8,16 +9,16 @@ import {
   UserContextMenuCommandInteraction,
 } from 'discord.js'
 import {
+  SleetSlashCommand,
+  SleetUserCommand,
   botHasPermissionsGuard,
   formatUser,
   getGuild,
   getMembers,
   inGuildGuard,
-  SleetSlashCommand,
-  SleetUserCommand,
 } from 'sleetcord'
+import { baseLogger } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
-import { Prisma } from '@prisma/client'
 
 const mutedRoles = [
   'muted',
@@ -28,6 +29,8 @@ const mutedRoles = [
   'jail',
   'jailed',
 ]
+
+const muteLogger = baseLogger.child({ module: 'mute' })
 
 export const mute = new SleetSlashCommand(
   {
@@ -302,6 +305,7 @@ function muteAction(
       await member.roles.set([...keepRoles, mutedRole], reason)
       succeeded.push({ member, roles: previousRoles })
     } catch (e) {
+      muteLogger.error(e, 'Failed to mute user %s', member.id)
       failed.push({ member, reason: String(e) })
     }
   })
@@ -322,6 +326,7 @@ function unmuteAction(
       const restoredRoles = await restoreRoles(member, mutedRole, reason)
       succeeded.push({ member, roles: restoredRoles })
     } catch (e) {
+      muteLogger.error(e, 'Failed to unmute user %s', member.id)
       failed.push({ member, reason: String(e) })
     }
   })

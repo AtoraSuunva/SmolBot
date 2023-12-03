@@ -1,16 +1,19 @@
 import {
-  Client,
-  Guild,
-  Message,
-  EmbedBuilder,
-  TextBasedChannel,
-  User,
+  ApplicationCommandOptionType,
   Channel,
   ChatInputCommandInteraction,
-  ApplicationCommandOptionType,
+  Client,
+  EmbedBuilder,
+  Guild,
+  Message,
+  TextBasedChannel,
+  User,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser } from 'sleetcord'
+import { baseLogger } from 'sleetcord-common'
 import { quoteMessage } from '../util/quoteMessage.js'
+
+const quoteLogger = baseLogger.child({ module: 'quote' })
 
 export const quote = new SleetSlashCommand(
   {
@@ -72,7 +75,7 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
     )
     return interaction.reply({ embeds })
   } catch (e) {
-    console.error(e)
+    quoteLogger.warn(e, 'Failed to generate quote for %s', messageLink)
     return interaction.reply({
       ephemeral: true,
       content: e instanceof Error ? e.message : String(e),
