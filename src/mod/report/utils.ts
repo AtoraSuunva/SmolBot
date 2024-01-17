@@ -1,6 +1,4 @@
 import { UserReport } from '@prisma/client'
-import { prisma } from '../../util/db.js'
-import { ReportConfigResolved } from './manage/config.js'
 import {
   ActionRow,
   ActionRowBuilder,
@@ -24,8 +22,10 @@ import {
   codeBlock,
   hyperlink,
 } from 'discord.js'
-import { MINUTE, notNullish } from 'sleetcord-common'
 import { formatUser, getGuild } from 'sleetcord'
+import { MINUTE, notNullish } from 'sleetcord-common'
+import { prisma } from '../../util/db.js'
+import { ReportConfigResolved } from './manage/config.js'
 
 const REPORT = 'report'
 
@@ -201,6 +201,8 @@ async function replyToReport(
     return
   }
 
+  const defer = modalInteraction.deferReply()
+
   const message = modalInteraction.fields.getTextInputValue('message')
   const isAnonString =
     modalInteraction.fields.getTextInputValue('anon') || 'yes'
@@ -249,16 +251,16 @@ async function replyToReport(
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 
-    return modalInteraction.reply({
+    await defer
+    return modalInteraction.editReply({
       content: `Failed to send reply to user.\n${codeBlock('js', msg)}`,
-      ephemeral: true,
     })
   }
 
-  const reply = await modalInteraction.reply({
+  await defer
+  const reply = await modalInteraction.editReply({
     content: "Sent reply to user! Here's a copy of the reply:",
     embeds: [embed],
-    fetchReply: true,
   })
 
   const newLog = `${interaction.user} ${hyperlink('Replied', reply.url)}`
@@ -488,8 +490,8 @@ function changeBlockButtonTo(
           component.type === ComponentType.Button
             ? newButton
             : component.data.type === ComponentType.Button
-            ? new ButtonBuilder(component.data)
-            : null,
+              ? new ButtonBuilder(component.data)
+              : null,
         )
         .filter(notNullish),
     ),
