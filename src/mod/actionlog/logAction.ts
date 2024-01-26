@@ -110,7 +110,7 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
   await markActionlogArchiveDirty(guild.id)
 
   entry.id = nextActionID
-  const log = formatToLog(entry)
+  const log = await formatToLog(entry)
   await logChannel
     .send({
       content: log,

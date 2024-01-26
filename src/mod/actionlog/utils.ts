@@ -15,8 +15,9 @@ export interface ActionLogEntry {
   responsibleModerator: User | GuildMember | null
 }
 
-const userLog = (user: User | GuildMember) =>
-  formatUser(user, {
+const userLog = async (user: User | GuildMember): Promise<string> =>
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  formatUser(user.partial ? await user.fetch() : user, {
     mention: true,
   })
 
@@ -28,7 +29,7 @@ export interface LogFormatOptions {
   responsibleModerator?: boolean
 }
 
-export function formatToLog(
+export async function formatToLog(
   entry: ActionLogEntry,
   options: LogFormatOptions = {
     headerLine: true,
@@ -37,7 +38,7 @@ export function formatToLog(
     reasonBy: true,
     responsibleModerator: true,
   },
-): string {
+): Promise<string> {
   const log: string[] = []
 
   if (options.headerLine) {
@@ -45,7 +46,9 @@ export function formatToLog(
   }
 
   if (options.user) {
-    log.push(`**User:** ${entry.user ? userLog(entry.user) : 'unknown user'}`)
+    log.push(
+      `**User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
+    )
   }
 
   if (options.reason) {
@@ -57,14 +60,14 @@ export function formatToLog(
     entry.reasonBy &&
     entry.reasonBy.id !== entry.responsibleModerator?.id
   ) {
-    log.push(`**Reason by:** ${userLog(entry.reasonBy)}`)
+    log.push(`**Reason by:** ${await userLog(entry.reasonBy)}`)
   }
 
   if (options.responsibleModerator) {
     log.push(
       `**Responsible Moderator**: ${
         entry.responsibleModerator
-          ? userLog(entry.responsibleModerator)
+          ? await userLog(entry.responsibleModerator)
           : '*Unknown moderator*'
       }`,
     )

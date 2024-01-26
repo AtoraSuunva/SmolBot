@@ -164,7 +164,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
         if (channel?.isTextBased()) {
           await channel.messages
             .edit(action.messageID, {
-              content: formatToLog({
+              content: await formatToLog({
                 id: action.actionID,
                 version: action.version,
                 action: action.action as ActionLogEntry['action'],
@@ -244,29 +244,31 @@ async function formatPageToFields(
 ): Promise<APIEmbedField[]> {
   // TODO: some way to detect when the output would be too long and split it
   // but how? and how to do it without breaking pagination?
-  return (
-    await Promise.all(
-      actionLogs.map(
-        async (al): Promise<ActionLogEntry> => ({
-          id: al.actionID,
-          version: al.version,
-          action: al.action as ActionLogEntry['action'],
-          user: al.userID ? await guild.client.users.fetch(al.userID) : null,
-          reason: al.reason,
-          reasonBy: al.reasonByID
-            ? await guild.client.users.fetch(al.reasonByID)
-            : null,
-          responsibleModerator: al.moderatorID
-            ? await guild.client.users.fetch(al.moderatorID)
-            : null,
-        }),
-      ),
-    )
-  ).map((al) => ({
-    name: `Version #${al.version}`,
-    value: formatToLog(al, {
-      reason: true,
-      reasonBy: true,
-    }),
-  }))
+  return Promise.all(
+    (
+      await Promise.all(
+        actionLogs.map(
+          async (al): Promise<ActionLogEntry> => ({
+            id: al.actionID,
+            version: al.version,
+            action: al.action as ActionLogEntry['action'],
+            user: al.userID ? await guild.client.users.fetch(al.userID) : null,
+            reason: al.reason,
+            reasonBy: al.reasonByID
+              ? await guild.client.users.fetch(al.reasonByID)
+              : null,
+            responsibleModerator: al.moderatorID
+              ? await guild.client.users.fetch(al.moderatorID)
+              : null,
+          }),
+        ),
+      )
+    ).map(async (al) => ({
+      name: `Version #${al.version}`,
+      value: await formatToLog(al, {
+        reason: true,
+        reasonBy: true,
+      }),
+    })),
+  )
 }

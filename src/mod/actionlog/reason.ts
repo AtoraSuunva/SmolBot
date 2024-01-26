@@ -325,7 +325,7 @@ async function editAction(
       }
     }
 
-    const log = formatToLog(entry)
+    const log = await formatToLog(entry)
 
     try {
       await logChannel
@@ -388,7 +388,7 @@ async function editAction(
 
   try {
     await channel.messages.edit(oldAction.messageID, {
-      content: formatToLog(entry),
+      content: await formatToLog(entry),
       allowedMentions: {
         parse: [],
       },
