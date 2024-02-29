@@ -5,7 +5,6 @@ import {
   WarningDirtyTracker,
 } from '@prisma/client'
 import { APIEmbedField, time } from 'discord.js'
-import { PreRunError } from 'sleetcord'
 import { DAY, MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 
@@ -169,12 +168,32 @@ export async function fetchWarningConfigFor(
   })
 
   if (!config && required) {
-    throw new PreRunError(
-      `No warning config found for this guild. Please run \`/warnings config\` to set one up.`,
-    )
+    const defaultConfig: Omit<WarningConfig, 'updatedAt'> = {
+      guildID,
+      expiresAfter: DEFAULT_WARNING_CONFIG.expiresAfter,
+      archiveEnabled: DEFAULT_WARNING_CONFIG.archiveEnabled,
+      archiveChannel: DEFAULT_WARNING_CONFIG.archiveChannel,
+    }
+
+    return await prisma.warningConfig.upsert({
+      where: {
+        guildID,
+      },
+      update: defaultConfig,
+      create: defaultConfig,
+    })
   }
 
   return config
+}
+
+export const DEFAULT_WARNING_CONFIG: Omit<
+  WarningConfig,
+  'guildID' | 'updatedAt'
+> = {
+  expiresAfter: 0,
+  archiveEnabled: false,
+  archiveChannel: null,
 }
 
 export interface WarningFieldFormatOptions {
