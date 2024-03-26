@@ -1,37 +1,64 @@
 {
   "name": "smolbot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Custom mod/misc/util bot",
-  "main": "src/Sleet.js",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "tsc --build && node --env-file=.env --enable-source-maps dist/index.js",
+    "start:prod": "npx prisma migrate deploy && node --enable-source-maps dist/index.js",
+    "build": "tsc --build",
+    "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
+    "lint:fix": "eslint src/ --fix && prettier --write src/ && prisma format && tsc --noEmit",
+    "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
+    "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AtlasTheBot/smolbot.git"
+    "url": "git+https://github.com/AtoraSuunva/smolbot.git"
   },
-  "keywords": [
-    "bepis"
-  ],
-  "author": "AtlasTheBot",
+  "author": "AtoraSuunva",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AtlasTheBot/smolbot/issues"
+    "url": "https://github.com/AtoraSuunva/smolbot/issues"
   },
-  "homepage": "https://github.com/AtlasTheBot/smolbot#readme",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
-    "bufferutil": "^4.0.5",
-    "cheerio": "^1.0.0-rc.10",
-    "convert-units": "^2.3.4",
-    "discord.js": "^12.5.3",
-    "dotenv": "^16.0.0",
-    "node-fetch": "^2.6.1",
-    "pg-promise": "^10.11.1",
-    "pmx": "^1.6.7",
-    "recursive-readdir-sync": "^1.0.6",
-    "tldts": "^5.7.64",
-    "utf-8-validate": "^5.0.7",
-    "uwuifier": "^4.0.5",
-    "zlib-sync": "^0.1.7"
+    "@dice-roller/rpg-dice-roller": "^5.5.0",
+    "@prisma/client": "~5.10.2",
+    "@sapphire/shapeshift": "^3.9.6",
+    "@sentry/integrations": "^7.103.0",
+    "@sentry/node": "^7.103.0",
+    "@sentry/profiling-node": "^7.103.0",
+    "char-info": "^0.3.2",
+    "convert-units": "~2.3.4",
+    "csv-parse": "^5.5.5",
+    "csv-stringify": "^6.4.6",
+    "discord.js": "~14.14.1",
+    "env-var": "~7.4.1",
+    "pino": "~8.19.0",
+    "pino-dev": "^4.0.3",
+    "pluralize": "^8.0.0",
+    "pretty-ms": "~9.0.0",
+    "sleetcord": "1.2.2",
+    "sleetcord-common": "^6.2.0",
+    "undici": "^6.6.2"
+  },
+  "devDependencies": {
+    "@sentry/cli": "^2.28.6",
+    "@types/convert-units": "^2.3.9",
+    "@types/node": "~20.11.22",
+    "@types/pluralize": "^0.0.33",
+    "@typescript-eslint/eslint-plugin": "~7.1.0",
+    "@typescript-eslint/parser": "~7.1.0",
+    "eslint": "~8.57.0",
+    "eslint-config-prettier": "~9.1.0",
+    "eslint-plugin-import": "~2.29.1",
+    "prettier": "~3.2.5",
+    "prisma": "~5.10.2",
+    "typescript": "~5.3.3"
   }
 }
