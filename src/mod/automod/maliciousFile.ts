@@ -13,7 +13,7 @@ export const maliciousFile = new SleetModule(
 
 const DAY = 24 * HOUR
 
-const inGuilds = ['120330239996854274']
+const inGuilds: string[] = []
 
 async function runMessageCreate(message: Message) {
   if (
