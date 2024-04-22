@@ -5,6 +5,7 @@ import {
 } from 'discord.js'
 import {
   SleetSlashCommand,
+  formatUser,
   getGuild,
   inGuildGuard,
   makeChoices,
@@ -44,6 +45,11 @@ export const check_user_list = new SleetSlashCommand(
           'Skip checking if the user is on the server and try immediately banning them instead',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'reason',
+        description: 'The reason for the action',
+        type: ApplicationCommandOptionType.String,
+      },
     ],
   },
   {
@@ -60,6 +66,11 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
   const userFile = interaction.options.getAttachment('user_file')
   const action = interaction.options.getString('action')
   const massBan = interaction.options.getBoolean('mass_ban')
+  const reason =
+    (interaction.options.getString('reason') ?? 'No reason provided') +
+    ` by ${formatUser(interaction.user, {
+      markdown: false,
+    })}`
 
   await interaction.deferReply()
   const guild = await getGuild(interaction)
@@ -117,7 +128,7 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
   for (const id of toCheck) {
     if (massBan) {
       try {
-        await guild.members.ban(id)
+        await guild.members.ban(id, { reason })
         actionResult.push(`Banned ${id}`)
         continue
       } catch (e) {
@@ -132,15 +143,15 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
         try {
           switch (action) {
             case 'timeout':
-              await user.timeout(24 * HOUR)
+              await user.timeout(24 * HOUR, reason)
               actionResult.push(`Timed out ${user.id}`)
               break
             case 'kick':
-              await user.kick()
+              await user.kick(reason)
               actionResult.push(`Kicked ${user.id}`)
               break
             case 'ban':
-              await user.ban()
+              await user.ban({ reason })
               actionResult.push(`Banned ${user.id}`)
               break
           }
