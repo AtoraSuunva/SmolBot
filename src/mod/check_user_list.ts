@@ -30,7 +30,7 @@ export const check_user_list = new SleetSlashCommand(
       {
         name: 'user_file',
         description:
-          'A text file containing a list of user IDs to check, one per line',
+          'A text file containing a list of user IDs to check, one per line or space-separated',
         type: ApplicationCommandOptionType.Attachment,
       },
       {
@@ -108,7 +108,7 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
     }
 
     const text = await req.text()
-    const userList = text.split('\n')
+    const userList = text.split(/\n\r?|\s+/)
     for (const id of userList) {
       const trimmed = id.trim()
       if (idLike.test(trimmed)) {
@@ -125,19 +125,29 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
   const actionResult: string[] = []
   let actionFail = 0
 
-  for (const id of toCheck) {
+  const total = toCheck.length
+  let progress = 0
+
+  const partitionedChecks = partitionArray(toCheck, 100)
+
+  for (const chunk of partitionedChecks) {
     if (massBan) {
-      try {
-        await guild.members.ban(id, { reason })
-        actionResult.push(`Banned ${id}`)
-        continue
-      } catch (e) {
-        actionResult.push(`Failed: mass ban - ${id} - ${e}`)
-        actionFail++
+      for (const id of chunk) {
+        try {
+          await guild.members.ban(id, { reason })
+          actionResult.push(`Banned ${id}`)
+          continue
+        } catch (e) {
+          actionResult.push(`Failed: mass ban - ${id} - ${e}`)
+          actionFail++
+        }
       }
     } else {
-      const user = await guild.members.fetch(id).catch(() => null)
-      if (user) {
+      const users = await guild.members.fetch({
+        user: chunk,
+      })
+
+      for (const user of users.values()) {
         found.push(user.id)
 
         try {
@@ -161,6 +171,15 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
         }
       }
     }
+
+    progress += chunk.length
+
+    await interaction.editReply(
+      `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (${(
+        (progress / total) *
+        100
+      ).toFixed(2)}%)\nFound ${plural('user', found.length)} so far...`,
+    )
   }
 
   if (found.length === 0) {
@@ -193,4 +212,12 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
     content: reply,
     files,
   })
+}
+
+function partitionArray<T>(arr: T[], size: number): T[][] {
+  const parts: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    parts.push(arr.slice(i, i + size))
+  }
+  return parts
 }
