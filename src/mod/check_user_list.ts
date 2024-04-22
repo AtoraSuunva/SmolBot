@@ -188,7 +188,7 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
 
   const actionSuccess = actionResult.length - actionFail
   const actionReply = action
-    ? ` and ${action} ${plural('member', actionSuccess)}${actionFail > 0 ? ` (${actionFail} failed)` : ''}`
+    ? ` and actioned ${plural('member', actionSuccess)}${actionFail > 0 ? ` (${actionFail} failed)` : ''}`
     : ''
   const reply = `Found ${plural('user', found.length)} on the server${actionReply}:`
 
@@ -201,7 +201,7 @@ async function runCheckUserList(interaction: ChatInputCommandInteraction) {
 
   if (action && actionResult.length > 0) {
     files.push(
-      new AttachmentBuilder(Buffer.from(action), {
+      new AttachmentBuilder(Buffer.from(actionResult.join('\n')), {
         name: 'action.txt',
         description: 'List of actions taken on users',
       }),
