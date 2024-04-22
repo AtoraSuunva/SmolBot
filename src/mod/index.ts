@@ -3,6 +3,7 @@ import { actionLogModules } from './actionlog/index.js'
 import { antiraidModules } from './antiraid/index.js'
 import { maliciousFile } from './automod/maliciousFile.js'
 import { banlog } from './banlog.js'
+import { check_user_list } from './check_user_list.js'
 import { dehoist } from './dehoist.js'
 import { idof } from './idof.js'
 import { lock_thread } from './lock_thread.js'
@@ -27,6 +28,7 @@ export const modModules = [
   ...warningsModules,
   // automod,
   banlog,
+  check_user_list,
   dehoist,
   idof,
   lock_thread,
