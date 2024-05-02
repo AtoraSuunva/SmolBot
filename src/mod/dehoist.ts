@@ -50,11 +50,19 @@ export const dehoist = new SleetSlashCommand(
   },
   {
     run: runDehoist,
-    guildMemberAdd: checkToDehoist,
-    guildMemberUpdate: checkGuildMemberUpdate,
-    guildMemberAvailable: checkToDehoist,
+    async guildMemberAdd(member) {
+      await checkToDehoist([member])
+    },
+    async guildMemberUpdate(_, newMember) {
+      await checkToDehoist([newMember])
+    },
+    async guildMemberAvailable(member) {
+      await checkToDehoist([member])
+    },
   },
 )
+
+type DehoistableMember = GuildMember | PartialGuildMember
 
 interface DehoistSettings {
   hoistCharacters: string[]
@@ -63,6 +71,12 @@ interface DehoistSettings {
 }
 
 interface DehoistResult {
+  member: DehoistableMember
+  dehoisted: boolean
+  skipped: boolean
+}
+
+interface DehoistBatchResult {
   dehoisted: number
   failed: number
 }
@@ -91,19 +105,41 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
         )
 
   if (members.length === 0) {
-    await interaction.editReply('No members to dehoist!')
+    await interaction.editReply('Found no matching members to dehoist!')
     return
   }
 
-  await interaction.editReply(
-    `Found ${plural('member', members.length)} to dehoist, dehoisting...`,
-  )
+  const found = `Found ${plural('member', members.length)} to dehoist, dehoisting...`
 
-  const { dehoisted, failed } = await dehoistMembers(members, {
+  await interaction.editReply(found)
+
+  const generator = dehoistMembers(members, {
     hoistCharacters,
     dehoistPrepend,
     force: true,
   })
+
+  let dehoisted = 0
+  let failed = 0
+  let skipped = 0
+
+  for await (const result of generator) {
+    if (result.dehoisted) {
+      dehoisted++
+    } else if (!result.skipped) {
+      failed++
+    } else {
+      skipped++
+    }
+
+    const checked = dehoisted + failed + skipped
+
+    if (checked % 10 === 0) {
+      await interaction.editReply(
+        `${found} (${dehoisted} dehoisted, ${checked}/${members.length} done)`,
+      )
+    }
+  }
 
   if (automatic !== null) {
     const update: Prisma.AutomaticDehoistUpdateInput = {
@@ -135,59 +171,75 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
 
   await interaction.editReply(
     `Dehoisted ${plural('member', dehoisted)}!` +
-      (failed > 0 ? ` Failed to dehoist ${plural('member', failed)}.` : ''),
+      (failed > 0 ? `\nFailed to dehoist ${plural('member', failed)}.` : '') +
+      (skipped > 0 ? `\nSkipped ${plural('member', skipped)}.` : ''),
   )
 }
 
-async function checkGuildMemberUpdate(
-  oldMember: GuildMember | PartialGuildMember,
-  newMember: GuildMember,
-) {
-  if (oldMember.partial || oldMember.displayName !== newMember.displayName) {
-    await checkToDehoist(newMember)
-  }
-}
+async function checkToDehoist(members: DehoistableMember[]) {
+  const dehoistable = members.filter((m) => m.manageable)
 
-async function checkToDehoist(member: GuildMember | PartialGuildMember) {
-  if (!member.manageable) return
+  if (dehoistable.length === 0) return
 
-  const guild = member.guild
+  const guild = dehoistable[0].guild
   const settings = await prisma.automaticDehoist.findUnique({
     where: { guildID: guild.id },
   })
 
-  if (!settings || !settings.enabled) return
+  if (!settings?.enabled) return
 
   const hoistCharacters = settings.hoistCharacters.split('')
 
-  await dehoistMembers([member], {
+  const generator = dehoistMembers(dehoistable, {
     hoistCharacters,
     dehoistPrepend: settings.dehoistPrepend,
   })
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for await (const _ of generator) {
+    // skip
+  }
 }
 
-async function dehoistMembers(
-  members: (GuildMember | PartialGuildMember)[],
+async function* dehoistMembers(
+  members: DehoistableMember[],
   settings: DehoistSettings = {
     hoistCharacters: ['!'],
     dehoistPrepend: '\u{17B5}',
     force: false,
   },
-): Promise<DehoistResult> {
+): AsyncGenerator<DehoistResult, DehoistBatchResult, void> {
   const { hoistCharacters, dehoistPrepend, force } = settings
 
   let dehoisted = 0
   let failed = 0
 
   for (const member of members) {
-    if (!force && !hoistCharacters.includes(member.displayName[0])) continue
+    if (!force && !hoistCharacters.includes(member.displayName[0])) {
+      yield { member, dehoisted: false, skipped: true }
+      continue
+    }
+
+    if (!member.manageable) {
+      failed++
+      yield { member, dehoisted: false, skipped: false }
+      continue
+    }
 
     try {
       const newNick = (dehoistPrepend + member.displayName).substring(0, 32)
+
+      if (newNick === member.displayName) {
+        yield { member, dehoisted: false, skipped: true }
+        continue
+      }
+
       await member.setNickname(newNick, 'Dehoist')
       dehoisted++
+      yield { member, dehoisted: true, skipped: false }
     } catch {
       failed++
+      yield { member, dehoisted: false, skipped: false }
     }
   }
 
