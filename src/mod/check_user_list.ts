@@ -21,6 +21,7 @@ export const check_user_list = new SleetSlashCommand(
     description:
       'Check if any users in a list are on the server, and optionally action them',
     dm_permission: false,
+    default_member_permissions: ['KickMembers', 'BanMembers'],
     options: [
       {
         name: 'users',
