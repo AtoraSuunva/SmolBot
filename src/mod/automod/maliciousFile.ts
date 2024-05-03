@@ -41,7 +41,7 @@ async function runMessageCreate(message: Message) {
         .map((a) => escapeAllMarkdown(a.name))
         .join(', ')
 
-      if (logChannel && logChannel.isTextBased()) {
+      if (logChannel?.isTextBased()) {
         await logChannel.send({
           content: `Malicious file deleted in ${
             message.channel

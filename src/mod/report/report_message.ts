@@ -40,8 +40,8 @@ async function runReportMessage(
     return
   }
 
-  const config = await fetchConfig(guild, interaction.user).catch((err) =>
-    err instanceof Error ? err.message : String(err),
+  const config = await fetchConfig(guild, interaction.user).catch(
+    (err: unknown) => (err instanceof Error ? err.message : String(err)),
   )
 
   if (typeof config === 'string') {
@@ -91,7 +91,7 @@ async function runReportMessage(
       filter: (i) => i.customId === customId,
       time: 15 * MINUTE,
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       if (err instanceof DiscordjsError) {
         return null // time ran out
       }

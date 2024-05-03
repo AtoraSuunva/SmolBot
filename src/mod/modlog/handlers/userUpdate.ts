@@ -1,7 +1,7 @@
 import { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
-import { formatLog, getValidatedConfigFor } from '../utils.js'
 import { UserUpdate } from '../modlog_manage.js'
+import { formatLog, getValidatedConfigFor } from '../utils.js'
 
 export const logUserUpdate = new SleetModule(
   {
@@ -43,7 +43,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
     if (!conf) continue
     const { config, channel } = conf
 
-    switch (config.userUpdate) {
+    switch (config.userUpdate as UserUpdate) {
       case UserUpdate.Username:
         if (!usernameUpdate) continue
         break
@@ -54,6 +54,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
         if (!usernameUpdate && !avatarUpdate) continue
         break
       case UserUpdate.None:
+      default:
         continue
     }
 

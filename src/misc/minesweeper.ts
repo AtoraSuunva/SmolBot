@@ -97,7 +97,7 @@ const charMap = (c: string | number) =>
   c === MINE ? ':bomb:' : nMap[c as keyof typeof nMap]
 
 /** Char to use for the mine */
-const MINE = 'X' as const
+const MINE = 'X'
 
 /**
  * The required data for a game of minesweeper

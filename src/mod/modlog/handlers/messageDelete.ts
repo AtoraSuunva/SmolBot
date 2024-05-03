@@ -1,16 +1,16 @@
-import { SleetModule, formatUser } from 'sleetcord'
-import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 import {
+  AttachmentPayload,
+  AuditLogEvent,
+  EmbedType,
+  GuildAuditLogsFetchOptions,
   Message,
   PartialMessage,
-  AuditLogEvent,
-  GuildAuditLogsFetchOptions,
-  AttachmentPayload,
   escapeCodeBlock,
-  EmbedType,
 } from 'discord.js'
-import { editStore } from '../../unedit.js'
+import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
+import { editStore } from '../../unedit.js'
+import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -153,15 +153,11 @@ export function messageToLog(
           }) + ' :'
         : ''
     } ${escapeCodeBlock(message.content)}` +
-    `${
-      includeAttachments && message.attachments.size > 0
-        ? ' | Attach: ' + message.attachments.map((a) => a.name).join(' ; ')
-        : ''
-    }` +
-    `${
-      includeEmbed && richEmbed
-        ? ' | RichEmbed: ' + escapeCodeBlock(JSON.stringify(richEmbed))
-        : ''
-    }`
+    (includeAttachments && message.attachments.size > 0
+      ? ' | Attach: ' + message.attachments.map((a) => a.name).join(' ; ')
+      : '') +
+    (includeEmbed && richEmbed
+      ? ' | RichEmbed: ' + escapeCodeBlock(JSON.stringify(richEmbed))
+      : '')
   )
 }

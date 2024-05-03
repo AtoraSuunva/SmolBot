@@ -121,7 +121,7 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
 
   if (shouldApply) {
     await Promise.all(results.map((r) => applyAction(r, mergedConfig))).catch(
-      async (e) => {
+      async (e: unknown) => {
         antiraidLogger.error(e, 'Error applying actions')
 
         await interaction.editReply({

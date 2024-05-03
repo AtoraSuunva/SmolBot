@@ -190,7 +190,7 @@ async function replyToReport(
       filter: (i) => i.customId === customId,
       time: 30 * MINUTE,
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       if (err instanceof DiscordjsError) {
         return null // time ran out
       }
@@ -339,7 +339,7 @@ async function blockReportUser(
       filter: (i) => i.customId === customId,
       time: 30 * MINUTE,
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       if (err instanceof DiscordjsError) {
         return null // time ran out
       }
