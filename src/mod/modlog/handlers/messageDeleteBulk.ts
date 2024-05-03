@@ -137,12 +137,8 @@ type KeysOfType<T, KT> = {
   [K in keyof T]: T[K] extends KT ? K : never
 }[keyof T]
 
-type GetMapValue<M extends Map<unknown, unknown>> = M extends Map<
-  unknown,
-  infer V
->
-  ? V
-  : never
+type GetMapValue<M extends Map<unknown, unknown>> =
+  M extends Map<unknown, infer V> ? V : never
 
 function extractMentions<
   K extends KeysOfType<MessageMentions, Collection<string, unknown>>,
@@ -176,13 +172,13 @@ function channelMentions(set: Set<Channel>): string {
           'name' in s
             ? s.name
             : s.recipient
-            ? formatUser(s.recipient, {
-                markdown: false,
-                id: false,
-                bidirectional: false,
-                escape: false,
-              })
-            : 'unknown channel'
+              ? formatUser(s.recipient, {
+                  markdown: false,
+                  id: false,
+                  bidirectional: false,
+                  escape: false,
+                })
+              : 'unknown channel'
         } (${s.id})`,
     )
     .join('; ')}]\n`
