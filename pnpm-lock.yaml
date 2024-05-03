@@ -17,15 +17,6 @@ importers:
       '@sapphire/shapeshift':
         specifier: ^3.9.7
         version: 3.9.7
-      '@sentry/integrations':
-        specifier: ^7.113.0
-        version: 7.113.0
-      '@sentry/node':
-        specifier: ^7.113.0
-        version: 7.113.0
-      '@sentry/profiling-node':
-        specifier: ^7.113.0
-        version: 7.113.0
       char-info:
         specifier: ^0.3.2
         version: 0.3.2
@@ -44,9 +35,6 @@ importers:
       env-var:
         specifier: ~7.4.1
         version: 7.4.1
-      pino:
-        specifier: ~9.0.0
-        version: 9.0.0
       pino-dev:
         specifier: ^4.0.3
         version: 4.0.3
@@ -60,8 +48,8 @@ importers:
         specifier: 1.4.0
         version: 1.4.0(discord.js@14.14.1)
       sleetcord-common:
-        specifier: ^6.2.0
-        version: 6.2.0(prisma@5.13.0)
+        specifier: ^7.0.0
+        version: 7.0.0(prisma@5.13.0)
       undici:
         specifier: ^6.15.0
         version: 6.15.0
@@ -290,13 +278,6 @@ packages:
   '@sentry/node@7.113.0':
     resolution: {integrity: sha512-Vam4Ia0I9fhVw8GJOzcLP7MiiHJSKl8L9LzLMMLG3+2/dFnDQOyS7sOfk3GqgpwzqPiusP9vFu7CFSX7EMQbTg==}
     engines: {node: '>=8'}
-
-  '@sentry/profiling-node@1.3.5':
-    resolution: {integrity: sha512-n2bfEbtLW3WuIMQGyxKJKzBNZOb1JYfMeJQ2WQn/42F++69m+u7T0S3EDGRN0Y//fbt5+r0any+4r3kChRXZkQ==}
-    engines: {node: '>=8.0.0'}
-    hasBin: true
-    peerDependencies:
-      '@sentry/node': ^7.44.1
 
   '@sentry/profiling-node@7.113.0':
     resolution: {integrity: sha512-ABEBLNaFwKIDZHPmvlFPCyrhdKkFRYyGeTijKuQ/fU0q81CCNnh+FJphfJTh9Js1afJ9ShFxk2KZNGzipyo8Zw==}
@@ -578,10 +559,6 @@ packages:
   define-properties@1.2.1:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
-
-  detect-libc@2.0.2:
-    resolution: {integrity: sha512-UX6sGumvvqSaXgdKGUsgZWqcUyIXZ/vZTrlRT/iobiKhGL0zL4d3osHj3uqllWJK+i+sixDS/3COVEOFbupFyw==}
-    engines: {node: '>=8'}
 
   detect-libc@2.0.3:
     resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
@@ -1168,10 +1145,6 @@ packages:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
 
-  parse-ms@3.0.0:
-    resolution: {integrity: sha512-Tpb8Z7r7XbbtBTrM9UhpkzzaMrqA2VXMT3YChzYltwV3P3pM6t8wl7TvpMnSTosz1aQAdVib7kdoys7vYOPerw==}
-    engines: {node: '>=12'}
-
   parse-ms@4.0.0:
     resolution: {integrity: sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==}
     engines: {node: '>=18'}
@@ -1199,9 +1172,6 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
-  pino-abstract-transport@1.1.0:
-    resolution: {integrity: sha512-lsleG3/2a/JIWUtf9Q5gUNErBqwIu1tUKTT3dUzaf5DySw9ra1wcqKjJjLX1VTY64Wk1eEOYsVGSaGfCK85ekA==}
-
   pino-abstract-transport@1.2.0:
     resolution: {integrity: sha512-Guhh8EZfPCfH+PMXAb6rKOjGQEoy0xlAIn+irODG5kgfYV+BQ0rGYYWTIel3P5mmyXqkYkPmdIkywsn6QKUR1Q==}
 
@@ -1212,10 +1182,6 @@ packages:
 
   pino-std-serializers@6.2.2:
     resolution: {integrity: sha512-cHjPPsE+vhj/tnhCy/wiMh3M3z3h/j15zHQX+S9GkTBgqJuTuJzYJ4gUyACLhDaJ7kk9ba9iRDmbH2tJU03OiA==}
-
-  pino@8.20.0:
-    resolution: {integrity: sha512-uhIfMj5TVp+WynVASaVEJFTncTUe4dHBq6CWplu/vBgvGHhvBvQfxz+vcOrnnBQdORH3izaGEurLfNlq3YxdFQ==}
-    hasBin: true
 
   pino@9.0.0:
     resolution: {integrity: sha512-uI1ThkzTShNSwvsUM6b4ND8ANzWURk9zTELMztFkmnCQeR/4wkomJ+echHee5GMWGovoSfjwdeu80DsFIt7mbA==}
@@ -1233,10 +1199,6 @@ packages:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
-
-  pretty-ms@8.0.0:
-    resolution: {integrity: sha512-ASJqOugUF1bbzI35STMBUpZqdfYKlJugy6JBziGi2EE+AL5JPJGSzvpeVXojxrr0ViUYoToUjb5kjSEGf7Y83Q==}
-    engines: {node: '>=14.16'}
 
   pretty-ms@9.0.0:
     resolution: {integrity: sha512-E9e9HJ9R9NasGOgPaPE8VMeiPKAyWR5jcFpNnwIejslIhWqdqOrb2wShBsncMPUb+BcCd2OPYfh7p2W6oemTng==}
@@ -1368,16 +1330,13 @@ packages:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
 
-  sleetcord-common@6.2.0:
-    resolution: {integrity: sha512-hKlMGwh+ix6nKT5oHa/RfunKqRzFtUItVfUwmI2+TghUmFjTkGoSvV7WesqF4keWA03/DRvkJhdLYzFTTuU5pw==}
+  sleetcord-common@7.0.0:
+    resolution: {integrity: sha512-55PQABlIKSVyffmvOnIgvuhhtuvaR5IeQlbvDiC4s8gkXHoAqhKnW9S9ys260LMnJ07m9U8xrSdxlmgg1dIc1Q==}
 
   sleetcord@1.4.0:
     resolution: {integrity: sha512-mFlLetLqcn9mBzm7ATmOprnK44iAswypvm8j+VyTSXn279bybVIBu0tXG9LT7f3aYbkkg/oMWbHTsOFtHj33eA==}
     peerDependencies:
       discord.js: ^14.12.1
-
-  sonic-boom@3.8.0:
-    resolution: {integrity: sha512-ybz6OYOUjoQQCQ/i4LU8kaToD8ACtYP+Cj5qd2AO36bwbdewxWJ3ArmJ2cr6AvxlL2o0PqnCcPGUgkILbfkaCA==}
 
   sonic-boom@3.8.1:
     resolution: {integrity: sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==}
@@ -1425,9 +1384,6 @@ packages:
 
   text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
-
-  thread-stream@2.4.1:
-    resolution: {integrity: sha512-d/Ex2iWd1whipbT681JmTINKw0ZwOUBZm7+Gjs64DHuX34mmw8vJL2bFAaNacaW72zYiTJxSHi5abUuOi5nsfg==}
 
   thread-stream@2.7.0:
     resolution: {integrity: sha512-qQiRWsU/wvNolI6tbbCKd9iKaTnCXsTwVxhhKM6nctPdujTyztjlbUkUTUymidWcMnZ5pWR0ej4a0tjsW021vw==}
@@ -1760,12 +1716,6 @@ snapshots:
       '@sentry/types': 7.113.0
       '@sentry/utils': 7.113.0
 
-  '@sentry/profiling-node@1.3.5(@sentry/node@7.113.0)':
-    dependencies:
-      '@sentry/node': 7.113.0
-      detect-libc: 2.0.2
-      node-abi: 3.62.0
-
   '@sentry/profiling-node@7.113.0':
     dependencies:
       detect-libc: 2.0.3
@@ -2081,8 +2031,6 @@ snapshots:
       define-data-property: 1.1.1
       has-property-descriptors: 1.0.1
       object-keys: 1.1.1
-
-  detect-libc@2.0.2: {}
 
   detect-libc@2.0.3: {}
 
@@ -2793,8 +2741,6 @@ snapshots:
     dependencies:
       callsites: 3.1.0
 
-  parse-ms@3.0.0: {}
-
   parse-ms@4.0.0: {}
 
   path-exists@4.0.0: {}
@@ -2809,11 +2755,6 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  pino-abstract-transport@1.1.0:
-    dependencies:
-      readable-stream: 4.5.2
-      split2: 4.2.0
-
   pino-abstract-transport@1.2.0:
     dependencies:
       readable-stream: 4.5.2
@@ -2827,30 +2768,16 @@ snapshots:
       date-fns: 3.0.5
       debug: 4.3.4
       joycon: 3.1.1
-      pino-abstract-transport: 1.1.0
+      pino-abstract-transport: 1.2.0
       pump: 3.0.0
       readable-stream: 4.5.1
-      sonic-boom: 3.8.0
+      sonic-boom: 3.8.1
       split2: 4.2.0
       strip-ansi: 6.0.1
     transitivePeerDependencies:
       - supports-color
 
   pino-std-serializers@6.2.2: {}
-
-  pino@8.20.0:
-    dependencies:
-      atomic-sleep: 1.0.0
-      fast-redact: 3.5.0
-      on-exit-leak-free: 2.1.2
-      pino-abstract-transport: 1.1.0
-      pino-std-serializers: 6.2.2
-      process-warning: 3.0.0
-      quick-format-unescaped: 4.0.4
-      real-require: 0.2.0
-      safe-stable-stringify: 2.4.3
-      sonic-boom: 3.8.1
-      thread-stream: 2.4.1
 
   pino@9.0.0:
     dependencies:
@@ -2871,10 +2798,6 @@ snapshots:
   prelude-ls@1.2.1: {}
 
   prettier@3.2.5: {}
-
-  pretty-ms@8.0.0:
-    dependencies:
-      parse-ms: 3.0.0
 
   pretty-ms@9.0.0:
     dependencies:
@@ -3004,16 +2927,16 @@ snapshots:
 
   slash@3.0.0: {}
 
-  sleetcord-common@6.2.0(prisma@5.13.0):
+  sleetcord-common@7.0.0(prisma@5.13.0):
     dependencies:
       '@prisma/client': 5.13.0(prisma@5.13.0)
       '@sentry/integrations': 7.113.0
       '@sentry/node': 7.113.0
-      '@sentry/profiling-node': 1.3.5(@sentry/node@7.113.0)
+      '@sentry/profiling-node': 7.113.0
       discord.js: 14.14.1
       env-var: 7.4.1
-      pino: 8.20.0
-      pretty-ms: 8.0.0
+      pino: 9.0.0
+      pretty-ms: 9.0.0
       sleetcord: 1.4.0(discord.js@14.14.1)
     transitivePeerDependencies:
       - bufferutil
@@ -3025,10 +2948,6 @@ snapshots:
       discord-api-types: 0.37.83
       discord.js: 14.14.1
       tseep: 1.2.1
-
-  sonic-boom@3.8.0:
-    dependencies:
-      atomic-sleep: 1.0.0
 
   sonic-boom@3.8.1:
     dependencies:
@@ -3077,10 +2996,6 @@ snapshots:
   supports-preserve-symlinks-flag@1.0.0: {}
 
   text-table@0.2.0: {}
-
-  thread-stream@2.4.1:
-    dependencies:
-      real-require: 0.2.0
 
   thread-stream@2.7.0:
     dependencies:
