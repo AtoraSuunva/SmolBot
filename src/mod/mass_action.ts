@@ -23,13 +23,13 @@ import { capitalize, plural } from '../util/format.js'
 const commonOptions: APIApplicationCommandOption[] = [
   {
     name: 'users',
-    description: 'The users to ban',
+    description: 'The users to action, space-separated user IDs or mentions',
     type: ApplicationCommandOptionType.String,
   },
   {
     name: 'users_file',
     description:
-      'A text file containing a list of user IDs to ban, newline- and/or space-separated',
+      'A text file containing a list of user IDs to action, newline- and/or space-separated',
     type: ApplicationCommandOptionType.Attachment,
   },
   {
@@ -58,7 +58,7 @@ export const mass_ban = new SleetSlashCommand(
       reasonOption,
       {
         name: 'delete_days',
-        description: 'The number of days of messages to delete',
+        description: 'The number of days of messages to delete (default: 0)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
         max_value: 7,
@@ -95,10 +95,47 @@ export const mass_find = new SleetSlashCommand(
     description: 'Check which users in a list are members of this guild',
     default_member_permissions: ['ModerateMembers'],
     dm_permission: false,
-    options: [...commonOptions],
+    options: commonOptions,
   },
   {
     run: runMassFind,
+  },
+)
+
+export const mass_unban = new SleetSlashCommand(
+  {
+    name: 'mass_unban',
+    description: 'Mass unban a list of users',
+    default_member_permissions: ['BanMembers'],
+    dm_permission: false,
+    options: [...commonOptions, reasonOption],
+  },
+  {
+    run: runMassUnban,
+  },
+)
+
+export const mass_softban = new SleetSlashCommand(
+  {
+    name: 'mass_softban',
+    description:
+      'Softbans a user (ban + unban). Unbans + bans already-banned users. Useful to purge messages.',
+    default_member_permissions: ['BanMembers'],
+    dm_permission: false,
+    options: [
+      ...commonOptions,
+      reasonOption,
+      {
+        name: 'delete_days',
+        description: 'The number of days of messages to delete (default: 1)',
+        type: ApplicationCommandOptionType.Integer,
+        min_value: 0,
+        max_value: 7,
+      },
+    ],
+  },
+  {
+    run: runMassSoftban,
   },
 )
 
@@ -116,7 +153,19 @@ type ActionUser = (
   guild: Guild,
   user: User | string,
   reason: string,
-) => Promise<string | User | GuildMember | undefined>
+) => Promise<string | User | GuildMember | undefined | null>
+
+interface BulkActionResult {
+  success: UserOrId[]
+  failure: ActionFail[]
+}
+
+type BulkActionUsers = (
+  guild: Guild,
+  users: UserOrId[],
+  reason: string,
+) => Promise<BulkActionResult>
+
 type CheckMember = (member: GuildMember) => boolean
 
 async function runMassBan(interaction: ChatInputCommandInteraction) {
@@ -134,8 +183,10 @@ async function runMassBan(interaction: ChatInputCommandInteraction) {
         reason,
         deleteMessageSeconds,
       }),
+    // TODO: on d.js v14.15.0 release bulkCreate is added so we can use that instead
+    // bulkActionUsers: async (g, users, reason) => {},
     checkMember: (m) => m.bannable,
-    mustBeInGuild: !forceBan,
+    actionUserType: forceBan ? UserType.Everyone : UserType.MembersOnly,
   })
 }
 
@@ -147,7 +198,7 @@ async function runMassKick(interaction: ChatInputCommandInteraction) {
     actionUser: (g, u, reason) =>
       g.members.kick(typeof u === 'string' ? u : u.id, reason),
     checkMember: (m) => m.kickable,
-    mustBeInGuild: true,
+    actionUserType: UserType.MembersOnly,
   })
 }
 
@@ -158,9 +209,57 @@ async function runMassFind(interaction: ChatInputCommandInteraction) {
     actioned: 'found',
     actionUser: async () => Promise.resolve(undefined),
     checkMember: () => true,
-    mustBeInGuild: true,
+    actionUserType: UserType.MembersOnly,
     checkRoleHierarchy: false,
   })
+}
+
+async function runMassUnban(interaction: ChatInputCommandInteraction) {
+  await runMassAction({
+    interaction,
+    action: 'unban',
+    actioned: 'unbanned',
+    actionUser: (g, u, reason) => g.members.unban(u, reason),
+    checkMember: () => true,
+    actionUserType: UserType.NonMembersOnly,
+  })
+}
+
+async function runMassSoftban(interaction: ChatInputCommandInteraction) {
+  const deleteDays = interaction.options.getInteger('delete_days') ?? 1
+  const deleteMessageSeconds = (deleteDays * DAY) / 1000
+
+  await runMassAction({
+    interaction,
+    action: 'softban',
+    actioned: 'softbanned',
+    actionUser: async (g, u, reason) => {
+      try {
+        await g.members.unban(u, reason)
+        // Success = they were banned before, just re-ban them
+        return g.members.ban(u, {
+          reason,
+          deleteMessageSeconds,
+        })
+      } catch {
+        // Failure = they weren't banned before, ban then unban them
+        await g.members.ban(u, {
+          reason,
+          deleteMessageSeconds,
+        })
+
+        return g.members.unban(u, reason)
+      }
+    },
+    checkMember: (m) => m.bannable,
+    actionUserType: UserType.Everyone,
+  })
+}
+
+enum UserType {
+  Everyone,
+  MembersOnly,
+  NonMembersOnly,
 }
 
 interface RunMassActionOptions {
@@ -171,18 +270,24 @@ interface RunMassActionOptions {
   actioned: string
   /** Function to apply the action on the user */
   actionUser: ActionUser
-  /** Check if the member can be actioned */
+  /**
+   * Optional function to bulk action users, if given it'll be used instead of action user for batches of users
+   *
+   * Useful for cases where Discord accepts bulk actions, like bans
+   */
+  bulkActionUsers?: BulkActionUsers
+  /**
+   * Check if the member can be actioned by the bot
+   */
   checkMember: CheckMember
   /**
-   * Whether the user must be in the guild to be actioned
-   *
-   * If true this enables an optimization to fetch guild members in batches of 100, making checking MUCH faster
+   * The type of users that should be actioned, can be everyone, members-only, or non-members only
    */
-  mustBeInGuild?: boolean
+  actionUserType: UserType
   /**
-   * If user roles should be checked, meaning that the actioned user must have a lower role than the bot and interaction user
+   * If user roles should be checked, meaning that the actioned user must have a lower role than the interaction user
    *
-   * Default true
+   * @default true
    */
   checkRoleHierarchy?: boolean
 }
@@ -192,8 +297,9 @@ async function runMassAction({
   action,
   actioned,
   actionUser,
+  bulkActionUsers,
   checkMember,
-  mustBeInGuild,
+  actionUserType,
   checkRoleHierarchy = true,
 }: RunMassActionOptions) {
   inGuildGuard(interaction)
@@ -273,64 +379,94 @@ async function runMassAction({
 
   const interactionMember = await guild.members.fetch(interaction.user.id)
   const isOwner = interactionMember.id === guild.ownerId
-  const me = await guild.members.fetchMe()
+  // Make sure I'm fetched
+  await guild.members.fetchMe()
   const userHighestRole = interactionMember.roles.highest
-  const myHighestRole = me.roles.highest
+
+  await interaction.editReply(
+    `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (0%)\n${capitalize(
+      actioned,
+    )} 0 users so far...`,
+  )
 
   // Then handle it in batches of 100
   for await (const batch of partitionArray(uniqueUsers, 100)) {
     const members = await guild.members.fetch({ user: batch })
 
-    for (const [, member] of members) {
-      let fail: string | null = null
+    const bulkActionBatch: UserOrId[] = []
 
-      if (!checkMember(member)) {
-        fail = `I'm missing permissions to ${action} this user`
-      } else if (checkRoleHierarchy) {
-        if (
+    if (
+      actionUserType === UserType.Everyone ||
+      actionUserType === UserType.MembersOnly
+    ) {
+      for (const [, member] of members) {
+        let fail: string | null = null
+
+        if (!checkMember(member)) {
+          fail = `I'm missing permissions to ${action} this user or they have a role higher or equal to me`
+        } else if (
+          checkRoleHierarchy &&
           !isOwner &&
           member.roles.highest.position >= userHighestRole.position
         ) {
           fail = `You cannot ${action} someone with a higher or equal role to you`
-        } else if (member.roles.highest.position >= myHighestRole.position) {
-          fail = `I cannot ${action} someone with a higher or equal role to me`
         }
-      }
 
-      if (fail) {
-        failure.push({
-          user: member.user,
-          reason: fail,
-        })
-        continue
-      }
+        if (fail) {
+          failure.push({
+            user: member.user,
+            reason: fail,
+          })
+          continue
+        }
 
-      try {
-        await actionUser(guild, member.user, reason)
-        success.push(member.user)
-      } catch (e: unknown) {
-        failure.push({
-          user: member.user,
-          reason: String(e),
-        })
-      }
-    }
+        if (bulkActionUsers) {
+          bulkActionBatch.push(member.user)
+          continue
+        }
 
-    if (!mustBeInGuild) {
-      // Check which users are left in the list that aren't members
-      const remaining = batch.filter((id) => !members.has(id))
-
-      for (const id of remaining) {
         try {
-          const possibleUser = await actionUser(guild, id, reason)
-          success.push(actionResultToUserOrId(possibleUser) ?? id)
+          await actionUser(guild, member.user, reason)
+          success.push(member.user)
         } catch (e: unknown) {
           failure.push({
-            user: id,
+            user: member.user,
             reason: String(e),
           })
         }
       }
+    }
+
+    if (
+      actionUserType === UserType.Everyone ||
+      actionUserType === UserType.NonMembersOnly
+    ) {
+      // Check which users are left in the list that aren't members
+      const remaining = batch.filter((id) => !members.has(id))
+
+      if (bulkActionUsers) {
+        bulkActionBatch.push(...remaining)
+      } else {
+        for (const id of remaining) {
+          try {
+            const possibleUser = await actionUser(guild, id, reason)
+            success.push(actionResultToUserOrId(possibleUser) ?? id)
+          } catch (e: unknown) {
+            failure.push({
+              user: id,
+              reason: String(e),
+            })
+          }
+        }
+      }
+    }
+
+    if (bulkActionUsers && bulkActionBatch.length > 0) {
+      const { success: bulkSuccess, failure: bulkFailure } =
+        await bulkActionUsers(guild, bulkActionBatch, reason)
+
+      success.push(...bulkSuccess)
+      failure.push(...bulkFailure)
     }
 
     progress += batch.length
@@ -402,7 +538,7 @@ function formatUserOrId(idOnly: boolean, user: UserOrId): string {
 
 function actionResultToUserOrId(
   result: Awaited<ReturnType<ActionUser>>,
-): UserOrId | undefined {
+): UserOrId | undefined | null {
   return result instanceof GuildMember
     ? result.user
     : result instanceof User
