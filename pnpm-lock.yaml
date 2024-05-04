@@ -35,6 +35,9 @@ importers:
       env-var:
         specifier: ~7.4.1
         version: 7.4.1
+      p-queue:
+        specifier: ^8.0.1
+        version: 8.0.1
       pino-dev:
         specifier: ^4.0.3
         version: 4.0.3
@@ -45,8 +48,8 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0
       sleetcord:
-        specifier: 1.4.0
-        version: 1.4.0(discord.js@14.14.1)
+        specifier: 1.4.1
+        version: 1.4.1(discord.js@14.14.1)
       sleetcord-common:
         specifier: ^7.0.0
         version: 7.0.0(prisma@5.13.0)
@@ -696,6 +699,9 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -1141,6 +1147,14 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
+  p-queue@8.0.1:
+    resolution: {integrity: sha512-NXzu9aQJTAzbBqOt2hwsR63ea7yvxJc0PwN/zobNAudYfb1B7R08SzB4TsLeSbUCuG467NhnoT0oO6w1qRO+BA==}
+    engines: {node: '>=18'}
+
+  p-timeout@6.1.2:
+    resolution: {integrity: sha512-UbD77BuZ9Bc9aABo74gfXhNvzC9Tx7SxtHSh1fxvx3jTLLYvmVhiQZZrJzqqU0jKbN32kb5VOKiLEQI/3bIjgQ==}
+    engines: {node: '>=14.16'}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -1333,8 +1347,8 @@ packages:
   sleetcord-common@7.0.0:
     resolution: {integrity: sha512-55PQABlIKSVyffmvOnIgvuhhtuvaR5IeQlbvDiC4s8gkXHoAqhKnW9S9ys260LMnJ07m9U8xrSdxlmgg1dIc1Q==}
 
-  sleetcord@1.4.0:
-    resolution: {integrity: sha512-mFlLetLqcn9mBzm7ATmOprnK44iAswypvm8j+VyTSXn279bybVIBu0tXG9LT7f3aYbkkg/oMWbHTsOFtHj33eA==}
+  sleetcord@1.4.1:
+    resolution: {integrity: sha512-ppiFl7G6BqQBMFXw+rPi/i24k6WV/k6yyBIOSoZD1+VmtKpGn9SU7EgYGGTznT3WFpPKjMi93ERymiKaFW0/wA==}
     peerDependencies:
       discord.js: ^14.12.1
 
@@ -2259,6 +2273,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  eventemitter3@5.0.1: {}
+
   events@3.3.0: {}
 
   fast-deep-equal@3.1.3: {}
@@ -2737,6 +2753,13 @@ snapshots:
     dependencies:
       p-limit: 3.1.0
 
+  p-queue@8.0.1:
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 6.1.2
+
+  p-timeout@6.1.2: {}
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -2937,13 +2960,13 @@ snapshots:
       env-var: 7.4.1
       pino: 9.0.0
       pretty-ms: 9.0.0
-      sleetcord: 1.4.0(discord.js@14.14.1)
+      sleetcord: 1.4.1(discord.js@14.14.1)
     transitivePeerDependencies:
       - bufferutil
       - prisma
       - utf-8-validate
 
-  sleetcord@1.4.0(discord.js@14.14.1):
+  sleetcord@1.4.1(discord.js@14.14.1):
     dependencies:
       discord-api-types: 0.37.83
       discord.js: 14.14.1

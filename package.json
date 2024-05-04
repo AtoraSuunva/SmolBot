@@ -36,10 +36,11 @@
     "csv-stringify": "^6.4.6",
     "discord.js": "~14.14.1",
     "env-var": "~7.4.1",
+    "p-queue": "^8.0.1",
     "pino-dev": "^4.0.3",
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.0.0",
-    "sleetcord": "1.4.0",
+    "sleetcord": "1.4.1",
     "sleetcord-common": "^7.0.0",
     "undici": "^6.15.0"
   },
