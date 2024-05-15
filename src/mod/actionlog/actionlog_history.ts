@@ -114,6 +114,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
     idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (componentInteraction) => {
     if (componentInteraction.user.id !== interaction.user.id) {
       await componentInteraction.reply({

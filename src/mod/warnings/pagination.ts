@@ -11,13 +11,13 @@ import {
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+import { plural } from '../../util/format.js'
 import {
-  formatWarningToField,
-  fetchWarningConfigFor,
   MAX_PER_PAGE,
   PaginatedWarnings,
+  fetchWarningConfigFor,
+  formatWarningToField,
 } from './utils.js'
-import { plural } from '../../util/format.js'
 
 export type WarningFetcher = (
   guildID: string,
@@ -131,6 +131,7 @@ export async function respondWithPaginatedWarnings(
     idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (buttonInteraction) => {
     if (buttonInteraction.user.id !== interaction.user.id) {
       await buttonInteraction.reply({

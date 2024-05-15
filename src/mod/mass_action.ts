@@ -17,7 +17,7 @@ import {
   isLikelyID,
   partitionArray,
 } from 'sleetcord'
-import { DAY } from 'sleetcord-common'
+import { DAY, SECOND } from 'sleetcord-common'
 import { capitalize, plural } from '../util/format.js'
 
 const commonOptions: APIApplicationCommandOption[] = [
@@ -156,8 +156,8 @@ type ActionUser = (
 ) => Promise<string | User | GuildMember | undefined | null>
 
 interface BulkActionResult {
-  success: UserOrId[]
-  failure: ActionFail[]
+  success: readonly UserOrId[]
+  failure: readonly ActionFail[]
 }
 
 type BulkActionUsers = (
@@ -183,8 +183,31 @@ async function runMassBan(interaction: ChatInputCommandInteraction) {
         reason,
         deleteMessageSeconds,
       }),
-    // TODO: on d.js v14.15.0 release bulkCreate is added so we can use that instead
-    // bulkActionUsers: async (g, users, reason) => {},
+    bulkActionUsers: async (g, users, reason) => {
+      try {
+        const { bannedUsers, failedUsers } = await g.bans.bulkCreate(users, {
+          reason,
+          deleteMessageSeconds,
+        })
+
+        return {
+          success: bannedUsers,
+          failure: failedUsers.map((fail) => ({
+            user: fail,
+            reason: 'Failed to bulk ban',
+          })),
+        }
+      } catch (e: unknown) {
+        return {
+          success: [],
+          failure: users.map((user) => ({
+            user,
+            reason: String(e),
+          })),
+        }
+      }
+    },
+    bulkActionBatchSize: 200,
     checkMember: (m) => m.bannable,
     actionUserType: forceBan ? UserType.Everyone : UserType.MembersOnly,
   })
@@ -277,6 +300,14 @@ interface RunMassActionOptions {
    */
   bulkActionUsers?: BulkActionUsers
   /**
+   * The number of users to action in a single batch, if bulkActionUsers is provided.
+   *
+   * bulkActionUsers will be called with up to, but not more, than this many users.
+   *
+   * @default 100
+   */
+  bulkActionBatchSize?: number
+  /**
    * Check if the member can be actioned by the bot
    */
   checkMember: CheckMember
@@ -292,12 +323,16 @@ interface RunMassActionOptions {
   checkRoleHierarchy?: boolean
 }
 
+const MAX_MEMBER_FETCH = 100
+const TIME_BETWEEN_PROGRESS_UPDATES = 5 * SECOND
+
 async function runMassAction({
   interaction,
   action,
   actioned,
   actionUser,
   bulkActionUsers,
+  bulkActionBatchSize = 100,
   checkMember,
   actionUserType,
   checkRoleHierarchy = true,
@@ -383,23 +418,42 @@ async function runMassAction({
   await guild.members.fetchMe()
   const userHighestRole = interactionMember.roles.highest
 
-  await interaction.editReply(
-    `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (0%)\n${capitalize(
-      actioned,
-    )} 0 users so far...`,
-  )
+  const bulkActionBatch: UserOrId[] = []
+
+  let lastProgressUpdate = Date.now()
+  const updateProgress = async (immediate = false) => {
+    if (
+      !immediate &&
+      Date.now() - lastProgressUpdate < TIME_BETWEEN_PROGRESS_UPDATES
+    ) {
+      return
+    }
+
+    await interaction.editReply(
+      `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (${(
+        (progress / total) *
+        100
+      ).toFixed(
+        2,
+      )}%)\n${capitalize(actioned)} ${plural('user', success.length)} so far...${bulkActionBatch.length > 0 ? ` (${bulkActionBatch.length} queued)` : ''}`,
+    )
+    lastProgressUpdate = Date.now()
+  }
+
+  await updateProgress(true)
 
   // Then handle it in batches of 100
-  for await (const batch of partitionArray(uniqueUsers, 100)) {
+  for await (const batch of partitionArray(uniqueUsers, MAX_MEMBER_FETCH)) {
     const members = await guild.members.fetch({ user: batch })
-
-    const bulkActionBatch: UserOrId[] = []
 
     if (
       actionUserType === UserType.Everyone ||
       actionUserType === UserType.MembersOnly
     ) {
       for (const [, member] of members) {
+        progress++
+        await updateProgress()
+
         let fail: string | null = null
 
         if (!checkMember(member)) {
@@ -446,6 +500,8 @@ async function runMassAction({
 
       if (bulkActionUsers) {
         bulkActionBatch.push(...remaining)
+        progress += remaining.length
+        await updateProgress()
       } else {
         for (const id of remaining) {
           try {
@@ -457,36 +513,60 @@ async function runMassAction({
               reason: String(e),
             })
           }
+
+          progress++
+          await updateProgress()
         }
       }
     }
 
-    if (bulkActionUsers && bulkActionBatch.length > 0) {
+    await updateProgress()
+
+    // Check if we're at enough users to bulk action
+    if (
+      bulkActionUsers &&
+      bulkActionBatch.length > 0 &&
+      bulkActionBatch.length >= bulkActionBatchSize
+    ) {
+      const toActionBatch = bulkActionBatch.splice(0, bulkActionBatchSize)
+
       const { success: bulkSuccess, failure: bulkFailure } =
-        await bulkActionUsers(guild, bulkActionBatch, reason)
+        await bulkActionUsers(guild, toActionBatch, reason)
 
       success.push(...bulkSuccess)
       failure.push(...bulkFailure)
+
+      await updateProgress()
     }
-
-    progress += batch.length
-
-    await interaction.editReply(
-      `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (${(
-        (progress / total) *
-        100
-      ).toFixed(
-        2,
-      )}%)\n${capitalize(actioned)} ${plural('user', success.length)} so far...`,
-    )
   }
 
+  // Drain the rest of the batch
+  if (bulkActionUsers && bulkActionBatch.length > 0) {
+    while (bulkActionBatch.length > 0) {
+      const toActionBatch = bulkActionBatch.splice(0, bulkActionBatchSize)
+
+      const { success: bulkSuccess, failure: bulkFailure } =
+        await bulkActionUsers(guild, toActionBatch, reason)
+
+      success.push(...bulkSuccess)
+      failure.push(...bulkFailure)
+
+      await updateProgress()
+    }
+  }
+
+  const shouldEscapeSuccesses = success.length <= OUTPUT_LIMIT
+  const shouldEscapeFailures = failure.length <= OUTPUT_LIMIT
+
   const formattedSuccess = success
-    .map((user) => formatUserOrId(idOnly, user))
+    .map((user) => formatUserOrId(idOnly, user, shouldEscapeSuccesses))
     .join('\n')
 
   const formattedFailure = failure
-    .map((fail) => `${formatUserOrId(idOnly, fail.user)}: ${fail.reason}`)
+    .map(
+      (fail) =>
+        `${formatUserOrId(idOnly, fail.user, shouldEscapeFailures)}: ${fail.reason}`,
+    )
     .join('\n')
 
   const content: string[] = []
@@ -528,12 +608,16 @@ async function runMassAction({
   })
 }
 
-function formatUserOrId(idOnly: boolean, user: UserOrId): string {
+function formatUserOrId(
+  idOnly: boolean,
+  user: UserOrId,
+  escape = false,
+): string {
   return typeof user === 'string'
     ? user
     : idOnly
       ? user.id
-      : formatUser(user, { markdown: false })
+      : formatUser(user, { markdown: false, escape })
 }
 
 function actionResultToUserOrId(

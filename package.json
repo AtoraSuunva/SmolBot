@@ -34,7 +34,7 @@
     "convert-units": "~2.3.4",
     "csv-parse": "^5.5.5",
     "csv-stringify": "^6.4.6",
-    "discord.js": "~14.14.1",
+    "discord.js": "~14.15.1",
     "env-var": "~7.4.1",
     "p-queue": "^8.0.1",
     "pino-dev": "^4.0.3",
