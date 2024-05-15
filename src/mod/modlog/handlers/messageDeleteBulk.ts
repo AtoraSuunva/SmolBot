@@ -3,14 +3,15 @@ import {
   Channel,
   Collection,
   Message,
-  PartialMessage,
-  User,
   MessageMentions,
+  PartialMessage,
+  ReadonlyCollection,
+  User,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
+import { notNullish } from 'sleetcord-common'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 import { messageToLog } from './messageDelete.js'
-import { notNullish } from 'sleetcord-common'
 
 export const logMessageDeleteBulk = new SleetModule(
   {
@@ -22,7 +23,7 @@ export const logMessageDeleteBulk = new SleetModule(
 )
 
 async function handleMessageDeleteBulk(
-  messages: Collection<string, Message | PartialMessage>,
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
 ) {
   const firstMessage = messages.first()
   if (!firstMessage) return
@@ -34,7 +35,7 @@ async function handleMessageDeleteBulk(
   const { config, channel } = conf
   if (!config.messageDeleteBulk) return
 
-  const sortedMessages = messages.sort(
+  const sortedMessages = messages.sorted(
     (a, b) => a.createdTimestamp - b.createdTimestamp,
   )
   const users = new Set(sortedMessages.map((m) => m.author))
@@ -87,7 +88,7 @@ async function handleMessageDeleteBulk(
 }
 
 function messageLog(
-  messages: Collection<string, Message | PartialMessage>,
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
 ): string {
   const firstMessage = messages.first()
   if (!firstMessage) return ''
@@ -144,7 +145,10 @@ function extractMentions<
   K extends KeysOfType<MessageMentions, Collection<string, unknown>>,
   R extends MessageMentions[K],
   V extends GetMapValue<R>,
->(messages: Collection<string, Message | PartialMessage>, key: K): Set<V> {
+>(
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
+  key: K,
+): Set<V> {
   // casts since typescript apparently can correctly resolve K, R, and V completely fine, but
   // then believes that flatMap HAS to return a Collection<string, User | Channel | Role...> and possibly nothing else
   // even AFTER it goddamn inferred EXACTLY what `m.mentions[key]` should return
