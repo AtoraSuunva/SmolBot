@@ -97,7 +97,8 @@ async function messageDelete(message: Message | PartialMessage) {
         ),
       ),
     ),
-  )
+  ).filter((m) => m.length > 0)
+
   const attachProxy = message.attachments.map(
     (a) => `[${escapeMarkdown(a.name)}](<${a.proxyURL}>)`,
   )
@@ -118,8 +119,8 @@ async function messageDelete(message: Message | PartialMessage) {
       : '') +
     (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '')
 
-  // +250 to give us some more headroom
-  const deletedMessageLength = messageContent.length + 250
+  // +100 to give us some more headroom
+  const deletedMessageLength = messageContent.length + 100
 
   const files: AttachmentPayload[] = []
 
@@ -179,7 +180,7 @@ export async function messageToLog(
 
     if (ref) {
       lines.push(
-        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ref.content.slice(0, 50)}${ref.content.length > 50 ? '…' : ''}`,
+        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ref.content.replaceAll(/\n/, ' ').slice(0, 50)}${ref.content.length > 50 ? '…' : ''}`,
       )
     } else {
       lines.push(
@@ -210,7 +211,7 @@ export async function messageToLog(
   }
 
   if (includeEmbeds && message.embeds.length > 0) {
-    lines.push(embedToLog(message.embeds[0]))
+    lines.push(embedToLog(message.embeds[0], { minimal: true }))
 
     if (message.embeds.length > 1) {
       lines.push(`╰╼ +${plural('embed', message.embeds.length - 1)} omitted`)
@@ -255,7 +256,14 @@ const BR_CHAR = '╯'
 const H_CHAR = '─'
 const V_CHAR = '│'
 
-function embedToLog(embed: Embed): string {
+interface ToEmbedOptions {
+  minimal?: boolean
+}
+
+function embedToLog(
+  embed: Embed,
+  { minimal = false }: ToEmbedOptions = {},
+): string {
   let lines: string[] = []
 
   if (embed.author) {
@@ -292,15 +300,24 @@ function embedToLog(embed: Embed): string {
 
   lines = lines.flatMap((l) => l.split('\n'))
 
-  const maxLineLength = Math.max(...lines.map((l) => l.length))
-  const boxWidth = maxLineLength + 2
+  if (minimal) {
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = `${V_CHAR} ${lines[i]}`
+    }
 
-  for (let i = 0; i < lines.length; i++) {
-    lines[i] = `${V_CHAR} ${lines[i].padEnd(maxLineLength)} ${V_CHAR}`
+    lines.unshift(`${TL_CHAR}${H_CHAR} Embed ${H_CHAR}`)
+    lines.push(`${BL_CHAR}${H_CHAR.repeat(9)}`)
+  } else {
+    const maxLineLength = Math.max(...lines.map((l) => l.length), 0)
+    const boxWidth = maxLineLength + 2
+
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = `${V_CHAR} ${lines[i].padEnd(maxLineLength)} ${V_CHAR}`
+    }
+
+    lines.unshift(`${TL_CHAR}${H_CHAR.repeat(boxWidth)}${TR_CHAR}`)
+    lines.push(`${BL_CHAR}${H_CHAR.repeat(boxWidth)}${BR_CHAR}`)
   }
-
-  lines.unshift(`${TL_CHAR}${H_CHAR.repeat(boxWidth)}${TR_CHAR}`)
-  lines.push(`${BL_CHAR}${H_CHAR.repeat(boxWidth)}${BR_CHAR}`)
 
   return lines.join('\n')
 }
