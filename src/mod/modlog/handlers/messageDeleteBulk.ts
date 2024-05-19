@@ -1,9 +1,14 @@
 import {
+  APIChannel,
+  APIGuild,
+  APIGuildMember,
+  APIMessage,
+  APIRole,
+  APIUser,
   AttachmentPayload,
-  Channel,
-  Collection,
+  ChannelType,
+  GuildTextBasedChannel,
   Message,
-  MessageMentions,
   PartialMessage,
   ReadonlyCollection,
   User,
@@ -11,7 +16,6 @@ import {
 import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
-import { messageToLog } from './messageDelete.js'
 
 export const logMessageDeleteBulk = new SleetModule(
   {
@@ -22,14 +26,16 @@ export const logMessageDeleteBulk = new SleetModule(
   },
 )
 
+const ARCHIVE_VIEWER = 'https://log.atora.dev/'
+const FILENAME = 'archive.json'
+const generateArchiveUrl = (channelId: string, attachmentId: string) =>
+  `${ARCHIVE_VIEWER}${channelId}/${attachmentId}/${FILENAME}`
+
 async function handleMessageDeleteBulk(
   messages: ReadonlyCollection<string, Message | PartialMessage>,
+  fromChannel: GuildTextBasedChannel,
 ) {
-  const firstMessage = messages.first()
-  if (!firstMessage) return
-  if (!firstMessage.guild) return
-
-  const conf = await getValidatedConfigFor(firstMessage.guild)
+  const conf = await getValidatedConfigFor(fromChannel.guild)
   if (!conf) return
 
   const { config, channel } = conf
@@ -41,7 +47,108 @@ async function handleMessageDeleteBulk(
   const users = new Set(sortedMessages.map((m) => m.author))
   const messagesPerUser = new Map<User, number>()
 
+  const body: AttachmentBodyV1 = {
+    version: 1,
+    data: {
+      messages: sortedMessages
+        .map((m) => {
+          const data = structuredClone((m as unknown as MessageWithRaw).rawData)
+          for (const mention of data.mentions) {
+            if ('member' in mention) {
+              delete mention.member
+            }
+          }
+          return data
+        })
+        .filter(notNullish),
+      guild: {
+        id: fromChannel.guild.id,
+        name: fromChannel.guild.name,
+        icon: fromChannel.guild.icon,
+      },
+      channel: {
+        id: fromChannel.id,
+        name: fromChannel.name,
+        type: fromChannel.type,
+        guild_id: fromChannel.guild.id,
+      },
+      channels: {},
+      roles: {},
+      users: {},
+      members: {},
+    },
+  }
+
   for (const message of sortedMessages.values()) {
+    // For every mentioned channel, user, or role, add them to the body so they resolve
+
+    for (const [id, channel] of message.mentions.channels) {
+      body.data.channels[id] = {
+        id: channel.id,
+        name: 'name' in channel ? channel.name : null,
+        type: channel.type,
+      }
+
+      if ('guildId' in channel) {
+        body.data.channels[id].guild_id = channel.guildId
+      }
+    }
+
+    for (const [id, channel] of message.mentions.crosspostedChannels) {
+      body.data.channels[id] = {
+        id: channel.channelId,
+        name: channel.name,
+        type: channel.type,
+      }
+    }
+
+    for (const [id, role] of message.mentions.roles) {
+      body.data.roles[id] = {
+        id: role.id,
+        name: role.name,
+        color: role.color,
+        icon: role.icon,
+        unicode_emoji: role.unicodeEmoji,
+      }
+    }
+
+    const rp = message.mentions.repliedUser
+    if (rp) {
+      body.data.users[rp.id] = {
+        id: rp.id,
+        avatar: rp.avatar,
+        discriminator: rp.discriminator,
+        global_name: rp.globalName,
+        username: rp.username,
+      }
+    }
+
+    for (const [id, user] of message.mentions.users) {
+      body.data.users[id] = {
+        id: user.id,
+        avatar: user.avatar,
+        discriminator: user.discriminator,
+        global_name: user.globalName,
+        username: user.username,
+      }
+    }
+
+    if (message.member) {
+      body.data.members[message.member.id] = {
+        roles: message.member.roles.cache.map((r) => r.id),
+      }
+
+      for (const [id, role] of message.member.roles.cache) {
+        body.data.roles[id] = {
+          id: role.id,
+          name: role.name,
+          color: role.color,
+          icon: role.icon,
+          unicode_emoji: role.unicodeEmoji,
+        }
+      }
+    }
+
     if (message.author === null) continue
     const count = messagesPerUser.get(message.author) ?? 0
     messagesPerUser.set(message.author, count + 1)
@@ -58,12 +165,12 @@ async function handleMessageDeleteBulk(
     .join(', ')
     .substring(0, 1024)
 
-  const logMessage = `${firstMessage.channel}, **${messages.size}** messages\n${userList}`
-  const messageContent = messageLog(messages)
+  const logMessage = `${fromChannel}, **${messages.size}** messages\n${userList}`
+
   const files: AttachmentPayload[] = [
     {
       name: FILENAME,
-      attachment: Buffer.from(messageContent),
+      attachment: Buffer.from(JSON.stringify(body)),
       description: 'Log of bulk-deleted messages',
     },
   ]
@@ -87,108 +194,51 @@ async function handleMessageDeleteBulk(
   }
 }
 
-function messageLog(
-  messages: ReadonlyCollection<string, Message | PartialMessage>,
-): string {
-  const firstMessage = messages.first()
-  if (!firstMessage) return ''
+type MinimalGuild = Pick<APIGuild, 'id' | 'name' | 'icon'>
+type MinimalChannel = Pick<APIChannel, 'id' | 'name'> & {
+  type: ChannelType
+  guild_id?: string
+}
+type MinimalRole = Pick<
+  APIRole,
+  'id' | 'name' | 'color' | 'icon' | 'unicode_emoji'
+>
+type MinimalUser = Pick<
+  APIUser,
+  'id' | 'avatar' | 'discriminator' | 'global_name' | 'username'
+>
+type MinimalGuildMember = Pick<APIGuildMember, 'roles'>
 
-  const authors = new Set(messages.map((m) => m.author).filter(notNullish))
-  const channels = extractMentions(messages, 'channels')
-  const roles = extractMentions(messages, 'roles')
-  const users = extractMentions(messages, 'users')
-
-  const header =
-    `[${firstMessage.guild ? firstMessage.guild.name : 'DM'} (${
-      firstMessage.guild ? firstMessage.guild.id : firstMessage.channel.id
-    }); ` +
-    ('name' in firstMessage.channel
-      ? `#${firstMessage.channel.name} (${firstMessage.channel.id})`
-      : `@${
-          firstMessage.channel.recipient
-            ? formatUser(firstMessage.channel.recipient, {
-                markdown: false,
-                escape: false,
-              })
-            : '<unknown>'
-        }`) +
-    ']\n' +
-    mentionArray(authors, 'tag') +
-    mentionArray(users, 'tag') +
-    channelMentions(channels) +
-    mentionArray(roles, 'name') +
-    '\n'
-
-  const messageContent = messages
-    .filter((m): m is Message => !m.partial)
-    .map((m) =>
-      messageToLog(m, {
-        id: true,
-        username: true,
-        includeAttachments: true,
-        includeEmbed: true,
-      }),
-    )
-    .join('\n')
-
-  return `${header}${messageContent}`
+interface AttachmentBodyV1 {
+  version: 1
+  data: {
+    messages: APIMessage[]
+    guild: MinimalGuild
+    channel: MinimalChannel
+    members: Record<string, MinimalGuildMember>
+    roles: Record<string, MinimalRole>
+    channels: Record<string, MinimalChannel>
+    users: Record<string, MinimalUser>
+  }
 }
 
-type KeysOfType<T, KT> = {
-  [K in keyof T]: T[K] extends KT ? K : never
-}[keyof T]
-
-type GetMapValue<M extends Map<unknown, unknown>> =
-  M extends Map<unknown, infer V> ? V : never
-
-function extractMentions<
-  K extends KeysOfType<MessageMentions, Collection<string, unknown>>,
-  R extends MessageMentions[K],
-  V extends GetMapValue<R>,
->(
-  messages: ReadonlyCollection<string, Message | PartialMessage>,
-  key: K,
-): Set<V> {
-  // casts since typescript apparently can correctly resolve K, R, and V completely fine, but
-  // then believes that flatMap HAS to return a Collection<string, User | Channel | Role...> and possibly nothing else
-  // even AFTER it goddamn inferred EXACTLY what `m.mentions[key]` should return
-  return new Set(
-    messages
-      .flatMap((m): Collection<string, unknown> => m.mentions[key])
-      .values() as IterableIterator<V>,
-  )
+/* eslint-disable @typescript-eslint/dot-notation */
+// A glorious and ugly hack
+// Caching the data ourselves means d.js may or may not emit the right events depending on the cache
+// If d.js disposes of the message for some reason (hitting cache limits...) then we're storing extra data that won't be in message delete bulk events
+// If we just attach it to the message... then we know it'll be there on every message and when we see message delete bulk events :)
+// The alternative is either storing data and listening to raw events ourselves (effort) or converting messages to APIMessages (effort)
+interface MessageWithRaw {
+  rawData: APIMessage
 }
 
-function mentionArray<V extends { id: string }, N extends keyof V>(
-  set: Set<V>,
-  key: N,
-): string {
-  return `[${Array.from(set)
-    .map((s) => `${String(s[key])} (${s.id})`)
-    .join('; ')}]\n`
-}
+const oldPatch = Message.prototype['_patch']
 
-function channelMentions(set: Set<Channel>): string {
-  return `[${Array.from(set)
-    .map(
-      (s) =>
-        `${
-          'name' in s
-            ? s.name
-            : s.recipient
-              ? formatUser(s.recipient, {
-                  markdown: false,
-                  id: false,
-                  bidirectional: false,
-                  escape: false,
-                })
-              : 'unknown channel'
-        } (${s.id})`,
-    )
-    .join('; ')}]\n`
+Message.prototype['_patch'] = function (data: APIMessage) {
+  oldPatch.call(this, data)
+  ;(this as unknown as MessageWithRaw).rawData = {
+    ...(this as unknown as MessageWithRaw).rawData,
+    ...data,
+  }
 }
-
-const archiveViewer = 'https://giraffeduck.com/api/log/'
-const FILENAME = 'archive.dlog.txt'
-const generateArchiveUrl = (channelId: string, attachmentId: string) =>
-  `${archiveViewer}${channelId}-${attachmentId}`
+/* eslint-enable @typescript-eslint/dot-notation */
