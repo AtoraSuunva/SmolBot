@@ -52,12 +52,19 @@ async function handleMessageDeleteBulk(
     data: {
       messages: sortedMessages
         .map((m) => {
-          const data = structuredClone((m as unknown as MessageWithRaw).rawData)
-          for (const mention of data.mentions) {
-            if ('member' in mention) {
-              delete mention.member
+          const data = structuredClone(
+            (m as unknown as MessageWithRaw).rawData,
+          ) as APIMessage | undefined
+          if (!data) return null
+
+          if ('mentions' in data) {
+            for (const mention of data.mentions) {
+              if ('member' in mention) {
+                delete mention.member
+              }
             }
           }
+
           return data
         })
         .filter(notNullish),
@@ -146,6 +153,18 @@ async function handleMessageDeleteBulk(
           icon: role.icon,
           unicode_emoji: role.unicodeEmoji,
         }
+      }
+    }
+
+    if (message.interaction) {
+      const { interaction } = message
+
+      body.data.users[interaction.user.id] = {
+        id: interaction.user.id,
+        avatar: interaction.user.avatar,
+        discriminator: interaction.user.discriminator,
+        global_name: interaction.user.globalName,
+        username: interaction.user.username,
       }
     }
 
