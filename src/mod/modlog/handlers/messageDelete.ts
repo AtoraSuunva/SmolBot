@@ -180,7 +180,7 @@ export async function messageToLog(
 
     if (ref) {
       lines.push(
-        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ref.content.replaceAll(/\n/, ' ').slice(0, 50)}${ref.content.length > 50 ? '…' : ''}`,
+        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ref.content.replaceAll(/\n/g, ' ').slice(0, 50)}${ref.content.length > 50 ? '…' : ''}`,
       )
     } else {
       lines.push(
