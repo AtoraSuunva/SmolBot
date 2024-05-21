@@ -66,7 +66,10 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
       logMessage[config.userUpdate as UserUpdate]
     }`
 
-    await channel.send(formatLog('👥', 'User Update', message))
+    await channel.send({
+      content: formatLog('👥', 'User Update', message),
+      allowedMentions: { parse: [] },
+    })
   }
 }
 

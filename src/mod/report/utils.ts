@@ -302,9 +302,13 @@ async function blockReportUser(
       originalMessage.components,
     )
 
-    void originalMessage.edit({
-      components: newComponents,
-    })
+    originalMessage
+      .edit({
+        components: newComponents,
+      })
+      .catch(() => {
+        /* ignore */
+      })
 
     return interaction.reply({
       content: 'This user is already blocked from reporting.',
@@ -415,9 +419,13 @@ async function unblockReportUser(
       originalMessage.components,
     )
 
-    void originalMessage.edit({
-      components: newComponents,
-    })
+    originalMessage
+      .edit({
+        components: newComponents,
+      })
+      .catch(() => {
+        /* ignore */
+      })
 
     return interaction.reply({
       content: 'This user is not blocked from reporting.',

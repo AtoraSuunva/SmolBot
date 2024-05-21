@@ -1,33 +1,33 @@
 import {
+  APIApplication,
+  ActionRowBuilder,
+  ApplicationCommandOptionType,
+  ButtonBuilder,
+  ButtonInteraction,
+  ButtonStyle,
+  ChannelType,
+  ChatInputCommandInteraction,
   Client,
+  Collection,
   DiscordAPIError,
-  GuildPreview,
-  Invite,
   EmbedBuilder,
+  GuildNSFWLevel,
+  GuildPreview,
+  GuildPreviewEmoji,
+  GuildVerificationLevel,
+  Interaction,
+  Invite,
   SnowflakeUtil,
+  Sticker,
   User,
   UserFlags,
   Widget,
-  ChatInputCommandInteraction,
   codeBlock,
-  GuildPreviewEmoji,
-  Collection,
-  Sticker,
-  ChannelType,
-  GuildNSFWLevel,
-  ApplicationCommandOptionType,
-  APIApplication,
-  GuildVerificationLevel,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  Interaction,
-  ButtonInteraction,
-  time,
   escapeInlineCode,
+  time,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 import prettyMilliseconds from 'pretty-ms'
+import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
 import { plural } from '../util/format.js'
 
 export const lookup = new SleetSlashCommand(
@@ -286,7 +286,11 @@ async function sendUserLookup(
   user: User,
 ): Promise<void> {
   if (!(user instanceof User)) {
-    return void interaction.editReply('Did not find info for that user.')
+    return void interaction
+      .editReply('Did not find info for that user.')
+      .catch(() => {
+        /* ignore */
+      })
   }
 
   const rawUser =
@@ -436,7 +440,9 @@ async function sendGuildInviteLookup(
   const { guild, code, presenceCount, memberCount } = invite
 
   if (!guild) {
-    return void interaction.editReply('Not a guild invite!')
+    return void interaction.editReply('Not a guild invite!').catch(() => {
+      /* ignore */
+    })
   }
 
   const preview = await tryFetchGuildPreview(interaction.client, guild.id)

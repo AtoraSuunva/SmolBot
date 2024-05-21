@@ -7,7 +7,7 @@ import {
   Invite,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { formatUser, SleetModule } from 'sleetcord'
+import { SleetModule, formatUser } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
 import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
@@ -83,6 +83,7 @@ async function guildMemberAdd(member: GuildMember) {
   await channel.send({
     content: formatLog('📥', 'Member Join', msg),
     embeds: [embed],
+    allowedMentions: { parse: [] },
   })
 }
 

@@ -38,9 +38,13 @@ async function runDelete(
   const message = await defer
 
   if (welcome === null) {
-    return void interaction.editReply({
-      content: 'No welcome config found. So nothing to delete.',
-    })
+    return void interaction
+      .editReply({
+        content: 'No welcome config found. So nothing to delete.',
+      })
+      .catch(() => {
+        /* ignore */
+      })
   }
 
   const deleteButton = new ButtonBuilder()
@@ -79,10 +83,14 @@ async function runDelete(
 
   collector.on('end', (_collected, reason) => {
     if (reason === 'time') {
-      void interaction.editReply({
-        content: 'Deletion timed out',
-        components: [],
-      })
+      interaction
+        .editReply({
+          content: 'Deletion timed out',
+          components: [],
+        })
+        .catch(() => {
+          /* ignore */
+        })
     }
   })
 }

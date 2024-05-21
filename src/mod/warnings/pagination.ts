@@ -151,9 +151,15 @@ export async function respondWithPaginatedWarnings(
     await buttonInteraction.update(res)
   })
 
-  collector.on('end', () => {
-    void interaction.editReply({
-      components: [],
-    })
+  collector.on('end', (_, reason) => {
+    if (reason !== 'messageDelete') {
+      interaction
+        .editReply({
+          components: [],
+        })
+        .catch(() => {
+          /* ignore */
+        })
+    }
   })
 }

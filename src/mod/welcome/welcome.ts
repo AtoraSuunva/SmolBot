@@ -8,13 +8,13 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
+import { formatLog, sendToModLog } from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
 import { fields } from './fields.js'
-import { formatMessage, message } from './message.js'
-import { formatLog, sendToModLog } from '../modlog/utils.js'
 import { mark_joined } from './mark_joined.js'
+import { formatMessage, message } from './message.js'
 
 export const welcome = new SleetSlashCommand(
   {
@@ -148,7 +148,9 @@ async function handleJoin(
 
   if (reactWith && message) {
     // ignore errors, not my problem really
-    message.react(reactWith).catch(() => void 0)
+    message.react(reactWith).catch(() => {
+      /* ignore */
+    })
   }
 
   await addJoin(member.guild.id, member.id)
