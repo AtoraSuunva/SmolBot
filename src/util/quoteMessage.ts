@@ -1,9 +1,9 @@
 import {
-  Message,
+  Attachment,
   EmbedBuilder,
+  Message,
   MessageType,
   hyperlink,
-  Attachment,
 } from 'discord.js'
 import { formatUser } from 'sleetcord'
 import { plural } from './format.js'
@@ -43,52 +43,7 @@ export async function quoteMessage(
   // There's some interesting properties based on the message type
   // We can show better detail than just copy-pasting the message by actually parsing it
   // https://discord.com/developers/docs/resources/channel#message-object-message-types
-  switch (message.type) {
-    // Crosspost flag...
-    case MessageType.ChannelPinnedMessage:
-      quoteChannelPinnedMessage(message, embed)
-      break
-    case MessageType.UserJoin:
-      quoteUserJoin(message, embed)
-      break
-    case MessageType.GuildBoost:
-      quoteGuildBoost(message, embed)
-      break
-    case MessageType.GuildBoostTier1:
-      quoteGuildBoostTier(message, embed, 1)
-      break
-    case MessageType.GuildBoostTier2:
-      quoteGuildBoostTier(message, embed, 2)
-      break
-    case MessageType.GuildBoostTier3:
-      quoteGuildBoostTier(message, embed, 3)
-      break
-    case MessageType.ChannelFollowAdd:
-      quoteChannelFollowAdd(message, embed)
-      break
-    case MessageType.GuildDiscoveryDisqualified:
-      quoteGuildDiscoveryDisqualified(message, embed)
-      break
-    case MessageType.GuildDiscoveryRequalified:
-      quoteGuildDiscoveryRequalified(message, embed)
-      break
-    case MessageType.GuildDiscoveryGracePeriodInitialWarning:
-      quoteGuildDiscoveryGracePeriodInitialWarning(message, embed)
-      break
-    case MessageType.GuildDiscoveryGracePeriodFinalWarning:
-      quoteGuildDiscoveryGracePeriodFinalWarning(message, embed)
-      break
-    case MessageType.Reply:
-      await quoteReply(message, embed)
-      break
-    case MessageType.ThreadCreated:
-    case MessageType.ThreadStarterMessage:
-      quoteThreadCreateMessage(message, embed)
-      break
-    case MessageType.AutoModerationAction:
-      quoteAutoModerationAction(message, embed)
-      break
-  }
+  await addToEmbed(message, embed)
 
   const listedAttachments: Attachment[] = []
   // Can't have more than 4 images tiled together in a single embed, so any more than that we just add into a field
@@ -139,6 +94,55 @@ export async function quoteMessage(
   }
 
   return embeds
+}
+
+export async function addToEmbed(message: Message, embed: EmbedBuilder) {
+  switch (message.type) {
+    // Crosspost flag...
+    case MessageType.ChannelPinnedMessage:
+      quoteChannelPinnedMessage(message, embed)
+      break
+    case MessageType.UserJoin:
+      quoteUserJoin(message, embed)
+      break
+    case MessageType.GuildBoost:
+      quoteGuildBoost(message, embed)
+      break
+    case MessageType.GuildBoostTier1:
+      quoteGuildBoostTier(message, embed, 1)
+      break
+    case MessageType.GuildBoostTier2:
+      quoteGuildBoostTier(message, embed, 2)
+      break
+    case MessageType.GuildBoostTier3:
+      quoteGuildBoostTier(message, embed, 3)
+      break
+    case MessageType.ChannelFollowAdd:
+      quoteChannelFollowAdd(message, embed)
+      break
+    case MessageType.GuildDiscoveryDisqualified:
+      quoteGuildDiscoveryDisqualified(message, embed)
+      break
+    case MessageType.GuildDiscoveryRequalified:
+      quoteGuildDiscoveryRequalified(message, embed)
+      break
+    case MessageType.GuildDiscoveryGracePeriodInitialWarning:
+      quoteGuildDiscoveryGracePeriodInitialWarning(message, embed)
+      break
+    case MessageType.GuildDiscoveryGracePeriodFinalWarning:
+      quoteGuildDiscoveryGracePeriodFinalWarning(message, embed)
+      break
+    case MessageType.Reply:
+      await quoteReply(message, embed)
+      break
+    case MessageType.ThreadCreated:
+    case MessageType.ThreadStarterMessage:
+      quoteThreadCreateMessage(message, embed)
+      break
+    case MessageType.AutoModerationAction:
+      quoteAutoModerationAction(message, embed)
+      break
+  }
 }
 
 function isImageAttachment(attachment: Attachment): boolean {
