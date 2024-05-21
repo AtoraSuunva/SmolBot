@@ -69,13 +69,14 @@ export async function logChannelModified(
     changelog ? '\n```diff\n' + changelog.substring(0, 1800) + '\n```' : ''
   }`
 
-  await channel.send(
-    formatLog(
+  await channel.send({
+    content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],
       message,
     ),
-  )
+    allowedMentions: { parse: [] },
+  })
 }
 
 const LogEmoji = {

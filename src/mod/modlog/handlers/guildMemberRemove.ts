@@ -1,7 +1,7 @@
 import { EmbedBuilder, GuildMember, PartialGuildMember } from 'discord.js'
+import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, formatUser } from 'sleetcord'
 import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
-import prettyMilliseconds from 'pretty-ms'
 
 export const logGuildMemberRemove = new SleetModule(
   {
@@ -55,5 +55,6 @@ async function handleGuildMemberRemove(
       formatUser(member.user, { mention: true }),
     ),
     embeds: [embed],
+    allowedMentions: { parse: [] },
   })
 }
