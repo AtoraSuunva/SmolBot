@@ -12,6 +12,7 @@ import {
   PartialMessage,
   ReadonlyCollection,
   User,
+  codeBlock,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
@@ -41,9 +42,11 @@ async function handleMessageDeleteBulk(
   const { config, channel } = conf
   if (!config.messageDeleteBulk) return
 
-  const sortedMessages = messages.sorted(
-    (a, b) => a.createdTimestamp - b.createdTimestamp,
-  )
+  const sortedMessages = messages
+    // We can't reliably format partials :(
+    // TODO: if not all messages are partials, should we include them in the generated log? how? need dummy data...
+    .filter((m) => !m.partial && m instanceof Message)
+    .sorted((a, b) => a.createdTimestamp - b.createdTimestamp)
   const users = new Set(sortedMessages.map((m) => m.author))
   const messagesPerUser = new Map<User, number>()
 
@@ -184,32 +187,49 @@ async function handleMessageDeleteBulk(
     .join(', ')
     .substring(0, 1024)
 
-  const logMessage = `${fromChannel}, **${messages.size}** messages\n${userList}`
+  const logMessage = [`${fromChannel}, **${messages.size}** messages`]
 
-  const files: AttachmentPayload[] = [
-    {
-      name: FILENAME,
-      attachment: Buffer.from(JSON.stringify(body)),
-      description: 'Log of bulk-deleted messages',
-    },
-  ]
+  if (userList) {
+    logMessage.push(`\n${userList}`)
+  }
+
+  if (body.data.messages.length === 0) {
+    logMessage.push(
+      '. Every message was uncached or partial, no log available. Message IDs:\n',
+    )
+    logMessage.push(codeBlock(messages.map((m) => m.id).join(', ')))
+  }
+
+  const files: AttachmentPayload[] =
+    body.data.messages.length === 0
+      ? []
+      : [
+          {
+            name: FILENAME,
+            attachment: Buffer.from(JSON.stringify(body)),
+            description: 'Log of bulk-deleted messages',
+          },
+        ]
 
   const sentMessage = await channel.send({
-    content: formatLog('🔥', 'Channel Purged', logMessage),
+    content: formatLog('🔥', 'Channel Purged', logMessage.join('')),
     files,
+    allowedMentions: { parse: [] },
   })
 
-  const attachmentUrl = sentMessage.attachments.first()?.url
+  if (files.length > 0) {
+    const attachmentUrl = sentMessage.attachments.first()?.url
 
-  if (attachmentUrl) {
-    const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
+    if (attachmentUrl) {
+      const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
 
-    await sentMessage.edit({
-      content: `${sentMessage.content}\n<${generateArchiveUrl(
-        channelId,
-        attachmentId,
-      )}>`,
-    })
+      await sentMessage.edit({
+        content: `${sentMessage.content}\n<${generateArchiveUrl(
+          channelId,
+          attachmentId,
+        )}>`,
+      })
+    }
   }
 }
 

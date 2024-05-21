@@ -2,10 +2,12 @@ import {
   AttachmentPayload,
   AuditLogEvent,
   Embed,
+  EmbedBuilder,
   GuildAuditLogsFetchOptions,
   GuildMember,
   InteractionType,
   Message,
+  MessageType,
   PartialMessage,
   User,
   codeBlock,
@@ -14,6 +16,7 @@ import {
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
+import { addToEmbed } from '../../../util/quoteMessage.js'
 import { editStore } from '../../unedit.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
@@ -80,24 +83,43 @@ async function messageDelete(message: Message | PartialMessage) {
 
   const edits = editStore.get(message.id)?.edits ?? []
   // Set to dedupe identical logs, often just discord editing in link embeds after the message was sent
-  const editsLog = Array.from(
-    new Set(
-      await Promise.all(
-        [...edits.slice(0, -1), message].map((m, i) =>
-          messageToLog(m, {
-            includeInteraction: i === 0,
-            includeReference: i === 0,
-            includeUser: i === 0,
-            includeTimestamp: i === 0,
-            includeAttachments: false,
-            includeEmbeds: i === 0,
-            includePoll: i === 0,
-            includeStickers: false,
-          }),
-        ),
-      ),
+
+  const formattedLogs = await Promise.all(
+    [...edits.slice(0, -1), message].map((m, i) =>
+      messageToLog(m, {
+        includeInteraction: i === 0,
+        includeReference: i === 0,
+        includeUser: i === 0,
+        includeTimestamp: i === 0,
+        includeAttachments: false,
+        includeEmbeds: true,
+        includePoll: i === 0,
+        includeStickers: false,
+      }),
     ),
-  ).filter((m) => m.length > 0)
+  )
+
+  const editsLog: string[] = formattedLogs
+    .map((v, i, arr) => {
+      const keep: string[] = []
+
+      if (i === 0) {
+        keep.push(v.header, v.content, v.footer)
+      } else {
+        if (v.header !== arr[i - 1].header) {
+          keep.push(v.header)
+        }
+        if (v.content !== arr[i - 1].content) {
+          keep.push(v.content)
+        }
+        if (v.footer !== arr[i - 1].footer) {
+          keep.push(v.footer)
+        }
+      }
+
+      return keep.join('\n').trim()
+    })
+    .filter((v) => v.length > 0)
 
   const attachProxy = message.attachments.map(
     (a) => `[${escapeMarkdown(a.name)}](<${a.proxyURL}>)`,
@@ -140,6 +162,7 @@ async function messageDelete(message: Message | PartialMessage) {
   await channel.send({
     content: formatLog('🗑️', 'Message Deleted', msg),
     files,
+    allowedMentions: { parse: [] },
   })
 }
 
@@ -152,6 +175,31 @@ function formatLogUser(user: User | GuildMember) {
   })
 }
 
+interface LogMessageOptions {
+  /** Include `╭╼ User [username] (id) used /commandName` */
+  includeInteraction?: boolean
+  /** Include `╭╼ Reply to User [username] (id): Message content */
+  includeReference?: boolean
+  /** Include `◯ User [username] (id) [TAG...]` */
+  includeUser?: boolean
+  /** Include `[TIMESTAMP]`, either appended to user line or alone */
+  includeTimestamp?: boolean
+  /** Include a text version of the first embed, if any. Additional embeds shown as: `╰╼ + X more embeds` */
+  includeEmbeds?: boolean
+  /** Include `╰╼ Attachments: fileName.png, fileName.jpg` */
+  includeAttachments?: boolean
+  /** Include `╰╼ Stickers: sticker, sticker2 */
+  includeStickers?: boolean
+  /** Include `╰┮ Poll: Question` followed by `├╼ Answer (votes)` */
+  includePoll?: boolean
+}
+
+interface MessageLogOutput {
+  header: string
+  content: string
+  footer: string
+}
+
 export async function messageToLog(
   message: Message,
   {
@@ -159,12 +207,12 @@ export async function messageToLog(
     includeReference = true,
     includeUser = true,
     includeTimestamp = true,
-    includeAttachments = true,
     includeEmbeds = true,
+    includeAttachments = true,
     includeStickers = true,
     includePoll = true,
-  } = {},
-): Promise<string> {
+  }: LogMessageOptions = {},
+): Promise<MessageLogOutput> {
   const lines: string[] = []
 
   if (includeInteraction && message.interaction) {
@@ -175,12 +223,15 @@ export async function messageToLog(
     )
   }
 
-  if (includeReference && message.reference) {
+  if (includeReference && message.reference?.messageId) {
+    // Without a messageId `fetchReference` will end up fetching message*S* from the channel instead of a single message
+    // Which ends up giving you a Collection<string, Message> and breaking TS assumptions leading to cool errors
+    // See https://github.com/discordjs/discord.js/issues/10294
     const ref = await message.fetchReference().catch(() => null)
 
     if (ref) {
       lines.push(
-        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ref.content.replaceAll(/\n/g, ' ').slice(0, 50)}${ref.content.length > 50 ? '…' : ''}`,
+        `╭╼ Reply to ${formatLogUser(ref.author)}: ${escapeCodeBlock(ref.content.replaceAll(/\n/g, ' ').slice(0, 50))}${ref.content.length > 50 ? '…' : ''}`,
       )
     } else {
       lines.push(
@@ -206,9 +257,23 @@ export async function messageToLog(
     lines.push(`[${formatTime(message.createdAt)}]`)
   }
 
-  if (message.content) {
+  const header = lines.join('\n')
+  lines.splice(0, lines.length)
+
+  if (![MessageType.Default, MessageType.Reply].includes(message.type)) {
+    const embed = new EmbedBuilder()
+    await addToEmbed(message, embed)
+    if (embed.data.description) {
+      lines.push(
+        `╞ ${escapeCodeBlock(embed.data.description).split('\n').join('\n╞ ')}`,
+      )
+    }
+  } else if (message.content) {
     lines.push(`┊ ${escapeCodeBlock(message.content).split('\n').join('\n┊ ')}`)
   }
+
+  const content = lines.join('\n')
+  lines.splice(0, lines.length)
 
   if (includeEmbeds && message.embeds.length > 0) {
     lines.push(embedToLog(message.embeds[0], { minimal: true }))
@@ -246,7 +311,13 @@ export async function messageToLog(
     lines.push(`╰╼ Edited [${formatTime(message.editedAt)}]`)
   }
 
-  return lines.join('\n')
+  const footer = lines.join('\n')
+
+  return {
+    header,
+    content,
+    footer,
+  }
 }
 
 const TL_CHAR = '╭'
