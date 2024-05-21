@@ -119,10 +119,16 @@ export const actionReason = new SleetSlashCommand(
       },
       {
         name: 'reason',
-        description: 'The reason for the warning',
+        description: 'The reason for the action',
         type: ApplicationCommandOptionType.String,
         required: true,
         max_length: 1500,
+      },
+      {
+        name: 'redact_username',
+        description:
+          'Redact the username from the log (e.g. if they have a slur), preserves ID (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
       },
       {
         name: 'ephemeral',
@@ -142,6 +148,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   const actionString = interaction.options.getString('action_id', true)
   const reason = interaction.options.getString('reason', true).trim()
+  const redactUser = interaction.options.getBoolean('redact_username')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   await interaction.deferReply({
@@ -171,7 +178,9 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   const results: EditActionLog[] = []
 
   for (const id of actionIDs) {
-    results.push(await editAction(guild, config, id, reason, interaction.user))
+    results.push(
+      await editAction(guild, config, id, reason, redactUser, interaction.user),
+    )
     if (results.length !== actionIDs.length) {
       // Add a small delay before doing the next one to avoid ratelimiting as hard
       await sleep(500)
@@ -253,6 +262,7 @@ async function editAction(
   config: ActionLogConfig,
   actionID: number,
   reason: string,
+  redactUser: boolean | null,
   reasonBy: User,
 ): Promise<EditActionLog> {
   const oldAction = await prisma.actionLog.findFirst({
@@ -277,6 +287,7 @@ async function editAction(
     actionID: actionID,
     version: oldAction.version,
     userID: oldAction.userID,
+    redactUser: redactUser ?? oldAction.redactUser,
     reason: reason,
     reasonByID: reasonBy.id,
     moderatorID: oldAction.moderatorID ?? reasonBy.id,
@@ -295,19 +306,19 @@ async function editAction(
       ? await guild.client.users.fetch(mergedAction.userID)
       : null,
     reason: mergedAction.reason,
+    redactUser: mergedAction.redactUser,
     reasonBy: mergedAction.reasonByID
       ? await guild.client.users.fetch(mergedAction.reasonByID)
       : null,
     responsibleModerator: mergedAction.moderatorID
       ? await guild.client.users.fetch(mergedAction.moderatorID)
       : null,
+    createdAt: mergedAction.createdAt,
   }
 
-  if (oldAction.messageID === null) {
-    // Either wasn't logged before or failed to log
-    // In which case we should create a new log
+  const sendMessage = async (): Promise<EditActionLog> => {
     if (config.logChannelID === null) {
-      // Although if there is no log channel, we can't do anything
+      // If there is no log channel, we can't do anything
       return {
         id: actionID,
         success: false,
@@ -363,6 +374,12 @@ async function editAction(
     }
   }
 
+  if (oldAction.messageID === null) {
+    // Either wasn't logged before or failed to log
+    // In which case we should create a new log
+    return await sendMessage()
+  }
+
   const channel = guild.channels.cache.get(oldAction.channelID)
 
   if (!channel?.isTextBased()) {
@@ -394,10 +411,15 @@ async function editAction(
       },
     })
   } catch (e) {
-    return {
-      id: actionID,
-      success: false,
-      message: `Failed to edit message: ${e}`,
+    try {
+      // If we failed to edit the message, try sending a new one
+      return await sendMessage()
+    } catch (e2) {
+      return {
+        id: actionID,
+        success: false,
+        message: `Failed to edit message or send a new one: [${e}] + [${e2}]`,
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 import { ActionLogConfig, ActionLogDirtyTracker } from '@prisma/client'
-import { Guild, GuildMember, User } from 'discord.js'
+import { Guild, GuildMember, User, time } from 'discord.js'
 import { PreRunError, formatUser } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
@@ -10,9 +10,11 @@ export interface ActionLogEntry {
   version?: number
   action: 'ban' | 'unban' | 'kick' | 'timeout' | 'timeout removed'
   user: User | GuildMember | null
+  redactUser: boolean
   reason: string | null
   reasonBy?: User | GuildMember | null
   responsibleModerator: User | GuildMember | null
+  createdAt: Date
 }
 
 const userLog = async (user: User | GuildMember): Promise<string> =>
@@ -42,13 +44,21 @@ export async function formatToLog(
   const log: string[] = []
 
   if (options.headerLine) {
-    log.push(`**${capitalize(entry.action)}** | Case ${entry.id}`)
+    log.push(
+      `**${capitalize(entry.action)}** | Case ${entry.id} | ${time(entry.createdAt, 'f')}`,
+    )
   }
 
   if (options.user) {
-    log.push(
-      `**User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
-    )
+    if (entry.redactUser) {
+      log.push(
+        `**User:** \`[Username Redacted by Moderators]\` (${entry.user?.id ?? 'unknown user'})`,
+      )
+    } else {
+      log.push(
+        `**User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
+      )
+    }
   }
 
   if (options.reason) {

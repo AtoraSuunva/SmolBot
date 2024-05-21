@@ -70,9 +70,11 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
     id: 0,
     action: type,
     user: auditLogEntry.target,
+    redactUser: false,
     reason: auditLogEntry.reason?.trim() ?? null,
     reasonBy: auditLogEntry.executor,
     responsibleModerator: auditLogEntry.executor,
+    createdAt: auditLogEntry.createdAt,
   }
 
   void logQueue.add(async () => {

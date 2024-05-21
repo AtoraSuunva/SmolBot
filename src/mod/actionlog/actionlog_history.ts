@@ -172,6 +172,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
                 user: action.userID
                   ? await guild.client.users.fetch(action.userID)
                   : null,
+                redactUser: action.redactUser,
                 reason: action.reason,
                 reasonBy: action.reasonByID
                   ? await guild.client.users.fetch(action.reasonByID)
@@ -179,6 +180,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
                 responsibleModerator: action.moderatorID
                   ? await guild.client.users.fetch(action.moderatorID)
                   : null,
+                createdAt: action.createdAt,
               }),
               allowedMentions: {
                 parse: [],
@@ -254,6 +256,7 @@ async function formatPageToFields(
             version: al.version,
             action: al.action as ActionLogEntry['action'],
             user: al.userID ? await guild.client.users.fetch(al.userID) : null,
+            redactUser: al.redactUser,
             reason: al.reason,
             reasonBy: al.reasonByID
               ? await guild.client.users.fetch(al.reasonByID)
@@ -261,6 +264,7 @@ async function formatPageToFields(
             responsibleModerator: al.moderatorID
               ? await guild.client.users.fetch(al.moderatorID)
               : null,
+            createdAt: al.createdAt,
           }),
         ),
       )

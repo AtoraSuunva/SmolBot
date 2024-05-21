@@ -189,6 +189,7 @@ model ActionLog {
 
   action      String
   userID      String?   @map("user_id")
+  redactUser  Boolean   @default(false) @map("redact_user")
   reason      String?
   reasonByID  String?   @map("reason_by_id")
   moderatorID String?   @map("moderator_id")
