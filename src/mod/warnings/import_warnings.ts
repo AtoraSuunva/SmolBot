@@ -1,6 +1,7 @@
 import { Prisma, PrismaPromise, Warning } from '@prisma/client'
 import {
   BaseError,
+  BaseErrorJsonified,
   CombinedError,
   CombinedPropertyError,
   ObjectValidator,
@@ -133,21 +134,25 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
   await interaction.editReply(`Imported ${plural('warning', count)}`)
 }
 
-const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> =
-  s.object({
-    guildID: s.string.regex(/^\d{1,20}$/), // Probably more than long enough for a snowflake
-    warningID: s.string.reshape(reshapeToNumber),
-    version: s.string.reshape(reshapeToNumber),
-    user: s.string.lengthLessThanOrEqual(100), // 2-32 username + #discrim (5) = 37 but JS doesn't count astral symbols correctly, discord does
-    userID: s.string.regex(/^\d{1,20}$/),
-    reason: s.string.lengthLessThan(256),
-    permanent: s.string.reshape(reshapeToBoolean),
-    void: s.string.reshape(reshapeToBoolean),
-    moderatorID: s.string.regex(/^\d{1,20}$/).nullable,
-    modNote: s.string.lengthLessThan(256).nullable,
-    createdAt: s.string.reshape(reshapeToDate),
-    validUntil: s.string.reshape(reshapeToDate).nullable,
-  }).strict
+const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> = s
+  .object({
+    guildID: s.string().regex(/^\d{1,20}$/), // Probably more than long enough for a snowflake
+    warningID: s.string().reshape(reshapeToNumber),
+    version: s.string().reshape(reshapeToNumber),
+    user: s.string().lengthLessThanOrEqual(100), // 2-32 username + #discrim (5) = 37 but JS doesn't count astral symbols correctly, discord does
+    userID: s.string().regex(/^\d{1,20}$/),
+    reason: s.string().lengthLessThan(256),
+    permanent: s.string().reshape(reshapeToBoolean),
+    void: s.string().reshape(reshapeToBoolean),
+    moderatorID: s
+      .string()
+      .regex(/^\d{1,20}$/)
+      .nullable(),
+    modNote: s.string().lengthLessThan(256).nullable(),
+    createdAt: s.string().reshape(reshapeToDate),
+    validUntil: s.string().reshape(reshapeToDate).nullable(),
+  })
+  .strict()
 
 function reshapeToNumber(value: string): Result<number> {
   const parsed = parseInt(value, 10)
@@ -180,7 +185,18 @@ function reshapeToDate(value: string): Result<Date> {
   return Result.ok(parsed)
 }
 
-function formatBaseError(error: BaseError): Record<string, unknown> {
+type FormattedBaseError = NestedError | BaseErrorJsonified
+
+interface NestedError {
+  errors: (FormattedBaseError | NestedPropertyError)[]
+}
+
+interface NestedPropertyError {
+  property: PropertyKey
+  errors: FormattedBaseError
+}
+
+function formatBaseError(error: BaseError): FormattedBaseError {
   if (
     error instanceof CombinedError ||
     error instanceof CombinedPropertyError
@@ -197,10 +213,7 @@ function formatBaseError(error: BaseError): Record<string, unknown> {
         }
       }),
     }
-  } else if ('toJSON' in error && typeof error.toJSON === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return error.toJSON()
   }
 
-  return { message: error.message }
+  return error.toJSON()
 }
