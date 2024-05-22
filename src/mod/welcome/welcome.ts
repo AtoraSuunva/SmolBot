@@ -1,4 +1,5 @@
 import { WelcomeSettings } from '@prisma/client'
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   Guild,
   GuildMember,
@@ -20,7 +21,7 @@ export const welcome = new SleetSlashCommand(
   {
     name: 'welcome',
     description: 'Manage the welcome message',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     options: [fields, message, deleteCommand, config, mark_joined],
   },

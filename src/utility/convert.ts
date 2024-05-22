@@ -1,9 +1,13 @@
+import { default as converter } from 'convert-units'
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
-import { default as converter } from 'convert-units'
 
 const units = converter().list()
 
@@ -60,33 +64,39 @@ export const convert = new SleetSlashCommand(
   {
     name: 'convert',
     description: 'Converts a value from one unit to another',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'value',
-        description: 'The value to convert',
         type: ApplicationCommandOptionType.Number,
+        description: 'The value to convert',
         required: true,
       },
       {
         name: 'from',
-        description: 'The unit to convert from',
         type: ApplicationCommandOptionType.String,
+        description: 'The unit to convert from',
         required: true,
         autocomplete: autocompleteFrom,
       },
       {
         name: 'to',
-        description: 'The unit to convert to (default: Best guess)',
         type: ApplicationCommandOptionType.String,
-        required: false,
+        description: 'The unit to convert to (default: Best guess)',
         autocomplete: autocompleteTo,
       },
       {
         name: 'ephemeral',
-        description:
-          'Whether to send the result as an ephemeral message (default: True)',
         type: ApplicationCommandOptionType.Boolean,
-        required: false,
+        description: 'Only show the result to you (default: True)',
       },
     ],
   },
@@ -98,8 +108,8 @@ export const convert = new SleetSlashCommand(
 async function runConvert(interaction: ChatInputCommandInteraction) {
   const value = interaction.options.getNumber('value', true)
   const from = interaction.options.getString('from', true)
-  const to = interaction.options.getString('to', false)
-  const ephemeral = interaction.options.getBoolean('ephemeral', false) ?? true
+  const to = interaction.options.getString('to')
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
 
   const fromUnit = units.find((unit) => unit.abbr === from)?.abbr
 

@@ -1,15 +1,27 @@
+import { DiceRoll } from '@dice-roller/rpg-dice-roller'
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  AttachmentPayload,
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import { DiceRoll } from '@dice-roller/rpg-dice-roller'
 
 export const roll = new SleetSlashCommand(
   {
     name: 'roll',
     description: 'Rolls a die, or multiple dice, using AdX notation',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'dice',
@@ -21,19 +33,18 @@ export const roll = new SleetSlashCommand(
         name: 'statistics',
         type: ApplicationCommandOptionType.Boolean,
         description:
-          'Whether to show statistics about the roll, possible min, max, average... (default: false)',
+          'Whether to show statistics about the roll, possible min, max, average... (default: False)',
       },
       {
         name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
-        description:
-          'Whether to show the result of the dice roll to only you (default: false)',
+        description: 'Only show the result to you (default: False)',
       },
       {
         name: 'help',
         type: ApplicationCommandOptionType.Boolean,
         description:
-          "Get some help on how to use dice notation for rolls, and what's supported (default: false)",
+          "Get some help on how to use dice notation for rolls, and what's supported (default: False)",
       },
     ],
   },
@@ -77,20 +88,23 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     )
   }
 
-  let content = result.join('\n')
-  const files: AttachmentPayload[] = []
+  const content = result.join('\n')
 
   if (result.length > 2000) {
-    files.push({
-      name: 'roll.txt',
-      attachment: Buffer.from(content),
+    return interaction.reply({
+      content: 'Your roll result was too big! Check the file for the result.',
+      files: [
+        {
+          name: 'roll.txt',
+          attachment: Buffer.from(content),
+        },
+      ],
+      ephemeral,
     })
-    content = 'Your roll result was too big! Check the file for the result.'
+  } else {
+    return interaction.reply({
+      content,
+      ephemeral,
+    })
   }
-
-  return interaction.reply({
-    content,
-    files,
-    ephemeral,
-  })
 }

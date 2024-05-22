@@ -1,20 +1,21 @@
+import { Prisma } from '@prisma/client'
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
+import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
-import { Prisma } from '@prisma/client'
-import { getOptionCount } from 'sleetcord-common'
 
 export const mute_manage = new SleetSlashCommand(
   {
     name: 'mute_manage',
     description: 'Configure the mute system',
     default_member_permissions: ['ManageGuild'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'role',

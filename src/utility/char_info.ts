@@ -1,8 +1,13 @@
 import { uniGetBlock, uniGetCategories, uniGetScripts } from 'char-info'
 import { UnicodeCharGroup } from 'char-info/internal/unicode-lookup.js'
 import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
+import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
+  codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
@@ -10,12 +15,26 @@ export const char_info = new SleetSlashCommand(
   {
     name: 'char_info',
     description: 'Get information about a string of characters',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'string',
         type: ApplicationCommandOptionType.String,
         description: 'The string of characters to get information about',
         required: true,
+      },
+      {
+        name: 'ephemeral',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -26,11 +45,13 @@ export const char_info = new SleetSlashCommand(
 
 async function runCharInfo(interaction: ChatInputCommandInteraction) {
   const string = interaction.options.getString('string', true)
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   if (string.length === 0) {
-    await interaction.reply(
-      "You didn't give me any string to get information about!",
-    )
+    await interaction.reply({
+      content: "You didn't give me any string to get information about!",
+      ephemeral,
+    })
     return
   }
 
@@ -40,7 +61,24 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
     characters.push(...characterInfo(char))
   }
 
-  await interaction.reply(characters.join('\n'))
+  const output = characters.join('\n')
+
+  if (output.length > 1950) {
+    await interaction.reply({
+      files: [
+        {
+          name: 'char_info.txt',
+          attachment: Buffer.from(output, 'utf-8'),
+        },
+      ],
+      ephemeral,
+    })
+  } else {
+    await interaction.reply({
+      content: codeBlock('yaml', output),
+      ephemeral,
+    })
+  }
 }
 
 const intlList = new Intl.ListFormat('en', {
@@ -69,7 +107,7 @@ function characterInfo(char: string): string[] {
     const categories = uniGetCategories.code(charCode)
     const scripts = uniGetScripts.code(charCode)
 
-    const prelude = i == 0 ? `- ${char}:` : '  -'
+    const prelude = i == 0 ? `- '${char}':` : '  -'
 
     const unicodeInfo = `${unicodePoint} (${
       block.displayName

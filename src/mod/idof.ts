@@ -1,17 +1,18 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
-  codeBlock,
-  escapeCodeBlock,
   Guild,
   GuildMember,
+  codeBlock,
+  escapeCodeBlock,
 } from 'discord.js'
 import {
   AutocompleteHandler,
+  SleetSlashCommand,
   escapeAllMarkdown,
   formatUser,
   getGuild,
-  SleetSlashCommand,
 } from 'sleetcord'
 import { tableFormat } from '../util/format.js'
 
@@ -22,6 +23,7 @@ interface MemberMatch {
   username: string
   nickname: string | null
   id: string
+  member: GuildMember
 }
 
 const userAutocomplete: AutocompleteHandler<string> = async ({
@@ -43,7 +45,7 @@ export const idof = new SleetSlashCommand(
   {
     name: 'idof',
     description: 'Get the ID of a user.',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'user',
@@ -51,6 +53,11 @@ export const idof = new SleetSlashCommand(
         type: ApplicationCommandOptionType.String,
         autocomplete: userAutocomplete,
         required: true,
+      },
+      {
+        name: 'ephemeral',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -60,7 +67,9 @@ export const idof = new SleetSlashCommand(
 )
 
 async function runIdof(interaction: ChatInputCommandInteraction) {
-  await interaction.deferReply()
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+  await interaction.deferReply({ ephemeral })
+
   const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
   const matches = await matchMembers(guild, user, {
@@ -68,20 +77,28 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   })
 
   if (matches.length === 0) {
-    return interaction.editReply(`No users found matching "${user}"`)
+    return interaction.editReply({
+      content: `No users found matching "${escapeAllMarkdown(user)}"`,
+      allowedMentions: { parse: [] },
+    })
   } else if (matches.length === 1) {
-    return interaction.editReply(matches[0].id)
+    return interaction.editReply({
+      content: formatUser(matches[0].member),
+      allowedMentions: { parse: [] },
+    })
   } else {
-    return interaction.editReply(
-      `Multiple users found matching "${escapeAllMarkdown(
+    return interaction.editReply({
+      content: `Multiple users found matching "${escapeAllMarkdown(
         user,
       )}":\n${resultFormat(matches)}`,
-    )
+      allowedMentions: { parse: [] },
+    })
   }
 }
 
 function resultFormat(data: MemberMatch[]): string {
   return codeBlock(
+    'm',
     escapeCodeBlock(
       tableFormat(data, {
         keys: ['username', 'globalName', 'id', 'nickname'],
@@ -196,5 +213,6 @@ function formatSuggestion(m: GuildMember): MemberMatch {
     username: m.user.tag,
     nickname: m.nickname,
     id: m.user.id,
+    member: m,
   }
 }

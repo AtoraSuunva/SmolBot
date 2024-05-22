@@ -1,4 +1,5 @@
 import { ActionLog, ActionLogConfig } from '@prisma/client'
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -103,7 +104,7 @@ export const actionReason = new SleetSlashCommand(
   {
     name: 'reason',
     description: 'Reason an action',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: [
       'BanMembers',
       'KickMembers',
@@ -112,29 +113,28 @@ export const actionReason = new SleetSlashCommand(
     options: [
       {
         name: 'action_id',
-        description: 'The ID of the action to edit',
         type: ApplicationCommandOptionType.String,
+        description: 'The ID of the action to edit',
         autocomplete: actionIDAutocomplete,
         required: true,
       },
       {
         name: 'reason',
-        description: 'The reason for the action',
         type: ApplicationCommandOptionType.String,
+        description: 'The reason for the action',
         required: true,
         max_length: 1500,
       },
       {
         name: 'redact_username',
+        type: ApplicationCommandOptionType.Boolean,
         description:
           'Redact the username from the log (e.g. if they have a slur), preserves ID (default: false)',
-        type: ApplicationCommandOptionType.Boolean,
       },
       {
         name: 'ephemeral',
-        description:
-          'Whether to only show the response to you (default: false)',
         type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },

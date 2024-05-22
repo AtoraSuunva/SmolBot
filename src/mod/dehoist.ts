@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -19,7 +20,7 @@ export const dehoist = new SleetSlashCommand(
     name: 'dehoist',
     description:
       'Dehoists users by placing an invisible character in front of their name',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageNicknames'],
     options: [
       {

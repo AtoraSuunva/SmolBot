@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -6,7 +7,7 @@ import {
   ChatInputCommandInteraction,
   Interaction,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { plural } from '../util/format.js'
 
@@ -14,7 +15,7 @@ export const timeout_button = new SleetSlashCommand(
   {
     name: 'timeout_button',
     description: 'Create a timeout button for funny',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ModerateMembers'],
     options: [
       {

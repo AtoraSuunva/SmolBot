@@ -1,18 +1,19 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
   Guild,
   GuildBan,
   Invite,
-  EmbedBuilder,
   User,
-  ChatInputCommandInteraction,
-  ApplicationCommandOptionType,
 } from 'discord.js'
 import {
+  SleetSlashCommand,
   botHasPermissionsGuard,
   formatUser,
   getGuild,
   inGuildGuard,
-  SleetSlashCommand,
 } from 'sleetcord'
 
 export const revoke = new SleetSlashCommand(
@@ -20,7 +21,7 @@ export const revoke = new SleetSlashCommand(
     name: 'revoke',
     description: 'Revoke all invites from a specific user',
     default_member_permissions: ['BanMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'from',

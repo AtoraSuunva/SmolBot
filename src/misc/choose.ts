@@ -1,26 +1,46 @@
 import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
+import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { plural } from '../util/format.js'
 
+const MAX_OPTIONS = 200
+const MAX_PICKS = 50
+
 export const choose = new SleetSlashCommand(
   {
     name: 'choose',
     description: 'Chooses between multiple options',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'options',
         type: ApplicationCommandOptionType.String,
-        description:
-          'The options to choose from, use commas (,) to separate them',
+        description: `The options to choose from, use commas (,) to separate them (max: ${MAX_OPTIONS})`,
         required: true,
       },
       {
-        name: 'pick-count',
+        name: 'pick_count',
         type: ApplicationCommandOptionType.Integer,
-        description: 'The number of options to pick (default: 1)',
+        description: `The number of options to pick (default: 1, max: ${MAX_PICKS})`,
+      },
+      {
+        name: 'ephemeral',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -29,8 +49,6 @@ export const choose = new SleetSlashCommand(
   },
 )
 
-const MAX_OPTIONS = 50
-
 const intlList = new Intl.ListFormat('en', {
   style: 'long',
   type: 'conjunction',
@@ -38,15 +56,22 @@ const intlList = new Intl.ListFormat('en', {
 
 async function runChoose(interaction: ChatInputCommandInteraction) {
   const inputOptions = interaction.options.getString('options', true)
-  const pickCount = interaction.options.getInteger('pick-count') ?? 1
+  const pickCount = interaction.options.getInteger('pick_count') ?? 1
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   if (inputOptions.length === 0) {
-    await interaction.reply("You didn't give me any options to choose from!")
+    await interaction.reply({
+      content: "You didn't give me any options to choose from!",
+      ephemeral: true,
+    })
     return
   }
 
   if (pickCount <= 0) {
-    await interaction.reply("I can't pick less than 1 option!")
+    await interaction.reply({
+      content: "I can't pick less than 1 option!",
+      ephemeral: true,
+    })
     return
   }
 
@@ -56,29 +81,40 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
     .filter((option) => option.length > 0)
 
   if (options.length === 1) {
-    await interaction.reply(
-      `There's only 1 option, so **${options[0]}**!\nUse commas (,) to separate multiple options if you didn't mean to only put 1 option, like this "otter, ferret, weasel".`,
-    )
+    await interaction.reply({
+      content: `There's only 1 option, so **${options[0]}**!\nUse commas (,) to separate multiple options if you didn't mean to only put 1 option, like this "otter, ferret, weasel".`,
+      ephemeral,
+    })
     return
   }
 
   if (options.length > MAX_OPTIONS) {
-    await interaction.reply(
-      `You can't give me more than ${plural(
+    await interaction.reply({
+      content: `You can't give me more than ${plural(
         'option',
         MAX_OPTIONS,
       )}! You gave ${plural('option', options.length)}.`,
-    )
+      ephemeral: true,
+    })
+    return
+  }
+
+  if (pickCount > MAX_PICKS) {
+    await interaction.reply({
+      content: `You can't pick more than ${plural('option', MAX_PICKS)}!`,
+      ephemeral: true,
+    })
     return
   }
 
   if (pickCount > options.length) {
-    await interaction.reply(
-      `You can't pick ${plural('option', pickCount)} from ${plural(
+    await interaction.reply({
+      content: `You can't pick ${plural('option', pickCount)} from ${plural(
         'option',
         options.length,
       )}!`,
-    )
+      ephemeral: true,
+    })
     return
   }
 
@@ -96,5 +132,22 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
     pickedOptions.push(choice)
   }
 
-  await interaction.reply(`I choose **${intlList.format(pickedOptions)}**!`)
+  const content = `I choose **${intlList.format(pickedOptions)}**!`
+
+  if (content.length > 2000) {
+    await interaction.reply({
+      files: [
+        {
+          name: 'choice.txt',
+          attachment: Buffer.from(content, 'utf-8'),
+        },
+      ],
+      ephemeral,
+    })
+  } else {
+    await interaction.reply({
+      content,
+      ephemeral,
+    })
+  }
 }

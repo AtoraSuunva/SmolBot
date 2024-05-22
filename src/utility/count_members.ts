@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -5,10 +6,10 @@ import {
   GuildMember,
 } from 'discord.js'
 import {
+  SleetSlashCommand,
   escapeAllMarkdown,
   getGuild,
   makeChoices,
-  SleetSlashCommand,
 } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { setTimeout } from 'timers/promises'
@@ -32,7 +33,7 @@ export const count_members = new SleetSlashCommand(
   {
     name: 'count_members',
     description: 'Counts the number of members in a guild',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'name_contains',
