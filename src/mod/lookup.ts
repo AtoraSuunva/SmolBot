@@ -216,10 +216,12 @@ async function tryFetchGuildPreview(
   }
 }
 
-const rpcURL = (app: string) =>
+const rpcUrl = (app: string) =>
   `https://discord.com/api/applications/${app}/rpc`
-const oAuthURL = (app: string, permissions: string, scopes: string[]) =>
-  `https://discord.com/oauth2/authorize?client_id=${app}&permissions=${permissions}&scope=${encodeURIComponent(
+const oAuthUrl = (app: string) =>
+  `https://discord.com/oauth2/authorize?client_id=${app}`
+const oAuthUrlScoped = (app: string, permissions: string, scopes: string[]) =>
+  `${oAuthUrl(app)}&permissions=${permissions}&scope=${encodeURIComponent(
     scopes.join(' '),
   )}`
 
@@ -230,7 +232,7 @@ const oAuthURL = (app: string, permissions: string, scopes: string[]) =>
  * @throws Error if the application is not a bot or doesn't exist, *or* if the bot is old enough that bot ID != application ID
  */
 async function fetchRPCDetails(app: string): Promise<APIApplication> {
-  const res = await fetch(rpcURL(app))
+  const res = await fetch(rpcUrl(app))
 
   if (res.status === 404) {
     throw new Error('No application found or snowflake incorrect.')
@@ -380,7 +382,15 @@ async function sendUserLookup(
       const row = new ActionRowBuilder<ButtonBuilder>()
       components.push(row)
 
-      const inviteURL = oAuthURL(
+      const inviteUrl = oAuthUrl(rpc.id)
+      row.addComponents([
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('Invite')
+          .setURL(inviteUrl),
+      ])
+
+      const inviteUrlScoped = oAuthUrlScoped(
         rpc.id,
         rpc.install_params?.permissions ?? '0',
         rpc.install_params?.scopes ?? ['bot'],
@@ -388,8 +398,8 @@ async function sendUserLookup(
       row.addComponents([
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
-          .setLabel('Invite')
-          .setURL(inviteURL),
+          .setLabel('Invite (Scoped)')
+          .setURL(inviteUrlScoped),
       ])
 
       const availability = rpc.bot_public ? 'Public' : 'Private'
@@ -429,7 +439,7 @@ async function sendUserLookup(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('RPC Details')
-          .setURL(rpcURL(rpc.id)),
+          .setURL(rpcUrl(rpc.id)),
       ])
     } else {
       details.push('No RPC information available. This bot is likely too old.')
