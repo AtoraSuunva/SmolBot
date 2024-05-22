@@ -1,12 +1,13 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  EmbedBuilder,
   GuildMember,
   Interaction,
-  EmbedBuilder,
   Role,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
@@ -16,7 +17,7 @@ export const role_buttons = new SleetSlashCommand(
     name: 'role_buttons',
     description:
       'Create a set of buttons for users to add/remove roles from themselves',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     options: [
       {

@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -7,36 +8,35 @@ import {
   ThreadEditOptions,
 } from 'discord.js'
 import {
+  SleetSlashCommand,
   escapeAllMarkdown,
   formatUser,
   getChannel,
-  SleetSlashCommand,
 } from 'sleetcord'
 
 export const lock_thread = new SleetSlashCommand(
   {
     name: 'lock_thread',
     description: 'Locks a thread',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageThreads'],
     options: [
       {
         name: 'reason',
-        description: 'The reason for locking the thread',
         type: ApplicationCommandOptionType.String,
+        description: 'The reason for locking the thread',
         required: true,
       },
       {
         name: 'thread',
-        description: 'The thread to lock',
         type: ApplicationCommandOptionType.Channel,
+        description: 'The thread to lock',
         channel_types: Constants.ThreadChannelTypes,
       },
       {
         name: 'ephemeral',
-        description:
-          'Send lock feedback as an ephemeral message (default: True)',
         type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: True)',
       },
     ],
   },

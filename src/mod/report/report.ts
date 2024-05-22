@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -15,7 +16,7 @@ export const report = new SleetSlashCommand(
   {
     name: 'report',
     description: 'Report something to the moderators.',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'content',

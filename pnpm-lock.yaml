@@ -29,6 +29,9 @@ importers:
       csv-stringify:
         specifier: ^6.5.0
         version: 6.5.0
+      discord-api-types:
+        specifier: ^0.37.84
+        version: 0.37.84
       discord.js:
         specifier: ~14.15.2
         version: 14.15.2
@@ -48,8 +51,8 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0
       sleetcord:
-        specifier: 1.5.0
-        version: 1.5.0(discord.js@14.15.2)
+        specifier: 1.5.1
+        version: 1.5.1(discord.js@14.15.2)
       sleetcord-common:
         specifier: ^7.0.0
         version: 7.0.0(prisma@5.14.0)
@@ -567,6 +570,9 @@ packages:
 
   discord-api-types@0.37.83:
     resolution: {integrity: sha512-urGGYeWtWNYMKnYlZnOnDHm8fVRffQs3U0SpE8RHeiuLKb/u92APS8HoQnPTFbnXmY1vVnXjXO4dOxcAn3J+DA==}
+
+  discord-api-types@0.37.84:
+    resolution: {integrity: sha512-NngmTBW8vermlbO0qNtaS7SHCWB/R96ICqflTwM/cV7zsxyQGd38E2bBlwaxLbXgb2YTF3+Yx6+qGs/3sXedCw==}
 
   discord.js@14.15.2:
     resolution: {integrity: sha512-wGD37YCaTUNprtpqMIRuNiswwsvSWXrHykBSm2SAosoTYut0VUDj9yo9t4iLtMKvuhI49zYkvKc2TNdzdvpJhg==}
@@ -1343,8 +1349,8 @@ packages:
   sleetcord-common@7.0.0:
     resolution: {integrity: sha512-55PQABlIKSVyffmvOnIgvuhhtuvaR5IeQlbvDiC4s8gkXHoAqhKnW9S9ys260LMnJ07m9U8xrSdxlmgg1dIc1Q==}
 
-  sleetcord@1.5.0:
-    resolution: {integrity: sha512-DBRTLgMrhn9B0CRmYJKnrqbhlqlfzqTwVCleigMTXH0fWrtAYdjo2UaEZ83xc+2MWRgdp6c7xyEV/4WxqujnuQ==}
+  sleetcord@1.5.1:
+    resolution: {integrity: sha512-ji+Z3WLopa6+PpwZUc7tEEQ3cWr7ipx3BiBiOhIlftUzDLkywiwn6EPV2z8DgvY0r+Es7VRErzyNzBD+Um4Zkg==}
     peerDependencies:
       discord.js: ^14.12.1
 
@@ -2043,6 +2049,8 @@ snapshots:
       path-type: 4.0.0
 
   discord-api-types@0.37.83: {}
+
+  discord-api-types@0.37.84: {}
 
   discord.js@14.15.2:
     dependencies:
@@ -2948,15 +2956,15 @@ snapshots:
       env-var: 7.5.0
       pino: 9.0.0
       pretty-ms: 9.0.0
-      sleetcord: 1.5.0(discord.js@14.15.2)
+      sleetcord: 1.5.1(discord.js@14.15.2)
     transitivePeerDependencies:
       - bufferutil
       - prisma
       - utf-8-validate
 
-  sleetcord@1.5.0(discord.js@14.15.2):
+  sleetcord@1.5.1(discord.js@14.15.2):
     dependencies:
-      discord-api-types: 0.37.83
+      discord-api-types: 0.37.84
       discord.js: 14.15.2
       tseep: 1.2.1
 

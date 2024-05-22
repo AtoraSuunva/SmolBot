@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -8,7 +9,7 @@ export const send = new SleetSlashCommand(
   {
     name: 'send',
     description: 'Send a message as the bot',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'message',

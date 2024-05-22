@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   Channel,
@@ -19,7 +20,7 @@ export const quote = new SleetSlashCommand(
   {
     name: 'quote',
     description: 'Quotes a message',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'message_link',

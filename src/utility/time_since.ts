@@ -1,27 +1,39 @@
 import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
+import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   time,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
 import prettyMilliseconds from 'pretty-ms'
+import { SleetSlashCommand } from 'sleetcord'
 
 export const time_since = new SleetSlashCommand(
   {
     name: 'time_since',
     description: 'Get the time since a given date',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'date',
-        description: 'The date to get the time since',
         type: ApplicationCommandOptionType.String,
+        description: 'The date to get the time since',
         required: true,
       },
       {
         name: 'ephemeral',
-        description:
-          'Whether to send the response as an ephemeral message (default: True)',
         type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: True)',
       },
     ],
   },

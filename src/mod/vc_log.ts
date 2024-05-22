@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -6,11 +7,11 @@ import {
   VoiceState,
 } from 'discord.js'
 import {
+  SleetSlashCommand,
+  SleetSlashSubcommand,
   formatUser,
   getGuild,
   getTextBasedChannel,
-  SleetSlashCommand,
-  SleetSlashSubcommand,
 } from 'sleetcord'
 import { prisma } from '../util/db.js'
 
@@ -47,7 +48,7 @@ export const vc_log = new SleetSlashCommand(
   {
     name: 'vc_log',
     description: 'Manage VC logging',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     options: [config, disable],
   },

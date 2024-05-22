@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -25,7 +26,7 @@ export const purge = new SleetSlashCommand(
     name: 'purge',
     description: 'Purges a number of messages',
     default_member_permissions: ['ManageMessages'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'count',

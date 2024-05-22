@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   APIApplicationCommandOption,
   ApplicationCommandOptionType,
@@ -52,7 +53,7 @@ export const mass_ban = new SleetSlashCommand(
     description:
       'Mass ban a list of users, can ban only users in-guild or ban everyone on the list',
     default_member_permissions: ['BanMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       ...commonOptions,
       reasonOption,
@@ -81,7 +82,7 @@ export const mass_kick = new SleetSlashCommand(
     name: 'mass_kick',
     description: 'Mass kick a list of users',
     default_member_permissions: ['KickMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [...commonOptions, reasonOption],
   },
   {
@@ -94,7 +95,7 @@ export const mass_find = new SleetSlashCommand(
     name: 'mass_find',
     description: 'Check which users in a list are members of this guild',
     default_member_permissions: ['ModerateMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: commonOptions,
   },
   {
@@ -107,7 +108,7 @@ export const mass_unban = new SleetSlashCommand(
     name: 'mass_unban',
     description: 'Mass unban a list of users',
     default_member_permissions: ['BanMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [...commonOptions, reasonOption],
   },
   {
@@ -121,7 +122,7 @@ export const mass_softban = new SleetSlashCommand(
     description:
       'Softbans a user (ban + unban). Unbans + bans already-banned users. Useful to purge messages.',
     default_member_permissions: ['BanMembers'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       ...commonOptions,
       reasonOption,

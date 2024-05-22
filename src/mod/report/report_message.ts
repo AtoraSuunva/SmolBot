@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   DiscordjsError,
@@ -19,7 +20,7 @@ import { sendReport } from './utils.js'
 export const report_message = new SleetMessageCommand(
   {
     name: 'Report Message',
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
   },
   {
     run: runReportMessage,

@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   MessageContextMenuCommandInteraction,
   MessageFlags,
@@ -9,7 +10,7 @@ export const restore_embeds = new SleetMessageCommand(
   {
     name: 'Restore Embeds',
     default_member_permissions: ['ManageMessages'],
-    dm_permission: true,
+    contexts: [InteractionContextType.Guild],
   },
   {
     run: runRestoreEmbeds,
@@ -24,8 +25,8 @@ async function runRestoreEmbeds(
 
   if (!flags.has(MessageFlags.SuppressEmbeds)) {
     return interaction.reply({
-      ephemeral: true,
       content: 'This message does not have suppressed embeds.',
+      ephemeral: true,
     })
   }
 
@@ -33,15 +34,15 @@ async function runRestoreEmbeds(
 
   if (interaction.channel === null) {
     return interaction.reply({
-      ephemeral: true,
       content: 'This message is not in a cached channel.',
+      ephemeral: true,
     })
   }
 
   await interaction.channel.messages.edit(message.id, { flags: flags.bitfield })
 
   return interaction.reply({
-    ephemeral: true,
     content: 'Embeds restored.',
+    ephemeral: true,
   })
 }

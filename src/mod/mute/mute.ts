@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -37,7 +38,7 @@ export const mute = new SleetSlashCommand(
     name: 'mute',
     description: 'Mutes a user',
     default_member_permissions: ['ManageRoles'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'members',
@@ -53,7 +54,7 @@ export const mute = new SleetSlashCommand(
       {
         name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Ephemeral mute (default: false)',
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -66,7 +67,7 @@ export const mute_menu = new SleetUserCommand(
   {
     name: 'Mute',
     default_member_permissions: ['ManageRoles'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
   },
   {
     run: (i) => handleUserCommand(i, 'mute'),
@@ -78,7 +79,7 @@ export const unmute = new SleetSlashCommand(
     name: 'unmute',
     description: 'Unmutes a user',
     default_member_permissions: ['ManageRoles'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'members',
@@ -94,7 +95,7 @@ export const unmute = new SleetSlashCommand(
       {
         name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Ephemeral mute (default: false)',
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -107,7 +108,7 @@ export const unmute_menu = new SleetUserCommand(
   {
     name: 'Unmute',
     default_member_permissions: ['ManageRoles'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
   },
   {
     run: (i) => handleUserCommand(i, 'unmute'),

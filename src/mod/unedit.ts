@@ -1,3 +1,4 @@
+import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
@@ -8,7 +9,7 @@ import {
   MessageContextMenuCommandInteraction,
   PartialMessage,
 } from 'discord.js'
-import { SleetSlashCommand, isLikelyID, SleetMessageCommand } from 'sleetcord'
+import { isLikelyID, SleetMessageCommand, SleetSlashCommand } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 
 export const unedit = new SleetSlashCommand(
@@ -16,7 +17,7 @@ export const unedit = new SleetSlashCommand(
     name: 'unedit',
     description: 'Unedits a message',
     default_member_permissions: ['ManageMessages'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'message_link',
@@ -36,7 +37,7 @@ export const unedit_message = new SleetMessageCommand(
   {
     name: 'Unedit Message',
     default_member_permissions: ['ManageMessages'],
-    dm_permission: false,
+    contexts: [InteractionContextType.Guild],
   },
   {
     run: runUneditContextMenu,

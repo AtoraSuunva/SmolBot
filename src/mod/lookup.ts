@@ -1,4 +1,8 @@
 import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+} from 'discord-api-types/v10'
+import {
   APIApplication,
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -34,12 +38,26 @@ export const lookup = new SleetSlashCommand(
   {
     name: 'lookup',
     description: 'Lookup a user, guild, or invite :)',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
     options: [
       {
         name: 'data',
         description: 'The data to lookup (user ID, guild ID, invite code)',
         type: ApplicationCommandOptionType.String,
         required: true,
+      },
+      {
+        name: 'ephemeral',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Only show the result to you (default: False)',
       },
     ],
   },
@@ -56,22 +74,40 @@ async function interactionCreate(interaction: Interaction) {
     interaction.isButton() &&
     interaction.customId.startsWith(`${LOOKUP_ID}:`)
   ) {
-    const [, data] = interaction.customId.split(':')
-    await lookupAndRespond(interaction, data)
+    const [, data, ephemeral] = interaction.customId.split(':')
+    await lookupAndRespond(interaction, data, ephemeral === 'true').catch(
+      () => {
+        /* ignore */
+      },
+    )
+    // Then disable the button
+    await interaction.message
+      .edit({
+        components: [],
+      })
+      .catch(() => {
+        /* ignore */
+      })
   }
 }
 
 async function runLookup(interaction: ChatInputCommandInteraction) {
   const data = interaction.options.getString('data', true)
-  await lookupAndRespond(interaction, data)
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+
+  await lookupAndRespond(interaction, data, ephemeral)
 }
 
 type LookupInteraction = ChatInputCommandInteraction | ButtonInteraction
 
-async function lookupAndRespond(interaction: LookupInteraction, data: string) {
+async function lookupAndRespond(
+  interaction: LookupInteraction,
+  data: string,
+  ephemeral: boolean,
+) {
   const { client } = interaction
 
-  await interaction.deferReply()
+  await interaction.deferReply({ ephemeral })
 
   let error
 
@@ -96,6 +132,7 @@ async function lookupAndRespond(interaction: LookupInteraction, data: string) {
           return sendInviteLookup(
             interaction,
             await client.fetchInvite(guild.instantInvite),
+            ephemeral,
           )
         } else {
           return sendGuildWidgetLookup(interaction, guild)
@@ -110,7 +147,7 @@ async function lookupAndRespond(interaction: LookupInteraction, data: string) {
     // Likely an invite code
     try {
       const invite = await client.fetchInvite(data)
-      return sendInviteLookup(interaction, invite)
+      return sendInviteLookup(interaction, invite, ephemeral)
     } catch (e) {
       error = e
     }
@@ -230,9 +267,9 @@ const Badges: Record<keyof typeof UserFlags, string> = {
   BugHunterLevel2: '<:BadgeBugHunterLvl2:909313947172233266>',
   VerifiedBot: '<:VerifiedBot:910427927160709180>',
   VerifiedDeveloper: '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
-  CertifiedModerator: '<:BadgeCertifiedMod:909313949332275300>',
+  CertifiedModerator: '<:BadgeModeratorProgramsAlumni:1242694571385946152>',
   BotHTTPInteractions: '[HTTP Interactions]',
-  ActiveDeveloper: '<:activedev:1042545590640324608>',
+  ActiveDeveloper: '<:activeDev:1242646832828387500>',
 
   // Not officially documented, but "known"
   Spammer: '[Spammer]',
@@ -407,8 +444,8 @@ async function sendUserLookup(
 
 const ONLINE = '<:i_online:468214881623998464>'
 const OFFLINE = '<:i_offline2:468215162244038687>'
-const PARTNERED = '<:ServerPartnered:842194494161027100>'
-const VERIFIED = '<:ServerVerifiedIcon:751159037378297976>'
+const PARTNERED = '<:serverPartnered:1242647914119954484>'
+const VERIFIED = '<:serverVerifiedIcon:1242647914917003285>'
 
 /**
  * Send a guild or group DM invite based on which kind of invite it is
@@ -418,10 +455,11 @@ const VERIFIED = '<:ServerVerifiedIcon:751159037378297976>'
 async function sendInviteLookup(
   interaction: LookupInteraction,
   invite: Invite,
+  ephemeral: boolean,
 ): Promise<void> {
   if (invite.guild) {
     // Guild Invite
-    return sendGuildInviteLookup(interaction, invite)
+    return sendGuildInviteLookup(interaction, invite, ephemeral)
   } else {
     // Group DM invite? Maybe something else?
     return sendGroupDMInviteLookup(interaction, invite)
@@ -436,6 +474,7 @@ async function sendInviteLookup(
 async function sendGuildInviteLookup(
   interaction: LookupInteraction,
   invite: Invite,
+  ephemeral: boolean,
 ): Promise<void> {
   const { guild, code, presenceCount, memberCount } = invite
 
@@ -501,7 +540,7 @@ async function sendGuildInviteLookup(
         .setEmoji('📫')
         .setLabel('Lookup Inviter')
         .setStyle(ButtonStyle.Primary)
-        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}`),
+        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}:${ephemeral}`),
     ])
   }
 
