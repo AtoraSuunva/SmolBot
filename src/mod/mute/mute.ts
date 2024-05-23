@@ -336,8 +336,11 @@ function unmuteAction(
 }
 
 async function storeRoles(member: GuildMember): Promise<Role[]> {
+  const { guild } = member
   const previous = (await fetchStoredRoles(member)) ?? []
-  const roles = member.roles.cache.filter(validRole).map((r) => r.id)
+  const roles = member.roles.cache
+    .filter((r) => validRole(r, guild))
+    .map((r) => r.id)
   await setStoredRoles(member, [...previous, ...roles])
   return member.roles.cache.toJSON()
 }
@@ -362,9 +365,11 @@ async function restoreRoles(
     }),
   )
 
+  const { guild } = member
+
   const applyRoles = resolvedStoredRoles
     .filter(isDefined)
-    .filter((r) => validRole(r) && r.id !== mutedRole.id)
+    .filter((r) => validRole(r, guild) && r.id !== mutedRole.id)
 
   await member.roles.remove(mutedRole, reason)
   await member.roles.add(applyRoles, reason)
@@ -376,8 +381,8 @@ function isDefined<T>(value: T | undefined | null): value is T {
   return value !== undefined && value !== null
 }
 
-function validRole(role: Role): boolean {
-  if (role.id === role.guild.id) return false
+function validRole(role: Role, guild: Guild): boolean {
+  if (role.id === guild.id) return false
   if (role.managed) return false
   return true
 }
@@ -387,9 +392,10 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
     succeeded
       .map((success) => {
         const { member, roles } = success
+        const { guild } = member
         const act = action === 'mute' ? 'Previous Roles' : 'Restored'
 
-        const validRoles = (roles ?? []).filter(validRole)
+        const validRoles = (roles ?? []).filter((r) => validRole(r, guild))
 
         const restored =
           validRoles.length > 0
