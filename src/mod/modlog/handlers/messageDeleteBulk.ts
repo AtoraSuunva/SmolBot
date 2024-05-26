@@ -119,6 +119,7 @@ async function handleMessageDeleteBulk(
         color: role.color,
         icon: role.icon,
         unicode_emoji: role.unicodeEmoji,
+        position: role.rawPosition,
       }
     }
 
@@ -155,6 +156,7 @@ async function handleMessageDeleteBulk(
           color: role.color,
           icon: role.icon,
           unicode_emoji: role.unicodeEmoji,
+          position: role.rawPosition,
         }
       }
     }
@@ -238,9 +240,9 @@ type MinimalChannel = Pick<APIChannel, 'id' | 'name'> & {
   type: ChannelType
   guild_id?: string
 }
-type MinimalRole = Pick<
+export type MinimalRole = Pick<
   APIRole,
-  'id' | 'name' | 'color' | 'icon' | 'unicode_emoji'
+  'id' | 'name' | 'color' | 'icon' | 'unicode_emoji' | 'position'
 >
 type MinimalUser = Pick<
   APIUser,
