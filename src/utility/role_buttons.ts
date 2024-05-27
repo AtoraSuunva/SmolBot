@@ -53,10 +53,11 @@ export const role_buttons = new SleetSlashCommand(
 )
 
 const FORMAT_REGEX =
-  /\s*(?<emoji>(?:\p{RGI_Emoji}|<:\w+:(?<emote>\d{17,20})>))?\s*(?<description>.*?)??\s*<@&(?<roleId>\d{17,20})>/gv
+  /\s*(?<emoji>(?:\p{RGI_Emoji}|<(?<animated>a?):\w+:(?<emote>\d{17,20})>))?\s*(?<description>.*?)??\s*<@&(?<roleId>\d{17,20})>/gv
 
 interface FormatGroups {
   emoji?: string
+  animated?: string
   emote?: string
   description?: string
   roleId: string
@@ -142,7 +143,9 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
         button.setEmoji(buttonEmoji)
       }
 
-      const displayEmoji = role.emote ? `<:_:${role.emote}>` : role.emoji
+      const displayEmoji = role.emote
+        ? `<${role.animated ? 'a' : ''}:_:${role.emote}>`
+        : role.emoji
 
       fields.push(
         `${displayEmoji ? `${displayEmoji} ` : ''}${roleObj}${
