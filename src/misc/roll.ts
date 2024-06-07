@@ -90,7 +90,7 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
 
   const content = result.join('\n')
 
-  if (result.length > 2000) {
+  if (content.length > 2000) {
     return interaction.reply({
       content: 'Your roll result was too big! Check the file for the result.',
       files: [
