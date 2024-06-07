@@ -6,6 +6,7 @@ import { quote } from './quote.js'
 import { restore_embeds } from './restore_embeds.js'
 import { role_buttons } from './role_buttons.js'
 import { time_since } from './time_since.js'
+import { timestamp } from './timestamp.js'
 
 export const utilityModules = [
   char_info,
@@ -16,4 +17,5 @@ export const utilityModules = [
   restore_embeds,
   role_buttons,
   time_since,
+  timestamp,
 ]
