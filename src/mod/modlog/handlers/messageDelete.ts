@@ -18,6 +18,12 @@ import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import { editStore } from '../../unedit.js'
+import {
+  ANSI_REGEX,
+  BackgroundColor,
+  TextColor,
+  ansiFormat,
+} from '../ansiColors.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
 export const logMessageDelete = new SleetModule(
@@ -117,7 +123,10 @@ async function messageDelete(message: Message | PartialMessage) {
         }
       }
 
-      return keep.join('\n').trim()
+      return keep
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
+        .join('\n')
     })
     .filter((v) => v.length > 0)
 
@@ -149,14 +158,17 @@ async function messageDelete(message: Message | PartialMessage) {
   if (deletedMessageLength + msg.length > 2000) {
     files.push({
       name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
-      attachment: Buffer.from(messageContent),
+      attachment: Buffer.from(
+        messageContent.replaceAll(ANSI_REGEX, ''),
+        'utf-8',
+      ),
       description: `Deleted Message by ${formatUser(message.author, {
         markdown: false,
         escape: false,
       })}`,
     })
   } else {
-    msg += codeBlock(messageContent)
+    msg += codeBlock('ansi', escapeCodeBlock(messageContent))
   }
 
   await channel.send({
@@ -172,6 +184,19 @@ function formatLogUser(user: User | GuildMember) {
     id: true,
     bidirectional: false,
     escape: false,
+    format: (part, str) => {
+      switch (part) {
+        case 'globalName':
+        case 'discriminator':
+          return ansiFormat(TextColor.Green, str)
+        case 'username':
+          return ansiFormat(TextColor.Yellow, str)
+        case 'id':
+          return ansiFormat(TextColor.Cyan, str)
+        default:
+          return str
+      }
+    },
   })
 }
 
@@ -200,6 +225,12 @@ interface MessageLogOutput {
   footer: string
 }
 
+const TAG_APP = `[${ansiFormat(TextColor.Pink, 'APP')}] `
+const TAG_SYSTEM = `[${ansiFormat(TextColor.Pink, 'SYSTEM')}] `
+const TAG_WEBHOOK = `[${ansiFormat(TextColor.Pink, 'WEBHOOK')}] `
+const TAG_ACTIVITY = `[${ansiFormat(TextColor.Pink, 'ACTIVITY')}] `
+const TAG_THREAD = `[${ansiFormat(TextColor.Pink, 'THREAD')}] `
+
 export async function messageToLog(
   message: Message,
   {
@@ -218,20 +249,25 @@ export async function messageToLog(
   if (includeInteraction && message.interaction) {
     const { interaction } = message
 
+    const commandName =
+      (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
+      interaction.commandName
+
     lines.push(
-      `╭╼ ${formatLogUser(interaction.user)} used ${interaction.type === InteractionType.ApplicationCommand ? '/' : ''}${interaction.commandName}`,
+      `╭╼ ${formatLogUser(interaction.user)} used ${ansiFormat(TextColor.Blue, commandName)}`,
     )
   }
 
   if (includeReference && message.reference?.messageId) {
-    // Without a messageId `fetchReference` will end up fetching message*S* from the channel instead of a single message
-    // Which ends up giving you a Collection<string, Message> and breaking TS assumptions leading to cool errors
-    // See https://github.com/discordjs/discord.js/issues/10294
     const ref = await message.fetchReference().catch(() => null)
 
     if (ref) {
+      const preview =
+        escapeCodeBlock(ref.content.replaceAll(/\n/g, ' ').slice(0, 50)) +
+        (ref.content.length > 50 ? '…' : '')
+
       lines.push(
-        `╭╼ Reply to ${formatLogUser(ref.author)}: ${escapeCodeBlock(ref.content.replaceAll(/\n/g, ' ').slice(0, 50))}${ref.content.length > 50 ? '…' : ''}`,
+        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
       )
     } else {
       lines.push(
@@ -242,25 +278,32 @@ export async function messageToLog(
 
   if (includeUser) {
     const tags =
-      (message.author.bot ? '[APP] ' : '') +
-      (message.system ? '[SYSTEM] ' : '') +
-      (message.webhookId ? '[WEBHOOK] ' : '') +
-      (message.activity ? '[ACTIVITY] ' : '') +
-      (message.hasThread ? '[THREAD] ' : '')
+      (message.author.bot ? TAG_APP : '') +
+      (message.system ? TAG_SYSTEM : '') +
+      (message.webhookId ? TAG_WEBHOOK : '') +
+      (message.activity ? TAG_ACTIVITY : '') +
+      (message.hasThread ? TAG_THREAD : '')
 
     const timestamp = includeTimestamp
-      ? `[${formatTime(message.createdAt)}]`
+      ? `[${ansiFormat(TextColor.Blue, formatTime(message.createdAt))}]`
       : ''
 
     lines.push(`◯ ${formatLogUser(message.author)} ${tags}${timestamp}`)
   } else if (includeTimestamp) {
-    lines.push(`[${formatTime(message.createdAt)}]`)
+    lines.push(`[${ansiFormat(TextColor.Blue, formatTime(message.createdAt))}]`)
   }
 
-  const header = lines.join('\n')
+  const header = lines.join('\n').trim()
   lines.splice(0, lines.length)
 
-  if (![MessageType.Default, MessageType.Reply].includes(message.type)) {
+  if (
+    ![
+      MessageType.Default,
+      MessageType.Reply,
+      MessageType.ChatInputCommand,
+      MessageType.ContextMenuCommand,
+    ].includes(message.type)
+  ) {
     const embed = new EmbedBuilder()
     await addToEmbed(message, embed)
     if (embed.data.description) {
@@ -272,7 +315,7 @@ export async function messageToLog(
     lines.push(`┊ ${escapeCodeBlock(message.content).split('\n').join('\n┊ ')}`)
   }
 
-  const content = lines.join('\n')
+  const content = lines.join('\n').trim()
   lines.splice(0, lines.length)
 
   if (includeEmbeds && message.embeds.length > 0) {
@@ -302,16 +345,18 @@ export async function messageToLog(
     for (const [, answer] of message.poll.answers) {
       current++
       lines.push(
-        ` ${current === last ? '╰╼' : '├╼'} ${answer.text} (${answer.voteCount})`,
+        ` ${current === last ? '╰╼' : '├╼'} ${answer.text} (${ansiFormat(TextColor.Cyan, answer.voteCount)})`,
       )
     }
   }
 
   if (message.editedAt) {
-    lines.push(`╰╼ Edited [${formatTime(message.editedAt)}]`)
+    lines.push(
+      `╰╼ Edited [${ansiFormat(TextColor.Blue, formatTime(message.editedAt))}]`,
+    )
   }
 
-  const footer = lines.join('\n')
+  const footer = lines.join('\n').trim()
 
   return {
     header,
@@ -338,46 +383,56 @@ function embedToLog(
   let lines: string[] = []
 
   if (embed.author) {
-    lines.push(`Author: ${embed.author.name}`)
+    lines.push(`${ansiFormat(TextColor.Green, 'Author:')} ${embed.author.name}`)
   }
 
   if (embed.title) {
-    lines.push(`Title: ${embed.title}`)
+    lines.push(`${ansiFormat(TextColor.Green, 'Title:')} ${embed.title}`)
   }
 
   if (embed.description) {
-    lines.push(`Description: ${embed.description}`)
+    lines.push(
+      `${ansiFormat(TextColor.Green, 'Description:')} ${embed.description.replaceAll('\n', '\n┊ ')}`,
+    )
   }
 
   for (const field of embed.fields) {
-    lines.push(`${field.name}:\n┊ ${field.value.replaceAll('\n', '\n┊ ')}`)
+    lines.push(
+      `${ansiFormat(TextColor.Yellow, field.name)}:\n┊ ${field.value.replaceAll('\n', '\n┊ ')}`,
+    )
   }
 
   if (embed.footer) {
-    lines.push(`Footer: ${embed.footer.text}`)
+    lines.push(`${ansiFormat(TextColor.Green, 'Footer:')} ${embed.footer.text}`)
   }
 
   if (embed.timestamp) {
-    lines.push(`Timestamp: ${embed.timestamp}`)
+    lines.push(
+      `${ansiFormat(TextColor.Green, 'Timestamp:')} ${embed.timestamp}`,
+    )
   }
 
   if (embed.image) {
-    lines.push(`Image: ${embed.image.url}`)
+    lines.push(`${ansiFormat(TextColor.Green, 'Image:')} ${embed.image.url}`)
   }
 
   if (embed.thumbnail) {
-    lines.push(`Thumbnail: ${embed.thumbnail.url}`)
+    lines.push(
+      `${ansiFormat(TextColor.Green, 'Thumbnail:')} ${embed.thumbnail.url}`,
+    )
   }
 
   lines = lines.flatMap((l) => l.split('\n'))
 
   if (minimal) {
     for (let i = 0; i < lines.length; i++) {
-      lines[i] = `${V_CHAR} ${lines[i]}`
+      lines[i] = `${ansiFormat(TextColor.Cyan, V_CHAR)} ${lines[i]}`
     }
 
-    lines.unshift(`${TL_CHAR}${H_CHAR} Embed ${H_CHAR}`)
-    lines.push(`${BL_CHAR}${H_CHAR.repeat(9)}`)
+    lines.unshift(
+      ansiFormat(TextColor.Cyan, `${TL_CHAR}${H_CHAR} Embed ${H_CHAR}`),
+    )
+    lines.push(ansiFormat(TextColor.Cyan, `${BL_CHAR}${H_CHAR.repeat(9)}`))
   } else {
     const maxLineLength = Math.max(...lines.map((l) => l.length), 0)
     const boxWidth = maxLineLength + 2

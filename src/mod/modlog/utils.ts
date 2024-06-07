@@ -1,5 +1,5 @@
 import { ModLogConfig } from '@prisma/client'
-import { Guild, GuildTextBasedChannel, TextChannel } from 'discord.js'
+import { Guild, GuildTextBasedChannel, TextChannel, time } from 'discord.js'
 import { prisma } from '../../util/db.js'
 
 export enum EVENT_COLORS {
@@ -54,7 +54,7 @@ export function formatLog(
   message: string,
   timestamp = new Date(),
 ): string {
-  return `${emoji} \`[${formatTime(timestamp)}]\` \`[${type}]\`: ${message}`
+  return `${emoji} ${time(timestamp, 'T')} \`[${type}]\`: ${message}`
 }
 
 export function formatTime(timestamp: Date = new Date()): string {

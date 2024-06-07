@@ -11,7 +11,6 @@ import {
   Message,
   PartialMessage,
   ReadonlyCollection,
-  User,
   codeBlock,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
@@ -48,7 +47,7 @@ async function handleMessageDeleteBulk(
     .filter((m) => !m.partial && m instanceof Message)
     .sorted((a, b) => a.createdTimestamp - b.createdTimestamp)
   const users = new Set(sortedMessages.map((m) => m.author))
-  const messagesPerUser = new Map<User, number>()
+  const messagesPerUser = new Map<string, number>()
 
   const body: AttachmentBodyV1 = {
     version: 1,
@@ -174,8 +173,8 @@ async function handleMessageDeleteBulk(
     }
 
     if (message.author === null) continue
-    const count = messagesPerUser.get(message.author) ?? 0
-    messagesPerUser.set(message.author, count + 1)
+    const count = messagesPerUser.get(message.author.id) ?? 0
+    messagesPerUser.set(message.author.id, count + 1)
   }
 
   const userList = Array.from(users)
@@ -183,7 +182,7 @@ async function handleMessageDeleteBulk(
       u
         ? `${formatUser(u, {
             mention: false,
-          })} \`[${messagesPerUser.get(u) ?? 0}]\``
+          })} \`[${messagesPerUser.get(u.id) ?? 0}]\``
         : 'Unknown User',
     )
     .join(', ')
