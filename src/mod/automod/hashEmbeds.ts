@@ -68,17 +68,14 @@ export function hashEmbeds(message: Message): Promise<string[]> {
  * @returns A promise that resolves to the hash (hex-encoded string)
  */
 function hashStream(stream: ReadableStream): Promise<string> {
+  const hash = createHash('sha256')
+
   return new Promise((resolve, reject) => {
-    const hash = createHash('sha256')
-
-    hash.on('error', reject)
-    hash.on('readable', () => {
-      const data = hash.read() as Buffer | null
-      if (data) {
-        resolve(data.toString('hex'))
-      }
-    })
-
-    Readable.fromWeb(stream).pipe(hash)
+    Readable.fromWeb(stream)
+      .pipe(hash as unknown as NodeJS.WritableStream)
+      .on('error', reject)
+      .on('finish', () => {
+        resolve(hash.digest('hex'))
+      })
   })
 }

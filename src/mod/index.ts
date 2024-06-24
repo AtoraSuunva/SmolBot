@@ -4,6 +4,7 @@ import { antiraidModules } from './antiraid/index.js'
 import { maliciousFile } from './automod/maliciousFile.js'
 import { banlog } from './banlog.js'
 import { dehoist } from './dehoist.js'
+import { delete_police_config } from './delete_police_config.js'
 import { idof } from './idof.js'
 import { lock_thread } from './lock_thread.js'
 import { lookup } from './lookup.js'
@@ -15,6 +16,7 @@ import {
   mass_unban,
 } from './mass_action.js'
 import { modlogModules } from './modlog/index.js'
+import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
 import { purge } from './purge.js'
 import { report } from './report/report.js'
@@ -33,6 +35,7 @@ export const modModules = [
   // automod,
   banlog,
   dehoist,
+  delete_police_config,
   idof,
   lock_thread,
   lookup,
@@ -42,6 +45,7 @@ export const modModules = [
   mass_kick,
   mass_softban,
   mass_unban,
+  modmail,
   purge,
   report,
   revoke,
