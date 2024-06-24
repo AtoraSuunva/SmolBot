@@ -16,7 +16,7 @@ import {
   mass_unban,
 } from './mass_action.js'
 import { modlogModules } from './modlog/index.js'
-import { modmail } from './modmail/index.js'
+// import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
 import { purge } from './purge.js'
 import { report } from './report/report.js'
@@ -45,7 +45,7 @@ export const modModules = [
   mass_kick,
   mass_softban,
   mass_unban,
-  modmail,
+  // modmail,
   purge,
   report,
   revoke,
