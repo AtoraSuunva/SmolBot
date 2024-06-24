@@ -1,6 +1,7 @@
 import {
   Attachment,
   EmbedBuilder,
+  InteractionType,
   Message,
   MessageType,
   hyperlink,
@@ -13,12 +14,20 @@ const MAX_QUOTE_LINES = 10
 /** Number of characters before replied message content becomes cut */
 const MAX_REPLY_LENGTH = 100
 
+interface QuoteOptions {
+  includeChannel?: boolean
+  includeTimestamp?: boolean
+}
+
 export async function quoteMessage(
   message: Message<true>,
+  { includeChannel = true, includeTimestamp = true }: QuoteOptions = {},
 ): Promise<EmbedBuilder[]> {
   const embeds: EmbedBuilder[] = []
 
   const quoteContent = formatQuoteContent(message.content)
+
+  const channelLine = includeChannel ? ` - #${message.channel.name}` : ''
 
   const embed = new EmbedBuilder()
     .setURL(message.url)
@@ -27,12 +36,31 @@ export async function quoteMessage(
         markdown: false,
         id: false,
         escape: false,
-      })} - #${message.channel.name}`,
+      })}${channelLine}`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
     })
     .setDescription(quoteContent)
-    .setTimestamp(message.createdTimestamp)
+
+  if (includeTimestamp) {
+    embed.setTimestamp(message.createdTimestamp)
+  }
+
+  if (message.interaction) {
+    const { interaction } = message
+
+    const commandName =
+      (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
+      interaction.commandName
+
+    embed.setTitle(
+      `${formatUser(interaction.user, {
+        markdown: false,
+        id: false,
+        escape: false,
+      })} used ${commandName}`,
+    )
+  }
 
   embeds.push(embed)
 

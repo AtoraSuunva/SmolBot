@@ -217,3 +217,18 @@ model AntiRaidConfig {
 
   updatedAt DateTime @updatedAt @map("updated_at")
 }
+
+model DeletePoliceConfig {
+  guildID       String  @id @map("guild_id")
+  enabled       Boolean
+  // Time in seconds until a message is no longer considered "quick deleted"
+  threshold     Int
+  // Time in seconds that can be random added to the quick delete time, i.e. threshold = 10, fuzziness = 5, message is considered quick deleted if deleted within 10-15 seconds (random limit)
+  fuzziness     Int
+  // Message added to the repost footer
+  footerMessage String? @map("footer_message")
+  ignoreBots    Boolean @map("ignore_bots")
+  ignoreMods    Boolean @map("ignore_mods")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+}

@@ -51,15 +51,15 @@
     "@sentry/cli": "^2.32.1",
     "@types/convert-units": "^2.3.9",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~20.14.2",
+    "@types/node": "~20.14.8",
     "@types/pluralize": "^0.0.33",
-    "@typescript-eslint/eslint-plugin": "~7.12.0",
-    "@typescript-eslint/parser": "~7.12.0",
+    "@typescript-eslint/eslint-plugin": "~7.13.1",
+    "@typescript-eslint/parser": "~7.13.1",
     "eslint": "~8.57.0",
     "eslint-config-prettier": "~9.1.0",
     "eslint-plugin-import": "~2.29.1",
     "prettier": "~3.3.1",
     "prisma": "~5.15.0",
-    "typescript": "~5.4.5"
+    "typescript": "~5.5.2"
   }
 }

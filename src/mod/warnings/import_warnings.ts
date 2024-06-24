@@ -8,15 +8,15 @@ import {
   Result,
   s,
 } from '@sapphire/shapeshift'
-import { parse } from 'csv-parse'
+import { parse, Parser } from 'csv-parse'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
   codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { Readable } from 'node:stream'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import { Readable } from 'stream'
 import { fetch } from 'undici'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'
@@ -85,7 +85,10 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const parseStream = Readable.fromWeb(response.body).pipe(parser)
+  const parseStream = Readable.fromWeb(response.body).pipe(
+    // Typescript complains about the types, though Parser _does_ implement NodeJS.WritableStream through inheritance. Guess not?
+    parser as unknown as NodeJS.WritableStream,
+  ) as unknown as Parser
 
   const creates: PrismaPromise<unknown>[] = []
   let count = 0
