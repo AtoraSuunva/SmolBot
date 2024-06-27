@@ -372,6 +372,12 @@ async function restoreRoles(
     .filter((r) => validRole(r, guild) && r.id !== mutedRole.id)
 
   await member.roles.remove(mutedRole, reason)
+  muteLogger.info(
+    'Restoring roles for %s; %o; %o',
+    member.id,
+    roles,
+    applyRoles,
+  )
   await member.roles.add(applyRoles, reason)
   await deleteStoredRoles(member)
   return applyRoles
