@@ -1,15 +1,19 @@
+import { ModLogConfig } from '@prisma/client'
 import {
+  AuditLogEvent,
+  Client,
   Guild,
   GuildAuditLogsEntry,
-  AuditLogEvent,
   GuildTextBasedChannel,
   User,
-  Client,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
 import { getValidatedConfigFor } from '../../utils.js'
-import { ChannelAuditLog, logChannelModified } from './channelModify.js'
-import { ModLogConfig } from '@prisma/client'
+import {
+  ChannelAuditLog,
+  channelDelete,
+  logChannelModified,
+} from './channelModify.js'
 import { BanAuditLog, logMemberBanKick } from './memberBanKick.js'
 
 export const logAuditLog = new SleetModule(
@@ -18,6 +22,7 @@ export const logAuditLog = new SleetModule(
   },
   {
     guildAuditLogEntryCreate,
+    channelDelete,
   },
 )
 

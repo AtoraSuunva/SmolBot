@@ -15,6 +15,7 @@ import {
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+import { plural } from '../../../util/format.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 
 export const logMessageDeleteBulk = new SleetModule(
@@ -31,9 +32,10 @@ const FILENAME = 'archive.json'
 const generateArchiveUrl = (channelId: string, attachmentId: string) =>
   `${ARCHIVE_VIEWER}${channelId}/${attachmentId}/${FILENAME}`
 
-async function handleMessageDeleteBulk(
+export async function handleMessageDeleteBulk(
   messages: ReadonlyCollection<string, Message | PartialMessage>,
   fromChannel: GuildTextBasedChannel,
+  channelDeleted = false,
 ) {
   const conf = await getValidatedConfigFor(fromChannel.guild)
   if (!conf) return
@@ -172,23 +174,23 @@ async function handleMessageDeleteBulk(
       }
     }
 
-    if (message.author === null) continue
     const count = messagesPerUser.get(message.author.id) ?? 0
     messagesPerUser.set(message.author.id, count + 1)
   }
 
   const userList = Array.from(users)
-    .map((u) =>
-      u
-        ? `${formatUser(u, {
-            mention: false,
-          })} \`[${messagesPerUser.get(u.id) ?? 0}]\``
-        : 'Unknown User',
+    .map(
+      (u) =>
+        `${formatUser(u, {
+          mention: false,
+        })} \`[${messagesPerUser.get(u.id) ?? 0}]\``,
     )
     .join(', ')
     .substring(0, 1024)
 
-  const logMessage = [`${fromChannel}, **${messages.size}** messages`]
+  const logMessage = [
+    `${channelDeleted ? `#${fromChannel.name} (deleted)` : fromChannel}, ${plural('message', messages.size)}`,
+  ]
 
   if (userList) {
     logMessage.push(`\n${userList}`)
