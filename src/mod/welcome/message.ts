@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   GuildMember,
   GuildTextBasedChannel,
+  Message,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
@@ -25,6 +26,7 @@ const supported = [
     '{#welcome-channel}',
     'Mentions the channel where the welcome message is posted',
   ],
+  ['{message-link}', "Replaced with the link to the user's first message"],
   ['{server-name}', 'Replaced with the server name'],
 ]
   .map(([key, value]) => `  \`${key}\` - ${value}`)
@@ -41,17 +43,19 @@ function runMessage(interaction: ChatInputCommandInteraction) {
 
 interface WelcomeContext {
   member: GuildMember
-  origin: GuildTextBasedChannel | undefined
+  origin?: GuildTextBasedChannel | undefined
   welcome: GuildTextBasedChannel
+  message?: Message | undefined
 }
 
 export function formatMessage(
-  message: string,
-  { member, origin, welcome }: WelcomeContext,
+  welcomeMessage: string,
+  { member, origin, welcome, message }: WelcomeContext,
 ) {
-  return message
+  return welcomeMessage
     .replaceAll('{@user}', member.toString())
     .replaceAll('{#origin-channel}', origin?.toString() ?? '')
     .replaceAll('{#welcome-channel}', welcome.toString())
+    .replaceAll('{message-link}', message?.url ?? '')
     .replaceAll('{server-name}', member.guild.name)
 }
