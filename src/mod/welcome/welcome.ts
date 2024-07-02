@@ -126,6 +126,7 @@ async function handleJoin(
       member,
       origin: channel,
       welcome: sendChannel,
+      message,
     })
     const sentMessage = await sendChannel.send(msg)
 
