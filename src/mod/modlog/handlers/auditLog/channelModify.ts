@@ -2,12 +2,16 @@ import {
   AuditLogEvent,
   BaseChannel,
   ChannelType,
+  DMChannel,
   GuildAuditLogsEntry,
   GuildBasedChannel,
+  LimitedCollection,
   NonThreadGuildBasedChannel,
+  TextBasedChannel,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
-import { formatLog } from '../../utils.js'
+import { formatLog, getValidatedConfigFor } from '../../utils.js'
+import { handleMessageDeleteBulk } from '../messageDeleteBulk.js'
 import { AuditInfo, resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
@@ -18,6 +22,29 @@ export type ChannelAuditLog = GuildAuditLogsEntry<
   | AuditLogEvent.ChannelDelete
   | AuditLogEvent.ChannelUpdate
 >
+
+const tempStoredChannels = new LimitedCollection<
+  string,
+  NonThreadGuildBasedChannel & TextBasedChannel
+>({
+  maxSize: 10,
+})
+
+export async function channelDelete(
+  channel: DMChannel | NonThreadGuildBasedChannel,
+) {
+  if (channel.isDMBased()) return
+  const conf = await getValidatedConfigFor(channel.guild)
+  if (!conf) return
+
+  if (
+    conf.config.channelDelete &&
+    conf.config.messageDeleteBulk &&
+    channel.isTextBased()
+  ) {
+    tempStoredChannels.set(channel.id, channel)
+  }
+}
 
 export async function logChannelModified(
   auditLogEntry: ChannelAuditLog,
@@ -35,12 +62,15 @@ export async function logChannelModified(
   }
 
   const modifiedChannel =
-    auditLogEntry.target instanceof BaseChannel ||
-    auditLogEntry.action === AuditLogEvent.ChannelDelete
-      ? (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel) // If target is a channel or if the channel was deleted, use the target
+    auditLogEntry.target instanceof BaseChannel
+      ? // If target is a channel
+        (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel)
       : auditLogEntry.targetId
-        ? await guild.channels.fetch(auditLogEntry.targetId) // Try to fetch the channel
-        : auditLogEntry.targetId // Give up and use just the ID
+        ? // Use our cache or try to fetch the channel from discord
+          tempStoredChannels.get(auditLogEntry.targetId) ??
+          (await guild.channels.fetch(auditLogEntry.targetId))
+        : // Give up and use just the ID
+          auditLogEntry.targetId
 
   const executor = await resolveUser(
     auditLogEntry.executor,
@@ -52,7 +82,7 @@ export async function logChannelModified(
   const execUser = executor ? formatUser(executor) : 'Unknown User'
   const changelog = auditLogEntry.changes
     .map((change) => {
-      const log = [`** ${change.key}: **`]
+      const log = [`=== ${change.key}:`]
       if (change.old !== undefined) {
         log.push(`- ${String(change.old).replace(/\n/g, '\n- ')}`)
       }
@@ -77,6 +107,25 @@ export async function logChannelModified(
     ),
     allowedMentions: { parse: [] },
   })
+
+  if (
+    auditLogEntry.action === AuditLogEvent.ChannelDelete &&
+    modifiedChannel instanceof BaseChannel &&
+    modifiedChannel.isTextBased()
+  ) {
+    await handleMessageDeleteBulk(
+      modifiedChannel.messages.cache,
+      modifiedChannel,
+      true,
+    )
+  }
+
+  if (
+    auditLogEntry.targetId &&
+    tempStoredChannels.has(auditLogEntry.targetId)
+  ) {
+    tempStoredChannels.delete(auditLogEntry.targetId)
+  }
 }
 
 const LogEmoji = {
