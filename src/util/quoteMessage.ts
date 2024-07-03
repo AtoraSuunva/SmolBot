@@ -318,7 +318,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
         id: false,
         escape: false,
       })}`,
-      value: `[${shortContent}](${reference.url})`,
+      value: `${shortContent} [${hyperlink('Message Link', reference.url)}]`,
     },
   ])
 }
