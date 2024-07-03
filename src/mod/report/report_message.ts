@@ -127,7 +127,7 @@ async function runReportMessage(
 
   report.setFooter(footer).addFields([
     {
-      name: `Posted ${editedAt ? '& Edited' : ''} at`,
+      name: `Posted${editedAt ? ' & Edited' : ''} at`,
       value: `${createdAt}${editedAt ? '\n' + editedAt : ''}`,
     },
   ])
