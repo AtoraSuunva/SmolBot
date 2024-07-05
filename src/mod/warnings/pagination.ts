@@ -49,7 +49,7 @@ function defaultFormatTitle(result: PaginatedWarnings): string | null {
   const expired = result.counts.expired
 
   return `${plural('warning', warnings)}${
-    expired > 0 ? `, ${plural('expired', expired)}` : ''
+    expired > 0 ? `, **${expired.toLocaleString()}** expired` : ''
   }`
 }
 
