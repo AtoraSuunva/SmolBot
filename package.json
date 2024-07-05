@@ -28,13 +28,13 @@
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.0",
-    "@prisma/client": "~5.15.0",
+    "@prisma/client": "~5.16.1",
     "@sapphire/shapeshift": "^4.0.0",
-    "char-info": "^0.3.2",
+    "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
     "csv-parse": "^5.5.6",
     "csv-stringify": "^6.5.0",
-    "discord-api-types": "^0.37.87",
+    "discord-api-types": "^0.37.92",
     "discord.js": "~14.15.3",
     "env-var": "~7.5.0",
     "luxon": "^3.4.4",
@@ -51,15 +51,15 @@
     "@sentry/cli": "^2.32.1",
     "@types/convert-units": "^2.3.9",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~20.14.8",
+    "@types/node": "~20.14.9",
     "@types/pluralize": "^0.0.33",
-    "@typescript-eslint/eslint-plugin": "~7.13.1",
-    "@typescript-eslint/parser": "~7.13.1",
+    "@typescript-eslint/eslint-plugin": "~7.15.0",
+    "@typescript-eslint/parser": "~7.15.0",
     "eslint": "~8.57.0",
     "eslint-config-prettier": "~9.1.0",
     "eslint-plugin-import": "~2.29.1",
     "prettier": "~3.3.1",
-    "prisma": "~5.15.0",
-    "typescript": "~5.5.2"
+    "prisma": "~5.16.1",
+    "typescript": "~5.5.3"
   }
 }

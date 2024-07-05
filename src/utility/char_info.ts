@@ -1,5 +1,4 @@
 import { uniGetBlock, uniGetCategories, uniGetScripts } from 'char-info'
-import { UnicodeCharGroup } from 'char-info/internal/unicode-lookup.js'
 import {
   ApplicationIntegrationType,
   InteractionContextType,
@@ -120,6 +119,9 @@ function characterInfo(char: string): string[] {
 
   return info
 }
+
+// unfortunately internal, but we can just pull it out like this
+type UnicodeCharGroup = ReturnType<(typeof uniGetCategories)['code']>[0]
 
 function displayUnicodeGroup(group: UnicodeCharGroup[]): string {
   return intlList.format(group.map((g) => g.displayName))
