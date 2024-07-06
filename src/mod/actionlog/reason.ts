@@ -122,14 +122,13 @@ export const actionReason = new SleetSlashCommand(
         name: 'reason',
         type: ApplicationCommandOptionType.String,
         description: 'The reason for the action',
-        required: true,
         max_length: 1500,
       },
       {
         name: 'redact_username',
         type: ApplicationCommandOptionType.Boolean,
         description:
-          'Redact the username from the log (e.g. if they have a slur), preserves ID (default: false)',
+          'Redact the username from the log (e.g. if they have a slur), preserves ID (default: False)',
       },
       {
         name: 'ephemeral',
@@ -147,9 +146,17 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
   const actionString = interaction.options.getString('action_id', true)
-  const reason = interaction.options.getString('reason', true).trim()
+  const reason = interaction.options.getString('reason')?.trim() ?? null
   const redactUser = interaction.options.getBoolean('redact_username')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+
+  if (reason === null && redactUser === null) {
+    await interaction.reply({
+      content: 'You did not provide any changes to make, so nothing was done',
+      ephemeral: true,
+    })
+    return
+  }
 
   await interaction.deferReply({
     ephemeral,
@@ -158,7 +165,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   let actionIDs: number[]
 
   try {
-    actionIDs = await resolveIDs(guild, actionString)
+    actionIDs = await resolveIDs(guild, actionString, MAX_IDS)
   } catch (err) {
     await interaction.editReply({
       content: `Failed to parse action ID: ${err}`,
@@ -168,7 +175,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   if (actionIDs.length === 0) {
     await interaction.editReply({
-      content: 'No actions to reason found',
+      content: 'No actions to update found',
     })
     return
   }
@@ -189,7 +196,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   if (results.length === 0) {
     await interaction.editReply({
-      content: 'Somehow, nothing managed to be reasoned',
+      content: 'Somehow, nothing managed to be updated',
     })
     return
   }
@@ -203,7 +210,13 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
         ? `action #${successes[0].id}`
         : plural('action', successes.length)
 
-    log.push(`Changed reason for ${formattedAction} to${formatReason(reason)}`)
+    if (reason) {
+      log.push(
+        `Changed reason for ${formattedAction} to${formatReason(reason)}`,
+      )
+    } else {
+      log.push(`Updated ${formattedAction}`)
+    }
     await markActionlogArchiveDirty(guild.id)
   }
 
@@ -211,7 +224,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   if (failures > 0) {
     log.push(
-      `Failed to reason ${plural('action', failures)}:\n> ${results
+      `Failed to update ${plural('action', failures)}:\n> ${results
         .filter((result): result is EditActionLogFailure => !result.success)
         .map((result) => `**${result.id}**: ${result.message}`)
         .join('\n> ')}`,
@@ -223,9 +236,9 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   const files = []
 
   if (formattedContent.length > 2000) {
-    content = 'See attached file for reason log'
+    content = 'See attached file for update log'
     files.push({
-      name: 'reason-log.txt',
+      name: 'update-log.txt',
       attachment: Buffer.from(formattedContent),
     })
   }
@@ -261,7 +274,7 @@ async function editAction(
   guild: Guild,
   config: ActionLogConfig,
   actionID: number,
-  reason: string,
+  reason: string | null,
   redactUser: boolean | null,
   reasonBy: User,
 ): Promise<EditActionLog> {
@@ -288,8 +301,8 @@ async function editAction(
     version: oldAction.version,
     userID: oldAction.userID,
     redactUser: redactUser ?? oldAction.redactUser,
-    reason: reason,
-    reasonByID: reasonBy.id,
+    reason: reason ?? oldAction.reason,
+    reasonByID: reason ? reasonBy.id : oldAction.reasonByID,
     moderatorID: oldAction.moderatorID ?? reasonBy.id,
     channelID: oldAction.channelID,
     messageID: oldAction.messageID,

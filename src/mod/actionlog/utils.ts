@@ -187,7 +187,7 @@ export function range(
   maxSize = Infinity,
 ): number[] {
   if (start > end) {
-    return range(end, start)
+    return range(end, start, maxSize)
   }
 
   let size = end - start + 1
@@ -210,19 +210,21 @@ export function range(
  *   - `N..M` to get all cases between N and M, inclusive
  * - An offset:
  *   - `N~X` where X is a literal number, for N with a negative offset (`l~1` is the second latest case, ie. "go back one")
- * @param guild The guild to resolve IDs for, required for latest/l
+ * @param guildOrLatestActionId The guild to resolve IDs for, required for latest/l, or the latest action ID itself
  * @param idResolvable A string containing a format that can be resolved to an ID or an array of IDs
  * @param maxIDs The maximum number of IDs to resolve, defaults to 50
  * @returns The resolved IDs (already deduped), or an empty array if none were found
  */
 export async function resolveIDs(
-  guild: Guild,
+  guildOrLatestActionId: Guild | number,
   idResolvable: string,
   maxIDs = 50,
 ): Promise<number[]> {
   if (idResolvable === '') {
     return []
   }
+
+  idResolvable = idResolvable.trim().toLowerCase()
 
   const autocompleteResult = idResolvable.match(/^#(\d+) \[\w+\] —.*$/)
 
@@ -238,12 +240,33 @@ export async function resolveIDs(
     }
   }
 
+  if (
+    (idResolvable.includes('l') || idResolvable.includes('latest')) &&
+    guildOrLatestActionId instanceof Guild
+  ) {
+    const latest = await prisma.actionLog.findFirst({
+      where: {
+        guildID: guildOrLatestActionId.id,
+        validUntil: null,
+      },
+      orderBy: {
+        actionID: 'desc',
+      },
+    })
+
+    if (!latest) {
+      throw new Error('Cannot find the latest action')
+    }
+
+    guildOrLatestActionId = latest.actionID
+  }
+
   if (idResolvable.includes(',')) {
     return await Promise.all(
       idResolvable
         .split(',')
         .slice(0, maxIDs)
-        .map((id) => resolveIDs(guild, id.trim())),
+        .map((id) => resolveIDs(guildOrLatestActionId, id.trim())),
     ).then((ids) => [...new Set(ids.flat())])
   }
 
@@ -257,8 +280,8 @@ export async function resolveIDs(
     }
 
     const [start, end] = await Promise.all([
-      resolveIDs(guild, startResolvable),
-      resolveIDs(guild, endResolvable),
+      resolveIDs(guildOrLatestActionId, startResolvable),
+      resolveIDs(guildOrLatestActionId, endResolvable),
     ])
 
     if (start.length !== 1 || end.length !== 1) {
@@ -277,31 +300,20 @@ export async function resolveIDs(
       throw new Error('Invalid offset, you need a number ie. l~1')
     }
 
-    const start = await resolveIDs(guild, startResolvable)
+    const start = await resolveIDs(guildOrLatestActionId, startResolvable)
 
     if (start.length !== 1) {
       throw new Error('Invalid offset, is the initial id not a number?')
     }
 
-    return [start[0] - end]
+    return [Math.max(start[0] - end, 1)]
   }
 
-  if (['l', 'latest'].includes(idResolvable)) {
-    const latest = await prisma.actionLog.findFirst({
-      where: {
-        guildID: guild.id,
-        validUntil: null,
-      },
-      orderBy: {
-        actionID: 'desc',
-      },
-    })
-
-    if (!latest) {
-      throw new Error('No actions found')
-    }
-
-    return [latest.actionID]
+  if (
+    ['l', 'latest'].includes(idResolvable) &&
+    typeof guildOrLatestActionId === 'number'
+  ) {
+    return [guildOrLatestActionId]
   }
 
   throw new Error(
