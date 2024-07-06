@@ -1,11 +1,6 @@
 import { GatewayIntentBits, Options, Partials, RESTOptions } from 'discord.js'
 import env from 'env-var'
-import {
-  SleetClient,
-  SleetModule,
-  SleetModuleEventHandlers,
-  formatUser,
-} from 'sleetcord'
+import { SleetClient, SleetModuleEventHandlers } from 'sleetcord'
 import {
   Sentry,
   baseLogger,
@@ -27,9 +22,9 @@ async function main() {
   initSentry({
     release: GIT_COMMIT_SHA,
     tracesSampler(samplingContext) {
-      const { name, op } = samplingContext.transactionContext
+      const { name } = samplingContext
 
-      if (op === 'module') {
+      if (name.includes(':')) {
         // Transaction names are `${module.name}:${event.name}`
         const [moduleName, eventName] = name.split(':') as [
           string,
@@ -47,11 +42,6 @@ async function main() {
         }
 
         return 0.2
-      } else if (op === 'db.sql.prisma') {
-        if (name === 'ModLogConfig findFirst') {
-          return 0.005
-        }
-        return 0.1
       }
 
       return 0.2
@@ -104,28 +94,10 @@ async function main() {
     },
   })
 
-  const moreLogging = new SleetModule(
-    {
-      name: 'moreLogging',
-    },
-    {
-      ready(c) {
-        const { application, shard, readyAt } = c
-        initLogger.info(`Ready at   : ${readyAt.toISOString()}`)
-        initLogger.info(`Logged in  : ${formatUser(c.user)}`)
-        initLogger.info(`Guild Count: ${application.approximateGuildCount}`)
-
-        if (shard) {
-          initLogger.info(`Shard Count: ${shard.count}`)
-        }
-      },
-    },
-  )
-
   // TODO: some modules should be locked to, say, a dev guild only
   // `registerOnlyInGuilds` solves that, but we need a way to pass which guild(s) to the commands
   // `devGuild` option in sleet? `registerOnlyInGuilds: ['devGuild']`?
-  sleetClient.addModules([moreLogging, ...modules])
+  sleetClient.addModules(modules)
 
   initLogger.info('Putting commands')
   await sleetClient.putCommands()

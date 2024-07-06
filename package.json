@@ -44,21 +44,21 @@
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.0.0",
     "sleetcord": "1.6.0",
-    "sleetcord-common": "^7.0.0",
-    "undici": "^6.18.2"
+    "sleetcord-common": "^8.0.3",
+    "undici": "^6.19.2"
   },
   "devDependencies": {
     "@sentry/cli": "^2.32.1",
     "@types/convert-units": "^2.3.9",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~20.14.9",
+    "@types/node": "~20.14.10",
     "@types/pluralize": "^0.0.33",
     "@typescript-eslint/eslint-plugin": "~7.15.0",
     "@typescript-eslint/parser": "~7.15.0",
     "eslint": "~8.57.0",
     "eslint-config-prettier": "~9.1.0",
     "eslint-plugin-import": "~2.29.1",
-    "prettier": "~3.3.1",
+    "prettier": "~3.3.2",
     "prisma": "~5.16.1",
     "typescript": "~5.5.3"
   }
