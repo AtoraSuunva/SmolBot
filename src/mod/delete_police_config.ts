@@ -8,11 +8,12 @@ import {
   Message,
   PartialMessage,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../util/db.js'
 import { formatConfig } from '../util/format.js'
 import { quoteMessage } from '../util/quoteMessage.js'
+import { deleteEvents, MessageDeleteAuditLog } from './messageDeleteAuditLog.js'
 
 export const delete_police_config = new SleetSlashCommand(
   {
@@ -43,6 +44,13 @@ export const delete_police_config = new SleetSlashCommand(
         min_value: 0,
       },
       {
+        name: 'footer_message',
+        description:
+          'The message to put in the footer of reposted messages (default: none)',
+        type: ApplicationCommandOptionType.String,
+        max_length: 2000,
+      },
+      {
         name: 'ignore_bots',
         description: 'Whether to ignore messages from bots (default: true)',
         type: ApplicationCommandOptionType.Boolean,
@@ -54,17 +62,21 @@ export const delete_police_config = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Boolean,
       },
       {
-        name: 'footer_message',
+        name: 'only_self_delete',
         description:
-          'The message to put in the footer of reposted messages (default: none)',
-        type: ApplicationCommandOptionType.String,
-        max_length: 2000,
+          'Whether to only repost messages that were self-deleted, unreliable with bots (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'guess_bot_delete',
+        description:
+          "Try to guess when a bot deleted a message and don't repost it (default: false)",
+        type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
   {
     run: runDeletePolice,
-    messageDelete: handleMessageDelete,
   },
 )
 
@@ -99,18 +111,22 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
   const enabled = interaction.options.getBoolean('enabled')
   const threshold = interaction.options.getInteger('threshold')
   const fuzziness = interaction.options.getInteger('fuzziness')
+  const footerMessage = interaction.options.getString('footer_message')
   const ignoreBots = interaction.options.getBoolean('ignore_bots')
   const ignoreMods = interaction.options.getBoolean('ignore_mods')
-  const footerMessage = interaction.options.getString('footer_message')
+  const onlySelfDelete = interaction.options.getBoolean('only_self_delete')
+  const guessBotDelete = interaction.options.getBoolean('guess_bot_delete')
 
   const mergedConfig: Omit<DeletePoliceConfig, 'updatedAt'> = {
     guildID: guild.id,
     enabled: enabled ?? oldConfig?.enabled ?? false,
     threshold: threshold ?? oldConfig?.threshold ?? 5,
     fuzziness: fuzziness ?? oldConfig?.fuzziness ?? 0,
+    footerMessage: footerMessage ?? oldConfig?.footerMessage ?? null,
     ignoreBots: ignoreBots ?? oldConfig?.ignoreBots ?? true,
     ignoreMods: ignoreMods ?? oldConfig?.ignoreMods ?? true,
-    footerMessage: footerMessage ?? oldConfig?.footerMessage ?? null,
+    onlySelfDelete: onlySelfDelete ?? oldConfig?.onlySelfDelete ?? false,
+    guessBotDelete: guessBotDelete ?? oldConfig?.guessBotDelete ?? false,
   }
 
   await prisma.deletePoliceConfig.upsert({
@@ -130,7 +146,26 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
   })
 }
 
-async function handleMessageDelete(message: Message | PartialMessage) {
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+deleteEvents.on('messageDeleteWithAuditLog', handleMessageDelete)
+deleteEvents.register(async (message: Message | PartialMessage) => {
+  if (message.partial || !message.inGuild()) {
+    return false
+  }
+
+  const config = await prisma.deletePoliceConfig.findUnique({
+    where: {
+      guildID: message.guild.id,
+    },
+  })
+
+  return !!(config?.enabled && config.onlySelfDelete)
+})
+
+async function handleMessageDelete(
+  message: Message | PartialMessage,
+  auditLog: MessageDeleteAuditLog | null,
+) {
   if (message.partial || !message.inGuild()) {
     return
   }
@@ -145,7 +180,15 @@ async function handleMessageDelete(message: Message | PartialMessage) {
     return
   }
 
-  const { threshold, fuzziness, ignoreBots, ignoreMods, footerMessage } = config
+  const {
+    threshold,
+    fuzziness,
+    ignoreBots,
+    ignoreMods,
+    onlySelfDelete,
+    guessBotDelete,
+    footerMessage,
+  } = config
 
   if (ignoreBots && message.author.bot) {
     return
@@ -158,13 +201,28 @@ async function handleMessageDelete(message: Message | PartialMessage) {
     return
   }
 
-  const now = new Date().getTime()
-  const messageTime = message.createdAt.getTime()
-  const timeSinceMessage = now - messageTime
+  // Use the audit log creation time (since it's probably more accurate due to "syncing computer time is hard and dealing with network latency is hard" reasons)
+  // Otherwise fallback to our time, ideally we'd track every message's "arrival time" but that's effort and extra data for not much gain
+  const now = auditLog?.createdTimestamp ?? new Date().getTime()
+  const messageTime = message.createdTimestamp
+  const timeSinceMessage = Math.abs(now - messageTime)
+
+  // Bot message deletes don't create audit log entries, so we have to guess
+  // based on if the message was deleted inhumanly fast
+  // Not reliable, and someone using a self-bot or client mod could accomplish this,
+  // while a bot could take too long or have network delays
+  if (guessBotDelete && timeSinceMessage < 500) {
+    return
+  }
 
   const limit = (threshold + Math.floor(Math.random() * (fuzziness + 1))) * 1000
 
   if (timeSinceMessage > limit) {
+    return
+  }
+
+  // If audit log is not null, it means someone else deleted this message
+  if (onlySelfDelete && auditLog !== null) {
     return
   }
 

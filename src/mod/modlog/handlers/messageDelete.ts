@@ -1,9 +1,7 @@
 import {
   AttachmentPayload,
-  AuditLogEvent,
   Embed,
   EmbedBuilder,
-  GuildAuditLogsFetchOptions,
   GuildMember,
   InteractionType,
   Message,
@@ -14,9 +12,13 @@ import {
   escapeCodeBlock,
   escapeMarkdown,
 } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
+import {
+  MessageDeleteAuditLog,
+  deleteEvents,
+} from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
 import {
   ANSI_REGEX,
@@ -26,18 +28,25 @@ import {
 } from '../ansiColors.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
-export const logMessageDelete = new SleetModule(
-  {
-    name: 'logMessageDelete',
-  },
-  {
-    messageDelete,
-  },
-)
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+deleteEvents.on('messageDeleteWithAuditLog', messageDeleteWithAuditLog)
+deleteEvents.register(async (message: Message | PartialMessage) => {
+  if (!message.guild) return false
 
-const lastDeleteEntry = new Map<string, string>()
+  const conf = await getValidatedConfigFor(message.guild)
+  if (!conf) return false
 
-async function messageDelete(message: Message | PartialMessage) {
+  const { config } = conf
+
+  if (!config.messageDelete) return false
+
+  return true
+})
+
+async function messageDeleteWithAuditLog(
+  message: Message | PartialMessage,
+  auditLog: MessageDeleteAuditLog | null,
+) {
   if (!message.guild) return
 
   const conf = await getValidatedConfigFor(message.guild)
@@ -54,37 +63,6 @@ async function messageDelete(message: Message | PartialMessage) {
 
     await channel.send(formatLog('🗑️', 'Message deleted', msg))
     return
-  }
-
-  let executor, reason
-
-  if (message.guild.members.me?.permissions.has('ViewAuditLog')) {
-    // TODO: maybe listen to audit logs separately and keep a "cache" of delete logs to associate them?
-    // Would have to deal with fuzzy timings, but would cut down on GETs
-    const fetchOpts: GuildAuditLogsFetchOptions<AuditLogEvent.MessageDelete> = {
-      type: AuditLogEvent.MessageDelete,
-      limit: 1,
-    }
-
-    const lastEntry = lastDeleteEntry.get(message.guild.id)
-
-    if (lastEntry) {
-      fetchOpts.after = lastEntry
-    }
-
-    const auditLog = await message.guild.fetchAuditLogs(fetchOpts)
-    const auditEntry = auditLog.entries.first()
-
-    if (
-      auditEntry?.target.id === message.author.id &&
-      auditEntry.extra.channel.id === message.channel.id &&
-      auditEntry.extra.count === 1 &&
-      auditEntry.id !== lastEntry
-    ) {
-      executor = auditEntry.executor
-      reason = auditEntry.reason
-      lastDeleteEntry.set(message.guild.id, auditEntry.id)
-    }
   }
 
   const edits = editStore.get(message.id)?.edits ?? []
@@ -138,6 +116,8 @@ async function messageDelete(message: Message | PartialMessage) {
   )
 
   const messageContent = editsLog.join('\n┈ ┈ ┈\n')
+
+  const { executor, reason } = auditLog ?? {}
 
   let msg =
     `(${message.id}) in ${message.channel}` +

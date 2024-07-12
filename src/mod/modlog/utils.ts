@@ -29,10 +29,15 @@ export async function getConfigFor(guild: Guild): Promise<ModLogConfig | null> {
 
 export type ConfigChecker = (config: ModLogConfig) => boolean
 
+export interface ValidConfig {
+  config: ModLogConfig
+  channel: GuildTextBasedChannel
+}
+
 export async function getValidatedConfigFor(
   guild: Guild,
   checker: ConfigChecker = () => true,
-): Promise<{ config: ModLogConfig; channel: GuildTextBasedChannel } | null> {
+): Promise<ValidConfig | null> {
   const config = await getConfigFor(guild)
 
   if (!config?.enabled || !checker(config)) return null
