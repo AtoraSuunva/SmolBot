@@ -28,7 +28,7 @@
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.0",
-    "@prisma/client": "~5.16.1",
+    "@prisma/client": "~5.16.2",
     "@sapphire/shapeshift": "^4.0.0",
     "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
@@ -45,6 +45,7 @@
     "pretty-ms": "~9.0.0",
     "sleetcord": "1.6.0",
     "sleetcord-common": "^8.0.3",
+    "tseep": "^1.2.2",
     "undici": "^6.19.2"
   },
   "devDependencies": {
@@ -53,13 +54,13 @@
     "@types/luxon": "^3.4.2",
     "@types/node": "~20.14.10",
     "@types/pluralize": "^0.0.33",
-    "@typescript-eslint/eslint-plugin": "~7.15.0",
-    "@typescript-eslint/parser": "~7.15.0",
+    "@typescript-eslint/eslint-plugin": "~7.16.0",
+    "@typescript-eslint/parser": "~7.16.0",
     "eslint": "~8.57.0",
     "eslint-config-prettier": "~9.1.0",
     "eslint-plugin-import": "~2.29.1",
     "prettier": "~3.3.2",
-    "prisma": "~5.16.1",
+    "prisma": "~5.16.2",
     "typescript": "~5.5.3"
   }
 }

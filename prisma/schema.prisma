@@ -219,16 +219,20 @@ model AntiRaidConfig {
 }
 
 model DeletePoliceConfig {
-  guildID       String  @id @map("guild_id")
-  enabled       Boolean
+  guildID        String  @id @map("guild_id")
+  enabled        Boolean
   // Time in seconds until a message is no longer considered "quick deleted"
-  threshold     Int
-  // Time in seconds that can be random added to the quick delete time, i.e. threshold = 10, fuzziness = 5, message is considered quick deleted if deleted within 10-15 seconds (random limit)
-  fuzziness     Int
+  threshold      Int
+  // Time in seconds that can be randomly added to the quick delete time, i.e. threshold = 10, fuzziness = 5, message is considered quick deleted if deleted within 10-15 seconds (random limit)
+  fuzziness      Int
   // Message added to the repost footer
-  footerMessage String? @map("footer_message")
-  ignoreBots    Boolean @map("ignore_bots")
-  ignoreMods    Boolean @map("ignore_mods")
+  footerMessage  String? @map("footer_message")
+  ignoreBots     Boolean @default(true) @map("ignore_bots")
+  ignoreMods     Boolean @default(true) @map("ignore_mods")
+  // Only repost if the user deleted it themselves (bot-deleted messages don't cause audit log entries and may still be reposted)
+  onlySelfDelete Boolean @default(false) @map("only_self_delete")
+  // Try to guess when bots delete the message (by checking if it was inhumanly quick, there's no reliable way to check unfortunately)
+  guessBotDelete Boolean @default(false) @map("guess_bot_delete")
 
   updatedAt DateTime @updatedAt @map("updated_at")
 }
