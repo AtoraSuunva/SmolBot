@@ -67,7 +67,7 @@ export const mass_ban = new SleetSlashCommand(
       {
         name: 'force_ban',
         description:
-          'Force ban users even if they are not in the guild (default: false)',
+          'Force ban users even if they are not in the guild (default: True)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -171,7 +171,7 @@ type CheckMember = (member: GuildMember) => boolean
 
 async function runMassBan(interaction: ChatInputCommandInteraction) {
   const deleteDays = interaction.options.getInteger('delete_days') ?? 0
-  const forceBan = interaction.options.getBoolean('force_ban') ?? false
+  const forceBan = interaction.options.getBoolean('force_ban') ?? true
 
   const deleteMessageSeconds = (deleteDays * DAY) / 1000
 
@@ -343,7 +343,7 @@ async function runMassAction({
   const guild = await getGuild(interaction, true)
   const userReason =
     interaction.options.getString('reason') ?? 'No reason provided'
-  const reason = `Mass ${action} by ${formatUser(interaction.user, {
+  const reason = `${capitalize(action)} by ${formatUser(interaction.user, {
     markdown: false,
   })}: ${userReason}`
   const idOnly = interaction.options.getBoolean('id_only') ?? false

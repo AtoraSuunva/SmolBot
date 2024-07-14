@@ -1,5 +1,7 @@
 import {
+  APIAuditLogChange,
   AuditLogEvent,
+  AutoModerationActionType,
   BaseChannel,
   ChannelType,
   DMChannel,
@@ -7,6 +9,7 @@ import {
   GuildBasedChannel,
   LimitedCollection,
   NonThreadGuildBasedChannel,
+  OverwriteType,
   TextBasedChannel,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
@@ -68,7 +71,9 @@ export async function logChannelModified(
       : auditLogEntry.targetId
         ? // Use our cache or try to fetch the channel from discord
           tempStoredChannels.get(auditLogEntry.targetId) ??
-          (await guild.channels.fetch(auditLogEntry.targetId))
+          (auditLogEntry.action !== AuditLogEvent.ChannelDelete
+            ? await guild.channels.fetch(auditLogEntry.targetId)
+            : null)
         : // Give up and use just the ID
           auditLogEntry.targetId
 
@@ -84,11 +89,11 @@ export async function logChannelModified(
     .map((change) => {
       const log = [`=== ${change.key}:`]
       if (change.old !== undefined) {
-        log.push(`- ${String(change.old).replace(/\n/g, '\n- ')}`)
+        log.push(`- ${formatChange(change.old).replace(/\n/g, '\n- ')}`)
       }
 
       if (change.new !== undefined) {
-        log.push(`+ ${String(change.new).replace(/\n/g, '\n+ ')}`)
+        log.push(`+ ${formatChange(change.new).replace(/\n/g, '\n+ ')}`)
       }
 
       return log.join('\n')
@@ -156,6 +161,22 @@ interface TargetChannel {
   flags: number
 }
 
+const ChannelTypeNames: Record<ChannelType, string> = {
+  [ChannelType.AnnouncementThread]: 'Announcement Thread',
+  [ChannelType.DM]: 'DM',
+  [ChannelType.GroupDM]: 'Group DM',
+  [ChannelType.GuildAnnouncement]: 'Announcement',
+  [ChannelType.GuildCategory]: 'Category',
+  [ChannelType.GuildDirectory]: 'Directory',
+  [ChannelType.GuildForum]: 'Forum',
+  [ChannelType.GuildStageVoice]: 'Stage',
+  [ChannelType.GuildText]: 'Text',
+  [ChannelType.GuildVoice]: 'Voice',
+  [ChannelType.PrivateThread]: 'Private Thread',
+  [ChannelType.PublicThread]: 'Public Thread',
+  [ChannelType.GuildMedia]: 'Media',
+}
+
 function formatChannel(
   channel: GuildBasedChannel | TargetChannel | string | null,
 ): string {
@@ -173,18 +194,40 @@ function formatChannel(
   }\`]${parent}`
 }
 
-const ChannelTypeNames: Record<ChannelType, string> = {
-  [ChannelType.AnnouncementThread]: 'Announcement Thread',
-  [ChannelType.DM]: 'DM',
-  [ChannelType.GroupDM]: 'Group DM',
-  [ChannelType.GuildAnnouncement]: 'Announcement',
-  [ChannelType.GuildCategory]: 'Category',
-  [ChannelType.GuildDirectory]: 'Directory',
-  [ChannelType.GuildForum]: 'Forum',
-  [ChannelType.GuildStageVoice]: 'Stage',
-  [ChannelType.GuildText]: 'Text',
-  [ChannelType.GuildVoice]: 'Voice',
-  [ChannelType.PrivateThread]: 'Private Thread',
-  [ChannelType.PublicThread]: 'Public Thread',
-  [ChannelType.GuildMedia]: 'Media',
+type AuditLogChange = APIAuditLogChange['old_value']
+
+function formatChange(change: AuditLogChange): string {
+  if (typeof change !== 'object') return String(change)
+
+  if (Array.isArray(change)) {
+    return formatChangeArray(change)
+  }
+
+  if ('emoji_id' in change) {
+    return `<Emoji:${change.emoji_name ?? change.emoji_id}>`
+  } else {
+    return '<AutoModerationRuleTriggerMetadata>'
+  }
+}
+
+type AuditLogChangeArray = Extract<APIAuditLogChange['old_value'], unknown[]>
+
+function formatChangeArray(change: AuditLogChangeArray): string {
+  return change
+    .map((c) => {
+      if (typeof c !== 'object') return String(change)
+
+      if ('position' in c) {
+        return `<Role:${c.name} (${c.id}) [p:${c.permissions}]>`
+      } else if ('allow' in c) {
+        return `<Overwrite:${OverwriteType[c.type]} (${c.id}) [a:${c.allow}/d:${c.deny}]>`
+      } else if ('type' in c) {
+        return `<AutoModerationAction:${AutoModerationActionType[c.type]}>`
+      } else if ('moderated' in c) {
+        return `<ForumTag:${c.name} (${c.id})>`
+      }
+
+      return `<unknown:${c}>`
+    })
+    .join(', ')
 }

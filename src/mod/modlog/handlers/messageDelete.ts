@@ -43,7 +43,7 @@ deleteEvents.register(async (message: Message | PartialMessage) => {
   return true
 })
 
-async function messageDeleteWithAuditLog(
+export async function messageDeleteWithAuditLog(
   message: Message | PartialMessage,
   auditLog: MessageDeleteAuditLog | null,
 ) {
