@@ -26,6 +26,7 @@ const WITHIN_TIME = 5 * SECOND
 
 async function messageDelete(message: Message | PartialMessage) {
   if (
+    (message.partial && message.author === null) ||
     !message.inGuild() ||
     message.guild.members.me?.permissions.has('ViewAuditLog') === false ||
     !(await deleteEvents.needsAuditLog(message))
@@ -102,12 +103,11 @@ async function messageDelete(message: Message | PartialMessage) {
   deleteEvents.emit('messageDeleteWithAuditLog', message, entry)
 }
 
-export type MessageDeleteAuditLog = GuildAuditLogsEntry<
-  AuditLogEvent,
-  'Delete',
-  'Message',
-  AuditLogEvent.MessageDelete
->
+export type MessageDeleteAuditLog =
+  GuildAuditLogsEntry<AuditLogEvent.MessageDelete>
+
+export type MessageBulkDeleteAuditLog =
+  GuildAuditLogsEntry<AuditLogEvent.MessageBulkDelete>
 
 type NeedsAuditLog = (message: Message | PartialMessage) => Promise<boolean>
 

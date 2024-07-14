@@ -17,6 +17,7 @@ import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { plural } from '../../../util/format.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
+import { messageDeleteWithAuditLog } from './messageDelete.js'
 
 export const logMessageDeleteBulk = new SleetModule(
   {
@@ -37,6 +38,14 @@ export async function handleMessageDeleteBulk(
   fromChannel: GuildTextBasedChannel,
   channelDeleted = false,
 ) {
+  // Nothing to do! Probably empty channel that was deleted
+  if (messages.size === 0) return
+
+  if (messages.size === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return messageDeleteWithAuditLog(messages.first()!, null)
+  }
+
   const conf = await getValidatedConfigFor(fromChannel.guild)
   if (!conf) return
 
@@ -200,7 +209,7 @@ export async function handleMessageDeleteBulk(
     logMessage.push(
       '. Every message was uncached or partial, no log available. Message IDs:\n',
     )
-    logMessage.push(codeBlock(messages.map((m) => m.id).join(', ')))
+    logMessage.push(codeBlock(messages.map((m) => m.id).join(' ')))
   }
 
   const files: AttachmentPayload[] =
