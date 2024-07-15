@@ -6,6 +6,7 @@ import {
   APIRole,
   APIUser,
   AttachmentPayload,
+  AuditLogEvent,
   ChannelType,
   GuildTextBasedChannel,
   Message,
@@ -16,7 +17,12 @@ import {
 import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { plural } from '../../../util/format.js'
+import {
+  MessageBulkDeleteAuditLog,
+  deleteEvents,
+} from '../../messageDeleteAuditLog.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
+import { ChannelAuditLog } from './auditLog/channelModify.js'
 import { messageDeleteWithAuditLog } from './messageDelete.js'
 
 export const logMessageDeleteBulk = new SleetModule(
@@ -24,7 +30,20 @@ export const logMessageDeleteBulk = new SleetModule(
     name: 'logMessageDeleteBulk',
   },
   {
-    messageDeleteBulk: handleMessageDeleteBulk,
+    load: () => {
+      deleteEvents.on(
+        'messageBulkDeleteWithAuditLog',
+        messageDeleteBulkWithAuditLog,
+      )
+      deleteEvents.registerBulk(needsAuditLog)
+    },
+    unload: () => {
+      deleteEvents.off(
+        'messageBulkDeleteWithAuditLog',
+        messageDeleteBulkWithAuditLog,
+      )
+      deleteEvents.unregisterBulk(needsAuditLog)
+    },
   },
 )
 
@@ -33,17 +52,32 @@ const FILENAME = 'archive.json'
 const generateArchiveUrl = (channelId: string, attachmentId: string) =>
   `${ARCHIVE_VIEWER}${channelId}/${attachmentId}/${FILENAME}`
 
-export async function handleMessageDeleteBulk(
+async function needsAuditLog(
   messages: ReadonlyCollection<string, Message | PartialMessage>,
   fromChannel: GuildTextBasedChannel,
-  channelDeleted = false,
+) {
+  if (messages.size === 0) return false
+
+  const conf = await getValidatedConfigFor(fromChannel.guild)
+  if (!conf) return false
+
+  const { config } = conf
+  if (!config.messageDeleteBulk) return false
+
+  return true
+}
+
+export async function messageDeleteBulkWithAuditLog(
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
+  fromChannel: GuildTextBasedChannel,
+  auditLog: ChannelAuditLog | MessageBulkDeleteAuditLog | null = null,
 ) {
   // Nothing to do! Probably empty channel that was deleted
   if (messages.size === 0) return
 
   if (messages.size === 1) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return messageDeleteWithAuditLog(messages.first()!, null)
+    return messageDeleteWithAuditLog(messages.first()!)
   }
 
   const conf = await getValidatedConfigFor(fromChannel.guild)
@@ -197,8 +231,14 @@ export async function handleMessageDeleteBulk(
     .join(', ')
     .substring(0, 1024)
 
+  const channelDeleted = auditLog?.action === AuditLogEvent.ChannelDelete
+  const { executor, reason } = auditLog ?? {}
+
   const logMessage = [
-    `${channelDeleted ? `#${fromChannel.name} (deleted)` : fromChannel}, ${plural('message', messages.size)}`,
+    `${channelDeleted ? `#${fromChannel.name} (deleted)` : fromChannel}, ` +
+      plural('message', messages.size) +
+      (executor ? ` by ${formatUser(executor)}` : '') +
+      (reason ? ` for "${reason}"` : ''),
   ]
 
   if (userList) {

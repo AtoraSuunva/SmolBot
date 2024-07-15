@@ -146,9 +146,8 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 deleteEvents.on('messageDeleteWithAuditLog', handleMessageDelete)
-deleteEvents.register(async (message: Message | PartialMessage) => {
+deleteEvents.registerSingle(async (message: Message | PartialMessage) => {
   if (message.partial || !message.inGuild()) {
     return false
   }

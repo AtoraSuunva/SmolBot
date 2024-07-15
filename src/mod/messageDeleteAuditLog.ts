@@ -1,9 +1,11 @@
 import {
   AuditLogEvent,
   GuildAuditLogsEntry,
+  GuildTextBasedChannel,
   LimitedCollection,
   Message,
   PartialMessage,
+  ReadonlyCollection,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
@@ -15,10 +17,11 @@ export const messageDeleteAuditLog = new SleetModule(
   },
   {
     messageDelete,
+    messageDeleteBulk,
   },
 )
 
-const previousAudits = new LimitedCollection<string, MessageDeleteAuditLog>({
+const previousDeletes = new LimitedCollection<string, MessageDeleteAuditLog>({
   maxSize: 500,
 })
 
@@ -29,7 +32,7 @@ async function messageDelete(message: Message | PartialMessage) {
     (message.partial && message.author === null) ||
     !message.inGuild() ||
     message.guild.members.me?.permissions.has('ViewAuditLog') === false ||
-    !(await deleteEvents.needsAuditLog(message))
+    !(await deleteEvents.singleNeedsAuditLog(message))
   ) {
     // Not a guild, we can't fetch audit log, or nobody needs audit log
     deleteEvents.emit('messageDeleteWithAuditLog', message, null)
@@ -80,14 +83,14 @@ async function messageDelete(message: Message | PartialMessage) {
     }
 
     // Compare against our history
-    const previousEntry = previousAudits.get(entry.id)
+    const previousEntry = previousDeletes.get(entry.id)
 
     // If we have it cached and it's the same count, it can't be it
     if (previousEntry && previousEntry.extra.count === entry.extra.count) {
       return false
     }
 
-    previousAudits.set(entry.id, entry)
+    previousDeletes.set(entry.id, entry)
     // If we have a previous entry then we're good
     // If not, check that the count is greater than 1 otherwise we might be taking uncached data
     // (if user A deletes 2+ messages from B, the bot logs it, then the bot restarts,
@@ -103,13 +106,83 @@ async function messageDelete(message: Message | PartialMessage) {
   deleteEvents.emit('messageDeleteWithAuditLog', message, entry)
 }
 
+const previousBulkDeletes = new LimitedCollection<
+  string,
+  MessageBulkDeleteAuditLog
+>({
+  maxSize: 500,
+})
+
+async function messageDeleteBulk(
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
+  channel: GuildTextBasedChannel,
+) {
+  // The same logic applies here, but we have some differences:
+  //   - We are always in a guild
+  //   - We only get messages deleted count + channel
+  //   - New entries aren't guaranteed to have count = 1 (Once again, updating audit logs prevent us from just listening to creates)
+  if (
+    channel.guild.members.me?.permissions.has('ViewAuditLog') === false ||
+    !(await deleteEvents.bulkNeedsAuditLog(messages, channel))
+  ) {
+    // Not a guild, we can't fetch audit log, or nobody needs audit log
+    deleteEvents.emit('messageBulkDeleteWithAuditLog', messages, channel, null)
+    return
+  }
+
+  const { guild } = channel
+
+  const auditLogs = await guild.fetchAuditLogs({
+    type: AuditLogEvent.MessageBulkDelete,
+  })
+
+  const possibleEntries = auditLogs.entries.filter((entry) => {
+    if (
+      // Not the same channel
+      entry.targetId !== channel.id
+    ) {
+      return false
+    }
+
+    // Compare against our history
+    const previousEntry = previousBulkDeletes.get(entry.id)
+
+    // If we have it cached and it's the same count, it can't be it
+    if (previousEntry && previousEntry.extra.count === entry.extra.count) {
+      return false
+    }
+
+    previousBulkDeletes.set(entry.id, entry)
+
+    // Multiple bulk deletes will update the count of the old one
+    // We know by now that either:
+    //   - This is an updated entry with a new count
+    //     - Check previous + just deleted = entry count
+    //   - This is a new entry
+    //     - Check count matches
+    return previousEntry
+      ? previousEntry.extra.count + messages.size === entry.extra.count
+      : entry.extra.count === messages.size
+  })
+
+  // Grab the latest viable entry
+  const entry = possibleEntries.first() ?? null
+  deleteEvents.emit('messageBulkDeleteWithAuditLog', messages, channel, entry)
+}
+
 export type MessageDeleteAuditLog =
   GuildAuditLogsEntry<AuditLogEvent.MessageDelete>
 
 export type MessageBulkDeleteAuditLog =
   GuildAuditLogsEntry<AuditLogEvent.MessageBulkDelete>
 
-type NeedsAuditLog = (message: Message | PartialMessage) => Promise<boolean>
+type SingleNeedsAuditLog = (
+  message: Message | PartialMessage,
+) => Promise<boolean>
+type BulkNeedsAuditLog = (
+  messages: ReadonlyCollection<string, Message | PartialMessage>,
+  channel: GuildTextBasedChannel,
+) => Promise<boolean>
 
 // It would be nice to have the type param as an interface instead, but the index signature makes TS unhappy
 // extending DefaultEventMap works fine, but TS then doesn't catch invalid event names
@@ -118,20 +191,51 @@ class MessageDeleteWithAuditLog extends EventEmitter<{
     message: Message | PartialMessage,
     auditLog: MessageDeleteAuditLog | null,
   ) => Awaited<void>
+  messageBulkDeleteWithAuditLog: (
+    messages: ReadonlyCollection<string, Message | PartialMessage>,
+    channel: GuildTextBasedChannel,
+    auditLog: MessageBulkDeleteAuditLog | null,
+  ) => Awaited<void>
 }> {
-  #subscribers: NeedsAuditLog[] = []
+  #singleSubscribers: SingleNeedsAuditLog[] = []
+  #bulkSubscribers: BulkNeedsAuditLog[] = []
 
-  register(subscriber: NeedsAuditLog) {
-    this.#subscribers.push(subscriber)
+  registerSingle(subscriber: SingleNeedsAuditLog) {
+    this.#singleSubscribers.push(subscriber)
   }
 
-  unregister(subscriber: NeedsAuditLog) {
-    this.#subscribers = this.#subscribers.filter((sub) => sub !== subscriber)
+  unregisterSingle(subscriber: SingleNeedsAuditLog) {
+    this.#singleSubscribers = this.#singleSubscribers.filter(
+      (sub) => sub !== subscriber,
+    )
   }
 
-  async needsAuditLog(message: Message | PartialMessage): Promise<boolean> {
+  registerBulk(subscriber: BulkNeedsAuditLog) {
+    this.#bulkSubscribers.push(subscriber)
+  }
+
+  unregisterBulk(subscriber: BulkNeedsAuditLog) {
+    this.#bulkSubscribers = this.#bulkSubscribers.filter(
+      (sub) => sub !== subscriber,
+    )
+  }
+
+  async singleNeedsAuditLog(
+    message: Message | PartialMessage,
+  ): Promise<boolean> {
     const results = await Promise.all(
-      this.#subscribers.map((sub) => sub(message)),
+      this.#singleSubscribers.map((sub) => sub(message)),
+    )
+
+    return results.some(Boolean)
+  }
+
+  async bulkNeedsAuditLog(
+    messages: ReadonlyCollection<string, Message | PartialMessage>,
+    channel: GuildTextBasedChannel,
+  ): Promise<boolean> {
+    const results = await Promise.all(
+      this.#bulkSubscribers.map((sub) => sub(messages, channel)),
     )
 
     return results.some(Boolean)

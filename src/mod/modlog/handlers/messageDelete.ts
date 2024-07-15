@@ -12,7 +12,7 @@ import {
   escapeCodeBlock,
   escapeMarkdown,
 } from 'discord.js'
-import { formatUser } from 'sleetcord'
+import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import {
@@ -28,24 +28,37 @@ import {
 } from '../ansiColors.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-deleteEvents.on('messageDeleteWithAuditLog', messageDeleteWithAuditLog)
-deleteEvents.register(async (message: Message | PartialMessage) => {
+export const logMessageDelete = new SleetModule(
+  {
+    name: 'logMessageDelete',
+  },
+  {
+    load: () => {
+      deleteEvents.on('messageDeleteWithAuditLog', messageDeleteWithAuditLog)
+      deleteEvents.registerSingle(needsAuditLog)
+    },
+    unload: () => {
+      deleteEvents.off('messageDeleteWithAuditLog', messageDeleteWithAuditLog)
+      deleteEvents.unregisterSingle(needsAuditLog)
+    },
+  },
+)
+
+async function needsAuditLog(message: Message | PartialMessage) {
   if (!message.guild) return false
 
   const conf = await getValidatedConfigFor(message.guild)
   if (!conf) return false
 
   const { config } = conf
-
   if (!config.messageDelete) return false
 
   return true
-})
+}
 
 export async function messageDeleteWithAuditLog(
   message: Message | PartialMessage,
-  auditLog: MessageDeleteAuditLog | null,
+  auditLog: MessageDeleteAuditLog | null = null,
 ) {
   if (!message.guild) return
 
