@@ -1,5 +1,6 @@
 import {
   APIAuditLogChange,
+  AttachmentPayload,
   AuditLogEvent,
   AutoModerationActionType,
   BaseChannel,
@@ -14,7 +15,7 @@ import {
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { formatLog, getValidatedConfigFor } from '../../utils.js'
-import { handleMessageDeleteBulk } from '../messageDeleteBulk.js'
+import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
 import { AuditInfo, resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
@@ -70,10 +71,10 @@ export async function logChannelModified(
         (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel)
       : auditLogEntry.targetId
         ? // Use our cache or try to fetch the channel from discord
-          tempStoredChannels.get(auditLogEntry.targetId) ??
+          (tempStoredChannels.get(auditLogEntry.targetId) ??
           (auditLogEntry.action !== AuditLogEvent.ChannelDelete
             ? await guild.channels.fetch(auditLogEntry.targetId)
-            : null)
+            : null))
         : // Give up and use just the ID
           auditLogEntry.targetId
 
@@ -100,16 +101,35 @@ export async function logChannelModified(
     })
     .join('\n')
 
-  const message = `${channelText} ${verb} by ${execUser}${
-    changelog ? '\n```diff\n' + changelog.substring(0, 1800) + '\n```' : ''
-  }`
+  const headline = `${channelText} ${verb} by ${execUser}`
+
+  let message = ''
+  let files: AttachmentPayload[] = []
+
+  if (changelog.length <= 1800) {
+    message = `${headline}${
+      changelog ? '\n```diff\n' + changelog + '\n```' : ''
+    }`
+  } else {
+    message = `${headline}\nChangelog is too long to display here, see attached file for details.`
+
+    files = [
+      {
+        attachment: Buffer.from(changelog),
+        name: `changelog.txt`,
+      },
+    ]
+  }
+
+  const content = formatLog(
+    LogEmoji[auditLogEntry.action],
+    LogName[auditLogEntry.action],
+    message,
+  )
 
   await channel.send({
-    content: formatLog(
-      LogEmoji[auditLogEntry.action],
-      LogName[auditLogEntry.action],
-      message,
-    ),
+    content,
+    files,
     allowedMentions: { parse: [] },
   })
 
@@ -118,10 +138,10 @@ export async function logChannelModified(
     modifiedChannel instanceof BaseChannel &&
     modifiedChannel.isTextBased()
   ) {
-    await handleMessageDeleteBulk(
+    await messageDeleteBulkWithAuditLog(
       modifiedChannel.messages.cache,
       modifiedChannel,
-      true,
+      auditLogEntry,
     )
   }
 
