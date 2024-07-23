@@ -5,9 +5,9 @@ import {
 } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
+import { type AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
 
 const units = converter().list()
 

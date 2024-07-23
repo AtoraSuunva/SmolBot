@@ -1,13 +1,13 @@
+import type { Prisma } from '@prisma/client'
 import { stringify } from 'csv-stringify'
 import {
   ApplicationCommandOptionType,
-  AttachmentPayload,
-  ChatInputCommandInteraction,
-  User,
+  type AttachmentPayload,
+  type ChatInputCommandInteraction,
+  type User,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild, getRoles, getUsers } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { Prisma } from '@prisma/client'
 import { plural } from '../../util/format.js'
 
 export const mark_joined = new SleetSlashSubcommand(

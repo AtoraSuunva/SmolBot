@@ -1,19 +1,22 @@
-import { DeletePoliceConfig } from '@prisma/client'
+import type { DeletePoliceConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   InteractionContextType,
 } from 'discord-api-types/v10'
-import {
+import type {
   ChatInputCommandInteraction,
   Message,
   PartialMessage,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../util/db.js'
 import { formatConfig } from '../util/format.js'
 import { quoteMessage } from '../util/quoteMessage.js'
-import { deleteEvents, MessageDeleteAuditLog } from './messageDeleteAuditLog.js'
+import {
+  type MessageDeleteAuditLog,
+  deleteEvents,
+} from './messageDeleteAuditLog.js'
 
 export const delete_police_config = new SleetSlashCommand(
   {

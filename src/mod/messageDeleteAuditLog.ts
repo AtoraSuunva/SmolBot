@@ -1,11 +1,11 @@
 import {
   AuditLogEvent,
-  GuildAuditLogsEntry,
-  GuildTextBasedChannel,
+  type GuildAuditLogsEntry,
+  type GuildTextBasedChannel,
   LimitedCollection,
-  Message,
-  PartialMessage,
-  ReadonlyCollection,
+  type Message,
+  type PartialMessage,
+  type ReadonlyCollection,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'

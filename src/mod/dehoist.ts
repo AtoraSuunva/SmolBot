@@ -1,10 +1,10 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  GuildMember,
-  PartialGuildMember,
+  type ChatInputCommandInteraction,
+  type GuildMember,
+  type PartialGuildMember,
 } from 'discord.js'
 import {
   SleetSlashCommand,
@@ -171,9 +171,7 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.editReply(
-    `Dehoisted ${plural('member', dehoisted)}!` +
-      (failed > 0 ? `\nFailed to dehoist ${plural('member', failed)}.` : '') +
-      (skipped > 0 ? `\nSkipped ${plural('member', skipped)}.` : ''),
+    `Dehoisted ${plural('member', dehoisted)}!${failed > 0 ? `\nFailed to dehoist ${plural('member', failed)}.` : ''}${skipped > 0 ? `\nSkipped ${plural('member', skipped)}.` : ''}`,
   )
 }
 
@@ -196,7 +194,6 @@ async function checkToDehoist(members: DehoistableMember[]) {
     dehoistPrepend: settings.dehoistPrepend,
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for await (const _ of generator) {
     // skip
   }

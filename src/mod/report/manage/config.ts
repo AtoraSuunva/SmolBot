@@ -1,17 +1,17 @@
-import { ReportConfig } from '@prisma/client'
+import type { ReportConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
-  Guild,
-  GuildTextBasedChannel,
-  User,
+  type Guild,
+  type GuildTextBasedChannel,
+  type User,
 } from 'discord.js'
-import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
 import { formatConfig } from '../../../util/format.js'
 import { handleReportButtonInteraction } from '../utils.js'
-import { getOptionCount } from 'sleetcord-common'
 
 export const report_manage_config = new SleetSlashSubcommand(
   {
@@ -59,14 +59,14 @@ async function runReportManage(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing report config, use `/report_manage config` with options to create one.",
       })
-    } else {
-      return interaction.reply({
-        content: `Current config:\n${formatConfig({
-          config: oldConfig,
-          guild,
-        })}`,
-      })
     }
+
+    return interaction.reply({
+      content: `Current config:\n${formatConfig({
+        config: oldConfig,
+        guild,
+      })}`,
+    })
   }
 
   const enabled = interaction.options.getBoolean('enabled')

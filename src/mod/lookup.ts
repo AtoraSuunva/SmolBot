@@ -3,26 +3,26 @@ import {
   InteractionContextType,
 } from 'discord-api-types/v10'
 import {
-  APIApplication,
+  type APIApplication,
   ActionRowBuilder,
   ApplicationCommandOptionType,
   ButtonBuilder,
-  ButtonInteraction,
+  type ButtonInteraction,
   ButtonStyle,
   ChannelType,
-  ChatInputCommandInteraction,
-  Client,
-  Collection,
+  type ChatInputCommandInteraction,
+  type Client,
+  type Collection,
   DiscordAPIError,
   EmbedBuilder,
   GuildNSFWLevel,
-  GuildPreview,
-  GuildPreviewEmoji,
+  type GuildPreview,
+  type GuildPreviewEmoji,
   GuildVerificationLevel,
-  Interaction,
-  Invite,
+  type Interaction,
+  type Invite,
   SnowflakeUtil,
-  Sticker,
+  type Sticker,
   User,
   UserFlags,
   Widget,
@@ -109,7 +109,7 @@ async function lookupAndRespond(
 
   await interaction.deferReply({ ephemeral })
 
-  let error
+  let error: unknown | null
 
   if (isLikelyID(data)) {
     // Probably an ID, check if it's a user or guild
@@ -134,9 +134,9 @@ async function lookupAndRespond(
             await client.fetchInvite(guild.instantInvite),
             ephemeral,
           )
-        } else {
-          return sendGuildWidgetLookup(interaction, guild)
         }
+
+        return sendGuildWidgetLookup(interaction, guild)
       }
 
       return sendGuildPreviewLookup(interaction, guild)
@@ -187,7 +187,9 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
             snowflakeToDate(guildId),
           )}`,
         }
-      } else if (e.status === 404) {
+      }
+
+      if (e.status === 404) {
         return {
           exists: false,
           message: `No guild with ID "\`${guildId}\`" not found.`,
@@ -236,7 +238,9 @@ async function fetchRPCDetails(app: string): Promise<APIApplication> {
 
   if (res.status === 404) {
     throw new Error('No application found or snowflake incorrect.')
-  } else if (res.status === 200) {
+  }
+
+  if (res.status === 200) {
     return res.json() as Promise<APIApplication>
   }
 
@@ -332,10 +336,7 @@ async function sendUserLookup(
       })
   }
 
-  const rawUser =
-    '``' +
-    escapeInlineCode(user.discriminator === '0' ? user.username : user.tag) +
-    '``'
+  const rawUser = `\`\`${escapeInlineCode(user.discriminator === '0' ? user.username : user.tag)}\`\``
   const badges = getUserBadgeEmojis(user)
   const formattedBadges =
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
@@ -365,7 +366,7 @@ async function sendUserLookup(
   }
 
   if (user.banner) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     embed.setImage(user.bannerURL({ size: 4096 })!)
   }
 
@@ -470,10 +471,10 @@ async function sendInviteLookup(
   if (invite.guild) {
     // Guild Invite
     return sendGuildInviteLookup(interaction, invite, ephemeral)
-  } else {
-    // Group DM invite? Maybe something else?
-    return sendGroupDMInviteLookup(interaction, invite)
   }
+
+  // Group DM invite? Maybe something else?
+  return sendGroupDMInviteLookup(interaction, invite)
 }
 
 /**
@@ -509,7 +510,7 @@ async function sendGuildInviteLookup(
     .setDescription(guild.description)
     .addFields([
       {
-        name: `Guild Info:`,
+        name: 'Guild Info:',
         value: `${guildPrepend}${guild.name}\n**ID:** ${guild.id}\n[#${
           invite.channel?.name ?? 'unknown channel'
         }](http://discord.com)`,
@@ -586,12 +587,12 @@ async function sendGuildInviteLookup(
   const images: string[] = []
 
   if (guild.splash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     images.push(`[Splash](${guild.splashURL({ size: 4096 })!})`)
   }
 
   if (guild.banner) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     images.push(`[Banner](${guild.bannerURL({ size: 4096 })!})`)
   }
 
@@ -670,7 +671,7 @@ async function sendGroupDMInviteLookup(
     .setTitle(`:incoming_envelope:  Group DM Invite: ${code}`)
     .setThumbnail(invite.channel.iconURL({ size: 4096 }))
     .setFooter({
-      text: `Source: Invite`,
+      text: 'Source: Invite',
     })
     .addFields([
       {
@@ -816,13 +817,13 @@ async function sendGuildPreviewLookup(
   const images: string[] = []
 
   if (preview.splash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     const splash = preview.splashURL({ size: 4096 })!
     images.push(`[Splash](${splash})`)
   }
 
   if (preview.discoverySplash) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     const discoverySplash = preview.discoverySplashURL({ size: 4096 })!
     images.push(`[Discovery Splash](${discoverySplash})`)
   }

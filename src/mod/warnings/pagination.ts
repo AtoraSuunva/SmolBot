@@ -1,20 +1,20 @@
-import { WarningConfig } from '@prisma/client'
+import type { WarningConfig } from '@prisma/client'
 import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  CommandInteraction,
+  type CommandInteraction,
   ComponentType,
-  EmbedAuthorOptions,
+  type EmbedAuthorOptions,
   EmbedBuilder,
-  InteractionEditReplyOptions,
+  type InteractionEditReplyOptions,
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { plural } from '../../util/format.js'
 import {
   MAX_PER_PAGE,
-  PaginatedWarnings,
+  type PaginatedWarnings,
   fetchWarningConfigFor,
   formatWarningToField,
 } from './utils.js'
@@ -131,7 +131,6 @@ export async function respondWithPaginatedWarnings(
     idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (buttonInteraction) => {
     if (buttonInteraction.user.id !== interaction.user.id) {
       await buttonInteraction.reply({

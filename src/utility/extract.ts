@@ -1,13 +1,13 @@
+import { setTimeout } from 'node:timers/promises'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
+  GuildMember,
+  type TextBasedChannel,
   cleanCodeBlockContent,
   codeBlock,
-  GuildMember,
-  TextBasedChannel,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'
 
 export const extract = new SleetSlashCommand(
@@ -124,30 +124,35 @@ function getRawUrl(url: string): string {
     return url.endsWith('/') ? `${url}raw` : `${url}/raw`
 
   if (/https?:\/\/pastebin.com\/(?!raw)/.test(url)) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return `https://pastebin.com/raw/${url
-      .split('/')
-      .filter((a) => !!a)
-      .pop()!}`
+    return `https://pastebin.com/raw/${
+      // biome-ignore lint/style/noNonNullAssertion: we know the url format will be valid
+      url
+        .split('/')
+        .filter((a) => !!a)
+        .pop()!
+    }`
   }
 
   if (/https?:\/\/hastebin.com\/(?!raw)/.test(url)) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return `https://hastebin.com/raw/${url
-      .split('/')
-      .filter((a) => !!a)
-      .pop()!}`
+    return `https://hastebin.com/raw/${
+      // biome-ignore lint/style/noNonNullAssertion: we know the url format will be valid
+      url
+        .split('/')
+        .filter((a) => !!a)
+        .pop()!
+    }`
   }
 
   return url
 }
 
 function getMemberLimit(member: GuildMember): number {
-  return Object.entries(limits)
-    .filter((v) => member.roles.cache.has(v[0]))
-    .map((v) => v[1])
-    .sort((a, b) => a - b)
-    .reverse()[0]
+  return (
+    Object.entries(limits)
+      .filter((v) => member.roles.cache.has(v[0]))
+      .map((v) => v[1])
+      .sort((a, b) => b - a)[0] ?? 2000
+  )
 }
 
 async function getLatestFile(
@@ -177,9 +182,7 @@ async function splitSend(
   content: string,
   { code = false }: SplitSendOptions = {},
 ) {
-  const splits: string[] = []
-
-  content.match(whitespaceSplitRegex)?.forEach((v) => splits.push(v))
+  const splits: string[] = content.match(whitespaceSplitRegex) ?? []
 
   if (splits.length === 0) await channel.send('`[Empty Message]`')
 

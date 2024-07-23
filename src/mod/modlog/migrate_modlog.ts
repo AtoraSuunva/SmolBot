@@ -1,8 +1,13 @@
-import { ChannelType, Client, GatewayIntentBits, Partials } from 'discord.js'
-import { baseLogger } from 'sleetcord-common'
-import { Prisma } from '@prisma/client'
-import { SleetClient, SleetModule } from 'sleetcord'
+import type { Prisma } from '@prisma/client'
+import {
+  ChannelType,
+  type Client,
+  GatewayIntentBits,
+  Partials,
+} from 'discord.js'
 import env from 'env-var'
+import { SleetClient, SleetModule } from 'sleetcord'
+import { baseLogger } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import '../../util/dbLogging.js'
 
@@ -49,7 +54,7 @@ sleetClient.addModules([migrate_modlog])
 await sleetClient.login()
 
 const prefix = '>'
-const modlogSentinel = prefix + 'modlog'
+const modlogSentinel = `${prefix}modlog`
 const settingsTemplate = [
   {
     name: 'member_add',
@@ -135,7 +140,6 @@ const settingsTemplate = [
 async function runMigrateModlog(client: Client) {
   let lastGuildId = 0n
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
   while (true) {
     const oauthGuilds = await client.guilds.fetch({
       after: lastGuildId.toString(),
@@ -222,34 +226,31 @@ type ModlogParse = Required<
 >
 
 function parseFromTopic(topic: string[]): ModlogParse {
-  const settings = settingsTemplate
-    .map((setting) => {
-      const line = topic.find((line) => line.startsWith(prefix + setting.name))
+  const settings = settingsTemplate.map((setting) => {
+    const line = topic.find((line) => line.startsWith(prefix + setting.name))
 
-      const defaultSetting = { [setting.create]: setting.init }
-      if (!line) {
-        return defaultSetting
-      }
+    const defaultSetting = [setting.create, setting.init]
 
-      const equals = line.indexOf('=')
+    if (!line) {
+      return defaultSetting
+    }
 
-      if (equals < 0) {
-        return defaultSetting
-      }
+    const equals = line.indexOf('=')
 
-      const value = toPrimitive(line.substring(equals + 1))
+    if (equals < 0) {
+      return defaultSetting
+    }
 
-      if (typeof value !== typeof setting.init) {
-        return defaultSetting
-      }
+    const value = toPrimitive(line.substring(equals + 1))
 
-      return {
-        [setting.create]: value,
-      }
-    })
-    .reduce((acc, curr) => ({ ...acc, ...curr }), {})
+    if (typeof value !== typeof setting.init) {
+      return defaultSetting
+    }
 
-  return settings as ModlogParse
+    return [setting.create, value]
+  })
+
+  return Object.fromEntries(settings) as ModlogParse
 }
 
 function toPrimitive(val: unknown): number | boolean | null | string {

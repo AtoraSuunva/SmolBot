@@ -1,21 +1,21 @@
-import { Prisma, PrismaPromise, Warning } from '@prisma/client'
+import { Readable } from 'node:stream'
+import type { Prisma, PrismaPromise, Warning } from '@prisma/client'
 import {
   BaseError,
-  BaseErrorJsonified,
+  type BaseErrorJsonified,
   CombinedError,
   CombinedPropertyError,
-  ObjectValidator,
+  type ObjectValidator,
   Result,
   s,
 } from '@sapphire/shapeshift'
-import { parse, Parser } from 'csv-parse'
+import { type Parser, parse } from 'csv-parse'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   codeBlock,
 } from 'discord.js'
-import { Readable } from 'node:stream'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 import { fetch } from 'undici'
 import { prisma } from '../../util/db.js'
@@ -110,7 +110,9 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
         )}\nat:\n${codeBlock('js', JSON.stringify(record, null, 2))}`,
       )
       return
-    } else if (validated.isOk()) {
+    }
+
+    if (validated.isOk()) {
       if (validated.value.guildID !== guild.id) {
         // This *SHOULDN'T* happen, but just in case because this would be REALLY bad
         await defer
@@ -158,7 +160,7 @@ const warningCreateValidator: ObjectValidator<Prisma.WarningCreateInput> = s
   .strict()
 
 function reshapeToNumber(value: string): Result<number> {
-  const parsed = parseInt(value, 10)
+  const parsed = Number.parseInt(value, 10)
 
   if (Number.isNaN(parsed)) {
     return Result.err(new Error(`Invalid number: ${value}`))
@@ -208,11 +210,11 @@ function formatBaseError(error: BaseError): FormattedBaseError {
       errors: error.errors.map((v) => {
         if (v instanceof BaseError) {
           return formatBaseError(v)
-        } else {
-          return {
-            property: v[0],
-            errors: formatBaseError(v[1]),
-          }
+        }
+
+        return {
+          property: v[0],
+          errors: formatBaseError(v[1]),
         }
       }),
     }

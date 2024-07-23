@@ -1,6 +1,6 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'

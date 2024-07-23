@@ -1,10 +1,10 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
-  MessageContextMenuCommandInteraction,
+  type MessageContextMenuCommandInteraction,
   MessageFlags,
   MessageFlagsBitField,
 } from 'discord.js'
-import { InteractionMessage, SleetMessageCommand } from 'sleetcord'
+import { type InteractionMessage, SleetMessageCommand } from 'sleetcord'
 
 export const restore_embeds = new SleetMessageCommand(
   {

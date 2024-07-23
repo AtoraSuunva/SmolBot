@@ -1,11 +1,11 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
-  PrivateThreadChannel,
-  PublicThreadChannel,
-  ThreadEditOptions,
+  type PrivateThreadChannel,
+  type PublicThreadChannel,
+  type ThreadEditOptions,
 } from 'discord.js'
 import {
   SleetSlashCommand,
@@ -56,8 +56,9 @@ async function logToChannel(
   thread: PublicThreadChannel | PrivateThreadChannel,
   reason: string,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const logChannelId = logToChannels[thread.parentId!]
+  if (thread.parentId === null) return
+
+  const logChannelId = logToChannels[thread.parentId]
 
   if (!logChannelId) return
 

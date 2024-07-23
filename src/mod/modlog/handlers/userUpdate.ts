@@ -1,4 +1,4 @@
-import { Guild, GuildMember, PartialUser, User } from 'discord.js'
+import type { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { UserUpdate } from '../modlog_manage.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
@@ -53,7 +53,6 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
       case UserUpdate.Both:
         if (!usernameUpdate && !avatarUpdate) continue
         break
-      case UserUpdate.None:
       default:
         continue
     }

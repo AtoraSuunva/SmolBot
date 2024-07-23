@@ -1,22 +1,23 @@
 import {
-  APIAuditLogChange,
-  AttachmentPayload,
+  type APIAuditLogChange,
+  type AttachmentPayload,
   AuditLogEvent,
   AutoModerationActionType,
   BaseChannel,
   ChannelType,
-  DMChannel,
-  GuildAuditLogsEntry,
-  GuildBasedChannel,
+  type DMChannel,
+  type GuildAuditLogsEntry,
+  type GuildBasedChannel,
   LimitedCollection,
-  NonThreadGuildBasedChannel,
+  type NonThreadGuildBasedChannel,
   OverwriteType,
-  TextBasedChannel,
+  type TextBasedChannel,
+  codeBlock,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { formatLog, getValidatedConfigFor } from '../../utils.js'
 import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
-import { AuditInfo, resolveUser } from './index.js'
+import { type AuditInfo, resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
   AuditLogEvent,
@@ -71,10 +72,10 @@ export async function logChannelModified(
         (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel)
       : auditLogEntry.targetId
         ? // Use our cache or try to fetch the channel from discord
-          (tempStoredChannels.get(auditLogEntry.targetId) ??
+          tempStoredChannels.get(auditLogEntry.targetId) ??
           (auditLogEntry.action !== AuditLogEvent.ChannelDelete
             ? await guild.channels.fetch(auditLogEntry.targetId)
-            : null))
+            : null)
         : // Give up and use just the ID
           auditLogEntry.targetId
 
@@ -108,7 +109,7 @@ export async function logChannelModified(
 
   if (changelog.length <= 1800) {
     message = `${headline}${
-      changelog ? '\n```diff\n' + changelog + '\n```' : ''
+      changelog ? `\n${codeBlock('diff', changelog)}` : ''
     }`
   } else {
     message = `${headline}\nChangelog is too long to display here, see attached file for details.`
@@ -116,7 +117,7 @@ export async function logChannelModified(
     files = [
       {
         attachment: Buffer.from(changelog),
-        name: `changelog.txt`,
+        name: 'changelog.txt',
       },
     ]
   }
@@ -225,9 +226,9 @@ function formatChange(change: AuditLogChange): string {
 
   if ('emoji_id' in change) {
     return `<Emoji:${change.emoji_name ?? change.emoji_id}>`
-  } else {
-    return '<AutoModerationRuleTriggerMetadata>'
   }
+
+  return '<AutoModerationRuleTriggerMetadata>'
 }
 
 type AuditLogChangeArray = Extract<APIAuditLogChange['old_value'], unknown[]>
@@ -239,11 +240,17 @@ function formatChangeArray(change: AuditLogChangeArray): string {
 
       if ('position' in c) {
         return `<Role:${c.name} (${c.id}) [p:${c.permissions}]>`
-      } else if ('allow' in c) {
+      }
+
+      if ('allow' in c) {
         return `<Overwrite:${OverwriteType[c.type]} (${c.id}) [a:${c.allow}/d:${c.deny}]>`
-      } else if ('type' in c) {
+      }
+
+      if ('type' in c) {
         return `<AutoModerationAction:${AutoModerationActionType[c.type]}>`
-      } else if ('moderated' in c) {
+      }
+
+      if ('moderated' in c) {
         return `<ForumTag:${c.name} (${c.id})>`
       }
 

@@ -1,13 +1,13 @@
 import {
-  AttachmentPayload,
-  Embed,
+  type AttachmentPayload,
+  type Embed,
   EmbedBuilder,
-  GuildMember,
+  type GuildMember,
   InteractionType,
-  Message,
+  type Message,
   MessageType,
-  PartialMessage,
-  User,
+  type PartialMessage,
+  type User,
   codeBlock,
   escapeCodeBlock,
   escapeMarkdown,
@@ -16,7 +16,7 @@ import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import {
-  MessageDeleteAuditLog,
+  type MessageDeleteAuditLog,
   deleteEvents,
 } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
@@ -132,16 +132,11 @@ export async function messageDeleteWithAuditLog(
 
   const { executor, reason } = auditLog ?? {}
 
-  let msg =
-    `(${message.id}) in ${message.channel}` +
-    (executor ? ` by ${formatUser(executor)}` : '') +
-    (reason ? ` for "${reason}"` : '') +
-    (editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : '') +
-    '\n' +
-    (attachProxy.length > 0
+  let msg = `(${message.id}) in ${message.channel}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
+    attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
-      : '') +
-    (stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : '')
+      : ''
+  }${stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : ''}`
 
   // +100 to give us some more headroom
   const deletedMessageLength = messageContent.length + 100

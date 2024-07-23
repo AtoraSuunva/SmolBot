@@ -1,8 +1,8 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  GuildMember,
+  type ChatInputCommandInteraction,
+  type GuildMember,
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'

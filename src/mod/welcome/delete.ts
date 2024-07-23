@@ -1,11 +1,11 @@
 import {
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonInteraction,
+  type ButtonInteraction,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   ComponentType,
-  Guild,
+  type Guild,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
@@ -64,7 +64,6 @@ async function runDelete(
     time: 2 * MINUTE,
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (i) => {
     if (i.user.id === interaction.user.id) {
       await deleteWelcomeSettingsFrom(guild, i)

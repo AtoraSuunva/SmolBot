@@ -1,10 +1,10 @@
-import { ActionLogConfig } from '@prisma/client'
-import { AuditLogEvent, Guild, GuildAuditLogsEntry } from 'discord.js'
+import type { ActionLogConfig } from '@prisma/client'
+import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import PQueue from 'p-queue'
 import { SleetModule } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import {
-  ActionLogEntry,
+  type ActionLogEntry,
   fetchActionLogConfigFor,
   formatToLog,
   markActionlogArchiveDirty,
@@ -155,20 +155,24 @@ function getLogAction(
 ): ActionLogEntry['action'] | null {
   if (config.logBans && auditLogEntry.action === AuditLogEvent.MemberBanAdd) {
     return 'ban'
-  } else if (
+  }
+
+  if (
     config.logUnbans &&
     auditLogEntry.action === AuditLogEvent.MemberBanRemove
   ) {
     return 'unban'
-  } else if (
-    config.logKicks &&
-    auditLogEntry.action === AuditLogEvent.MemberKick
-  ) {
+  }
+
+  if (config.logKicks && auditLogEntry.action === AuditLogEvent.MemberKick) {
     return 'kick'
-  } else if (auditLogEntry.action === AuditLogEvent.MemberUpdate) {
+  }
+
+  if (auditLogEntry.action === AuditLogEvent.MemberUpdate) {
     if (config.logTimeouts && isTimeout(auditLogEntry)) {
       return 'timeout'
-    } else if (config.logTimeoutRemovals && isTimeoutRemoval(auditLogEntry)) {
+    }
+    if (config.logTimeoutRemovals && isTimeoutRemoval(auditLogEntry)) {
       return 'timeout removed'
     }
   }

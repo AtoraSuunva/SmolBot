@@ -3,7 +3,11 @@ import {
   ApplicationIntegrationType,
   InteractionContextType,
 } from 'discord-api-types/v10'
-import { ChatInputCommandInteraction, TimestampStyles, time } from 'discord.js'
+import {
+  type ChatInputCommandInteraction,
+  TimestampStyles,
+  time,
+} from 'discord.js'
 import { DateTime } from 'luxon'
 import createParse from 'parse-human-relative-time'
 import { SleetSlashCommand } from 'sleetcord'

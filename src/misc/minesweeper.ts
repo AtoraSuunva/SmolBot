@@ -1,8 +1,8 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { SleetSlashCommand, PreRunError } from 'sleetcord'
+import { PreRunError, SleetSlashCommand } from 'sleetcord'
 
 /**
  * Generate a minesweeper grid that you can play using spoilers
@@ -56,17 +56,15 @@ function runMinesweeper(interaction: ChatInputCommandInteraction) {
 
   const { grid, minecount, safe } = createMinesweeper(height, width, mines)
 
-  const message =
-    `*Mines: ${minecount}*\n` +
-    grid
-      .map((row, y) =>
-        row
-          .map((v, x) =>
-            safe[0] === y && safe[1] === x ? charMap(v) : `||${charMap(v)}||`,
-          )
-          .join(''),
-      )
-      .join('\n')
+  const message = `*Mines: ${minecount}*\n${grid
+    .map((row, y) =>
+      row
+        .map((v, x) =>
+          safe[0] === y && safe[1] === x ? charMap(v) : `||${charMap(v)}||`,
+        )
+        .join(''),
+    )
+    .join('\n')}`
 
   if (message.length > 2000) {
     return interaction.reply({
@@ -119,12 +117,15 @@ interface MinesweeperGame {
  * @returns A whole minesweeper game ready to be deployed
  */
 function createMinesweeper(height = 7, width = 7, mines = 0): MinesweeperGame {
-  mines = mines || Math.floor((height * width) / 4) || 1
+  const minesToPlace = mines || Math.floor((height * width) / 4) || 1
   let minecount = 0
-  let safe: [number, number] = [Infinity, Infinity]
+  let safe: [number, number] = [
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+  ]
   const grid = genGrid(height, width)
 
-  for (let i = 0; i < mines; i++) {
+  for (let i = 0; i < minesToPlace; i++) {
     const x = randInt(0, width - 1)
     const y = randInt(0, height - 1)
     if (grid[y][x] === MINE) i--
@@ -140,7 +141,8 @@ function createMinesweeper(height = 7, width = 7, mines = 0): MinesweeperGame {
       }
 
       // 50% chance to swap safe spot
-      if (safe[0] === Infinity || Math.floor(Math.random() * 2)) safe = [y, x]
+      if (safe[0] === Number.POSITIVE_INFINITY || Math.floor(Math.random() * 2))
+        safe = [y, x]
       grid[y][x] = countMines(x, y, grid)
     }
   }
@@ -166,13 +168,12 @@ type Grid = (number | string)[][]
  * @returns A grid of 0s
  */
 function genGrid(height: number, width: number): Grid {
-  const grid: number[][] = []
-  while (height--) {
-    const row: number[] = []
-    let w = width
-    while (w--) row.push(0)
-    grid.push(row)
+  const grid: number[][] = Array.from(Array(height)).map(() => [])
+
+  for (const row of grid) {
+    row.push(...Array(width).fill(0))
   }
+
   return grid
 }
 

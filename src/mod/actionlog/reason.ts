@@ -1,13 +1,13 @@
-import { ActionLog, ActionLogConfig } from '@prisma/client'
+import type { ActionLog, ActionLogConfig } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  Guild,
-  User,
+  type ChatInputCommandInteraction,
+  type Guild,
+  type User,
 } from 'discord.js'
 import {
-  AutocompleteHandler,
+  type AutocompleteHandler,
   SleetSlashCommand,
   formatUser,
   getGuild,
@@ -16,7 +16,7 @@ import { prisma } from '../../util/db.js'
 import { capitalize, plural } from '../../util/format.js'
 import { sleep } from '../../util/functions.js'
 import {
-  ActionLogEntry,
+  type ActionLogEntry,
   collapseSequence,
   fetchActionLogConfigFor,
   formatToLog,
@@ -83,7 +83,7 @@ const actionIDAutocomplete: AutocompleteHandler<string> = async ({
     if (collapsed.length > 100) {
       return [
         {
-          name: `Result is too long to display!`,
+          name: 'Result is too long to display!',
           value: '',
         },
       ]
@@ -252,9 +252,9 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 function formatReason(reason: string): string {
   if (reason.includes('\n')) {
     return `:\n> ${reason.replace(/\n/g, '\n> ')}`
-  } else {
-    return ` "${reason}"`
   }
+
+  return ` "${reason}"`
 }
 
 interface EditActionLogSuccess {
