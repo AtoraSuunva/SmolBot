@@ -5,7 +5,7 @@ import {
 } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
@@ -89,7 +89,6 @@ function characterInfo(char: string): string[] {
   let i = 0
   const info: string[] = []
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
   while (true) {
     const codePoint = char.codePointAt(i)
     const charCode = char.charCodeAt(i)
@@ -106,7 +105,7 @@ function characterInfo(char: string): string[] {
     const categories = uniGetCategories.code(charCode)
     const scripts = uniGetScripts.code(charCode)
 
-    const prelude = i == 0 ? `- '${char}':` : '  -'
+    const prelude = i === 0 ? `- '${char}':` : '  -'
 
     const unicodeInfo = `${unicodePoint} (${
       block.displayName

@@ -1,9 +1,9 @@
 import {
-  APIApplicationCommandBasicOption,
-  APIApplicationCommandOptionChoice,
+  type APIApplicationCommandBasicOption,
+  type APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
   Constants,
-  Guild,
+  type Guild,
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
 import { prisma } from '../../util/db.js'

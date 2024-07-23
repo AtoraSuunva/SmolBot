@@ -1,4 +1,8 @@
-import { EmbedBuilder, GuildMember, PartialGuildMember } from 'discord.js'
+import {
+  EmbedBuilder,
+  type GuildMember,
+  type PartialGuildMember,
+} from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, formatUser } from 'sleetcord'
 import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
@@ -39,7 +43,7 @@ async function handleGuildMemberRemove(
   const embed = new EmbedBuilder()
     .setDescription(
       `**${member.guild.memberCount.toLocaleString()}** Members\n${
-        roles ? '**Roles:** ' + roles : ''
+        roles ? `**Roles:** ${roles}` : ''
       }`,
     )
     .setColor(EVENT_COLORS.memberRemove)

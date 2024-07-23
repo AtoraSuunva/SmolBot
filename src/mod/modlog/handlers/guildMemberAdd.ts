@@ -1,10 +1,10 @@
 import {
-  Client,
-  Collection,
+  type Client,
+  type Collection,
   EmbedBuilder,
-  Guild,
-  GuildMember,
-  Invite,
+  type Guild,
+  type GuildMember,
+  type Invite,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, formatUser } from 'sleetcord'

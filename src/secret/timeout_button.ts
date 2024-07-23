@@ -4,8 +4,8 @@ import {
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
-  Interaction,
+  type ChatInputCommandInteraction,
+  type Interaction,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
@@ -62,7 +62,7 @@ async function handleInteractionCreate(interaction: Interaction) {
     const [command, timeString] = interaction.customId.split(':')
 
     if (command === 'timeout_button') {
-      const time = parseInt(timeString, 10)
+      const time = Number.parseInt(timeString, 10)
       const guild = await getGuild(interaction, true)
       const member = await guild.members.fetch(interaction.user.id)
 

@@ -1,4 +1,4 @@
-import { codeBlock, Guild } from 'discord.js'
+import { type Guild, codeBlock } from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 
@@ -31,12 +31,12 @@ export const guildFormatter: Formatter = (value: Value, guild?: Guild) =>
 
 export const channelFormatter: Formatter = (value: Value, guild?: Guild) =>
   `#${
-    guild?.channels.cache.get(value as string)?.name ?? `unknown-channel`
+    guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
   } (${String(value)})`
 
 export const roleFormatter: Formatter = (value: Value, guild?: Guild) =>
   `@${
-    guild?.roles.cache.get(value as string)?.name ?? `unknown-role`
+    guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
   } (${String(value)})`
 
 const defaultFormatters: Record<string, Formatter> = {
@@ -180,7 +180,7 @@ export function tableFormat<T extends object>(
   const columnNames =
     options?.columnsNames ?? ({} as Record<keyof T, string | undefined>)
   const showNullish = options?.showNullish ?? true
-  const characterLimit = options?.characterLimit ?? Infinity
+  const characterLimit = options?.characterLimit ?? Number.POSITIVE_INFINITY
   let currentLength = 0
 
   const header: string[] = []

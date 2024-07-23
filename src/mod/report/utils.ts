@@ -1,23 +1,23 @@
-import { UserReport } from '@prisma/client'
+import type { UserReport } from '@prisma/client'
 import {
-  ActionRow,
+  type ActionRow,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonInteraction,
+  type ButtonInteraction,
   ButtonStyle,
   Colors,
   ComponentType,
   DiscordjsError,
-  EmbedAuthorOptions,
+  type EmbedAuthorOptions,
   EmbedBuilder,
-  EmbedFooterOptions,
-  Interaction,
-  MessageActionRowComponent,
-  ModalActionRowComponentBuilder,
+  type EmbedFooterOptions,
+  type Interaction,
+  type MessageActionRowComponent,
+  type ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  User,
+  type User,
   blockQuote,
   codeBlock,
   hyperlink,
@@ -25,7 +25,7 @@ import {
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
-import { ReportConfigResolved } from './manage/config.js'
+import type { ReportConfigResolved } from './manage/config.js'
 
 const REPORT = 'report'
 

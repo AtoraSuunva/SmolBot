@@ -1,15 +1,15 @@
-import { Warning } from '@prisma/client'
+import type { Warning } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   EmbedBuilder,
 } from 'discord.js'
-import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { updateWarning } from './edit.js'
 import {
-  formatWarningToField,
   fetchWarningConfigFor,
+  formatWarningToField,
   markWarningArchiveDirty,
 } from './utils.js'
 

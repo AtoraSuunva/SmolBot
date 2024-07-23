@@ -1,7 +1,7 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand, getTextBasedChannel, inGuildGuard } from 'sleetcord'
 

@@ -1,10 +1,10 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
-  GuildTextBasedChannel,
-  VoiceState,
+  type GuildTextBasedChannel,
+  type VoiceState,
 } from 'discord.js'
 import {
   SleetSlashCommand,

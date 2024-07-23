@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction } from 'discord.js'
+import { type ChatInputCommandInteraction, codeBlock } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
 /** Generates a random fursona! */
@@ -18,15 +18,15 @@ async function runFurrygen(interaction: ChatInputCommandInteraction) {
 
   for (const field of fieldList) {
     const val = arrayPick(fields[field as keyof typeof fields])
-    const formattedVal = typeof val === 'function' ? val() : (val ?? 'None')
+    const formattedVal = typeof val === 'function' ? val() : val ?? 'None'
     lines.push(`${field.padEnd(maxFieldLength)} :: ${formattedVal}`)
   }
 
   await interaction.reply({
-    content: `Here is your assigned fursona!`,
+    content: 'Here is your assigned fursona!',
     embeds: [
       {
-        description: '```asciidoc\n' + lines.join('\n') + '\n```',
+        description: codeBlock('asciidoc', lines.join('\n')),
       },
     ],
   })
@@ -332,9 +332,9 @@ const maxFieldLength =
  * @returns A random int between [min, max], inclusive
  */
 function randInt(min: number, max: number): number {
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  return Math.floor(Math.random() * (max - min + 1)) + min
+  const min2 = Math.ceil(min)
+  const max2 = Math.floor(max)
+  return Math.floor(Math.random() * (max2 - min2 + 1)) + min2
 }
 
 /**

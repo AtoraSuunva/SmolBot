@@ -4,11 +4,12 @@ import {
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   EmbedBuilder,
   GuildMember,
-  Interaction,
-  Role,
+  type Interaction,
+  type Role,
+  codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 
@@ -159,10 +160,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
 
   if (fails.length > 0) {
     await interaction.reply({
-      content:
-        'Found some issues while trying to setup roles, try again:\n```\n' +
-        fails.join('\n') +
-        '\n```',
+      content: `Found some issues while trying to setup roles, try again:\n${codeBlock(fails.join('\n'))}`,
       ephemeral: true,
     })
     return
@@ -221,8 +219,8 @@ async function handleInteractionCreate(interaction: Interaction) {
   if (onlyOne) {
     const otherRoles: Role[] = []
 
-    interaction.message.components.forEach((row) => {
-      row.components.forEach((button) => {
+    for (const row of interaction.message.components) {
+      for (const button of row.components) {
         if (button.customId === interaction.customId || !button.customId) return
 
         const otherRole = guild.roles.cache.get(button.customId.split(':')[1])
@@ -230,8 +228,8 @@ async function handleInteractionCreate(interaction: Interaction) {
         if (otherRole) {
           otherRoles.push(otherRole)
         }
-      })
-    })
+      }
+    }
 
     if (otherRoles.length > 0) {
       removeRoles.push(

@@ -1,5 +1,5 @@
-import { ActionLogConfig, ActionLogDirtyTracker } from '@prisma/client'
-import { Guild, GuildMember, User, time } from 'discord.js'
+import type { ActionLogConfig, ActionLogDirtyTracker } from '@prisma/client'
+import { Guild, type GuildMember, type User, time } from 'discord.js'
 import { PreRunError, formatUser } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
@@ -18,7 +18,6 @@ export interface ActionLogEntry {
 }
 
 const userLog = async (user: User | GuildMember): Promise<string> =>
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   formatUser(user.partial ? await user.fetch() : user, {
     mention: true,
   })
@@ -106,7 +105,7 @@ export async function fetchActionLogConfigFor(
 
   if (!config && required) {
     throw new PreRunError(
-      `No actionlog config found for this guild. Please run \`/actionlog manage\` to set one up.`,
+      'No actionlog config found for this guild. Please run `/actionlog manage` to set one up.',
     )
   }
 
@@ -184,7 +183,7 @@ export async function fetchActionlogPendingArchive() {
 export function range(
   start: number,
   end: number,
-  maxSize = Infinity,
+  maxSize = Number.POSITIVE_INFINITY,
 ): number[] {
   if (start > end) {
     return range(end, start, maxSize)
@@ -224,29 +223,31 @@ export async function resolveIDs(
     return []
   }
 
-  idResolvable = idResolvable.trim().toLowerCase()
+  let resolvedId = idResolvable.trim().toLowerCase()
 
-  const autocompleteResult = idResolvable.match(/^#(\d+) \[\w+\] —.*$/)
+  const autocompleteResult = resolvedId.match(/^#(\d+) \[\w+\] —.*$/)
 
   if (autocompleteResult) {
-    return [parseInt(autocompleteResult[1], 10)]
+    return [Number.parseInt(autocompleteResult[1], 10)]
   }
 
-  if (idResolvable.match(/^\d+$/)) {
-    const number = parseInt(idResolvable, 10)
+  if (resolvedId.match(/^\d+$/)) {
+    const number = Number.parseInt(resolvedId, 10)
 
-    if (!isNaN(number)) {
+    if (!Number.isNaN(number)) {
       return [number]
     }
   }
 
+  let resolvedGuildOrLatestActionId = guildOrLatestActionId
+
   if (
-    (idResolvable.includes('l') || idResolvable.includes('latest')) &&
-    guildOrLatestActionId instanceof Guild
+    (resolvedId.includes('l') || resolvedId.includes('latest')) &&
+    resolvedGuildOrLatestActionId instanceof Guild
   ) {
     const latest = await prisma.actionLog.findFirst({
       where: {
-        guildID: guildOrLatestActionId.id,
+        guildID: resolvedGuildOrLatestActionId.id,
         validUntil: null,
       },
       orderBy: {
@@ -258,30 +259,30 @@ export async function resolveIDs(
       throw new Error('Cannot find the latest action')
     }
 
-    guildOrLatestActionId = latest.actionID
+    resolvedGuildOrLatestActionId = latest.actionID
   }
 
-  if (idResolvable.includes(',')) {
+  if (resolvedId.includes(',')) {
     return await Promise.all(
-      idResolvable
+      resolvedId
         .split(',')
         .slice(0, maxIDs)
-        .map((id) => resolveIDs(guildOrLatestActionId, id.trim())),
+        .map((id) => resolveIDs(resolvedGuildOrLatestActionId, id.trim())),
     ).then((ids) => [...new Set(ids.flat())])
   }
 
-  idResolvable = idResolvable.toLowerCase()
+  resolvedId = resolvedId.toLowerCase()
 
-  if (idResolvable.includes('..')) {
-    const [startResolvable, endResolvable] = idResolvable.split('..')
+  if (resolvedId.includes('..')) {
+    const [startResolvable, endResolvable] = resolvedId.split('..')
 
     if (startResolvable.includes('..') || endResolvable.includes('..')) {
       throw new Error('Invalid range, you cannot chain ranges')
     }
 
     const [start, end] = await Promise.all([
-      resolveIDs(guildOrLatestActionId, startResolvable),
-      resolveIDs(guildOrLatestActionId, endResolvable),
+      resolveIDs(resolvedGuildOrLatestActionId, startResolvable),
+      resolveIDs(resolvedGuildOrLatestActionId, endResolvable),
     ])
 
     if (start.length !== 1 || end.length !== 1) {
@@ -291,16 +292,19 @@ export async function resolveIDs(
     return range(start[0], end[0], maxIDs)
   }
 
-  if (idResolvable.includes('~')) {
-    const [startResolvable, endResolvable] = idResolvable.split('~')
+  if (resolvedId.includes('~')) {
+    const [startResolvable, endResolvable] = resolvedId.split('~')
 
-    const end = parseInt(endResolvable, 10)
+    const end = Number.parseInt(endResolvable, 10)
 
-    if (isNaN(end)) {
+    if (Number.isNaN(end)) {
       throw new Error('Invalid offset, you need a number ie. l~1')
     }
 
-    const start = await resolveIDs(guildOrLatestActionId, startResolvable)
+    const start = await resolveIDs(
+      resolvedGuildOrLatestActionId,
+      startResolvable,
+    )
 
     if (start.length !== 1) {
       throw new Error('Invalid offset, is the initial id not a number?')
@@ -310,10 +314,10 @@ export async function resolveIDs(
   }
 
   if (
-    ['l', 'latest'].includes(idResolvable) &&
-    typeof guildOrLatestActionId === 'number'
+    ['l', 'latest'].includes(resolvedId) &&
+    typeof resolvedGuildOrLatestActionId === 'number'
   ) {
-    return [guildOrLatestActionId]
+    return [resolvedGuildOrLatestActionId]
   }
 
   throw new Error(
@@ -332,7 +336,9 @@ export async function resolveIDs(
 export function collapseSequence(numbers: number[]): string {
   if (numbers.length === 0) {
     return ''
-  } else if (numbers.length === 1) {
+  }
+
+  if (numbers.length === 1) {
     return `${numbers[0]}`
   }
 

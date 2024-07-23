@@ -1,14 +1,14 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  Guild,
-  GuildMember,
+  type ChatInputCommandInteraction,
+  type Guild,
+  type GuildMember,
   codeBlock,
   escapeCodeBlock,
 } from 'discord.js'
 import {
-  AutocompleteHandler,
+  type AutocompleteHandler,
   SleetSlashCommand,
   escapeAllMarkdown,
   formatUser,
@@ -81,19 +81,21 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
       content: `No users found matching "${escapeAllMarkdown(user)}"`,
       allowedMentions: { parse: [] },
     })
-  } else if (matches.length === 1) {
+  }
+
+  if (matches.length === 1) {
     return interaction.editReply({
       content: formatUser(matches[0].member),
       allowedMentions: { parse: [] },
     })
-  } else {
-    return interaction.editReply({
-      content: `Multiple users found matching "${escapeAllMarkdown(
-        user,
-      )}":\n${resultFormat(matches)}`,
-      allowedMentions: { parse: [] },
-    })
   }
+
+  return interaction.editReply({
+    content: `Multiple users found matching "${escapeAllMarkdown(
+      user,
+    )}":\n${resultFormat(matches)}`,
+    allowedMentions: { parse: [] },
+  })
 }
 
 function resultFormat(data: MemberMatch[]): string {

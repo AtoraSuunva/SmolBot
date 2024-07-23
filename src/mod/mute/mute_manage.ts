@@ -1,8 +1,8 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
@@ -57,14 +57,14 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing mute config, use `/mute_manage` with options to create one.",
       })
-    } else {
-      return interaction.reply({
-        content: `Current config:\n${formatConfig({
-          config: oldConfig,
-          guild,
-        })}`,
-      })
     }
+
+    return interaction.reply({
+      content: `Current config:\n${formatConfig({
+        config: oldConfig,
+        guild,
+      })}`,
+    })
   }
 
   const role = interaction.options.getRole('role')
@@ -72,11 +72,11 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
   const unset = interaction.options.getString('unset')
 
   const toUpsert: Omit<Prisma.MuteConfigCreateInput, 'guildID'> = {
-    roleID: unset === 'role' ? null : (role?.id ?? oldConfig?.roleID ?? null),
+    roleID: unset === 'role' ? null : role?.id ?? oldConfig?.roleID ?? null,
     logChannelID:
       unset === 'log_channel'
         ? null
-        : (logChannel?.id ?? oldConfig?.logChannelID ?? null),
+        : logChannel?.id ?? oldConfig?.logChannelID ?? null,
   }
 
   const newConfig = await prisma.muteConfig.upsert({

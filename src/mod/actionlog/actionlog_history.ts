@@ -1,21 +1,21 @@
-import { ActionLog } from '@prisma/client'
+import type { ActionLog } from '@prisma/client'
 import {
-  APIEmbedField,
+  type APIEmbedField,
   ActionRowBuilder,
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   EmbedBuilder,
-  Guild,
-  InteractionEditReplyOptions,
+  type Guild,
+  type InteractionEditReplyOptions,
   StringSelectMenuBuilder,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { updateActionLog } from './reason.js'
-import { ActionLogEntry, formatToLog } from './utils.js'
+import { type ActionLogEntry, formatToLog } from './utils.js'
 
 export const actionlog_history = new SleetSlashSubcommand(
   {
@@ -114,7 +114,6 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
     idle: MINUTE * 5, // Stop if there's been no interaction in 5 minutes
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (componentInteraction) => {
     if (componentInteraction.user.id !== interaction.user.id) {
       await componentInteraction.reply({
@@ -137,7 +136,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
       componentInteraction.isStringSelectMenu() &&
       componentInteraction.customId === SELECT_REVERT
     ) {
-      const version = parseInt(componentInteraction.values[0])
+      const version = Number.parseInt(componentInteraction.values[0])
 
       const action = await prisma.actionLog.findFirst({
         where: {

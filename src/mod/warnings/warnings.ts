@@ -1,12 +1,12 @@
 import { SleetSlashCommand } from 'sleetcord'
 import { warningsAdd } from './add.js'
-import { warningsSearch } from './search.js'
 import { warningsEdit } from './edit.js'
-import { warningsHistory } from './history.js'
-import { warningsRevert } from './revert.js'
 import { warningsExport } from './export.js'
+import { warningsHistory } from './history.js'
 import { importWarnings } from './import_warnings.js'
 import { myWarnings } from './my_warnings.js'
+import { warningsRevert } from './revert.js'
+import { warningsSearch } from './search.js'
 
 export const warnings = new SleetSlashCommand(
   {

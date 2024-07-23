@@ -1,6 +1,6 @@
-import { WelcomeSettings } from '@prisma/client'
+import type { WelcomeSettings } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
-import {
+import type {
   Guild,
   GuildMember,
   GuildTextBasedChannel,

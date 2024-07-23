@@ -1,12 +1,13 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   EmbedBuilder,
-  Guild,
-  GuildBan,
-  Invite,
-  User,
+  type Guild,
+  type GuildBan,
+  type Invite,
+  type User,
+  codeBlock,
 } from 'discord.js'
 import {
   SleetSlashCommand,
@@ -140,5 +141,5 @@ function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
     })
     .setColor('#f44336')
     .setTitle('Revoked Invites:')
-    .setDescription('```md\n' + inviteList.join('\n') + '```')
+    .setDescription(codeBlock('md', inviteList.join('\n')))
 }

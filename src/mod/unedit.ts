@@ -1,15 +1,15 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  codeBlock,
+  type ChatInputCommandInteraction,
   Collection,
-  CommandInteraction,
-  Message,
-  MessageContextMenuCommandInteraction,
-  PartialMessage,
+  type CommandInteraction,
+  type Message,
+  type MessageContextMenuCommandInteraction,
+  type PartialMessage,
+  codeBlock,
 } from 'discord.js'
-import { isLikelyID, SleetMessageCommand, SleetSlashCommand } from 'sleetcord'
+import { SleetMessageCommand, SleetSlashCommand, isLikelyID } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 
 export const unedit = new SleetSlashCommand(
@@ -156,7 +156,7 @@ function getMessageLinkIds(str: string): MessageLinkMatches | null {
 function getMessageId(str: string): string | null {
   if (isLikelyID(str)) {
     return str
-  } else {
-    return getMessageLinkIds(str)?.messageId ?? null
   }
+
+  return getMessageLinkIds(str)?.messageId ?? null
 }

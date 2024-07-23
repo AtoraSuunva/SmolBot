@@ -5,9 +5,9 @@ import {
 } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, escapeAllMarkdown } from 'sleetcord'
 
 export const roll = new SleetSlashCommand(
   {
@@ -88,7 +88,8 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     )
   }
 
-  const content = result.join('\n')
+  const output = result.join('\n')
+  const content = escapeAllMarkdown(output)
 
   if (content.length > 2000) {
     return interaction.reply({
@@ -96,15 +97,14 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
       files: [
         {
           name: 'roll.txt',
-          attachment: Buffer.from(content),
+          attachment: Buffer.from(output),
         },
       ],
       ephemeral,
     })
-  } else {
-    return interaction.reply({
-      content,
-      ephemeral,
-    })
   }
+  return interaction.reply({
+    content,
+    ephemeral,
+  })
 }

@@ -1,5 +1,10 @@
-import { ModLogConfig } from '@prisma/client'
-import { Guild, GuildTextBasedChannel, TextChannel, time } from 'discord.js'
+import type { ModLogConfig } from '@prisma/client'
+import {
+  type Guild,
+  type GuildTextBasedChannel,
+  type TextChannel,
+  time,
+} from 'discord.js'
 import { prisma } from '../../util/db.js'
 
 export enum EVENT_COLORS {

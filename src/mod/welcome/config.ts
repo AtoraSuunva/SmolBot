@@ -1,20 +1,20 @@
-import { WelcomeSettings, Prisma } from '@prisma/client'
+import type { Prisma, WelcomeSettings } from '@prisma/client'
 import {
-  APIEmbedField,
+  type APIEmbedField,
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
   EmbedBuilder,
 } from 'discord.js'
 import {
+  SleetSlashSubcommand,
   getGuild,
   getRoles,
   getTextBasedChannel,
-  SleetSlashSubcommand,
 } from 'sleetcord'
+import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
-import { getOptionCount } from 'sleetcord-common'
 
 type NewWelcomeSettings = Prisma.WelcomeSettingsCreateInput | null
 
@@ -121,13 +121,13 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing welcome config, use `/welcome config` with options to create one.",
       })
-    } else {
-      const embed = createWelcomeEmbed(oldConfig)
-      return interaction.editReply({
-        content: 'These are your current settings',
-        embeds: [embed],
-      })
     }
+
+    const embed = createWelcomeEmbed(oldConfig)
+    return interaction.editReply({
+      content: 'These are your current settings',
+      embeds: [embed],
+    })
   }
 
   // Settings specified, edit the current settings
@@ -163,22 +163,45 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
     }
   } else {
     // Previous welcome, edit it
-    if (message !== null)
-      (newWelcome.message = message), changes.push('message')
-    if (channel !== null)
-      (newWelcome.channel = channel.id), changes.push('channel')
-    if (unsetChannel === true)
-      (newWelcome.channel = null), changes.push('channel')
-    if (rejoins !== null)
-      (newWelcome.rejoins = rejoins), changes.push('rejoins')
-    if (instant !== null)
-      (newWelcome.instant = instant), changes.push('instant')
-    if (ignoreRoles !== null)
-      (newWelcome.ignoreRoles = ignoreRoles), changes.push('ignore_roles')
-    if (reactWith !== null)
-      (newWelcome.reactWith = reactWith), changes.push('react_with')
-    if (String(reactWithOption?.value).toLowerCase() === 'none')
-      (newWelcome.reactWith = null), changes.push('react_with')
+    if (message !== null) {
+      newWelcome.message = message
+      changes.push('message')
+    }
+
+    if (channel !== null) {
+      newWelcome.channel = channel.id
+      changes.push('channel')
+    }
+
+    if (unsetChannel === true) {
+      newWelcome.channel = null
+      changes.push('channel')
+    }
+
+    if (rejoins !== null) {
+      newWelcome.rejoins = rejoins
+      changes.push('rejoins')
+    }
+
+    if (instant !== null) {
+      newWelcome.instant = instant
+      changes.push('instant')
+    }
+
+    if (ignoreRoles !== null) {
+      newWelcome.ignoreRoles = ignoreRoles
+      changes.push('ignore_roles')
+    }
+
+    if (reactWith !== null) {
+      newWelcome.reactWith = reactWith
+      changes.push('react_with')
+    }
+
+    if (String(reactWithOption?.value).toLowerCase() === 'none') {
+      newWelcome.reactWith = null
+      changes.push('react_with')
+    }
   }
 
   // There's an old config and no changes were made

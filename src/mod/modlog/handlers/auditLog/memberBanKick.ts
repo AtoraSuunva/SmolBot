@@ -1,7 +1,7 @@
-import { AuditLogEvent, GuildAuditLogsEntry } from 'discord.js'
-import { AuditInfo, resolveUser } from './index.js'
+import { AuditLogEvent, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
 import { formatLog } from '../../utils.js'
+import { type AuditInfo, resolveUser } from './index.js'
 
 export type BanAuditLog = GuildAuditLogsEntry<
   AuditLogEvent,

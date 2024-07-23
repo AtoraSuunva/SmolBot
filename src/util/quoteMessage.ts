@@ -1,8 +1,8 @@
 import {
-  Attachment,
+  type Attachment,
   EmbedBuilder,
   InteractionType,
-  Message,
+  type Message,
   MessageType,
   hyperlink,
 } from 'discord.js'
@@ -352,7 +352,7 @@ function formatQuoteContent(content: string): string | null {
 
   if (lines.length > MAX_QUOTE_LINES) {
     return `${lines.slice(0, MAX_QUOTE_LINES).join('\n')}...`
-  } else {
-    return lines.join('\n')
   }
+
+  return lines.join('\n')
 }

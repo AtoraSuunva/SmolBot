@@ -1,10 +1,10 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
-  APIApplicationCommandOption,
+  type APIApplicationCommandOption,
   ApplicationCommandOptionType,
-  AttachmentPayload,
-  ChatInputCommandInteraction,
-  Guild,
+  type AttachmentPayload,
+  type ChatInputCommandInteraction,
+  type Guild,
   GuildMember,
   User,
   codeBlock,
@@ -281,9 +281,9 @@ async function runMassSoftban(interaction: ChatInputCommandInteraction) {
 }
 
 enum UserType {
-  Everyone,
-  MembersOnly,
-  NonMembersOnly,
+  Everyone = 0,
+  MembersOnly = 1,
+  NonMembersOnly = 2,
 }
 
 interface RunMassActionOptions {
@@ -612,13 +612,13 @@ async function runMassAction({
 function formatUserOrId(
   idOnly: boolean,
   user: UserOrId,
-  escape = false,
+  escapeMarkdown = false,
 ): string {
   return typeof user === 'string'
     ? user
     : idOnly
       ? user.id
-      : formatUser(user, { markdown: false, escape })
+      : formatUser(user, { markdown: false, escape: escapeMarkdown })
 }
 
 function actionResultToUserOrId(

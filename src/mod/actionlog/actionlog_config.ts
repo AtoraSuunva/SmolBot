@@ -1,7 +1,7 @@
-import { ActionLogConfig } from '@prisma/client'
+import type { ActionLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
@@ -82,17 +82,16 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing action log config, use `/actionlog_config` with options to create one.",
       })
-    } else {
-      return interaction.reply({
-        content: `Current config:\n${formatConfig({
-          config: oldConfig,
-          guild,
-          formatters: {
-            archiveChannel: channelFormatter,
-          },
-        })}`,
-      })
     }
+    return interaction.reply({
+      content: `Current config:\n${formatConfig({
+        config: oldConfig,
+        guild,
+        formatters: {
+          archiveChannel: channelFormatter,
+        },
+      })}`,
+    })
   }
 
   const { options } = interaction

@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
+import { type ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const fields = new SleetSlashSubcommand(

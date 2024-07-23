@@ -1,6 +1,11 @@
-import { GatewayIntentBits, Options, Partials, RESTOptions } from 'discord.js'
+import {
+  GatewayIntentBits,
+  Options,
+  Partials,
+  type RESTOptions,
+} from 'discord.js'
 import env from 'env-var'
-import { SleetClient, SleetModuleEventHandlers } from 'sleetcord'
+import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
 import {
   Sentry,
   baseLogger,
@@ -37,7 +42,9 @@ async function main() {
           eventName === 'userUpdate'
         ) {
           return 0.01
-        } else if (moduleName === 'logging' || moduleName === 'sentryLogger') {
+        }
+
+        if (moduleName === 'logging' || moduleName === 'sentryLogger') {
           return 0.01
         }
 

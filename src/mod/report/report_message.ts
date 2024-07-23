@@ -2,10 +2,10 @@ import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   DiscordjsError,
-  EmbedFooterOptions,
-  Message,
-  MessageContextMenuCommandInteraction,
-  ModalActionRowComponentBuilder,
+  type EmbedFooterOptions,
+  type Message,
+  type MessageContextMenuCommandInteraction,
+  type ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -128,7 +128,7 @@ async function runReportMessage(
   report.setFooter(footer).addFields([
     {
       name: `Posted${editedAt ? ' & Edited' : ''} at`,
-      value: `${createdAt}${editedAt ? '\n' + editedAt : ''}`,
+      value: `${createdAt}${editedAt ? `\n${editedAt}` : ''}`,
     },
   ])
 

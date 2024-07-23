@@ -1,18 +1,18 @@
+import { setInterval, setTimeout } from 'node:timers/promises'
+import { stringify } from 'csv-stringify'
 import {
   AttachmentBuilder,
-  ChatInputCommandInteraction,
-  Client,
+  type ChatInputCommandInteraction,
+  type Client,
 } from 'discord.js'
-import { getGuild, SleetContext, SleetSlashSubcommand } from 'sleetcord'
+import { type SleetContext, SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { MINUTE, SECOND } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import {
   fetchGuildsPendingArchive,
   fetchWarningConfigFor,
   markWarningArchiveDirty,
 } from './utils.js'
-import { setTimeout, setInterval } from 'timers/promises'
-import { MINUTE, SECOND } from 'sleetcord-common'
-import { stringify } from 'csv-stringify'
 
 export const warningsExport = new SleetSlashSubcommand(
   {
@@ -44,7 +44,6 @@ const WAIT_BETWEEN_CHECKS = 10 * MINUTE // Wait 10 minutes between each check fo
 export async function warningsExportReady(this: SleetContext) {
   await archiveAllDirtyGuilds(this.client)
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for await (const _ of setInterval(WAIT_BETWEEN_CHECKS)) {
     await archiveAllDirtyGuilds(this.client)
   }

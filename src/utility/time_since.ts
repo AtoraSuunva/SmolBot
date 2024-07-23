@@ -4,7 +4,7 @@ import {
 } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'

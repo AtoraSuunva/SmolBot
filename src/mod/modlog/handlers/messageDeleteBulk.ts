@@ -1,28 +1,28 @@
 import {
-  APIChannel,
-  APIGuild,
-  APIGuildMember,
-  APIMessage,
-  APIRole,
-  APIUser,
-  AttachmentPayload,
+  type APIChannel,
+  type APIGuild,
+  type APIGuildMember,
+  type APIMessage,
+  type APIRole,
+  type APIUser,
+  type AttachmentPayload,
   AuditLogEvent,
-  ChannelType,
-  GuildTextBasedChannel,
+  type ChannelType,
+  type GuildTextBasedChannel,
   Message,
-  PartialMessage,
-  ReadonlyCollection,
+  type PartialMessage,
+  type ReadonlyCollection,
   codeBlock,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { plural } from '../../../util/format.js'
 import {
-  MessageBulkDeleteAuditLog,
+  type MessageBulkDeleteAuditLog,
   deleteEvents,
 } from '../../messageDeleteAuditLog.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
-import { ChannelAuditLog } from './auditLog/channelModify.js'
+import type { ChannelAuditLog } from './auditLog/channelModify.js'
 import { messageDeleteWithAuditLog } from './messageDelete.js'
 
 export const logMessageDeleteBulk = new SleetModule(
@@ -76,7 +76,7 @@ export async function messageDeleteBulkWithAuditLog(
   if (messages.size === 0) return
 
   if (messages.size === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: there is 1 and only 1 message in the collection
     return messageDeleteWithAuditLog(messages.first()!)
   }
 
@@ -107,7 +107,7 @@ export async function messageDeleteBulkWithAuditLog(
           if ('mentions' in data) {
             for (const mention of data.mentions) {
               if ('member' in mention) {
-                delete mention.member
+                mention.member = undefined
               }
             }
           }
@@ -235,10 +235,7 @@ export async function messageDeleteBulkWithAuditLog(
   const { executor, reason } = auditLog ?? {}
 
   const logMessage = [
-    `${channelDeleted ? `#${fromChannel.name} (deleted)` : fromChannel}, ` +
-      plural('message', messages.size) +
-      (executor ? ` by ${formatUser(executor)}` : '') +
-      (reason ? ` for "${reason}"` : ''),
+    `${channelDeleted ? `#${fromChannel.name} (deleted)` : fromChannel}, ${plural('message', messages.size)}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}`,
   ]
 
   if (userList) {
@@ -313,7 +310,6 @@ interface AttachmentBodyV1 {
   }
 }
 
-/* eslint-disable @typescript-eslint/dot-notation */
 // A glorious and ugly hack
 // Caching the data ourselves means d.js may or may not emit the right events depending on the cache
 // If d.js disposes of the message for some reason (hitting cache limits...) then we're storing extra data that won't be in message delete bulk events
@@ -323,8 +319,10 @@ interface MessageWithRaw {
   rawData: APIMessage
 }
 
+// biome-ignore lint/complexity/useLiteralKeys: bypassing Typescript's visibility checks
 const oldPatch = Message.prototype['_patch']
 
+// biome-ignore lint/complexity/useLiteralKeys: bypassing Typescript's visibility checks
 Message.prototype['_patch'] = function (data: APIMessage) {
   oldPatch.call(this, data)
   ;(this as unknown as MessageWithRaw).rawData = {
@@ -332,4 +330,3 @@ Message.prototype['_patch'] = function (data: APIMessage) {
     ...data,
   }
 }
-/* eslint-enable @typescript-eslint/dot-notation */

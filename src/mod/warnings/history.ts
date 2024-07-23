@@ -1,10 +1,13 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { respondWithPaginatedWarnings, WarningFetcher } from './pagination.js'
+import {
+  type WarningFetcher,
+  respondWithPaginatedWarnings,
+} from './pagination.js'
 import { fetchPaginatedWarningHistory } from './utils.js'
 
 export const warningsHistory = new SleetSlashSubcommand(

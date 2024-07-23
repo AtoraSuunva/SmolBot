@@ -1,6 +1,6 @@
 export const ESCAPE = '\u001b'
 export const RESET = `${ESCAPE}[0m`
-// eslint-disable-next-line no-control-regex
+// biome-ignore lint/suspicious/noControlCharactersInRegex: we need to match the escape character for ansi codes
 export const ANSI_REGEX = /\u001b.*?m/g
 
 export enum Format {
@@ -66,11 +66,13 @@ export function ansiMultiFormat(
   const arrayMarkup = markup.map((m) => {
     if (Array.isArray(m)) {
       return m
-    } else if (isFormat(m)) {
-      return [m, TextColor.Normal]
-    } else {
-      return [Format.Unspecified, m]
     }
+
+    if (isFormat(m)) {
+      return [m, TextColor.Normal]
+    }
+
+    return [Format.Unspecified, m]
   })
 
   return `${ESCAPE}[${arrayMarkup.map((m) => `${m[0]};${m[1]}`).join(';')}m${text}${reset ? RESET : ''}`

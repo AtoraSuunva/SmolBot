@@ -1,17 +1,17 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  Collection,
+  type ChatInputCommandInteraction,
+  type Collection,
   DMChannel,
-  FetchMessagesOptions,
+  type FetchMessagesOptions,
   GuildMember,
-  Message,
-  Snowflake,
+  type Message,
+  type Snowflake,
   User,
 } from 'discord.js'
 import {
-  Mentionable,
+  type Mentionable,
   PreRunError,
   SleetSlashCommand,
   botHasPermissionsGuard,

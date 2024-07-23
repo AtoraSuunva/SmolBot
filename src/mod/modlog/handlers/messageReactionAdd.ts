@@ -1,9 +1,10 @@
-import {
+import type {
   Guild,
+  GuildMember,
+  GuildTextBasedChannel,
   MessageReaction,
   PartialMessageReaction,
   PartialUser,
-  GuildTextBasedChannel,
   User,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
@@ -43,7 +44,7 @@ async function kickMember(
   userId: string,
   executor: User,
 ): Promise<TextBasedChannelSendArg> {
-  let member
+  let member: GuildMember | null = null
 
   try {
     member = await guild.members.fetch(userId)

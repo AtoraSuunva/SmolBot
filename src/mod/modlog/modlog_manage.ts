@@ -1,14 +1,14 @@
-import { ModLogConfig } from '@prisma/client'
+import type { ModLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
+import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { clearCacheFor } from './utils.js'
-import { getOptionCount } from 'sleetcord-common'
 
 export enum UserUpdate {
   None = 'None',
@@ -147,14 +147,14 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing modlog config, use `/modlog_manage` with options to create one.",
       })
-    } else {
-      return interaction.reply({
-        content: `Current config:\n${formatConfig({
-          config: oldConfig,
-          guild,
-        })}`,
-      })
     }
+
+    return interaction.reply({
+      content: `Current config:\n${formatConfig({
+        config: oldConfig,
+        guild,
+      })}`,
+    })
   }
 
   const { options } = interaction

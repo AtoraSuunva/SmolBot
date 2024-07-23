@@ -1,8 +1,8 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  GuildMember,
-  User,
+  type ChatInputCommandInteraction,
+  type GuildMember,
+  type User,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, makeChoices } from 'sleetcord'

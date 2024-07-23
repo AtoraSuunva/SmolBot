@@ -1,14 +1,14 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  Channel,
-  ChatInputCommandInteraction,
-  Client,
-  EmbedBuilder,
-  Guild,
-  Message,
-  TextBasedChannel,
-  User,
+  type Channel,
+  type ChatInputCommandInteraction,
+  type Client,
+  type EmbedBuilder,
+  type Guild,
+  type Message,
+  type TextBasedChannel,
+  type User,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'

@@ -1,10 +1,10 @@
-import {
+import type {
   Prisma,
   Warning,
   WarningConfig,
   WarningDirtyTracker,
 } from '@prisma/client'
-import { APIEmbedField, time } from 'discord.js'
+import { type APIEmbedField, time } from 'discord.js'
 import { DAY, MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 

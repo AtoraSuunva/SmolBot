@@ -1,9 +1,10 @@
+import { setTimeout } from 'node:timers/promises'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  Collection,
-  GuildMember,
+  type ChatInputCommandInteraction,
+  type Collection,
+  type GuildMember,
 } from 'discord.js'
 import {
   SleetSlashCommand,
@@ -12,7 +13,6 @@ import {
   makeChoices,
 } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import { setTimeout } from 'timers/promises'
 import { plural } from '../util/format.js'
 
 const checkChoices = makeChoices([

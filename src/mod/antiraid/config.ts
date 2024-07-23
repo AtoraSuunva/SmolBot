@@ -1,7 +1,7 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'

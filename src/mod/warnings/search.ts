@@ -1,10 +1,13 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { formatUser, SleetSlashSubcommand } from 'sleetcord'
-import { respondWithPaginatedWarnings, WarningFetcher } from './pagination.js'
+import { SleetSlashSubcommand, formatUser } from 'sleetcord'
+import {
+  type WarningFetcher,
+  respondWithPaginatedWarnings,
+} from './pagination.js'
 import { fetchPaginatedWarnings } from './utils.js'
 
 export const warningsSearch = new SleetSlashSubcommand(

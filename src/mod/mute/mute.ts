@@ -1,13 +1,13 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-  CommandInteraction,
-  Guild,
+  type ChatInputCommandInteraction,
+  type CommandInteraction,
+  type Guild,
   GuildMember,
-  Role,
-  UserContextMenuCommandInteraction,
+  type Role,
+  type UserContextMenuCommandInteraction,
 } from 'discord.js'
 import {
   SleetSlashCommand,

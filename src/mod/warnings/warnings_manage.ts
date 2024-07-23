@@ -1,14 +1,14 @@
-import { WarningConfig } from '@prisma/client'
+import type { WarningConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markWarningArchiveDirty } from './utils.js'
-import { getOptionCount } from 'sleetcord-common'
 
 export const warnings_manage = new SleetSlashCommand(
   {
@@ -59,17 +59,17 @@ async function runWarningsManage(interaction: ChatInputCommandInteraction) {
         content:
           "You don't have an existing warning config, use `/warnings_manage` with options to create one.",
       })
-    } else {
-      return interaction.reply({
-        content: `Current config:\n${formatConfig({
-          config: oldConfig,
-          guild,
-          formatters: {
-            archiveChannel: channelFormatter,
-          },
-        })}`,
-      })
     }
+
+    return interaction.reply({
+      content: `Current config:\n${formatConfig({
+        config: oldConfig,
+        guild,
+        formatters: {
+          archiveChannel: channelFormatter,
+        },
+      })}`,
+    })
   }
 
   const { options } = interaction
