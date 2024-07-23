@@ -1,5 +1,10 @@
-import { Awaitable, GuildMember, Message } from 'discord.js'
-import { AutomodRule, RuleTriggerInfo } from './AutomodRule.js'
+import { s } from '@sapphire/shapeshift'
+import type { Awaitable, GuildMember, Message } from 'discord.js'
+import {
+  AutomodRule,
+  type AutomodRuleData,
+  type RuleTriggerInfo,
+} from './AutomodRule.js'
 
 export interface RepeatInfractionInfo<Identifier> {
   /** The previous messages that "matched" some criteria to count as an infraction */
@@ -10,18 +15,35 @@ export interface RepeatInfractionInfo<Identifier> {
   repeats: number
 }
 
-export abstract class BaseRepeatRule<Identifier> extends AutomodRule {
+const unpackValidator = s.tuple([s.number()])
+
+export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
   private readonly infractionInfo = new Map<
     GuildMember,
     RepeatInfractionInfo<Identifier>
   >()
 
-  constructor(
-    public readonly maxRepeats: number,
-    name: string,
-    description: string,
-  ) {
-    super(name, description)
+  private maxRepeats: number
+
+  constructor(data: AutomodRuleData) {
+    super(
+      {
+        name: 'base-repeat',
+        description: 'Repeat rule',
+      },
+      data,
+    )
+
+    const [maxRepeats] = this.unpackParameters(data.parameters)
+    this.maxRepeats = maxRepeats
+  }
+
+  override unpackParameters(params: string) {
+    return unpackValidator.parse(JSON.parse(params))
+  }
+
+  override packParameters() {
+    return [this.maxRepeats] as [number]
   }
 
   async resetCounter(
@@ -75,7 +97,7 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule {
     if (newRepeats >= this.maxRepeats) {
       return {
         causedBy: [...previousMessages, message],
-        reason: this.description,
+        reason: this.message,
       }
     }
 

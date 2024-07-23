@@ -1,7 +1,7 @@
-import { Message } from 'discord.js'
 import { createHash } from 'node:crypto'
 import { Readable } from 'node:stream'
-import { ReadableStream } from 'node:stream/web'
+import type { ReadableStream } from 'node:stream/web'
+import type { Message } from 'discord.js'
 import { fetch } from 'undici'
 
 const hashCache = new WeakMap<Message, Promise<string[]>>()
@@ -53,7 +53,6 @@ export function hashEmbeds(message: Message): Promise<string[]> {
       .then((attachmentHashes) => {
         resolve([...embedHashes, ...attachmentHashes])
       })
-      // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
       .catch(reject)
   })
 

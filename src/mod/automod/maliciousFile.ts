@@ -1,4 +1,4 @@
-import { Attachment, Message } from 'discord.js'
+import type { Attachment, Message } from 'discord.js'
 import { SleetModule, escapeAllMarkdown, formatUser } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 
