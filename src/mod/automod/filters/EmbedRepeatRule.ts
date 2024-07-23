@@ -1,11 +1,14 @@
-import { Message } from 'discord.js'
-import { BaseRepeatRule, RepeatInfractionInfo } from './BaseRepeatRule.js'
+import type { Message } from 'discord.js'
 import { hashEmbeds } from '../hashEmbeds.js'
+import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
+/**
+ * Filter out message embed repeats
+ *
+ * Counts if a message has at least 1 embed identical to the previous message
+ */
 export class EmbedRepeatRule extends BaseRepeatRule<string[]> {
-  constructor(maxRepeats: number) {
-    super(maxRepeats, 'repeat', `Max repeats reached (${maxRepeats})`)
-  }
+  type = 'embed-repeat'
 
   override isRepeat(
     _message: Message<true>,

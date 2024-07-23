@@ -1,6 +1,6 @@
-import { Message } from 'discord.js'
-import { BaseRepeatRule, RepeatInfractionInfo } from './BaseRepeatRule.js'
+import type { Message } from 'discord.js'
 import { hashEmbeds } from '../hashEmbeds.js'
+import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
 interface AcrossChannelsIdentifier {
   channel: string
@@ -8,14 +8,15 @@ interface AcrossChannelsIdentifier {
   embeds: string[]
 }
 
+/**
+ * Filter out message content repeats across channels
+ *
+ * Counts if a message posted by the same user in 2 different channels has:
+ *   - The same non-empty content, or
+ *   - Any identical embeds (uses hashes)
+ */
 export class AcrossChannelsRule extends BaseRepeatRule<AcrossChannelsIdentifier> {
-  constructor(maxRepeats: number) {
-    super(
-      maxRepeats,
-      'across-channels',
-      `Max repeats across channels reached (${maxRepeats})`,
-    )
-  }
+  type = 'across-channels'
 
   override isRepeat(
     _message: Message<true>,
@@ -28,7 +29,8 @@ export class AcrossChannelsRule extends BaseRepeatRule<AcrossChannelsIdentifier>
       // Not the same channel
       lastIdentifier.channel !== newIdentifier.channel &&
       // Same content
-      (lastIdentifier.content === newIdentifier.content ||
+      ((lastIdentifier.content !== '' &&
+        lastIdentifier.content === newIdentifier.content) ||
         // Or same embeds
         newIdentifier.embeds.some((hash) =>
           lastIdentifier.embeds.includes(hash),

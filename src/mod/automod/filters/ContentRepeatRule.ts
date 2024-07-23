@@ -1,10 +1,13 @@
-import { Message } from 'discord.js'
-import { BaseRepeatRule, RepeatInfractionInfo } from './BaseRepeatRule.js'
+import type { Message } from 'discord.js'
+import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
+/**
+ * Filter out message content repeats
+ *
+ * Counts if a non-empty message has the same content, case-insensitive
+ */
 export class ContentRepeatRule extends BaseRepeatRule<string> {
-  constructor(maxRepeats: number) {
-    super(maxRepeats, 'repeat', `Max repeats reached (${maxRepeats})`)
-  }
+  type = 'content-repeat'
 
   override isRepeat(
     message: Message<true>,
