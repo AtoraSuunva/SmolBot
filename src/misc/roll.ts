@@ -80,16 +80,19 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  const result = [roll.toString()]
+  let rollOutput = roll.output
+  const split = rollOutput.split(' = ')
+  const total = split.pop()
+
+  const result = [`# ${total}`, `-# ${escapeAllMarkdown(split.join(' = '))}`]
 
   if (statistics) {
-    result.push(
-      `min: ${roll.minTotal}, max: ${roll.maxTotal}, average: ${roll.averageTotal}`,
-    )
+    const stats = `min: ${roll.minTotal}, max: ${roll.maxTotal}, average: ${roll.averageTotal}`
+    result.push(stats)
+    rollOutput += `\n${stats}`
   }
 
-  const output = result.join('\n')
-  const content = escapeAllMarkdown(output)
+  const content = result.join('\n')
 
   if (content.length > 2000) {
     return interaction.reply({
@@ -97,7 +100,7 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
       files: [
         {
           name: 'roll.txt',
-          attachment: Buffer.from(output),
+          attachment: Buffer.from(rollOutput),
         },
       ],
       ephemeral,
