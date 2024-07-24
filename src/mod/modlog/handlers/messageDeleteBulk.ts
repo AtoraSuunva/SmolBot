@@ -239,14 +239,21 @@ export async function messageDeleteBulkWithAuditLog(
   ]
 
   if (userList) {
-    logMessage.push(`\n${userList}`)
+    logMessage.push(`\n-# ${userList}`)
   }
 
   if (body.data.messages.length === 0) {
     logMessage.push(
-      '. Every message was uncached or partial, no log available. Message IDs:\n',
+      '. Every message was uncached or partial, no log available.',
     )
-    logMessage.push(codeBlock(messages.map((m) => m.id).join(' ')))
+    if (messages.size > 0) {
+      logMessage.push(
+        ' Message IDs:\n',
+        codeBlock(messages.map((m) => m.id).join(' ')),
+      )
+    } else {
+      logMessage.push(' No message IDs available.')
+    }
   }
 
   const files: AttachmentPayload[] =

@@ -86,7 +86,7 @@ export async function logChannelModified(
   )
   const channelText = formatChannel(modifiedChannel)
   const verb = LogVerb[auditLogEntry.action]
-  const execUser = executor ? formatUser(executor) : 'Unknown User'
+  const execUser = executor ? formatUser(executor) : '<unknown user>'
   const changelog = auditLogEntry.changes
     .map((change) => {
       const log = [`=== ${change.key}:`]
