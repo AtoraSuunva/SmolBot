@@ -1,12 +1,17 @@
 import type { Prisma } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
+  type APIRole,
   ApplicationCommandOptionType,
+  AuditLogEvent,
   type ChatInputCommandInteraction,
   type CommandInteraction,
   type Guild,
+  type GuildAuditLogsEntry,
   GuildMember,
+  type PartialGuildMember,
   type Role,
+  type TextBasedChannel,
   type UserContextMenuCommandInteraction,
 } from 'discord.js'
 import {
@@ -18,7 +23,7 @@ import {
   getMembers,
   inGuildGuard,
 } from 'sleetcord'
-import { baseLogger } from 'sleetcord-common'
+import { SECOND, baseLogger } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 
 const mutedRoles = [
@@ -60,6 +65,7 @@ export const mute = new SleetSlashCommand(
   },
   {
     run: (i) => handleChatInput(i, 'mute'),
+    guildMemberUpdate: handleGuildMemberUpdate,
   },
 )
 
@@ -176,7 +182,10 @@ async function runMute(
 
   await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
-  const deferReply = interaction.deferReply({ ephemeral })
+  const deferReply = await interaction.deferReply({
+    ephemeral,
+    fetchReply: true,
+  })
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
   const config: Prisma.MuteConfigGetPayload<true> =
@@ -197,7 +206,6 @@ async function runMute(
   const mutedRole = findMutedRole(guild, config.roleID)
 
   if (!mutedRole) {
-    await deferReply
     return interaction.editReply({
       content: `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
         '`, `',
@@ -207,13 +215,12 @@ async function runMute(
 
   const isOwner = interactionMember.id === guild.ownerId
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
-    await deferReply
     return interaction.editReply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
     })
   }
 
-  const toMute: GuildMember[] = []
+  const toAction: GuildMember[] = []
   const earlyFailed: MuteFail[] = []
 
   for (const member of members) {
@@ -238,16 +245,21 @@ async function runMute(
         reason: `I cannot ${action} someone with a higher or equal role to me.`,
       })
     } else if (hasMutedRole && !shouldHaveRole) {
-      earlyFailed.push({ member, reason: 'Already muted.' })
+      const userHasStoredRoles = await hasStoredRoles(member)
+
+      if (userHasStoredRoles) {
+        toAction.push(member)
+      } else {
+        earlyFailed.push({ member, reason: 'Already muted.' })
+      }
     } else if (!hasMutedRole && shouldHaveRole) {
       earlyFailed.push({ member, reason: 'Not muted.' })
     } else {
-      toMute.push(member)
+      toAction.push(member)
     }
   }
 
-  if (toMute.length === 0) {
-    await deferReply
+  if (toAction.length === 0) {
     return interaction.editReply({
       content: `No valid users to ${action}.\n${formatFails(earlyFailed)}`,
     })
@@ -256,8 +268,8 @@ async function runMute(
   const formattedReason = `${capitalAction} by ${interactionMember.displayName} for "${reason}"`
 
   const { succeeded, failed } = await (action === 'mute'
-    ? muteAction(toMute, mutedRole, formattedReason)
-    : unmuteAction(toMute, mutedRole, formattedReason))
+    ? muteAction(toAction, mutedRole, formattedReason)
+    : unmuteAction(toAction, mutedRole, formattedReason))
 
   const totalFails = [...earlyFailed, ...failed]
   const succ =
@@ -269,26 +281,127 @@ async function runMute(
 
   const content = `**${capitalAction}:**${succ}${fail}`
 
-  if (config.logChannelID) {
-    const logChannel = guild.channels.cache.get(config.logChannelID)
+  const byLine = `By ${formatUser(interactionMember)} in ${deferReply.url}${ephemeral ? ' (ephemeral)' : ''}`
 
-    if (logChannel?.isTextBased()) {
-      const byLine = `By ${formatUser(interactionMember)} in ${
-        interaction.channel
-      }`
+  await sendToLogChannel(guild, config.logChannelID, {
+    content: `${content}\n${byLine}`,
+    allowedMentions: { parse: [] },
+  })
 
-      await logChannel.send({
-        content: `${content}\n${byLine}`,
-        allowedMentions: { parse: [] },
-      })
-    }
-  }
-
-  await deferReply
   return interaction.editReply({
     content,
     allowedMentions: { parse: [] },
   })
+}
+
+/**
+ * Handle someone else (like a mod or a bot) removing the user's muted role.
+ *
+ * If we muted the user (and have roles stored for them), we'll restore their roles so that it works out in the end
+ */
+async function handleGuildMemberUpdate(
+  _oldMember: GuildMember | PartialGuildMember,
+  newMember: GuildMember,
+) {
+  const { guild } = newMember
+
+  const config: Prisma.MuteConfigGetPayload<true> =
+    (await prisma.muteConfig.findUnique({
+      where: {
+        guildID: guild.id,
+      },
+    })) ?? {
+      guildID: guild.id,
+      logChannelID: null,
+      roleID: null,
+    }
+
+  const mutedRole = findMutedRole(guild, config.roleID)
+
+  // If we can't find the muted role then guild isn't configured
+  if (!mutedRole) return
+  // If the user has the muted role then we shouldn't restore anything
+  if (newMember.roles.cache.get(mutedRole.id)) return
+
+  if (!hasStoredRoles(newMember)) return
+
+  const entry = await findUserResponsibleForRemovingMute(
+    newMember,
+    mutedRole.id,
+  )
+
+  const restoredRoles = await restoreRoles(
+    newMember,
+    mutedRole,
+    `${entry?.executor?.username ?? '<unknown user>'} removed the muted role`,
+  )
+
+  if (restoredRoles.length === 0) return
+
+  const content = formatSuccesses(
+    [{ member: newMember, roles: restoredRoles }],
+    'unmute',
+  )
+  const byLine = entry
+    ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'}${entry.reason ? ` for ${entry.reason}` : ' <No reason given>'}`
+    : 'By <unknown user>'
+
+  await sendToLogChannel(guild, config.logChannelID, {
+    content: `Muted Role removed, restored previous roles:\n${content}\n${byLine}`,
+    allowedMentions: { parse: [] },
+  })
+}
+
+const WITHIN_TIME = 5 * SECOND
+
+async function findUserResponsibleForRemovingMute(
+  member: GuildMember,
+  mutedRoleId: string,
+): Promise<GuildAuditLogsEntry<AuditLogEvent.MemberRoleUpdate> | null> {
+  const { guild } = member
+  const me = await guild.members.fetchMe()
+
+  if (!me.permissions.has('ViewAuditLog')) return null
+
+  const auditLogs = await guild.fetchAuditLogs({
+    type: AuditLogEvent.MemberRoleUpdate,
+  })
+
+  const now = Date.now()
+  const timeLimit = now - WITHIN_TIME
+
+  const entry = auditLogs.entries.find((entry) => {
+    return (
+      // Created within the last 5 seconds
+      entry.createdTimestamp > timeLimit &&
+      // Modified our member
+      entry.targetId === member.id &&
+      // Removed the muted role
+      entry.changes.some(
+        (change) =>
+          change.key === '$remove' &&
+          (change.new as APIRole[])?.some((r) => r.id === mutedRoleId),
+      )
+    )
+  })
+
+  return entry ?? null
+}
+
+function sendToLogChannel(
+  guild: Guild,
+  logChannelID: string | null,
+  payload: Parameters<TextBasedChannel['send']>[0],
+) {
+  if (!logChannelID) return Promise.resolve()
+
+  const logChannel = guild.channels.cache.get(logChannelID)
+
+  if (logChannel?.isTextBased()) {
+    return logChannel.send(payload)
+  }
+
+  return Promise.resolve()
 }
 
 function muteAction(
@@ -345,42 +458,57 @@ async function storeRoles(member: GuildMember): Promise<Role[]> {
   return member.roles.cache.toJSON()
 }
 
+/**
+ * Technically a mutex if you squint and also barely know what a mutex is
+ *
+ * The process of restoring a mute causes a guild member update, but if the bot tries to restore again
+ * while the first restore is still happening it causes bad things. There is no point in queueing them
+ * (since on success we'd just find out we have nothing to restore, and on failure conditions probably aren't
+ * gonna magically align instantly after aside from API one-offs)
+ */
+const userBeingRestored = new Set<string>()
+
 async function restoreRoles(
   member: GuildMember,
   mutedRole: Role,
   reason?: string,
 ): Promise<Role[]> {
-  const roles = (await fetchStoredRoles(member)) ?? []
+  const key = `${member.guild.id}:${member.id}`
+  if (userBeingRestored.has(key)) {
+    return []
+  }
 
-  // Resolve all the roles in case one of them has since been deleted or something
-  const resolvedStoredRoles = await Promise.all(
-    roles.map(async (r) => {
-      const role = member.guild.roles.cache.get(r)
-      if (role) return role
-      try {
-        return await member.guild.roles.fetch(r)
-      } catch {
-        return null
-      }
-    }),
-  )
+  userBeingRestored.add(key)
 
-  const { guild } = member
+  try {
+    const roles = await fetchStoredRoles(member)
 
-  const applyRoles = resolvedStoredRoles
-    .filter(isDefined)
-    .filter((r) => validRole(r, guild) && r.id !== mutedRole.id)
+    if (!roles) return []
 
-  await member.roles.remove(mutedRole, reason)
-  muteLogger.info(
-    'Restoring roles for %s; %o; %o',
-    member.id,
-    roles,
-    applyRoles,
-  )
-  await member.roles.add(applyRoles, reason)
-  await deleteStoredRoles(member)
-  return applyRoles
+    // Resolve all the roles in case one of them has since been deleted or something
+    const resolvedStoredRoles = await Promise.all(
+      roles.map(async (r) => member.guild.roles.fetch(r).catch(() => null)),
+    )
+
+    const { guild } = member
+
+    const applyRoles = resolvedStoredRoles
+      .filter(isDefined)
+      .filter((r) => validRole(r, guild) && r.id !== mutedRole.id)
+
+    await member.roles.remove(mutedRole, reason)
+    muteLogger.info(
+      'Restoring roles for %s; %o; %o',
+      member.id,
+      roles,
+      applyRoles,
+    )
+    await member.roles.add(applyRoles, reason)
+    await deleteStoredRoles(member)
+    return applyRoles
+  } finally {
+    userBeingRestored.delete(key)
+  }
 }
 
 function isDefined<T>(value: T | undefined | null): value is T {
@@ -405,10 +533,10 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
 
         const restored =
           validRoles.length > 0
-            ? ` - **${act}:** ${formatRoles(validRoles)}`
+            ? ` -# **${act}:** ${formatRoles(validRoles)}`
             : ''
 
-        return `> ${formatUser(member)}${restored}`
+        return `> ${formatUser(member, { mention: true })}\n>${restored}`
       })
       .join('\n') || 'nobody'
   )
@@ -416,7 +544,10 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
 
 function formatFails(failed: MuteFail[]): string {
   return failed
-    .map((fail) => `> ${formatUser(fail.member)} - ${fail.reason}`)
+    .map(
+      (fail) =>
+        `> ${formatUser(fail.member, { mention: true })}\n> -# ${fail.reason}`,
+    )
     .join('\n')
 }
 
@@ -445,6 +576,17 @@ async function fetchStoredRoles(member: GuildMember): Promise<string[] | null> {
   })
 
   return ids?.previousRoles.split(ROLE_SEPARATOR) ?? null
+}
+
+function hasStoredRoles(member: GuildMember): Promise<boolean> {
+  return prisma.memberMutes
+    .count({
+      where: {
+        guildID: member.guild.id,
+        userID: member.user.id,
+      },
+    })
+    .then((count) => count > 0)
 }
 
 function setStoredRoles(member: GuildMember, roles: string[]) {
