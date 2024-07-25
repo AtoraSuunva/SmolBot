@@ -168,13 +168,7 @@ type Grid = (number | string)[][]
  * @returns A grid of 0s
  */
 function genGrid(height: number, width: number): Grid {
-  const grid: number[][] = Array.from(Array(height)).map(() => [])
-
-  for (const row of grid) {
-    row.push(...Array(width).fill(0))
-  }
-
-  return grid
+  return Array.from(Array(height)).map(() => Array(width).fill(0))
 }
 
 // Get the 8 tiles around the tile, counting the num of mines
