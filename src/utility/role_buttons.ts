@@ -221,7 +221,9 @@ async function handleInteractionCreate(interaction: Interaction) {
 
     for (const row of interaction.message.components) {
       for (const button of row.components) {
-        if (button.customId === interaction.customId || !button.customId) return
+        if (button.customId === interaction.customId || !button.customId) {
+          continue
+        }
 
         const otherRole = guild.roles.cache.get(button.customId.split(':')[1])
 
