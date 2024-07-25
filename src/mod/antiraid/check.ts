@@ -157,6 +157,8 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
 }
 
 async function handleGuildMemberAdd(member: GuildMember) {
+  if (member.user.bot) return
+
   const config = await getAntiRaidConfigOrDefault(member.guild)
 
   if (!config.enabled) return
@@ -215,6 +217,8 @@ function checkMembers(
 ): MemberCheckResult[] {
   return members
     .map((member) => {
+      if (member.user.bot) return null
+
       let weight = 0
       const age = Date.now() - member.user.createdTimestamp
       const ageInMinutes = age / 1000 / 60
