@@ -343,7 +343,7 @@ async function handleGuildMemberUpdate(
     'unmute',
   )
   const byLine = entry
-    ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'}${entry.reason ? ` for ${entry.reason}` : ' <No reason given>'}`
+    ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'} for ${entry.reason ? `"${entry.reason}"` : '<No reason given>'}`
     : 'By <unknown user>'
 
   await sendToLogChannel(guild, config.logChannelID, {
@@ -527,18 +527,18 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
       .map((success) => {
         const { member, roles } = success
         const { guild } = member
-        const act = action === 'mute' ? 'Previous Roles' : 'Restored'
+        const act = action === 'mute' ? 'Removed' : 'Restored'
 
         const validRoles = (roles ?? []).filter((r) => validRole(r, guild))
 
         const restored =
           validRoles.length > 0
-            ? ` -# **${act}:** ${formatRoles(validRoles)}`
-            : ''
+            ? `**${act}:** ${formatRoles(validRoles)}`
+            : `No roles ${act.toLowerCase()}`
 
-        return `> ${formatUser(member, { mention: true })}\n>${restored}`
+        return `> ${formatUser(member, { mention: true })}\n> -# ${restored}`
       })
-      .join('\n') || 'nobody'
+      .join('\n') || 'Nobody'
   )
 }
 
@@ -575,7 +575,10 @@ async function fetchStoredRoles(member: GuildMember): Promise<string[] | null> {
     },
   })
 
-  return ids?.previousRoles.split(ROLE_SEPARATOR) ?? null
+  return (
+    ids?.previousRoles.split(ROLE_SEPARATOR).filter((v) => v.trim() !== '') ??
+    null
+  )
 }
 
 function hasStoredRoles(member: GuildMember): Promise<boolean> {
