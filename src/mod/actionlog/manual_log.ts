@@ -1,13 +1,12 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
-  type GuildMember,
-  type User,
   codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser, makeChoices } from 'sleetcord'
+import { SleetSlashCommand, makeChoices } from 'sleetcord'
+import { formatToLog } from './utils.js'
 
-const typeChoices = makeChoices([
+const actionChoices = makeChoices([
   'Ban',
   'Unban',
   'Kick',
@@ -15,15 +14,17 @@ const typeChoices = makeChoices([
   'Timeout Removed',
 ])
 
-/** Creates a banlog in case pollr is down goddamn again or something */
-export const banlog = new SleetSlashCommand(
+type ActionTypes = Lowercase<(typeof actionChoices)[number]['value']>
+
+export const manual_log = new SleetSlashCommand(
   {
-    name: 'banlog',
-    description: 'Create a banlog for some action',
+    name: 'manual_log',
+    description:
+      'Create a manual log for some action, which you can copy/paste',
     options: [
       {
         name: 'user',
-        description: 'The user to create the log for',
+        description: 'The user affected by the log',
         type: ApplicationCommandOptionType.User,
         required: true,
       },
@@ -34,10 +35,10 @@ export const banlog = new SleetSlashCommand(
         required: true,
       },
       {
-        name: 'type',
-        description: 'The type of log to create (default: ban)',
+        name: 'action',
+        description: 'The action taken for the log (default: ban)',
         type: ApplicationCommandOptionType.String,
-        choices: typeChoices,
+        choices: actionChoices,
       },
       {
         name: 'responsible',
@@ -47,28 +48,28 @@ export const banlog = new SleetSlashCommand(
     ],
   },
   {
-    run: runBanlog,
+    run: runManualLog,
   },
 )
 
-const userLog = (user: User | GuildMember) =>
-  formatUser(user, {
-    mention: true,
-  })
-
-async function runBanlog(interaction: ChatInputCommandInteraction) {
+async function runManualLog(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser('user', true)
   const reason = interaction.options.getString('reason', true)
-  const type = interaction.options.getString('type', false) ?? 'Ban'
-  const responsible =
+  const action = (
+    interaction.options.getString('action', false) ?? 'ban'
+  ).toLowerCase() as ActionTypes
+  const responsibleModerator =
     interaction.options.getUser('responsible', false) ?? interaction.user
 
-  const log = [
-    `**${type}**`,
-    `**User:** ${userLog(user)}`,
-    `**Reason:** ${reason}`,
-    `**Responsible Moderator**: ${userLog(responsible)}`,
-  ].join('\n')
+  const log = await formatToLog({
+    id: -1,
+    action,
+    user,
+    redactUser: false,
+    reason,
+    responsibleModerator,
+    createdAt: new Date(),
+  })
 
   await interaction.reply({
     ephemeral: true,

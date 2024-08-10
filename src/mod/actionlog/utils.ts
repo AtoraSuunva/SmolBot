@@ -44,24 +44,24 @@ export async function formatToLog(
 
   if (options.headerLine) {
     log.push(
-      `**${capitalize(entry.action)}** | Case ${entry.id} | ${time(entry.createdAt, 'f')}`,
+      `**${capitalize(entry.action)}** | ${entry.id > 0 ? `Case ${entry.id} | ` : ''}${time(entry.createdAt, 'f')}`,
     )
   }
 
   if (options.user) {
     if (entry.redactUser) {
       log.push(
-        `**User:** \`[Username Redacted by Moderators]\` (${entry.user?.id ?? 'unknown user'})`,
+        `> **User:** \`[Username Redacted by Moderators]\` (${entry.user?.id ?? 'unknown user'})`,
       )
     } else {
       log.push(
-        `**User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
+        `> **User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
       )
     }
   }
 
   if (options.reason) {
-    log.push(`**Reason:** ${entry.reason ?? '*No reason provided.*'}`)
+    log.push(`> **Reason:** ${entry.reason ?? '*No reason provided.*'}`)
   }
 
   if (
@@ -69,12 +69,12 @@ export async function formatToLog(
     entry.reasonBy &&
     entry.reasonBy.id !== entry.responsibleModerator?.id
   ) {
-    log.push(`**Reason by:** ${await userLog(entry.reasonBy)}`)
+    log.push(`> -# **Reason by:** ${await userLog(entry.reasonBy)}`)
   }
 
   if (options.responsibleModerator) {
     log.push(
-      `**Responsible Moderator**: ${
+      `> -# **Responsible Moderator**: ${
         entry.responsibleModerator
           ? await userLog(entry.responsibleModerator)
           : '*Unknown moderator*'
