@@ -1,8 +1,8 @@
 // import { automod } from './automod/automod.js'
 import { actionLogModules } from './actionlog/index.js'
+import { manual_log } from './actionlog/manual_log.js'
 import { antiraidModules } from './antiraid/index.js'
 import { maliciousFile } from './automod/maliciousFile.js'
-import { banlog } from './banlog.js'
 import { dehoist } from './dehoist.js'
 import { delete_police_config } from './delete_police_config.js'
 import { idof } from './idof.js'
@@ -34,20 +34,20 @@ export const modModules = [
   ...muteModules,
   ...warningsModules,
   // automod,
-  banlog,
+  // modmail,
   dehoist,
   delete_police_config,
   idof,
   lock_thread,
   lookup,
   maliciousFile,
+  manual_log,
   mass_ban,
   mass_find,
   mass_kick,
   mass_softban,
   mass_unban,
   messageDeleteAuditLog,
-  // modmail,
   purge,
   report,
   revoke,
