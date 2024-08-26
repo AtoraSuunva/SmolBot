@@ -17,7 +17,7 @@ import {
 } from './mass_action.js'
 import { messageDeleteAuditLog } from './messageDeleteAuditLog.js'
 import { modlogModules } from './modlog/index.js'
-// import { modmail } from './modmail/index.js'
+import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
 import { purge } from './purge.js'
 import { report } from './report/report.js'
@@ -34,7 +34,7 @@ export const modModules = [
   ...muteModules,
   ...warningsModules,
   // automod,
-  // modmail,
+  modmail,
   dehoist,
   delete_police_config,
   idof,
