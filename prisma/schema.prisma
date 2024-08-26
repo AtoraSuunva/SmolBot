@@ -244,3 +244,58 @@ model DeletePoliceConfig {
 
   updatedAt DateTime @updatedAt @map("updated_at")
 }
+
+model ModMailConfig {
+  guildID String @id @map("guild_id")
+
+  modReplyPrefix     String @default("!r") @map("mod_reply_prefix")
+  modAnonReplyPrefix String @default("!a") @map("mod_anon_reply_prefix")
+}
+
+model ModMailTicketConfig {
+  modmailID String @map("modmail_id")
+  guildID   String @map("guild_id")
+
+  maxOpenTickets Int? @map("max_open_tickets")
+  ratelimit      Int?
+
+  @@id([modmailID, guildID])
+}
+
+model ModMailTicket {
+  ticketID  Int    @id @default(autoincrement()) @map("ticket_id")
+  modmailID String @map("modmail_id")
+  guildID   String @map("guild_id")
+
+  userID        String @map("user_id")
+  userChannelID String @map("user_channel_id")
+  userThreadID  String @map("user_thread_id")
+  modChannelID  String @map("mod_channel_id")
+  modThreadID   String @map("mod_thread_id")
+
+  // true if a channel/thread was deleted (which is unrecoverable except for DB editing)
+  linkDeleted Boolean @default(false) @map("link_deleted")
+  open        Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model ModMailTicketModalField {
+  // Mod-given Id for this set of fields
+  modmailID String @map("modmail_id")
+  // The guild Id for the guild this set of fields is for
+  guildID   String @map("guild_id")
+  // Mod-given custom Id for this field specifically
+  customID  String @map("custom_id")
+
+  order       Int
+  label       String
+  style       Int
+  placeholder String?
+  required    Boolean?
+  minLength   Int?     @map("min_length")
+  maxLength   Int?     @map("max_length")
+
+  @@id([modmailID, guildID, customID])
+}
