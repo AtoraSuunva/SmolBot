@@ -214,7 +214,10 @@ async function replyToReport(
     text: `Reply from ${
       isAnon
         ? guild.name
-        : formatUser(interaction.user, { markdown: false, escape: false })
+        : formatUser(interaction.user, {
+            markdown: false,
+            escapeMarkdown: false,
+          })
     }`,
   }
 

@@ -61,7 +61,7 @@ async function kickMember(
   }
 
   await member.kick(
-    `Kicked by ${formatUser(executor, { markdown: false, escape: false })}`,
+    `Kicked by ${formatUser(executor, { markdown: false, escapeMarkdown: false })}`,
   )
   return `Kicked '${userId}' requested by ${formatUser(executor)}`
 }
@@ -72,7 +72,7 @@ export const actions = {
       await guild.bans.create(userId, {
         reason: `Banned by ${formatUser(executor, {
           markdown: false,
-          escape: false,
+          escapeMarkdown: false,
         })}`,
       })
     } catch (e) {

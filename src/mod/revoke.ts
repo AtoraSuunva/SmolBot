@@ -136,7 +136,7 @@ function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
 
   return new EmbedBuilder()
     .setAuthor({
-      name: formatUser(user, { markdown: false, escape: false }),
+      name: formatUser(user, { markdown: false, escapeMarkdown: false }),
       iconURL: user.displayAvatarURL(),
     })
     .setColor('#f44336')

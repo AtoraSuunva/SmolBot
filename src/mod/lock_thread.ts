@@ -84,7 +84,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   const reason = interaction.options.getString('reason', true)
   const formattedReason = `Locked by ${formatUser(interaction.user, {
     markdown: false,
-    escape: false,
+    escapeMarkdown: false,
   })}: ${reason}`
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
 

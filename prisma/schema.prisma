@@ -152,12 +152,20 @@ model MuteConfig {
   guildID      String  @id @map("guild_id")
   roleID       String? @map("role_id")
   logChannelID String? @map("log_channel_id")
+
+  separateUsers  Boolean @default(false) @map("separate_users")
+  categoryID     String? @map("category_id")
+  channelTopic   String? @map("channel_topic")
+  nameTemplate   String? @map("name_template")
+  maxChannels    Int?    @map("max_channels")
+  starterMessage String? @map("starter_message")
 }
 
 model MemberMutes {
   guildID       String   @map("guild_id")
   userID        String   @map("user_id")
   previousRoles String   @map("previous_roles")
+  muteChannel   String?  @map("mute_channel")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@id([guildID, userID])

@@ -152,7 +152,7 @@ export async function messageDeleteWithAuditLog(
       ),
       description: `Deleted Message by ${formatUser(message.author, {
         markdown: false,
-        escape: false,
+        escapeMarkdown: false,
       })}`,
     })
   } else {
@@ -171,8 +171,10 @@ function formatLogUser(user: User | GuildMember) {
     markdown: false,
     id: true,
     bidirectional: false,
-    escape: false,
+    escapeMarkdown: false,
     format: (part, str) => {
+      if (str === null) return null
+
       switch (part) {
         case 'globalName':
         case 'discriminator':
