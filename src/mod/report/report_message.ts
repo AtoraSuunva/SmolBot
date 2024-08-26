@@ -112,7 +112,10 @@ async function runReportMessage(
     text: `Reported by ${
       isAnon
         ? 'Anonymous'
-        : formatUser(interaction.user, { markdown: false, escape: false })
+        : formatUser(interaction.user, {
+            markdown: false,
+            escapeMarkdown: false,
+          })
     }`,
   }
 

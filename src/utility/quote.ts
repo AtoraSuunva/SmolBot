@@ -161,7 +161,7 @@ async function getQuoteFor(
     text: `Quoted by ${formatUser(user, {
       markdown: false,
       id: false,
-      escape: false,
+      escapeMarkdown: false,
     })}`,
   })
 

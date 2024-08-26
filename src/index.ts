@@ -117,7 +117,8 @@ async function main() {
 try {
   await main()
 } catch (err) {
-  initLogger.error('Fatal error during startup, or error bubbled up', err)
+  initLogger.error('Fatal error during startup, or error bubbled up')
+  initLogger.error(err)
   Sentry.captureException(err)
   process.exit(1)
 }

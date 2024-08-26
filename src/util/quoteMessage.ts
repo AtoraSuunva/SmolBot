@@ -35,7 +35,7 @@ export async function quoteMessage(
       name: `${formatUser(message.author, {
         markdown: false,
         id: false,
-        escape: false,
+        escapeMarkdown: false,
       })}${channelLine}`,
       iconURL: message.author.displayAvatarURL(),
       url: message.url,
@@ -57,7 +57,7 @@ export async function quoteMessage(
       `${formatUser(interaction.user, {
         markdown: false,
         id: false,
-        escape: false,
+        escapeMarkdown: false,
       })} used ${commandName}`,
     )
   }
@@ -316,7 +316,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
       name: `Reply to ${formatUser(reference.author, {
         markdown: false,
         id: false,
-        escape: false,
+        escapeMarkdown: false,
       })}`,
       value: `${shortContent} [${hyperlink('Message Link', reference.url)}]`,
     },

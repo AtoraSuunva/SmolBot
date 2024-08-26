@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
+  ChannelType,
   type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
@@ -27,6 +28,45 @@ export const mute_manage = new SleetSlashCommand(
         description: 'The channel to send mute logs to',
         type: ApplicationCommandOptionType.Channel,
         channel_types: Constants.GuildTextBasedChannelTypes,
+      },
+      {
+        name: 'separate_users',
+        description:
+          'Whether to separate muted users from other users, requires `muted_category` (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'muted_category',
+        description:
+          'The category to put muted user channels in, permissions are synced to this channel',
+        type: ApplicationCommandOptionType.Channel,
+        channel_types: [ChannelType.GuildCategory],
+      },
+      {
+        name: 'name_template',
+        description:
+          'Template for naming muted user channels, supports {user}/{user_id}/{i} (default: muted-{user})',
+        type: ApplicationCommandOptionType.String,
+        max_length: 100,
+      },
+      {
+        name: 'max_channels',
+        description:
+          'Max number of channels to create. An overflow channel is created for any extra users (default: 25)',
+        type: ApplicationCommandOptionType.Integer,
+      },
+      {
+        name: 'channel_topic',
+        description: 'The topic to set on the channel',
+        type: ApplicationCommandOptionType.String,
+        max_length: 1024,
+      },
+      {
+        name: 'starter_message',
+        description:
+          'The message to send on muted channel creation, supports {mention}/{executor}',
+        type: ApplicationCommandOptionType.String,
+        max_length: 2000,
       },
       {
         name: 'unset',
@@ -69,6 +109,12 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
 
   const role = interaction.options.getRole('role')
   const logChannel = interaction.options.getChannel('log_channel')
+  const separateUsers = interaction.options.getBoolean('separate_users')
+  const category = interaction.options.getChannel('muted_category')
+  const nameTemplate = interaction.options.getString('name_template')
+  const maxChannels = interaction.options.getInteger('max_channels')
+  const channelTopic = interaction.options.getString('channel_topic')
+  const starterMessage = interaction.options.getString('starter_message')
   const unset = interaction.options.getString('unset')
 
   const toUpsert: Omit<Prisma.MuteConfigCreateInput, 'guildID'> = {
@@ -77,6 +123,12 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
       unset === 'log_channel'
         ? null
         : logChannel?.id ?? oldConfig?.logChannelID ?? null,
+    separateUsers: separateUsers ?? oldConfig?.separateUsers ?? false,
+    categoryID: category?.id ?? oldConfig?.categoryID ?? null,
+    nameTemplate: nameTemplate ?? oldConfig?.nameTemplate ?? 'muted-{user}',
+    maxChannels: maxChannels ?? oldConfig?.maxChannels ?? 25,
+    channelTopic: channelTopic ?? oldConfig?.channelTopic ?? null,
+    starterMessage: starterMessage ?? oldConfig?.starterMessage ?? null,
   }
 
   const newConfig = await prisma.muteConfig.upsert({

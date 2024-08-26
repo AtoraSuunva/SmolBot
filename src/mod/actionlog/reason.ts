@@ -57,7 +57,7 @@ const actionIDAutocomplete: AutocompleteHandler<string> = async ({
                 ? formatUser(await client.users.fetch(action.userID), {
                     markdown: false,
                     mention: false,
-                    escape: false,
+                    escapeMarkdown: false,
                   })
                 : 'unknown user'
             }`.slice(0, 100),

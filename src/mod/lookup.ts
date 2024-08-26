@@ -346,7 +346,11 @@ async function sendUserLookup(
     .setTitle(
       user.discriminator === '0'
         ? user.username
-        : formatUser(user, { id: false, markdown: false, escape: false }),
+        : formatUser(user, {
+            id: false,
+            markdown: false,
+            escapeMarkdown: false,
+          }),
       // Use format user to add in the bidi control characters before the #
     )
     .setThumbnail(user.displayAvatarURL({ size: 4096 }))

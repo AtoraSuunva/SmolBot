@@ -618,7 +618,7 @@ function formatUserOrId(
     ? user
     : idOnly
       ? user.id
-      : formatUser(user, { markdown: false, escape: escapeMarkdown })
+      : formatUser(user, { markdown: false, escapeMarkdown })
 }
 
 function actionResultToUserOrId(

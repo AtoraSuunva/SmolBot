@@ -67,7 +67,10 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     text: `Reported by ${
       anonymous
         ? 'Anonymous'
-        : formatUser(interaction.user, { markdown: false, escape: false })
+        : formatUser(interaction.user, {
+            markdown: false,
+            escapeMarkdown: false,
+          })
     }`,
   }
 

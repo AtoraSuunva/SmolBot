@@ -102,7 +102,7 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
         `${formatUser(r.member, {
           id: true,
           markdown: false,
-          escape: false,
+          escapeMarkdown: false,
         })} (${r.weight} weight >= ${config.threshold}) - ${r.action}`,
     )
     .join('\n')

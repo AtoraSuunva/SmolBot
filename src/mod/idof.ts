@@ -205,7 +205,7 @@ function formatSuggestion(m: GuildMember): MemberMatch {
   const formattedUser = formatUser(m.user, {
     id: false,
     markdown: false,
-    escape: false,
+    escapeMarkdown: false,
   })
 
   return {
