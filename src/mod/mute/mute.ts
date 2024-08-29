@@ -15,7 +15,10 @@ import {
   type GuildAuditLogsEntry,
   GuildMember,
   type GuildTextBasedChannel,
+  type OverwriteData,
+  OverwriteType,
   type PartialGuildMember,
+  type PermissionResolvable,
   type Role,
   type TextBasedChannel,
   type UserContextMenuCommandInteraction,
@@ -576,6 +579,8 @@ function sendToLogChannel(
   return Promise.resolve()
 }
 
+const TO_ALLOW: PermissionResolvable = ['ViewChannel', 'SendMessages']
+
 async function muteAction(
   config: Prisma.MuteConfigGetPayload<true>,
   members: GuildMember[],
@@ -645,34 +650,80 @@ async function muteAction(
           }
         }
 
+        const cached = category.permissionOverwrites.cache
+
+        // Get the parent category perms instead of adding an extra API call to sync
+        const parentPermissions = cached.map<OverwriteData>((o) =>
+          o.id === mutedRole.id
+            ? {
+                id: mutedRole.id,
+                type: OverwriteType.Role,
+                allow: o.allow.remove('ViewChannel'),
+                deny: o.deny.add('ViewChannel'),
+              }
+            : (o.toJSON() as OverwriteData),
+        )
+
+        // We deny view channel to the muted role since user overrides take precedence and
+        // allowing any muted user to view the channel defeats the purpose of separating users
+        // (while mods might want to show muted users some other channels in that category)
+        const hasRoleOverride = category.permissionOverwrites.cache.has(
+          mutedRole.id,
+        )
+
+        if (!hasRoleOverride) {
+          parentPermissions.push({
+            id: mutedRole.id,
+            type: OverwriteType.Role,
+            allow: [],
+            deny: ['ViewChannel'],
+          })
+        }
+
+        // Add in the muted users as overrides
+        parentPermissions.push(
+          ...succeeded.map<OverwriteData>((s) => ({
+            id: s.member.id,
+            type: OverwriteType.Member,
+            allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
+            deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
+          })),
+        )
+
         mutedChannel = await guild.channels.create({
           name: channelName,
           type: ChannelType.GuildText,
           parent: category,
           reason: 'User muted',
           topic: config.channelTopic ?? '',
+          permissionOverwrites: parentPermissions,
         })
 
-        await mutedChannel.lockPermissions()
-      }
-
-      // Could be done with .set to accomplish every user at once, but needs to know the previous
-      // perms to avoid trashing them. Main issue is trusting cache to be up-to-date, we could
-      // fetch the perms first, but most cases should be muting 1-2 users at a time so we end up
-      // making about the same amount of requests (less if only 1 user was muted)
-      for (const s of succeeded) {
-        await mutedChannel.permissionOverwrites.create(s.member, {
-          ViewChannel: true,
-        })
-      }
-
-      // The channel was just created
-      if (!channel && config.starterMessage) {
-        await mutedChannel.send(
-          config.starterMessage
-            .replace('{mention}', members.map((m) => m.user).join(', '))
-            .replace('{executor}', formattedExecutor),
+        if (config.starterMessage) {
+          await mutedChannel.send(
+            config.starterMessage
+              .replace('{mention}', members.map((m) => m.user).join(', '))
+              .replace('{executor}', formattedExecutor),
+          )
+        }
+      } else {
+        // There's some clever way to write code that avoids repeating effectively the same code as above
+        // but honestly for me it wasn't worth the effort to dedupe like 5 lines of code but add a bunch of complexity
+        const cached = mutedChannel.permissionOverwrites.cache
+        const newOverwrites = cached.map<OverwriteData>(
+          (o) => o.toJSON() as OverwriteData,
         )
+
+        newOverwrites.push(
+          ...succeeded.map<OverwriteData>((s) => ({
+            id: s.member.id,
+            type: OverwriteType.Member,
+            allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
+            deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
+          })),
+        )
+
+        await mutedChannel.permissionOverwrites.set(newOverwrites)
       }
 
       await mutedChannel?.send({
