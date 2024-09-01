@@ -208,7 +208,7 @@ async function handleChatInput(
 ) {
   inGuildGuard(interaction)
   const members = await getMembers(interaction, 'members', true)
-  const reason = interaction.options.getString('reason') ?? 'No reason given'
+  const reason = interaction.options.getString('reason')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
   const channel = interaction.options.getChannel(
     'channel',
@@ -230,7 +230,7 @@ async function handleUserCommand(
       ? target
       : await guild.members.fetch(interaction.targetId),
   ]
-  const reason = 'Context menu mute'
+  const reason = null
   const ephemeral = false
   const channel = null
 
@@ -261,7 +261,7 @@ async function runMute(
   interaction: CommandInteraction,
   action: MuteAction,
   members: GuildMember[],
-  reason: string,
+  reason: string | null,
   ephemeral: boolean,
   channel: NonThreadGuildTextBasedChannel | null,
 ): Promise<unknown> {
@@ -349,7 +349,7 @@ async function runMute(
     })
   }
 
-  const formattedReason = `${capitalAction} by ${interactionMember.displayName} for "${reason}"`
+  const formattedReason = `${capitalAction} by ${interactionMember.displayName}${reason ? ` for "${reason}"` : ''}`
 
   const { succeeded, failed, addendum, components } = await (action === 'mute'
     ? muteAction(
@@ -383,10 +383,12 @@ async function runMute(
   const formattedAddendum =
     addendum && addendum.length > 0 ? `\n${addendum}` : ''
 
-  await sendToLogChannel(guild, config.logChannelID, {
-    content: `${content}\n${byLine}${formattedAddendum}`,
-    allowedMentions: { parse: [] },
-  })
+  if (succeeded.length > 0) {
+    await sendToLogChannel(guild, config.logChannelID, {
+      content: `${content}\n${byLine}${formattedAddendum}`,
+      allowedMentions: { parse: [] },
+    })
+  }
 
   return interaction.editReply({
     content: `${content}${formattedAddendum}`,
@@ -440,7 +442,7 @@ async function handleGuildMemberUpdate(
     'unmute',
   )
   const byLine = entry
-    ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'} for ${entry.reason ? `"${entry.reason}"` : '<No reason given>'}`
+    ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'}${entry.reason ? ` for "${entry.reason}"` : ''}`
     : 'By <unknown user>'
 
   await sendToLogChannel(guild, config.logChannelID, {
@@ -598,7 +600,11 @@ async function muteAction(
 
   for (const member of members) {
     try {
-      const previousRoles = await storeRoles(member)
+      if (member.roles.cache.has(mutedRole.id) && channel === null) {
+        throw new Error('Already muted')
+      }
+
+      const previousRoles = await storeRoles(member, [mutedRole])
       const keepRoles = member.roles.cache.filter((r) => r.managed).toJSON()
       await member.roles.set([...keepRoles, mutedRole], reason)
       succeeded.push({ member, roles: previousRoles })
@@ -650,45 +656,11 @@ async function muteAction(
           }
         }
 
-        const cached = category.permissionOverwrites.cache
-
         // Get the parent category perms instead of adding an extra API call to sync
-        const parentPermissions = cached.map<OverwriteData>((o) =>
-          o.id === mutedRole.id
-            ? {
-                id: mutedRole.id,
-                type: OverwriteType.Role,
-                allow: o.allow.remove('ViewChannel'),
-                deny: o.deny.add('ViewChannel'),
-              }
-            : (o.toJSON() as OverwriteData),
-        )
-
-        // We deny view channel to the muted role since user overrides take precedence and
-        // allowing any muted user to view the channel defeats the purpose of separating users
-        // (while mods might want to show muted users some other channels in that category)
-        const hasRoleOverride = category.permissionOverwrites.cache.has(
-          mutedRole.id,
-        )
-
-        if (!hasRoleOverride) {
-          parentPermissions.push({
-            id: mutedRole.id,
-            type: OverwriteType.Role,
-            allow: [],
-            deny: ['ViewChannel'],
-          })
-        }
-
-        // Add in the muted users as overrides
-        parentPermissions.push(
-          ...succeeded.map<OverwriteData>((s) => ({
-            id: s.member.id,
-            type: OverwriteType.Member,
-            allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
-            deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
-          })),
-        )
+        const parentPermissions =
+          category.permissionOverwrites.cache.map<OverwriteData>(
+            (o) => o.toJSON() as OverwriteData,
+          )
 
         mutedChannel = await guild.channels.create({
           name: channelName,
@@ -699,6 +671,20 @@ async function muteAction(
           permissionOverwrites: parentPermissions,
         })
 
+        // We deny view channel to the muted role since user overrides take precedence and
+        // allowing any muted user to view the channel defeats the purpose of separating users
+        // (while mods might want to show muted users some other channels in that category)
+
+        // Ideally, we'd calculate the perms and pass it to the channel create call, but Discord
+        // doesn't like that and will return a "Missing Permissions" error even if we have every
+        // permission needed (and allows us to edit in the exact same changes later!)
+        // You can get around this by giving the bot admin, but that's a solution in the same way as
+        // "installing a 'door' by blowing up your wall" is a solution
+
+        await mutedChannel.permissionOverwrites.create(mutedRole, {
+          ViewChannel: false,
+        })
+
         if (config.starterMessage) {
           await mutedChannel.send(
             config.starterMessage
@@ -706,25 +692,24 @@ async function muteAction(
               .replace('{executor}', formattedExecutor),
           )
         }
-      } else {
-        // There's some clever way to write code that avoids repeating effectively the same code as above
-        // but honestly for me it wasn't worth the effort to dedupe like 5 lines of code but add a bunch of complexity
-        const cached = mutedChannel.permissionOverwrites.cache
-        const newOverwrites = cached.map<OverwriteData>(
-          (o) => o.toJSON() as OverwriteData,
-        )
-
-        newOverwrites.push(
-          ...succeeded.map<OverwriteData>((s) => ({
-            id: s.member.id,
-            type: OverwriteType.Member,
-            allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
-            deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
-          })),
-        )
-
-        await mutedChannel.permissionOverwrites.set(newOverwrites)
       }
+
+      // Add in the user overrides so they can see the channel
+      const cached = mutedChannel.permissionOverwrites.cache
+      const newOverwrites = cached.map<OverwriteData>(
+        (o) => o.toJSON() as OverwriteData,
+      )
+
+      newOverwrites.push(
+        ...succeeded.map<OverwriteData>((s) => ({
+          id: s.member.id,
+          type: OverwriteType.Member,
+          allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
+          deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
+        })),
+      )
+
+      await mutedChannel.permissionOverwrites.set(newOverwrites)
 
       await mutedChannel?.send({
         content: `🔇 ${succeeded.map((s) => formatUser(s.member)).join(', ')} ${succeeded.length > 1 ? 'have' : 'has'} been muted by ${formattedExecutor}`,
@@ -851,16 +836,30 @@ async function unmuteAction(
   return { succeeded, failed, addendum, components }
 }
 
-async function storeRoles(member: GuildMember): Promise<Role[]> {
+/**
+ * Store a member's current roles in the database, filters out the @everyone role, managed roles, and any provided roles
+ * @param member The member to store roles for
+ * @param ignoreRoles Roles to ignore and not store
+ * @returns The roles that were stored
+ */
+async function storeRoles(
+  member: GuildMember,
+  ignoreRoles: Role[] = [],
+): Promise<Role[]> {
   const { guild } = member
   const { previousRoles } = (await fetchMuteInfo(member)) ?? {
     previousRoles: [],
   }
-  const roles = member.roles.cache
-    .filter((r) => validRole(r, guild))
-    .map((r) => r.id)
-  await setStoredRoles(member, [...(previousRoles ?? []), ...roles])
-  return member.roles.cache.toJSON()
+  const roles = member.roles.cache.filter(
+    (r) => !ignoreRoles.includes(r) && validRole(r, guild),
+  )
+
+  await setStoredRoles(member, [
+    ...(previousRoles ?? []),
+    ...roles.map((r) => r.id),
+  ])
+
+  return roles.toJSON()
 }
 
 /**
@@ -937,9 +936,7 @@ function isDefined<T>(value: T | undefined | null): value is T {
 }
 
 function validRole(role: Role, guild: Guild): boolean {
-  if (role.id === guild.id) return false
-  if (role.managed) return false
-  return true
+  return role.id !== guild.id && !role.managed
 }
 
 function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
