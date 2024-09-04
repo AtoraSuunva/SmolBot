@@ -59,7 +59,7 @@ async function archiveAllDirtyGuilds(client: Client) {
 
     const channel = await client.channels.fetch(config.archiveChannel)
 
-    if (!channel?.isTextBased()) continue
+    if (!channel?.isTextBased() || channel.isDMBased()) continue
 
     const archive = await csvArchiveForGuild(guildID)
 

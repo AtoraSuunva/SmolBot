@@ -98,6 +98,7 @@ async function main() {
         ThreadMemberManager: 0,
         AutoModerationRuleManager: 0,
       }),
+      enforceNonce: true,
     },
   })
 

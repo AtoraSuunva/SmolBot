@@ -18,9 +18,9 @@ import {
   type OverwriteData,
   OverwriteType,
   type PartialGuildMember,
+  type PartialTextBasedChannelFields,
   type PermissionResolvable,
   type Role,
-  type TextBasedChannel,
   type UserContextMenuCommandInteraction,
   time,
 } from 'discord.js'
@@ -568,7 +568,7 @@ async function findUserResponsibleForRemovingMute(
 function sendToLogChannel(
   guild: Guild,
   logChannelID: string | null,
-  payload: Parameters<TextBasedChannel['send']>[0],
+  payload: Parameters<PartialTextBasedChannelFields['send']>[0],
 ) {
   if (!logChannelID) return Promise.resolve()
 

@@ -28,14 +28,14 @@
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.0",
-    "@prisma/client": "~5.18.0",
+    "@prisma/client": "~5.19.1",
     "@sapphire/shapeshift": "^4.0.0",
     "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
     "csv-parse": "^5.5.6",
     "csv-stringify": "^6.5.1",
-    "discord-api-types": "^0.37.97",
-    "discord.js": "~14.15.3",
+    "discord-api-types": "^0.37.99",
+    "discord.js": "~14.16.1",
     "env-var": "~7.5.0",
     "luxon": "^3.5.0",
     "p-queue": "^8.0.1",
@@ -43,19 +43,19 @@
     "pino-dev": "^4.0.3",
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.1.0",
-    "sleetcord": "2.0.1",
-    "sleetcord-common": "^9.0.0",
+    "sleetcord": "2.0.2",
+    "sleetcord-common": "^9.0.1",
     "tseep": "^1.2.2",
     "undici": "^6.19.8"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@sentry/cli": "^2.33.1",
+    "@sentry/cli": "^2.34.1",
     "@types/convert-units": "^2.3.9",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~22.5.0",
+    "@types/node": "~22.5.3",
     "@types/pluralize": "^0.0.33",
-    "prisma": "~5.18.0",
+    "prisma": "~5.19.1",
     "typescript": "~5.5.4"
   }
 }

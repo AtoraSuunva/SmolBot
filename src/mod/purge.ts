@@ -310,7 +310,7 @@ function filterMessages(
     if (emoji && !hasCountEmoji(message, emoji)) return false
     if (onlyEmoji && !hasOnlyEmoji(message)) return false
     if (embeds && !hasCountEmbeds(message, embeds)) return false
-    if (!isDeleteable(message)) return false
+    if (!message.bulkDeletable) return false
     return true
   })
 }
@@ -389,12 +389,4 @@ function hasOnlyEmoji(message: Message): boolean {
 function hasCountEmbeds(message: Message, maxEmbeds: number): boolean {
   const count = message.embeds.length + message.attachments.size
   return count >= maxEmbeds
-}
-
-// 14 Days period in ms
-const p14Days = 60 * 60 * 24 * 14
-
-function isDeleteable(message: Message): boolean {
-  const tDelta = message.createdTimestamp - Date.now()
-  return message.deletable && tDelta < p14Days
 }
