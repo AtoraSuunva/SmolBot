@@ -4,10 +4,10 @@ import {
   ApplicationCommandOptionType,
   ChannelType,
   type ChatInputCommandInteraction,
-  Constants,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+import { GuildTextBasedChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 
@@ -27,7 +27,7 @@ export const mute_manage = new SleetSlashCommand(
         name: 'log_channel',
         description: 'The channel to send mute logs to',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: Constants.GuildTextBasedChannelTypes,
+        channel_types: GuildTextBasedChannelTypes,
       },
       {
         name: 'separate_users',

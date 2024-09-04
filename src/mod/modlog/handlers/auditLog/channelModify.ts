@@ -238,10 +238,6 @@ function formatChangeArray(change: AuditLogChangeArray): string {
     .map((c) => {
       if (typeof c !== 'object') return String(change)
 
-      if ('position' in c) {
-        return `<Role:${c.name} (${c.id}) [p:${c.permissions}]>`
-      }
-
       if ('allow' in c) {
         return `<Overwrite:${OverwriteType[c.type]} (${c.id}) [a:${c.allow}/d:${c.deny}]>`
       }
@@ -252,6 +248,10 @@ function formatChangeArray(change: AuditLogChangeArray): string {
 
       if ('moderated' in c) {
         return `<ForumTag:${c.name} (${c.id})>`
+      }
+
+      if ('position' in c) {
+        return `<Role:${c.name} (${c.id})>`
       }
 
       return `<unknown:${c}>`

@@ -2,7 +2,6 @@ import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
-  Constants,
   type GuildTextBasedChannel,
   type VoiceState,
 } from 'discord.js'
@@ -13,6 +12,7 @@ import {
   getGuild,
   getTextBasedChannel,
 } from 'sleetcord'
+import { GuildTextBasedChannelTypes } from '../util/constants.js'
 import { prisma } from '../util/db.js'
 
 const config = new SleetSlashSubcommand(
@@ -25,7 +25,7 @@ const config = new SleetSlashSubcommand(
         description: 'The channel to log to',
         type: ApplicationCommandOptionType.Channel,
         required: true,
-        channel_types: Constants.GuildTextBasedChannelTypes,
+        channel_types: GuildTextBasedChannelTypes,
       },
     ],
   },

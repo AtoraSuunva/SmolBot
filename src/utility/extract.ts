@@ -3,11 +3,12 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   GuildMember,
+  type GuildTextBasedChannel,
   type TextBasedChannel,
   cleanCodeBlockContent,
   codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, inGuildGuard } from 'sleetcord'
 import { plural } from '../util/format.js'
 
 export const extract = new SleetSlashCommand(
@@ -39,6 +40,8 @@ const limits = {
 }
 
 async function runExtract(interaction: ChatInputCommandInteraction) {
+  inGuildGuard(interaction)
+
   const limit =
     interaction.member instanceof GuildMember
       ? getMemberLimit(interaction.member)
@@ -178,7 +181,7 @@ interface SplitSendOptions {
 }
 
 async function splitSend(
-  channel: TextBasedChannel,
+  channel: GuildTextBasedChannel,
   content: string,
   { code = false }: SplitSendOptions = {},
 ) {
