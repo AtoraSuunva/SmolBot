@@ -1,4 +1,4 @@
-import { type Guild, codeBlock } from 'discord.js'
+import { type ForumChannel, type Guild, codeBlock } from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 
@@ -38,6 +38,17 @@ export const roleFormatter: Formatter = (value: Value, guild?: Guild) =>
   `@${
     guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
   } (${String(value)})`
+
+export const makeForumTagFormatter: (forum: ForumChannel) => Formatter =
+  (forum: ForumChannel) => (value: Value) => {
+    const tag = forum.availableTags.find((t) => t.id === value)
+
+    if (!tag) {
+      return `unknown-tag (${String(value)})`
+    }
+
+    return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
+  }
 
 const defaultFormatters: Record<string, Formatter> = {
   guild_id: guildFormatter,

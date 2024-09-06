@@ -166,6 +166,7 @@ model MemberMutes {
   userID        String   @map("user_id")
   previousRoles String   @map("previous_roles")
   muteChannel   String?  @map("mute_channel")
+  executor      String?  @map("executor")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@id([guildID, userID])
@@ -250,6 +251,17 @@ model ModMailConfig {
 
   modReplyPrefix     String @default("!r") @map("mod_reply_prefix")
   modAnonReplyPrefix String @default("!a") @map("mod_anon_reply_prefix")
+  modTeamName        String @default("Mod Team") @map("mod_team_name")
+}
+
+model ModMailForumConfig {
+  guildID   String @map("guild_id")
+  channelID String @map("channel_id")
+
+  openTag   String? @map("open_tag")
+  closedTag String? @map("closed_tag")
+
+  @@id([guildID, channelID])
 }
 
 model ModMailTicketConfig {

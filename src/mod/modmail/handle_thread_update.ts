@@ -1,4 +1,4 @@
-import type { AnyThreadChannel } from 'discord.js'
+import type { AnyThreadChannel, Client, ForumThreadChannel } from 'discord.js'
 import { SleetModule } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { getWebhookFor } from './handle_ticket_message.js'
@@ -45,11 +45,17 @@ const intlList = new Intl.ListFormat('en', {
   type: 'conjunction',
 })
 
+const updatingThreads = new Set<string>()
+
 async function handleThreadUpdate(
   oldThread: AnyThreadChannel,
   newThread: AnyThreadChannel,
 ) {
-  const ticket = await getTicket(newThread)
+  if (updatingThreads.has(newThread.id)) {
+    return
+  }
+
+  const ticket = await findTicket(newThread)
 
   if (!ticket || ticket.userThreadID === newThread.id) {
     // If it's not a ticket or if the user ticket thread was modified, ignore it
@@ -82,8 +88,7 @@ async function handleThreadUpdate(
 
   if (
     newThread.archived !== null &&
-    oldThread.archived !== newThread.archived &&
-    userThread.archived !== newThread.archived
+    oldThread.archived !== newThread.archived
   ) {
     newState = true
     threadChange.archived = newThread.archived
@@ -119,54 +124,89 @@ async function handleThreadUpdate(
     )
     .filter((v) => v)
 
+  const isTicketOpen = !threadChange.locked && !threadChange.archived
+
+  await prisma.modMailTicket.update({
+    where: {
+      ticketID: ticket.ticketID,
+    },
+    data: {
+      open: isTicketOpen,
+    },
+  })
+
   try {
     await webhook.send({
       content: `This ticket was ${intlList.format(
         changes,
-      )} by a moderator.\n${addendums.join('\n')}`,
+      )}.\n${addendums.join('\n')}`,
       threadId: userThread.id,
     })
 
-    // Synching the archived state hides it from the channel list and prevents the user from seeing the "new message" indicator
-    // So the user might never know it was archived
-
-    // if (threadChange.archived !== null || newThread.archived !== null) {
-    //   await userThread.setArchived(
-    //     (threadChange.archived ?? newThread.archived)!,
-    //   )
-    // }
-
     if (threadChange.locked !== null || newThread.locked !== null) {
+      // Synching the archived state hides it from the channel list and prevents the user from seeing the "new message" indicator
+      // So the user might never know it was archived
+
+      // if (threadChange.archived !== null || newThread.archived !== null) {
+      //   await userThread.setArchived(
+      //     (threadChange.archived ?? newThread.archived)!,
+      //   )
+      // }
+
       // biome-ignore lint/style/noNonNullAssertion: we just checked at least one state wasn't null
       await userThread.setLocked((threadChange.locked ?? newThread.locked)!)
     }
+
+    const config = await findForumConfig(ticket.modChannelID)
+
+    if (config) {
+      const newTags = newThread.appliedTags.filter(
+        (t) => t !== config.openTag && t !== config.closedTag,
+      )
+
+      if (newTags.length < 5) {
+        if (isTicketOpen && config.openTag) {
+          newTags.push(config.openTag)
+        } else if (!isTicketOpen && config.closedTag) {
+          newTags.push(config.closedTag)
+        }
+      }
+
+      updatingThreads.add(newThread.id)
+      await newThread.edit({
+        appliedTags: newTags,
+        archived: false,
+        locked: false,
+      })
+
+      if (!isTicketOpen || newThread.archived || newThread.locked) {
+        await newThread.edit({
+          archived: newThread.archived || !isTicketOpen,
+          locked: newThread.locked ?? false,
+        })
+      }
+    }
   } catch {
     // ignore
+  } finally {
+    updatingThreads.delete(newThread.id)
   }
 }
 
 async function handleThreadDelete(thread: AnyThreadChannel) {
-  console.log(`Thread ${thread.id} was deleted`)
-  const ticket = await getTicket(thread)
+  const ticket = await findTicket(thread)
 
   if (!ticket) {
     return
   }
 
-  const { client } = thread
   const isUserThread = ticket.userThreadID === thread.id
 
-  const otherChannel = await client.channels
-    .fetch(isUserThread ? ticket.modChannelID : ticket.userChannelID)
-    .catch(() => null)
-
-  if (!otherChannel || !('threads' in otherChannel)) {
-    return
-  }
-
-  const otherThread = await otherChannel.threads
-    .fetch(isUserThread ? ticket.modThreadID : ticket.userThreadID)
-    .catch(() => null)
+  const otherThread = await fetchThread(
+    thread.client,
+    isUserThread ? ticket.modChannelID : ticket.userChannelID,
+    isUserThread ? ticket.modThreadID : ticket.userThreadID,
+  )
 
   if (!otherThread) {
     return
@@ -180,22 +220,60 @@ async function handleThreadDelete(thread: AnyThreadChannel) {
       /* ignore */
     })
 
-  // Mod thread was deleted, lock the user thread
-  if (!isUserThread) {
-    otherThread.setLocked(true)
-  }
-
   await prisma.modMailTicket.update({
     where: {
       ticketID: ticket.ticketID,
     },
     data: {
+      open: false,
       linkDeleted: true,
     },
   })
+
+  if (isUserThread) {
+    // Tag the mod thread as closed
+    const modThread = await fetchThread(
+      thread.client,
+      ticket.modChannelID,
+      ticket.modThreadID,
+    )
+
+    if (modThread) {
+      const config = await findForumConfig(ticket.modChannelID)
+
+      if (config) {
+        const newTags = modThread.appliedTags.filter(
+          (t) => t !== config.openTag && t !== config.closedTag,
+        )
+
+        if (newTags.length < 5 && config.closedTag) {
+          newTags.push(config.closedTag)
+        }
+
+        await modThread.setAppliedTags(newTags).catch(() => {
+          /* ignore */
+        })
+      }
+    }
+  } else {
+    // Mod thread was deleted, lock the user thread
+    otherThread.setLocked(true)
+  }
 }
 
-async function getTicket(thread: AnyThreadChannel) {
+async function fetchThread(
+  client: Client,
+  channelId: string,
+  threadId: string,
+): Promise<ForumThreadChannel | null> {
+  const channel = await client.channels.fetch(channelId).catch(() => null)
+
+  if (!channel || !channel.isThreadOnly()) return null
+
+  return channel.threads.fetch(threadId).catch(() => null)
+}
+
+async function findTicket(thread: AnyThreadChannel) {
   return prisma.modMailTicket.findFirst({
     where: {
       OR: [
@@ -206,6 +284,14 @@ async function getTicket(thread: AnyThreadChannel) {
           modThreadID: thread.id,
         },
       ],
+    },
+  })
+}
+
+async function findForumConfig(channelId: string) {
+  return prisma.modMailForumConfig.findFirst({
+    where: {
+      channelID: channelId,
     },
   })
 }

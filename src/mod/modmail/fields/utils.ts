@@ -21,6 +21,8 @@ export const TEXT_INPUT_STYLES: APIApplicationCommandOptionChoice<number>[] = [
   },
 ]
 
+const MAX_MODMAIL_ID_LENGTH = 25
+
 export const modmailIdAutocomplete: AutocompleteHandler<string> = async ({
   interaction,
   value,
@@ -58,25 +60,28 @@ export const modmailIdAutocomplete: AutocompleteHandler<string> = async ({
     }),
   ])
 
-  const possibleMatches = results.flat()
+  const possibleMatches = Array.from(
+    new Set(results.flat().map((m) => m.modmailID)),
+  )
 
-  if (possibleMatches.length === 0) {
-    if (value.length === 0) {
-      return []
-    }
-
-    return [
-      {
-        name: value,
-        value,
-      },
-    ]
+  if (possibleMatches.length === 0 && value.length === 0) {
+    return []
   }
 
-  return possibleMatches.map((match) => ({
-    name: match.modmailID,
-    value: match.modmailID,
+  const matches = possibleMatches.map((match) => ({
+    name: match,
+    value: match,
   }))
+
+  if (value.length > 0 && !possibleMatches.includes(value)) {
+    const cutValue = value.slice(0, MAX_MODMAIL_ID_LENGTH)
+    matches.unshift({
+      name: `${cutValue} (create new)`,
+      value: cutValue,
+    })
+  }
+
+  return matches.slice(0, 25)
 }
 
 type SleetCommandOption = NonNullable<SleetSlashSubcommandBody['options']>[0]
@@ -87,7 +92,7 @@ export const FIELD_MODMAIL_ID: SleetCommandOption = {
   type: ApplicationCommandOptionType.String,
   autocomplete: modmailIdAutocomplete,
   required: true,
-  max_length: 25,
+  max_length: MAX_MODMAIL_ID_LENGTH,
 }
 
 export const customIdAutocomplete: AutocompleteHandler<string> = async ({

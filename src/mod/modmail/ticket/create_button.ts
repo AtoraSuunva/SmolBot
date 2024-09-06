@@ -16,6 +16,7 @@ import {
   ThreadAutoArchiveDuration,
   type ThreadChannel,
   escapeInlineCode,
+  time,
 } from 'discord.js'
 import {
   type AutocompleteHandler,
@@ -24,63 +25,66 @@ import {
   getGuild,
   inGuildGuard,
 } from 'sleetcord'
-import { MINUTE } from 'sleetcord-common'
-import { prisma } from '../../util/db.js'
-import { modmailIdAutocomplete } from './fields/utils.js'
+import { MINUTE, SECOND } from 'sleetcord-common'
+import { prisma } from '../../../util/db.js'
+import { modmailIdAutocomplete } from './../fields/utils.js'
 
-const tagAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
-  if (!interaction.inGuild()) {
-    return []
+type AutocompleteCreator = (
+  channelOption: string,
+) => AutocompleteHandler<string>
+
+export const createTagAutocomplete: AutocompleteCreator =
+  (channelOption: string) =>
+  async ({ interaction, value }) => {
+    if (!interaction.inGuild()) {
+      return []
+    }
+
+    const forumChannel = interaction.options.get(channelOption)
+
+    if (!forumChannel || !(typeof forumChannel.value === 'string')) {
+      return [
+        {
+          name: 'No forum channel selected, unable to suggest tags',
+          value: '',
+        },
+      ]
+    }
+
+    const guild = await getGuild(interaction, true)
+    const channel = await guild.channels.fetch(forumChannel.value)
+
+    if (!channel?.isThreadOnly()) {
+      return [
+        {
+          name: 'Invalid forum channel selected, unable to suggest tags',
+          value: '',
+        },
+      ]
+    }
+
+    if (channel.availableTags.length === 0) {
+      return [
+        {
+          name: 'No tags available in the forum channel',
+          value: '',
+        },
+      ]
+    }
+
+    const lowerValue = value.toLowerCase()
+
+    return channel.availableTags
+      .filter((tag) => tag.name.toLowerCase().includes(lowerValue))
+      .map((tag) => ({
+        name: `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name}`,
+        value: tag.id,
+      }))
   }
 
-  const forumChannel = interaction.options.get('modmail_forum')
-
-  if (!forumChannel || !(typeof forumChannel.value === 'string')) {
-    return [
-      {
-        name: 'No forum channel selected, unable to suggest tags',
-        value: '',
-      },
-    ]
-  }
-
-  const guild = await getGuild(interaction, true)
-  const channel = await guild.channels.fetch(forumChannel.value)
-
-  if (!channel?.isThreadOnly()) {
-    return [
-      {
-        name: 'Invalid forum channel selected, unable to suggest tags',
-        value: '',
-      },
-    ]
-  }
-
-  if (channel.availableTags.length === 0) {
-    return [
-      {
-        name: 'No tags available in the forum channel',
-        value: '',
-      },
-    ]
-  }
-
-  const lowerValue = value.toLowerCase()
-
-  return channel.availableTags
-    .filter((tag) => tag.name.toLowerCase().includes(lowerValue))
-    .map((tag) => ({
-      name: tag.name,
-      value: tag.id,
-    }))
-}
-
-export const create_ticket_button = new SleetSlashSubcommand(
+export const modmail_ticket_create_button = new SleetSlashSubcommand(
   {
-    name: 'create_ticket_button',
+    name: 'create_button',
     description: 'Create a button users can use to open a modmail ticket',
     options: [
       {
@@ -134,7 +138,7 @@ export const create_ticket_button = new SleetSlashSubcommand(
         description:
           'The tag to apply to the forum post on creation (default: none)',
         type: ApplicationCommandOptionType.String,
-        autocomplete: tagAutocomplete,
+        autocomplete: createTagAutocomplete('modmail_forum'),
         max_length: 20,
       },
     ],
@@ -276,12 +280,14 @@ async function handleCreateTicketButton(
           modmailID: modmailId,
           guildID: interaction.guildId,
           userID: interaction.user.id,
+          open: true,
+          linkDeleted: false,
         },
       })
 
       if (tickets >= config.maxOpenTickets) {
         await interaction.reply({
-          content: 'You have reached the maximum number of open tickets',
+          content: `You have reached the maximum number of open tickets (${tickets}/${config.maxOpenTickets}).\nYou can create more tickets once a moderator closes some of your existing tickets.`,
           ephemeral: true,
         })
         return
@@ -289,20 +295,31 @@ async function handleCreateTicketButton(
     }
 
     if (config.ratelimit) {
-      const tickets = await prisma.modMailTicket.count({
+      const delay = config.ratelimit * SECOND
+
+      const lastTicket = await prisma.modMailTicket.findFirst({
         where: {
           modmailID: modmailId,
           guildID: interaction.guildId,
           AND: [
-            { createdAt: { gte: new Date(Date.now() - config.ratelimit) } },
+            {
+              createdAt: {
+                gte: new Date(Date.now() - delay),
+              },
+            },
             { userID: interaction.user.id },
           ],
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
       })
 
-      if (tickets > 0) {
+      if (lastTicket) {
+        const nextTime = new Date(lastTicket.createdAt.getTime() + delay)
+
         await interaction.reply({
-          content: 'You are sending tickets too quickly, try again later',
+          content: `You are creating tickets too quickly, try again ${time(nextTime, 'R')}.`,
           ephemeral: true,
         })
         return
@@ -457,13 +474,25 @@ async function handleCreateTicketButton(
     })
   }
 
+  const forumConfig = await prisma.modMailForumConfig.findFirst({
+    select: {
+      openTag: true,
+    },
+    where: {
+      guildID: interaction.guildId,
+      channelID: modChannel.id,
+    },
+  })
+
   let modThread: ThreadChannel | undefined
 
   try {
     modThread = await modChannel.threads.create({
       name: `${modmailId} - ${formattedUser}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-      appliedTags: forumTag ? [forumTag] : [],
+      appliedTags: forumTag
+        ? [forumTag, forumConfig?.openTag ?? '']
+        : [forumConfig?.openTag ?? ''],
       reason: `Ticket created by ${formattedUser}`,
       message: {
         content: embed.data.fields?.[0].value.slice(0, 256) ?? 'No Preview',
