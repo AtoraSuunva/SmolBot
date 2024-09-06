@@ -94,12 +94,21 @@ export const mute = new SleetSlashCommand(
     guildMemberAdd: handleGuildMemberAdd,
     guildMemberRemove: handleGuildMemberRemove,
     interactionCreate: async (i) => {
-      if (i.isButton() && i.inGuild() && i.customId === DELETE_CHANNEL_ID) {
+      if (i.isButton() && i.inGuild()) {
+        const [cId, userId] = i.customId.split(':')
+
+        if (cId !== DELETE_CHANNEL_ID) {
+          return
+        }
+
         const channel = await i.guild?.channels
           .fetch(i.channelId)
           .catch(() => null)
 
-        if (!i.memberPermissions.has('ManageChannels')) {
+        if (
+          i.user.id !== userId ||
+          !i.memberPermissions.has('ManageChannels')
+        ) {
           await i.reply({
             content: 'No.',
             ephemeral: true,
@@ -250,12 +259,13 @@ const CONFIG_DEFAULT: Prisma.MuteConfigGetPayload<true> = {
 }
 
 const DELETE_CHANNEL_ID = 'delete_channel'
-const DELETE_CHANNEL_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents(
-  new ButtonBuilder()
-    .setCustomId(DELETE_CHANNEL_ID)
-    .setLabel('Delete Channel')
-    .setStyle(ButtonStyle.Danger),
-)
+const createDeleteChannelRow = (userId?: string | null) =>
+  new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${DELETE_CHANNEL_ID}:${userId ?? ''}`)
+      .setLabel('Delete Channel')
+      .setStyle(ButtonStyle.Danger),
+  )
 
 async function runMute(
   interaction: CommandInteraction,
@@ -522,7 +532,7 @@ async function handleGuildMemberRemove(
         await channel.send({
           content:
             'There are no more muted users left in this channel. You can now delete this channel.',
-          components: [DELETE_CHANNEL_ROW],
+          components: [createDeleteChannelRow(muteInfo.executor)],
         })
       }
     }
@@ -821,12 +831,12 @@ async function unmuteAction(
         if (channel.id === sourceChannel?.id) {
           addendum =
             'Every muted user in this channel has been unmuted. You can now delete this channel.'
-          components.push(DELETE_CHANNEL_ROW)
+          components.push(createDeleteChannelRow(executor?.id))
         } else {
           channel.send({
             content:
               'Every muted user in this channel has been unmuted. You can now delete this channel.',
-            components: [DELETE_CHANNEL_ROW],
+            components: [createDeleteChannelRow(executor?.id)],
           })
         }
       }
@@ -983,6 +993,7 @@ const ROLE_SEPARATOR = ' '
 interface MuteInfo {
   previousRoles: string[]
   muteChannel: string | null
+  executor: string | null
 }
 
 async function fetchMuteInfo(
@@ -992,6 +1003,7 @@ async function fetchMuteInfo(
     select: {
       previousRoles: true,
       muteChannel: true,
+      executor: true,
     },
     where: {
       guildID_userID: {
@@ -1008,6 +1020,7 @@ async function fetchMuteInfo(
           .split(ROLE_SEPARATOR)
           .filter((v) => v.trim() !== ''),
         muteChannel: info.muteChannel,
+        executor: info.executor,
       }
 }
 
