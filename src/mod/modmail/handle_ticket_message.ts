@@ -165,7 +165,7 @@ async function handleMessageCreate(message: Message) {
       options.username = formatWebhookUser(message.author)
       options.avatarURL = message.author.displayAvatarURL()
     } else {
-      options.username = 'Mod Team'
+      options.username = config.modTeamName
 
       if (message.guild.icon) {
         // biome-ignore lint/style/noNonNullAssertion: we just tested for an icon url
@@ -199,7 +199,7 @@ const formatWebhookUser = (user: User): string =>
     escapeMarkdown: false,
     markdown: false,
     id: false,
-  })
+  }).slice(0, 32)
 
 const webhookCache = new LimitedCollection<
   string,
@@ -219,7 +219,7 @@ export async function getWebhookFor(
   const webhooks = await channel.fetchWebhooks()
   const webhook = webhooks.find<Webhook<WebhookType.Incoming>>(
     (wh): wh is Webhook<WebhookType.Incoming> =>
-      wh.isUserCreated() && wh.owner.id === channel.client.user.id,
+      wh.isIncoming() && wh.owner?.id === channel.client.user.id,
   )
 
   if (webhook) {
