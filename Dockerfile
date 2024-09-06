@@ -1,5 +1,7 @@
 # Step that pulls in everything needed to build the app and builds it
-FROM node:22-alpine as dev-build
+# Pinned to this sha because newer versions broke
+# https://github.com/getsentry/sentry-javascript/issues/12169
+FROM node:22-alpine@sha256:ed9736a13b88ba55cbc08c75c9edac8ae7f72840482e40324670b299336680c1 AS dev-build
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
@@ -17,7 +19,7 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:22-alpine as prod-build
+FROM node:22-alpine@sha256:ed9736a13b88ba55cbc08c75c9edac8ae7f72840482e40324670b299336680c1 AS prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
@@ -30,8 +32,8 @@ COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
-FROM node:22-alpine as prod-runtime
-# See https://github.com/prisma/prisma/issues/19729, watch in case this changes
+FROM node:22-alpine@sha256:ed9736a13b88ba55cbc08c75c9edac8ae7f72840482e40324670b299336680c1 AS prod-runtime
+# See https://github.com/prisma/prisma/issues/19729
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
     rm -rf /var/cache/apk/*
