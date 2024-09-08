@@ -44,7 +44,7 @@
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.1.0",
     "sleetcord": "2.0.2",
-    "sleetcord-common": "^9.0.1",
+    "sleetcord-common": "^9.1.0",
     "tseep": "^1.2.2",
     "undici": "^6.19.8"
   },
