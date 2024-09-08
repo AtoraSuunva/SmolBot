@@ -6,7 +6,7 @@ import {
   MessageType,
   hyperlink,
 } from 'discord.js'
-import { formatUser } from 'sleetcord'
+import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { plural } from './format.js'
 
 /** Number of lines before quote content becomes cut */
@@ -99,7 +99,31 @@ export async function quoteMessage(
       {
         name: `+${plural('Attachment', listedAttachments.length)}`,
         value: listedAttachments
-          .map((a) => `[${a.name}](<${a.proxyURL}>)`)
+          .map((a) => hyperlink(escapeAllMarkdown(a.name), a.proxyURL))
+          .join(', '),
+      },
+    ])
+  }
+
+  for (const [, sticker] of message.stickers) {
+    if (attachedImagesCount < 4) {
+      attachedImagesCount++
+      if (!embed.data.image) {
+        embed.setImage(sticker.url)
+      } else {
+        embeds.push(
+          new EmbedBuilder().setURL(message.url).setImage(sticker.url),
+        )
+      }
+    }
+  }
+
+  if (message.stickers.size > 0) {
+    embed.addFields([
+      {
+        name: 'Stickers:',
+        value: message.stickers
+          .map((s) => hyperlink(escapeAllMarkdown(s.name), s.url))
           .join(', '),
       },
     ])
@@ -217,9 +241,9 @@ function quoteGuildBoostTier(
   tier: number,
 ) {
   embed.setDescription(
-    `${message.author} just boosted the server! ${
-      message.guild?.name ?? '<Unknown Server>'
-    } has achieved **tier ${tier}**!`,
+    `${message.author} just boosted the server! ${escapeAllMarkdown(
+      message.guild?.name ?? '<Unknown Server>',
+    )} has achieved **tier ${tier}**!`,
   )
 }
 
