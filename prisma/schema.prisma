@@ -238,10 +238,11 @@ model DeletePoliceConfig {
   footerMessage  String? @map("footer_message")
   ignoreBots     Boolean @default(true) @map("ignore_bots")
   ignoreMods     Boolean @default(true) @map("ignore_mods")
+  ignoreStickers Boolean @default(false) @map("ignore_stickers")
   // Only repost if the user deleted it themselves (bot-deleted messages don't cause audit log entries and may still be reposted)
   onlySelfDelete Boolean @default(false) @map("only_self_delete")
-  // Try to guess when bots delete the message (by checking if it was inhumanly quick, there's no reliable way to check unfortunately)
-  guessBotDelete Boolean @default(false) @map("guess_bot_delete")
+  // Time (in ms) to give bots to delete the message. There's no reliable way to check for bot deletes besides "it was inhumanly fast"
+  botGraceTimeMs Int     @default(0) @map("bot_grace_time_ms")
 
   updatedAt DateTime @updatedAt @map("updated_at")
 }
