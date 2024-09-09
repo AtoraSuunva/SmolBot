@@ -9,7 +9,7 @@ import type {
   PartialMessage,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
-import { getOptionCount } from 'sleetcord-common'
+import { SECOND, getOptionCount } from 'sleetcord-common'
 import { prisma } from '../util/db.js'
 import { formatConfig } from '../util/format.js'
 import { quoteMessage } from '../util/quoteMessage.js'
@@ -35,14 +35,14 @@ export const delete_police_config = new SleetSlashCommand(
       {
         name: 'threshold',
         description:
-          'Messages deleted faster than this many seconds will be reposted (default: 5)',
+          'Messages deleted faster than this many seconds will be reposted (default: 5s)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 1,
       },
       {
         name: 'fuzziness',
         description:
-          'Randomly add 0-fuzziness extra time to make it harder to guess the threshold (default: 0)',
+          'Randomly add 0-fuzziness extra time to make it harder to guess the threshold (default: 0s)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
       },
@@ -65,16 +65,22 @@ export const delete_police_config = new SleetSlashCommand(
         type: ApplicationCommandOptionType.Boolean,
       },
       {
+        name: 'ignore_stickers',
+        description:
+          'Whether to ignore messages with stickers (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
         name: 'only_self_delete',
         description:
           'Whether to only repost messages that were self-deleted, unreliable with bots (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
-        name: 'guess_bot_delete',
+        name: 'bot_grace_time',
         description:
-          "Try to guess when a bot deleted a message and don't repost it (default: false)",
-        type: ApplicationCommandOptionType.Boolean,
+          "Give bots a grace period (in ms) to delete the message where it won't be reposted (default: 0ms)",
+        type: ApplicationCommandOptionType.Integer,
       },
     ],
   },
@@ -117,8 +123,9 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
   const footerMessage = interaction.options.getString('footer_message')
   const ignoreBots = interaction.options.getBoolean('ignore_bots')
   const ignoreMods = interaction.options.getBoolean('ignore_mods')
+  const ignoreStickers = interaction.options.getBoolean('ignore_stickers')
   const onlySelfDelete = interaction.options.getBoolean('only_self_delete')
-  const guessBotDelete = interaction.options.getBoolean('guess_bot_delete')
+  const botGraceTimeMs = interaction.options.getInteger('bot_grace_time')
 
   const mergedConfig: Omit<DeletePoliceConfig, 'updatedAt'> = {
     guildID: guild.id,
@@ -128,8 +135,9 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
     footerMessage: footerMessage ?? oldConfig?.footerMessage ?? null,
     ignoreBots: ignoreBots ?? oldConfig?.ignoreBots ?? true,
     ignoreMods: ignoreMods ?? oldConfig?.ignoreMods ?? true,
+    ignoreStickers: ignoreStickers ?? oldConfig?.ignoreStickers ?? false,
     onlySelfDelete: onlySelfDelete ?? oldConfig?.onlySelfDelete ?? false,
-    guessBotDelete: guessBotDelete ?? oldConfig?.guessBotDelete ?? false,
+    botGraceTimeMs: botGraceTimeMs ?? oldConfig?.botGraceTimeMs ?? 0,
   }
 
   await prisma.deletePoliceConfig.upsert({
@@ -187,8 +195,9 @@ async function handleMessageDelete(
     fuzziness,
     ignoreBots,
     ignoreMods,
+    ignoreStickers,
     onlySelfDelete,
-    guessBotDelete,
+    botGraceTimeMs,
     footerMessage,
   } = config
 
@@ -203,28 +212,33 @@ async function handleMessageDelete(
     return
   }
 
+  // If audit log is not null, it means someone else deleted this message
+  if (onlySelfDelete && auditLog !== null) {
+    return
+  }
+
+  if (ignoreStickers && message.stickers.size) {
+    return
+  }
+
   // Use the audit log creation time (since it's probably more accurate due to "syncing computer time is hard and dealing with network latency is hard" reasons)
   // Otherwise fallback to our time, ideally we'd track every message's "arrival time" but that's effort and extra data for not much gain
-  const now = auditLog?.createdTimestamp ?? new Date().getTime()
+  const now = auditLog?.createdTimestamp ?? Date.now()
   const messageTime = message.createdTimestamp
-  const timeSinceMessage = Math.abs(now - messageTime)
+  const msTimeSinceMessage = Math.abs(now - messageTime)
 
   // Bot message deletes don't create audit log entries, so we have to guess
   // based on if the message was deleted inhumanly fast
   // Not reliable, and someone using a self-bot or client mod could accomplish this,
   // while a bot could take too long or have network delays
-  if (guessBotDelete && timeSinceMessage < 500) {
+  if (msTimeSinceMessage < botGraceTimeMs) {
     return
   }
 
-  const limit = (threshold + Math.floor(Math.random() * (fuzziness + 1))) * 1000
+  const limit =
+    (threshold + Math.floor(Math.random() * (fuzziness + 1))) * SECOND
 
-  if (timeSinceMessage > limit) {
-    return
-  }
-
-  // If audit log is not null, it means someone else deleted this message
-  if (onlySelfDelete && auditLog !== null) {
+  if (limit < msTimeSinceMessage) {
     return
   }
 
@@ -233,9 +247,11 @@ async function handleMessageDelete(
     includeTimestamp: false,
   })
 
-  embeds[0].setFooter({
-    text: footerMessage ?? '',
-  })
+  if (footerMessage) {
+    embeds[0].setFooter({
+      text: footerMessage,
+    })
+  }
 
   await message.channel.send({
     embeds,
