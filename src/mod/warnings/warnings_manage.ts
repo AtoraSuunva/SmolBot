@@ -2,10 +2,10 @@ import type { WarningConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  Constants,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import { GuildTextBasedChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markWarningArchiveDirty } from './utils.js'
@@ -34,7 +34,7 @@ export const warnings_manage = new SleetSlashCommand(
         description:
           'Set the channel where warnings will be archived as a csv file, if enabled (default: none)',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: GuildTextBasedChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
     ],
   },

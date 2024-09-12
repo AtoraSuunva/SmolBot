@@ -2,10 +2,10 @@ import {
   type APIApplicationCommandBasicOption,
   type APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
+  Constants,
   type Guild,
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
-import { GuildTextBasedChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 
 export enum AntiRaidActions {
@@ -77,7 +77,7 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
     name: 'log_channel',
     description: 'The channel to log actions to',
     type: ApplicationCommandOptionType.Channel,
-    channel_types: GuildTextBasedChannelTypes,
+    channel_types: Constants.GuildTextBasedChannelTypes,
   },
   {
     name: 'reset',

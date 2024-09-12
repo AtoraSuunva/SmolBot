@@ -2,10 +2,10 @@ import type { ActionLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  Constants,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import { GuildTextBasedChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markActionlogArchiveDirty } from './utils.js'
@@ -44,7 +44,7 @@ export const actionlog_config = new SleetSlashSubcommand(
         name: 'log_channel',
         description: 'The channel to log to (default: none)',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: GuildTextBasedChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'archive_enabled',
@@ -57,7 +57,7 @@ export const actionlog_config = new SleetSlashSubcommand(
         description:
           'Set the channel where actions will be archived as a csv file, if enabled (default: none)',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: GuildTextBasedChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
     ],
   },
