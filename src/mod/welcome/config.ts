@@ -3,6 +3,7 @@ import {
   type APIEmbedField,
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  Constants,
   EmbedBuilder,
 } from 'discord.js'
 import {
@@ -12,7 +13,6 @@ import {
   getTextBasedChannel,
 } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import { GuildTextBasedChannelTypes } from '../../util/constants.js'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 
@@ -34,7 +34,7 @@ export const config = new SleetSlashSubcommand(
         description:
           'A specific channel to send the message in, if any. (default: "none")',
         type: ApplicationCommandOptionType.Channel,
-        channel_types: GuildTextBasedChannelTypes,
+        channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'unset_channel',
