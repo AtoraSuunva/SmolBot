@@ -32,7 +32,7 @@ export const timestamp = new SleetSlashCommand(
       {
         name: 'date_time',
         description:
-          'The date & time to use as reference, accepts ISO 8601 time (default: now)',
+          'The date & time to use as reference (ISO 8601 YYYY-MM-DDTHH:MM:SS) (default: now)',
         type: ApplicationCommandOptionType.String,
       },
       {
@@ -79,9 +79,9 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
   const timezone = interaction.options.getString('timezone') ?? 'UTC'
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  const anchor = (
-    dateTime ? DateTime.fromISO(dateTime) : DateTime.now()
-  ).setZone(timezone)
+  const anchor = dateTime
+    ? DateTime.fromISO(dateTime, { zone: timezone })
+    : DateTime.now().setZone(timezone)
 
   if (!anchor.isValid) {
     await interaction.reply({
@@ -94,7 +94,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
   const result = relative ? parseHumanRelativeTime(relative, anchor) : anchor
   const unixInt = result.toUnixInteger()
 
-  const header = `Timestamps for \`${result.toFormat('yyyy-MM-dd HH:mm:ss')}\` - \`${timezone}\``
+  const header = `Timestamps for \`${result.toISO()}\` - \`${result.zoneName}\``
 
   const content = timestampStyles
     .map((style) => time(unixInt, style))
