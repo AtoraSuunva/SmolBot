@@ -18,7 +18,7 @@ async function runFurrygen(interaction: ChatInputCommandInteraction) {
 
   for (const field of fieldList) {
     const val = arrayPick(fields[field as keyof typeof fields])
-    const formattedVal = typeof val === 'function' ? val() : val ?? 'None'
+    const formattedVal = typeof val === 'function' ? val() : (val ?? 'None')
     lines.push(`${field.padEnd(maxFieldLength)} :: ${formattedVal}`)
   }
 

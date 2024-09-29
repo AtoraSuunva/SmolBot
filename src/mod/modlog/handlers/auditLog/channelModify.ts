@@ -72,10 +72,10 @@ export async function logChannelModified(
         (auditLogEntry.target as NonThreadGuildBasedChannel | TargetChannel)
       : auditLogEntry.targetId
         ? // Use our cache or try to fetch the channel from discord
-          tempStoredChannels.get(auditLogEntry.targetId) ??
+          (tempStoredChannels.get(auditLogEntry.targetId) ??
           (auditLogEntry.action !== AuditLogEvent.ChannelDelete
             ? await guild.channels.fetch(auditLogEntry.targetId)
-            : null)
+            : null))
         : // Give up and use just the ID
           auditLogEntry.targetId
 

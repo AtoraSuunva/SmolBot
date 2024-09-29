@@ -432,8 +432,7 @@ async function runMassAction({
 
     await interaction.editReply(
       `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (${(
-        (progress / total) *
-        100
+        (progress / total) * 100
       ).toFixed(
         2,
       )}%)\n${capitalize(actioned)} ${plural('user', success.length)} so far...${bulkActionBatch.length > 0 ? ` (${bulkActionBatch.length} queued)` : ''}`,
