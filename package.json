@@ -44,7 +44,7 @@
     "pino-dev": "^4.0.3",
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.1.0",
-    "sleetcord": "2.0.2",
+    "sleetcord": "2.1.0",
     "sleetcord-common": "^9.1.0",
     "tseep": "^1.3.1",
     "undici": "^6.19.8"
