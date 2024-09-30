@@ -8,5 +8,6 @@ export const lock_thread_config = new SleetSlashCommand({
   description: 'Manage the lock thread config',
   contexts: [InteractionContextType.Guild],
   integration_types: [ApplicationIntegrationType.GuildInstall],
+  default_member_permissions: ['ManageGuild'],
   options: [lock_thread_config_set, lock_thread_config_delete],
 })

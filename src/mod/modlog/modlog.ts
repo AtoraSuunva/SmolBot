@@ -1,3 +1,4 @@
+import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetModule, SleetSlashCommand } from 'sleetcord'
 import { logAuditLog } from './handlers/auditLog/index.js'
 import { logGuildMemberAdd } from './handlers/guildMemberAdd.js'
@@ -14,6 +15,9 @@ export const modlog = new SleetSlashCommand({
   name: 'modlog',
   description: 'Manage the modlog configuration',
   options: [modlog_config, modlog_channels],
+  contexts: [InteractionContextType.Guild],
+  integration_types: [ApplicationIntegrationType.GuildInstall],
+  default_member_permissions: ['ManageGuild'],
 })
 
 export const modlogHandlers = new SleetModule(
