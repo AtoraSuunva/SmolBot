@@ -58,11 +58,12 @@ async function needsAuditLog(
 ) {
   if (messages.size === 0) return false
 
-  const conf = await getValidatedConfigFor(fromChannel.guild)
+  const conf = await getValidatedConfigFor(
+    fromChannel.guild,
+    'messageDeleteBulk',
+    (config) => config.messageDeleteBulk,
+  )
   if (!conf) return false
-
-  const { config } = conf
-  if (!config.messageDeleteBulk) return false
 
   return true
 }
@@ -80,11 +81,14 @@ export async function messageDeleteBulkWithAuditLog(
     return messageDeleteWithAuditLog(messages.first()!)
   }
 
-  const conf = await getValidatedConfigFor(fromChannel.guild)
+  const conf = await getValidatedConfigFor(
+    fromChannel.guild,
+    'messageDeleteBulk',
+    (config) => config.messageDeleteBulk,
+  )
   if (!conf) return
 
-  const { config, channel } = conf
-  if (!config.messageDeleteBulk) return
+  const { channel } = conf
 
   const sortedMessages = messages
     // We can't reliably format partials :(

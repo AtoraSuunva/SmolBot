@@ -47,11 +47,12 @@ export const logMessageDelete = new SleetModule(
 async function needsAuditLog(message: Message | PartialMessage) {
   if (!message.guild) return false
 
-  const conf = await getValidatedConfigFor(message.guild)
+  const conf = await getValidatedConfigFor(
+    message.guild,
+    'messageDelete',
+    (config) => config.messageDelete,
+  )
   if (!conf) return false
-
-  const { config } = conf
-  if (!config.messageDelete) return false
 
   return true
 }
@@ -62,12 +63,14 @@ export async function messageDeleteWithAuditLog(
 ) {
   if (!message.guild) return
 
-  const conf = await getValidatedConfigFor(message.guild)
+  const conf = await getValidatedConfigFor(
+    message.guild,
+    'messageDelete',
+    (config) => config.messageDelete,
+  )
   if (!conf) return
 
-  const { config, channel } = conf
-
-  if (!config.messageDelete) return
+  const { channel } = conf
 
   if (message.partial) {
     const msg = `(${message.id}) (uncached) in ${

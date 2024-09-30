@@ -36,7 +36,7 @@ async function guildAuditLogEntryCreate(
   auditLogEntry: GuildAuditLogsEntry,
   guild: Guild,
 ) {
-  const conf = await getValidatedConfigFor(guild)
+  const conf = await getValidatedConfigFor(guild, '')
   if (!conf) return
 
   const { config, channel } = conf

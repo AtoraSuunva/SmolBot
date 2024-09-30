@@ -19,11 +19,14 @@ export const logGuildMemberRemove = new SleetModule(
 async function handleGuildMemberRemove(
   member: GuildMember | PartialGuildMember,
 ) {
-  const conf = await getValidatedConfigFor(member.guild)
+  const conf = await getValidatedConfigFor(
+    member.guild,
+    'memberRemove',
+    (config) => config.memberRemove,
+  )
   if (!conf) return
 
   const { config, channel } = conf
-  if (!config.memberRemove) return
 
   const roles = config.memberRemoveRoles
     ? member.roles.cache

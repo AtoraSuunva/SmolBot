@@ -1,4 +1,4 @@
-import type { ModLogConfig } from '@prisma/client'
+import type { ModLogConfig, Prisma } from '@prisma/client'
 import {
   type Guild,
   type GuildTextBasedChannel,
@@ -39,19 +39,72 @@ export interface ValidConfig {
   channel: GuildTextBasedChannel
 }
 
+export type LoggedAction = Exclude<
+  keyof Prisma.ModLogChannelsCreateInput,
+  'guildID' | 'updatedAt'
+>
+
 export async function getValidatedConfigFor(
   guild: Guild,
+  loggedAction: LoggedAction | '',
   checker: ConfigChecker = () => true,
 ): Promise<ValidConfig | null> {
   const config = await getConfigFor(guild)
 
   if (!config?.enabled || !checker(config)) return null
 
+  if (loggedAction) {
+    const channel = await getChannelFor(guild, loggedAction, false)
+
+    if (channel) {
+      return { config, channel }
+    }
+  }
+
   const channel = guild.channels.cache.get(config.channelID)
 
   if (!channel?.isTextBased()) return null
 
   return { config, channel }
+}
+
+export async function getChannelFor(
+  guild: Guild,
+  loggedAction: LoggedAction,
+  fallback = true,
+): Promise<GuildTextBasedChannel | null> {
+  const channels = await prisma.modLogChannels.findFirst({
+    select: {
+      [loggedAction]: true,
+    },
+    where: {
+      guildID: guild.id,
+    },
+  })
+
+  let channelID: string | undefined = channels?.[loggedAction]
+
+  if (!channelID) {
+    if (!fallback) return null
+
+    const config = await prisma.modLogConfig.findFirst({
+      select: {
+        channelID: true,
+      },
+      where: {
+        guildID: guild.id,
+      },
+    })
+
+    if (!config) return null
+    channelID = config.channelID
+  }
+
+  const channel = guild.channels.cache.get(channelID)
+
+  if (!channel?.isTextBased()) return null
+
+  return channel
 }
 
 export function clearCacheFor(guild: Guild) {
@@ -76,9 +129,10 @@ type SendPayload = Parameters<TextChannel['send']>[0]
 export async function sendToModLog(
   guild: Guild,
   payload: SendPayload,
+  loggedAction: LoggedAction,
   checker: ConfigChecker = () => true,
 ) {
-  const config = await getValidatedConfigFor(guild, checker)
+  const config = await getValidatedConfigFor(guild, loggedAction, checker)
 
   if (!config) return
 

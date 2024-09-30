@@ -1,6 +1,6 @@
 import { AuditLogEvent, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
-import { formatLog } from '../../utils.js'
+import { type LoggedAction, formatLog, getChannelFor } from '../../utils.js'
 import { type AuditInfo, resolveUser } from './index.js'
 
 export type BanAuditLog = GuildAuditLogsEntry<
@@ -29,6 +29,25 @@ export async function logMemberBanKick(
     return
   }
 
+  let loggedAction: LoggedAction
+
+  switch (auditLogEntry.action) {
+    case AuditLogEvent.MemberBanAdd:
+      loggedAction = 'memberBan'
+      break
+
+    case AuditLogEvent.MemberBanRemove:
+      loggedAction = 'memberUnban'
+      break
+
+    case AuditLogEvent.MemberKick:
+      loggedAction = 'memberRemove'
+      break
+  }
+
+  const logChannel =
+    (await getChannelFor(guild, loggedAction, false)) ?? channel
+
   const executor = await resolveUser(
     auditLogEntry.executor,
     auditLogEntry.executorId,
@@ -48,7 +67,7 @@ export async function logMemberBanKick(
 
   const message = `${targetUser} ${verb} by ${execUser}${reason}`
 
-  await channel.send({
+  await logChannel.send({
     content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],

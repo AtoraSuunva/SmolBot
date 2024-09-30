@@ -116,7 +116,7 @@ export function formatConfig<Config extends Record<string, Value>>(
  * @param str The string to make snake case
  * @returns The snake cased string
  */
-function toSnakeCase(str: string): string {
+export function toSnakeCase(str: string): string {
   return str
     .replace(/([a-z])([A-Z])/g, '$1_$2')
     .replace(/\s+/g, '_')

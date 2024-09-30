@@ -15,7 +15,12 @@ import {
   codeBlock,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
-import { formatLog, getValidatedConfigFor } from '../../utils.js'
+import {
+  type LoggedAction,
+  formatLog,
+  getChannelFor,
+  getValidatedConfigFor,
+} from '../../utils.js'
 import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
 import { type AuditInfo, resolveUser } from './index.js'
 
@@ -39,14 +44,14 @@ export async function channelDelete(
   channel: DMChannel | NonThreadGuildBasedChannel,
 ) {
   if (channel.isDMBased()) return
-  const conf = await getValidatedConfigFor(channel.guild)
+  const conf = await getValidatedConfigFor(
+    channel.guild,
+    'channelDelete',
+    (config) => config.channelDelete && config.messageDeleteBulk,
+  )
   if (!conf) return
 
-  if (
-    conf.config.channelDelete &&
-    conf.config.messageDeleteBulk &&
-    channel.isTextBased()
-  ) {
+  if (channel.isTextBased()) {
     tempStoredChannels.set(channel.id, channel)
   }
 }
@@ -65,6 +70,25 @@ export async function logChannelModified(
   ) {
     return
   }
+
+  let loggedAction: LoggedAction
+
+  switch (auditLogEntry.action) {
+    case AuditLogEvent.ChannelCreate:
+      loggedAction = 'channelCreate'
+      break
+
+    case AuditLogEvent.ChannelDelete:
+      loggedAction = 'channelDelete'
+      break
+
+    case AuditLogEvent.ChannelUpdate:
+      loggedAction = 'channelUpdate'
+      break
+  }
+
+  const logChannel =
+    (await getChannelFor(guild, loggedAction, false)) ?? channel
 
   const modifiedChannel =
     auditLogEntry.target instanceof BaseChannel
@@ -128,7 +152,7 @@ export async function logChannelModified(
     message,
   )
 
-  await channel.send({
+  await logChannel.send({
     content,
     files,
     allowedMentions: { parse: [] },

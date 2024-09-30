@@ -1,6 +1,6 @@
 import type { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
-import { UserUpdate } from '../modlog_manage.js'
+import { UserUpdate } from '../modlog_config.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 
 export const logUserUpdate = new SleetModule(
@@ -39,7 +39,11 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
   }
 
   for (const guild of newUser.client.guilds.cache.values()) {
-    const conf = await getValidatedConfigFor(guild)
+    const conf = await getValidatedConfigFor(
+      guild,
+      'userUpdate',
+      (config) => config.userUpdate !== UserUpdate.None,
+    )
     if (!conf) continue
     const { config, channel } = conf
 
