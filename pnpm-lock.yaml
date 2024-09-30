@@ -60,8 +60,8 @@ importers:
         specifier: ~9.1.0
         version: 9.1.0
       sleetcord:
-        specifier: 2.0.2
-        version: 2.0.2(discord.js@14.16.3)
+        specifier: 2.1.0
+        version: 2.1.0(discord.js@14.16.3)
       sleetcord-common:
         specifier: ^9.1.0
         version: 9.1.0(prisma@5.20.0)
@@ -1026,8 +1026,8 @@ packages:
   sleetcord-common@9.1.0:
     resolution: {integrity: sha512-4HFd7YK62wwvZFzED0j1utMqElZ6WzzkFG/0cP4dk/kk6mTyjbwFaHNBM3wZBmj4CIBWtk53NFuO+vHaoOx8kw==}
 
-  sleetcord@2.0.2:
-    resolution: {integrity: sha512-BzRDTxEcbltFgTgM7Dj7+k1F2RaG6aeiy410h62hPvR/eol1TDheMl3dmYRMe5CKYGzw5oKl4XUUX4KQbsEMLw==}
+  sleetcord@2.1.0:
+    resolution: {integrity: sha512-Sn+DNPcMFdE7a/J6yTTyZ2pxmZNlBD+RXyS4tQDJsiZhwdINCCAlnl4gdjPXt7SSZUKs0qP95eo6YEw7vpZtRg==}
     peerDependencies:
       discord.js: ^14.12.1
 
@@ -2148,14 +2148,14 @@ snapshots:
       env-var: 7.5.0
       pino: 9.4.0
       pretty-ms: 9.1.0
-      sleetcord: 2.0.2(discord.js@14.16.3)
+      sleetcord: 2.1.0(discord.js@14.16.3)
     transitivePeerDependencies:
       - bufferutil
       - prisma
       - supports-color
       - utf-8-validate
 
-  sleetcord@2.0.2(discord.js@14.16.3):
+  sleetcord@2.1.0(discord.js@14.16.3):
     dependencies:
       discord-api-types: 0.37.101
       discord.js: 14.16.3
