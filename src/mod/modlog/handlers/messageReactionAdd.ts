@@ -104,6 +104,7 @@ async function handleMessageReactionAdd(
 
   const conf = await getValidatedConfigFor(
     guild,
+    '',
     (config) => config.reactionActions,
   )
   if (!conf) return

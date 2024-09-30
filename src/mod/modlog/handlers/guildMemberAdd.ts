@@ -50,7 +50,11 @@ async function ready(client: Client) {
 
 async function guildMemberAdd(member: GuildMember) {
   const { guild } = member
-  const conf = await getValidatedConfigFor(guild, (config) => config.memberAdd)
+  const conf = await getValidatedConfigFor(
+    guild,
+    'memberAdd',
+    (config) => config.memberAdd,
+  )
   if (!conf) return
   const { config, channel } = conf
   const msg = formatUser(member.user, { mention: true })

@@ -144,6 +144,7 @@ async function handleJoin(
     await sendToModLog(
       member.guild,
       modLogMsg,
+      'memberWelcome',
       (config) => config.memberWelcome,
     )
   }

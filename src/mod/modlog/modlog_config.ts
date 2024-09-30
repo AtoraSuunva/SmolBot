@@ -4,7 +4,7 @@ import {
   type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
+import { SleetSlashSubcommand, getGuild, makeChoices } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
@@ -24,11 +24,10 @@ const userUpdateChoices = makeChoices([
   UserUpdate.Both,
 ])
 
-export const modlog_manage = new SleetSlashCommand(
+export const modlog_config = new SleetSlashSubcommand(
   {
-    name: 'modlog_manage',
+    name: 'config',
     description: 'View or edit the modlog config',
-    default_member_permissions: ['ManageGuild'],
     options: [
       {
         name: 'enabled',
@@ -49,7 +48,7 @@ export const modlog_manage = new SleetSlashCommand(
       {
         name: 'member_add_new',
         description:
-          'The time in hours for an account to be marked as "new". 0 to disable.',
+          'The time in hours for an account to be marked as "new" (0 to disable)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
       },
@@ -124,6 +123,18 @@ export const modlog_manage = new SleetSlashCommand(
         description: 'Log when an automod action by this bot is taken',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'reaction_remove',
+        description: 'Log when a reaction is removed from a message',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'reaction_remove_time',
+        description:
+          'Only log if a reaction was removed in under this many seconds (0 for no limit)',
+        type: ApplicationCommandOptionType.Integer,
+        min_value: 0,
+      },
     ],
   },
   {
@@ -145,7 +156,7 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
     if (!oldConfig) {
       return interaction.reply({
         content:
-          "You don't have an existing modlog config, use `/modlog_manage` with options to create one.",
+          "You don't have an existing modlog config, use `/modlog config` with options to create one.",
       })
     }
 
@@ -176,6 +187,8 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
   const channelDelete = options.getBoolean('channel_delete')
   const reactionActions = options.getBoolean('reaction_actions')
   const automodAction = options.getBoolean('automod_action')
+  const reactionRemove = options.getBoolean('reaction_remove')
+  const reactionRemoveTime = options.getInteger('reaction_remove_time')
 
   const channelID = channel?.id ?? oldConfig?.channelID
   if (!channelID) {
@@ -208,6 +221,8 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
     channelUpdate: channelUpdate ?? oldConfig?.channelUpdate ?? false,
     reactionActions: reactionActions ?? oldConfig?.reactionActions ?? false,
     automodAction: automodAction ?? oldConfig?.automodAction ?? false,
+    reactionRemove: reactionRemove ?? oldConfig?.reactionRemove ?? false,
+    reactionTime: reactionRemoveTime ?? oldConfig?.reactionTime ?? 0,
   }
 
   await prisma.modLogConfig.upsert({
