@@ -1,28 +1,25 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
-  EmbedBuilder,
   type Guild,
   type GuildBan,
   type Invite,
   type User,
-  codeBlock,
+  time,
 } from 'discord.js'
 import {
-  SleetSlashCommand,
+  SleetSlashSubcommand,
   botHasPermissionsGuard,
   formatUser,
   getGuild,
   inGuildGuard,
 } from 'sleetcord'
+import { prisma } from '../../util/db.js'
 
-export const revoke = new SleetSlashCommand(
+export const revoke_invites = new SleetSlashSubcommand(
   {
-    name: 'revoke',
+    name: 'invites',
     description: 'Revoke all invites from a specific user',
-    default_member_permissions: ['BanMembers'],
-    contexts: [InteractionContextType.Guild],
     options: [
       {
         name: 'from',
@@ -50,33 +47,40 @@ async function runRevoke(
   const user = interaction.options.getUser('from', true)
 
   const revoked = await revokeInvitesFor(guild, user)
-  const embed = formatInviteEmbed(user, revoked)
+  const content = formatInviteList(user, revoked)
 
-  return interaction.editReply({ embeds: [embed] })
+  return interaction.editReply({ content, allowedMentions: { parse: [] } })
 }
 
-// TODO: store this somewhere that isn't just a map
-// Map of guildID -> channelID to do and log invite revokes on ban in
-const banRevokeIn = new Map<string, string>([
-  ['120330239996854274', '797336365284065300'],
-])
-
 async function runBanRevoke(ban: GuildBan): Promise<void> {
+  if (
+    await ban.guild.members
+      .fetchMe()
+      .then((me) => !me.permissions.has('ManageGuild'))
+  ) {
+    return
+  }
+
   const { guild, user } = ban
-  if (!banRevokeIn.has(guild.id)) return
-  const logChannelID = banRevokeIn.get(guild.id)
-  const logChannel = logChannelID
-    ? guild.channels.cache.get(logChannelID)
+
+  const config = await prisma.revokeConfig.findFirst({
+    where: { guildID: guild.id },
+  })
+
+  if (!config || !config.enabled) return
+
+  const logChannel = config.channelID
+    ? guild.channels.cache.get(config.channelID)
     : undefined
 
   const revoked = await revokeInvitesFor(guild, user)
 
   if (revoked.length === 0) return
 
-  const embed = formatInviteEmbed(user, revoked)
+  const content = formatInviteList(user, revoked)
 
   if (logChannel?.isTextBased()) {
-    await logChannel.send({ embeds: [embed] })
+    await logChannel.send({ content, allowedMentions: { parse: [] } })
   }
 }
 
@@ -109,37 +113,32 @@ async function revokeInvitesFor(guild: Guild, user: User): Promise<Invite[]> {
  * Formats data into a pretty embed to send respond with
  * @param user The user that had their invites revoked
  * @param invites The invites that were revoked
- * @returns An EmbedBuilder that can be sent detailing the revoked invites
+ * @returns String that can be sent detailing the revoked invites
  */
-function formatInviteEmbed(user: User, invites: Invite[]): EmbedBuilder {
-  const inviteList: string[] = []
+function formatInviteList(user: User, invites: Invite[]): string {
+  const inviteList: string[] = [
+    `Revoked Invites for ${formatUser(user, { mention: true })}:`,
+  ]
 
-  for (const i of invites) {
-    inviteList.push(
-      [
-        `[${i.code}]`,
-        `[#${i.channel?.name ?? 'unknown channel'}] `,
-        i.uses !== null && i.maxUses !== null
-          ? `Uses: <${i.uses}/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}>, `
-          : '',
-        i.createdAt ? `Created: ${i.createdAt.toLocaleString()}, ` : '',
-        i.expiresAt
-          ? `Expires: ${i.expiresAt.toLocaleString()}`
-          : 'Expires: Never',
-      ].join(''),
-    )
-  }
-
-  if (inviteList.length === 0) {
+  if (invites.length > 0) {
+    for (const i of invites) {
+      inviteList.push(
+        [
+          `> \`${i.code}\``,
+          `${i.channel ?? '<unknown channel>'} `,
+          i.uses !== null && i.maxUses !== null
+            ? `\n> -# Uses: **${i.uses}**/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}, `
+            : '',
+          i.createdAt ? `Created: ${time(i.createdAt, 'f')},` : '',
+          i.expiresAt
+            ? `Expires: ${time(i.expiresAt, 'f')}`
+            : 'Expires: *Never*',
+        ].join(' '),
+      )
+    }
+  } else {
     inviteList.push('No invites found or revoked.')
   }
 
-  return new EmbedBuilder()
-    .setAuthor({
-      name: formatUser(user, { markdown: false, escapeMarkdown: false }),
-      iconURL: user.displayAvatarURL(),
-    })
-    .setColor('#f44336')
-    .setTitle('Revoked Invites:')
-    .setDescription(codeBlock('md', inviteList.join('\n')))
+  return inviteList.join('\n')
 }
