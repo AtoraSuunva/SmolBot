@@ -149,6 +149,12 @@ export const modmail_ticket_create_button = new SleetSlashSubcommand(
   },
 )
 
+const THREADABLE_CHANNEL_TYPES = [
+  ChannelType.GuildText,
+  ChannelType.GuildAnnouncement,
+  ChannelType.GuildForum,
+  ChannelType.GuildMedia,
+]
 const MODMAIL = 'modmail'
 const CREATE_TICKET = 'create_ticket'
 const TICKET_MODAL = 'ticket_modal'
@@ -157,6 +163,20 @@ async function runCreateModMailButton(
   interaction: ChatInputCommandInteraction,
 ) {
   inGuildGuard(interaction)
+
+  const channel = await interaction.client.channels
+    .fetch(interaction.channelId)
+    .catch(() => null)
+
+  if (!channel || !THREADABLE_CHANNEL_TYPES.includes(channel.type)) {
+    interaction.reply({
+      content:
+        'You cannot create threads in this channel type. Try a text channel, announcement channel, or forum channel.',
+      ephemeral: true,
+    })
+    return
+  }
+
   const message = interaction.options.getString('message', true)
 
   const buttonLabel = interaction.options.getString('button_label', true)
