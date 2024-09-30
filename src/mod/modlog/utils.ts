@@ -124,7 +124,7 @@ export function formatTime(timestamp: Date = new Date()): string {
   return padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
 }
 
-type SendPayload = Parameters<TextChannel['send']>[0]
+export type SendPayload = Parameters<TextChannel['send']>[0]
 
 export async function sendToModLog(
   guild: Guild,
