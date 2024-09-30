@@ -1,15 +1,19 @@
 import type { WelcomeSettings } from '@prisma/client'
 import { InteractionContextType } from 'discord-api-types/v10'
-import type {
-  Guild,
-  GuildMember,
-  GuildTextBasedChannel,
-  Message,
-  PartialGuildMember,
+import {
+  type AttachmentPayload,
+  type Guild,
+  type GuildMember,
+  type GuildTextBasedChannel,
+  type Message,
+  type PartialGuildMember,
+  codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { formatLog, sendToModLog } from '../modlog/utils.js'
+import { ANSI_REGEX } from '../modlog/ansiColors.js'
+import { messageToLog } from '../modlog/handlers/messageDelete.js'
+import { type SendPayload, formatLog, sendToModLog } from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
@@ -121,6 +125,8 @@ async function handleJoin(
       ? await resolveTextBasedChannel(member.guild, welcomeChannel)
       : null) ?? channel
 
+  let sentMessage: Message | null = null
+
   if (sendChannel) {
     const msg = formatMessage(welcomeMessage, {
       member,
@@ -128,26 +134,61 @@ async function handleJoin(
       welcome: sendChannel,
       message,
     })
-    const sentMessage = await sendChannel.send(msg)
-
-    const firstMessage =
-      message && message.channelId !== sentMessage.channelId
-        ? ` first message at ${message.url}`
-        : ''
-
-    const modLogMsg = formatLog(
-      '👋',
-      'Member Welcome',
-      `${formatUser(member)} at ${sentMessage.url}${firstMessage}`,
-    )
-
-    await sendToModLog(
-      member.guild,
-      modLogMsg,
-      'memberWelcome',
-      (config) => config.memberWelcome,
-    )
+    sentMessage = await sendChannel.send(msg)
   }
+
+  const firstMessage = message ? ` first message at ${message.url}` : ''
+  const messagePreview = message
+    ? await messageToLog(message, {
+        includeAttachments: true,
+        includeEmbeds: true,
+        includeInteraction: true,
+        includePoll: true,
+        includeReference: true,
+        includeStickers: true,
+        includeTimestamp: true,
+        includeUser: true,
+      })
+    : ''
+
+  const logMessage = formatLog(
+    '👋',
+    'Member Welcome',
+    `${formatUser(member)}${sentMessage ? ` at ${sentMessage.url}` : ''}${firstMessage}`,
+  )
+
+  let content = logMessage
+  const files: AttachmentPayload[] = []
+
+  if (messagePreview) {
+    const formattedPreview = `${messagePreview.header}\n${messagePreview.content ?? '┊'}\n${messagePreview.footer}`
+
+    // 1850 to give us some headroom
+    if (formattedPreview.length + logMessage.length <= 1850) {
+      content = `${logMessage}\n${codeBlock('ansi', formattedPreview)}`
+    } else {
+      files.push({
+        name: 'first_message.txt',
+        attachment: Buffer.from(
+          formattedPreview.replaceAll(ANSI_REGEX, ''),
+          'utf-8',
+        ),
+      })
+    }
+  }
+
+  const modLogMsg: SendPayload = {
+    content,
+    files,
+    allowedMentions: { parse: [] },
+  }
+
+  await sendToModLog(
+    member.guild,
+    modLogMsg,
+    'memberWelcome',
+    (config) => config.memberWelcome,
+  )
 
   if (reactWith && message) {
     // ignore errors, not my problem really
