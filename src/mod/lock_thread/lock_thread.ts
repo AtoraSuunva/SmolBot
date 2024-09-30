@@ -1,6 +1,7 @@
 import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   Constants,
   type PrivateThreadChannel,
@@ -13,12 +14,14 @@ import {
   formatUser,
   getChannel,
 } from 'sleetcord'
+import { prisma } from '../../util/db.js'
 
 export const lock_thread = new SleetSlashCommand(
   {
     name: 'lock_thread',
     description: 'Locks a thread',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageThreads'],
     options: [
       {
@@ -45,12 +48,6 @@ export const lock_thread = new SleetSlashCommand(
   },
 )
 
-const logToChannels: Record<string, string> = {
-  // parent channel: log channel
-  '969756986319183923': '982924658355625994',
-  '986100624892514374': '982924658355625994',
-}
-
 async function logToChannel(
   interaction: ChatInputCommandInteraction<'cached' | 'raw'>,
   thread: PublicThreadChannel | PrivateThreadChannel,
@@ -58,9 +55,22 @@ async function logToChannel(
 ) {
   if (thread.parentId === null) return
 
-  const logChannelId = logToChannels[thread.parentId]
+  const config = await prisma.lockThreadConfig.findFirst({
+    select: {
+      logChannelID: true,
+    },
+    where: {
+      sourceChannelID: thread.parentId,
+    },
+  })
 
-  if (!logChannelId) return
+  if (!config || !config.logChannelID) return
+
+  const channel = await interaction.guild?.channels.fetch(config.logChannelID)
+
+  if (!channel?.isTextBased()) {
+    return
+  }
 
   const formattedReason = [
     `**Locked Thread:** ${escapeAllMarkdown(thread.name)}`,
@@ -68,12 +78,6 @@ async function logToChannel(
     thread.url,
     `**Reason:** ${reason}`,
   ].join('\n')
-
-  const channel = await interaction.guild?.channels.fetch(logChannelId)
-
-  if (!channel?.isTextBased()) {
-    return
-  }
 
   return channel.send({ content: formattedReason })
 }

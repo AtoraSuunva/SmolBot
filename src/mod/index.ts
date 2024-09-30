@@ -6,7 +6,8 @@ import { maliciousFile } from './automod/maliciousFile.js'
 import { dehoist } from './dehoist.js'
 import { delete_police_config } from './delete_police_config.js'
 import { idof } from './idof.js'
-import { lock_thread } from './lock_thread.js'
+import { lock_thread } from './lock_thread/lock_thread.js'
+import { lock_thread_config } from './lock_thread/lock_thread_config.js'
 import { lookup } from './lookup.js'
 import {
   mass_ban,
@@ -21,7 +22,7 @@ import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
 import { purge } from './purge.js'
 import { report } from './report/report.js'
-import { revoke } from './revoke.js'
+import { revoke } from './revoke/index.js'
 import { unedit, unedit_message } from './unedit.js'
 import { vc_log } from './vc_log.js'
 import { warningsModules } from './warnings/index.js'
@@ -39,6 +40,7 @@ export const modModules = [
   delete_police_config,
   idof,
   lock_thread,
+  lock_thread_config,
   lookup,
   maliciousFile,
   manual_log,
