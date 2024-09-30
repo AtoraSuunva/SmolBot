@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+import { revoke_config } from './config.js'
 import { revoke_invites } from './invites.js'
 
 export const revoke = new SleetSlashCommand({
@@ -8,5 +9,5 @@ export const revoke = new SleetSlashCommand({
   contexts: [InteractionContextType.Guild],
   integration_types: [ApplicationIntegrationType.GuildInstall],
   default_member_permissions: ['BanMembers'],
-  options: [revoke_invites],
+  options: [revoke_invites, revoke_config],
 })
