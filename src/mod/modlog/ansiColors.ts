@@ -51,19 +51,13 @@ export type Markup =
   | BackgroundColor
 
 export function ansiFormat(
-  markup: Markup,
+  markup: Markup | Markup[],
   text: string | number,
   reset = true,
-) {
-  return ansiMultiFormat([markup], text, reset)
-}
+): string {
+  const inMarkup = Array.isArray(markup) ? markup : [markup]
 
-export function ansiMultiFormat(
-  markup: Markup[],
-  text: string | number,
-  reset = true,
-) {
-  const arrayMarkup = markup.map((m) => {
+  const arrayMarkup = inMarkup.map((m) => {
     if (Array.isArray(m)) {
       return m
     }
