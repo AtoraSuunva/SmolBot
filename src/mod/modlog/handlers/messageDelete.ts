@@ -10,7 +10,7 @@ import {
   type User,
   cleanCodeBlockContent,
   codeBlock,
-  escapeMarkdown,
+  escapeInlineCode,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
@@ -127,12 +127,10 @@ export async function messageDeleteWithAuditLog(
     })
     .filter((v) => v.length > 0)
 
-  const attachProxy = message.attachments.map(
-    (a) => `[${escapeMarkdown(a.name)}](<${a.proxyURL}>)`,
+  const attachProxy = message.attachments.map((a) =>
+    formatEscapedLink(a.name, a.proxyURL),
   )
-  const stickers = message.stickers.map(
-    (s) => `[${escapeMarkdown(s.name)}](<${s.url}>)`,
-  )
+  const stickers = message.stickers.map((s) => formatEscapedLink(s.name, s.url))
 
   const messageContent = editsLog.join('\n┈ ┈ ┈\n')
 
@@ -444,4 +442,8 @@ function embedToLog(
   }
 
   return lines.join('\n')
+}
+
+function formatEscapedLink(text: string, url: string): string {
+  return `[\`${escapeInlineCode(text)}\`](<${url}>)`
 }
