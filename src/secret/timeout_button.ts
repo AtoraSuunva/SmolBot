@@ -1,4 +1,3 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -6,6 +5,7 @@ import {
   ButtonStyle,
   type ChatInputCommandInteraction,
   type Interaction,
+  InteractionContextType,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'

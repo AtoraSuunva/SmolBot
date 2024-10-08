@@ -1,11 +1,8 @@
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   type APIApplication,
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   ButtonBuilder,
   type ButtonInteraction,
   ButtonStyle,
@@ -20,6 +17,7 @@ import {
   type GuildPreviewEmoji,
   GuildVerificationLevel,
   type Interaction,
+  InteractionContextType,
   type Invite,
   SnowflakeUtil,
   type Sticker,

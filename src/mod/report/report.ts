@@ -1,10 +1,10 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
   type EmbedFooterOptions,
+  InteractionContextType,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, getGuild } from 'sleetcord'
 import { fetchConfig } from './manage/config.js'

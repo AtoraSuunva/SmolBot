@@ -1,4 +1,3 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -8,6 +7,7 @@ import {
   EmbedBuilder,
   GuildMember,
   type Interaction,
+  InteractionContextType,
   type Role,
   codeBlock,
 } from 'discord.js'

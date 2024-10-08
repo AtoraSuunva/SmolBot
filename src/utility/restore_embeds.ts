@@ -1,5 +1,5 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
+  InteractionContextType,
   type MessageContextMenuCommandInteraction,
   MessageFlags,
   MessageFlagsBitField,

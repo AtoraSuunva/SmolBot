@@ -1,12 +1,10 @@
 import type { DeletePoliceConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  type ChatInputCommandInteraction,
   InteractionContextType,
-} from 'discord-api-types/v10'
-import type {
-  ChatInputCommandInteraction,
-  Message,
-  PartialMessage,
+  type Message,
+  type PartialMessage,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND, getOptionCount } from 'sleetcord-common'

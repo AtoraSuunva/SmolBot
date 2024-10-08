@@ -1,5 +1,4 @@
 import type { Prisma } from '@prisma/client'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   type APIRole,
   ActionRowBuilder,
@@ -15,6 +14,7 @@ import {
   type GuildAuditLogsEntry,
   GuildMember,
   type GuildTextBasedChannel,
+  InteractionContextType,
   type OverwriteData,
   OverwriteType,
   type PartialGuildMember,

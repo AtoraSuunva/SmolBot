@@ -8,8 +8,8 @@ import {
   MessageType,
   type PartialMessage,
   type User,
+  cleanCodeBlockContent,
   codeBlock,
-  escapeCodeBlock,
   escapeMarkdown,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
@@ -162,7 +162,7 @@ export async function messageDeleteWithAuditLog(
       })}`,
     })
   } else {
-    msg += codeBlock('ansi', escapeCodeBlock(messageContent))
+    msg += codeBlock('ansi', cleanCodeBlockContent(messageContent))
   }
 
   await channel.send({
@@ -259,7 +259,7 @@ export async function messageToLog(
 
     if (ref) {
       const preview =
-        escapeCodeBlock(ref.content.replaceAll(/\n/g, ' ').slice(0, 50)) +
+        cleanCodeBlockContent(ref.content.replaceAll(/\n/g, ' ').slice(0, 50)) +
         (ref.content.length > 50 ? '…' : '')
 
       lines.push(
@@ -304,11 +304,13 @@ export async function messageToLog(
     await addToEmbed(message, embed)
     if (embed.data.description) {
       lines.push(
-        `╞ ${escapeCodeBlock(embed.data.description).split('\n').join('\n╞ ')}`,
+        `╞ ${cleanCodeBlockContent(embed.data.description).split('\n').join('\n╞ ')}`,
       )
     }
   } else if (message.content) {
-    lines.push(`┊ ${escapeCodeBlock(message.content).split('\n').join('\n┊ ')}`)
+    lines.push(
+      `┊ ${cleanCodeBlockContent(message.content).split('\n').join('\n┊ ')}`,
+    )
   }
 
   const content = lines.join('\n').trim()

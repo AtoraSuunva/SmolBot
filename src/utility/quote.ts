@@ -1,4 +1,3 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type Channel,
@@ -6,6 +5,7 @@ import {
   type Client,
   type EmbedBuilder,
   type Guild,
+  InteractionContextType,
   type Message,
   type TextBasedChannel,
   type User,

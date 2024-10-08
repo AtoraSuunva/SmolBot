@@ -1,9 +1,9 @@
 import type { ActionLog, ActionLogConfig } from '@prisma/client'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   type Guild,
+  InteractionContextType,
   type User,
 } from 'discord.js'
 import {

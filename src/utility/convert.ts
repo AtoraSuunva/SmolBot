@@ -1,11 +1,9 @@
 import { default as converter } from 'convert-units'
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
 

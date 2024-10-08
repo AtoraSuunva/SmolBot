@@ -1,6 +1,6 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import { SleetSlashCommand } from 'sleetcord'
 
+import { InteractionContextType } from 'discord.js'
 import { modmail_fields } from './fields/index.js'
 import { modmail_forum } from './forum/index.js'
 import { handle_thread_update } from './handle_thread_update.js'
