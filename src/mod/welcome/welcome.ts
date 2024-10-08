@@ -161,7 +161,7 @@ async function handleJoin(
   const files: AttachmentPayload[] = []
 
   if (messagePreview) {
-    const formattedPreview = `${messagePreview.header}\n${messagePreview.content ?? '┊'}\n${messagePreview.footer}`
+    const formattedPreview = `${messagePreview.header}\n${messagePreview.content || '┊'}\n${messagePreview.footer}`
 
     // 1850 to give us some headroom
     if (formattedPreview.length + logMessage.length <= 1850) {
