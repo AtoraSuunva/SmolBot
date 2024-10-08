@@ -1,10 +1,10 @@
 import { setTimeout } from 'node:timers/promises'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   type Collection,
   type GuildMember,
+  InteractionContextType,
 } from 'discord.js'
 import {
   SleetSlashCommand,

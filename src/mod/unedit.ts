@@ -1,9 +1,9 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   Collection,
   type CommandInteraction,
+  InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
   type PartialMessage,

@@ -1,9 +1,9 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   Constants,
   type GuildTextBasedChannel,
+  InteractionContextType,
   type VoiceState,
 } from 'discord.js'
 import {

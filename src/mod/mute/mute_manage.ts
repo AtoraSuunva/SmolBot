@@ -1,10 +1,10 @@
 import type { Prisma } from '@prisma/client'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ChannelType,
   type ChatInputCommandInteraction,
   Constants,
+  InteractionContextType,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'

@@ -1,8 +1,8 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ActionRowBuilder,
   DiscordjsError,
   type EmbedFooterOptions,
+  InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
   type ModalActionRowComponentBuilder,

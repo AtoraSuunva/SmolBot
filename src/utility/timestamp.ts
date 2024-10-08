@@ -1,10 +1,8 @@
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   type ChatInputCommandInteraction,
+  InteractionContextType,
   TimestampStyles,
   time,
 } from 'discord.js'

@@ -1,9 +1,9 @@
 import type { Prisma } from '@prisma/client'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   type GuildMember,
+  InteractionContextType,
   type PartialGuildMember,
 } from 'discord.js'
 import {

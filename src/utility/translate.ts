@@ -1,12 +1,10 @@
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
   type CommandInteraction,
+  InteractionContextType,
   type MessageContextMenuCommandInteraction,
   cleanCodeBlockContent,
   codeBlock,

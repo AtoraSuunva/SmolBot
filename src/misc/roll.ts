@@ -1,11 +1,9 @@
 import { DiceRoll } from '@dice-roller/rpg-dice-roller'
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
 } from 'discord.js'
 import { SleetSlashCommand, escapeAllMarkdown } from 'sleetcord'
 

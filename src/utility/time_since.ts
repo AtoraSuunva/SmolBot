@@ -1,10 +1,8 @@
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
   time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'

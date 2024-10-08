@@ -1,9 +1,9 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   Constants,
+  InteractionContextType,
   type PrivateThreadChannel,
   type PublicThreadChannel,
   type ThreadEditOptions,

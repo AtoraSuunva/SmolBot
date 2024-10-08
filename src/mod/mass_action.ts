@@ -1,4 +1,3 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   type APIApplicationCommandOption,
   ApplicationCommandOptionType,
@@ -6,6 +5,7 @@ import {
   type ChatInputCommandInteraction,
   type Guild,
   GuildMember,
+  InteractionContextType,
   User,
   codeBlock,
 } from 'discord.js'

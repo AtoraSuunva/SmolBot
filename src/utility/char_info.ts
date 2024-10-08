@@ -1,11 +1,9 @@
 import { uniGetBlock, uniGetCategories, uniGetScripts } from 'char-info'
 import {
-  ApplicationIntegrationType,
-  InteractionContextType,
-} from 'discord-api-types/v10'
-import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'

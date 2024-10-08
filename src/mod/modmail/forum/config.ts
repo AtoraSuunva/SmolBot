@@ -1,6 +1,9 @@
 import type { Prisma } from '@prisma/client'
-import { ApplicationCommandOptionType } from 'discord-api-types/v10'
-import { ChannelType, type ChatInputCommandInteraction } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  ChannelType,
+  type ChatInputCommandInteraction,
+} from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 import { formatConfig, makeForumTagFormatter } from '../../../util/format.js'

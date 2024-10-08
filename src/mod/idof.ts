@@ -1,11 +1,11 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   type Guild,
   type GuildMember,
+  InteractionContextType,
+  cleanCodeBlockContent,
   codeBlock,
-  escapeCodeBlock,
 } from 'discord.js'
 import {
   type AutocompleteHandler,
@@ -101,7 +101,7 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
 function resultFormat(data: MemberMatch[]): string {
   return codeBlock(
     'm',
-    escapeCodeBlock(
+    cleanCodeBlockContent(
       tableFormat(data, {
         keys: ['username', 'globalName', 'id', 'nickname'],
         columnsNames: {

@@ -1,10 +1,10 @@
 import type { WelcomeSettings } from '@prisma/client'
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   type AttachmentPayload,
   type Guild,
   type GuildMember,
   type GuildTextBasedChannel,
+  InteractionContextType,
   type Message,
   type PartialGuildMember,
   codeBlock,
