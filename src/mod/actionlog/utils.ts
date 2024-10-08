@@ -61,7 +61,10 @@ export async function formatToLog(
   }
 
   if (options.reason) {
-    log.push(`> **Reason:** ${entry.reason ?? '*No reason provided.*'}`)
+    const reason =
+      entry.reason?.replaceAll(/\n/g, '\n> ') ?? '*No reason provided.*'
+
+    log.push(`> **Reason:** ${reason}`)
   }
 
   if (

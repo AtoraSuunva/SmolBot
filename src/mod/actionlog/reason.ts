@@ -131,6 +131,12 @@ export const actionReason = new SleetSlashCommand(
           'Redact the username from the log (e.g. if they have a slur), preserves ID (default: False)',
       },
       {
+        name: 'repost',
+        type: ApplicationCommandOptionType.Boolean,
+        description:
+          'Ignore all changes, instead only re-edit or re-post the latest version (default: False)',
+      },
+      {
         name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
         description: 'Only show the result to you (default: False)',
@@ -148,9 +154,10 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   const actionString = interaction.options.getString('action_id', true)
   const reason = interaction.options.getString('reason')?.trim() ?? null
   const redactUser = interaction.options.getBoolean('redact_username')
+  const repost = interaction.options.getBoolean('repost')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  if (reason === null && redactUser === null) {
+  if (reason === null && redactUser === null && repost === null) {
     await interaction.reply({
       content: 'You did not provide any changes to make, so nothing was done',
       ephemeral: true,
@@ -186,11 +193,19 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   for (const id of actionIDs) {
     results.push(
-      await editAction(guild, config, id, reason, redactUser, interaction.user),
+      await editAction(
+        guild,
+        config,
+        id,
+        reason,
+        redactUser,
+        repost,
+        interaction.user,
+      ),
     )
     if (results.length !== actionIDs.length) {
       // Add a small delay before doing the next one to avoid ratelimiting as hard
-      await sleep(500)
+      await sleep(250)
     }
   }
 
@@ -210,7 +225,9 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
         ? `action #${successes[0].id}`
         : plural('action', successes.length)
 
-    if (reason) {
+    if (repost) {
+      log.push(`Reposted ${formattedAction}`)
+    } else if (reason) {
       log.push(
         `Changed reason for ${formattedAction} to${formatReason(reason)}`,
       )
@@ -277,6 +294,7 @@ async function editAction(
   actionID: number,
   reason: string | null,
   redactUser: boolean | null,
+  repost: boolean | null,
   reasonBy: User,
 ): Promise<EditActionLog> {
   const oldAction = await prisma.actionLog.findFirst({
@@ -295,23 +313,27 @@ async function editAction(
     }
   }
 
-  const mergedAction: ActionLog = {
-    action: oldAction.action,
-    guildID: guild.id,
-    actionID: actionID,
-    version: oldAction.version,
-    userID: oldAction.userID,
-    redactUser: redactUser ?? oldAction.redactUser,
-    reason: reason ?? oldAction.reason,
-    reasonByID: reason ? reasonBy.id : oldAction.reasonByID,
-    moderatorID: oldAction.moderatorID ?? reasonBy.id,
-    channelID: oldAction.channelID,
-    messageID: oldAction.messageID,
-    createdAt: oldAction.createdAt,
-    validUntil: null,
-  }
+  const mergedAction: ActionLog = repost
+    ? oldAction
+    : {
+        action: oldAction.action,
+        guildID: guild.id,
+        actionID: actionID,
+        version: oldAction.version,
+        userID: oldAction.userID,
+        redactUser: redactUser ?? oldAction.redactUser,
+        reason: reason ?? oldAction.reason,
+        reasonByID: reason ? reasonBy.id : oldAction.reasonByID,
+        moderatorID: oldAction.moderatorID ?? reasonBy.id,
+        channelID: oldAction.channelID,
+        messageID: oldAction.messageID,
+        createdAt: oldAction.createdAt,
+        validUntil: null,
+      }
 
-  await updateActionLog(guild.id, mergedAction)
+  if (!repost) {
+    await updateActionLog(guild.id, mergedAction)
+  }
 
   const entry: ActionLogEntry = {
     id: oldAction.actionID,
@@ -366,7 +388,7 @@ async function editAction(
               guildID_actionID_version: {
                 guildID: guild.id,
                 actionID: oldAction.actionID,
-                version: oldAction.version + 1,
+                version: oldAction.version + (repost ? 0 : 1),
               },
             },
             data: {
