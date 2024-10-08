@@ -4,7 +4,10 @@ import {
   InteractionType,
   type Message,
   MessageType,
+  escapeInlineCode,
   hyperlink,
+  inlineCode,
+  time,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import { plural } from './format.js'
@@ -27,7 +30,7 @@ export async function quoteMessage(
 
   const quoteContent = formatQuoteContent(message.content)
 
-  const channelLine = includeChannel ? ` - #${message.channel.name}` : ''
+  const channelLine = includeChannel ? ` ∙ #${message.channel.name}` : ''
 
   const embed = new EmbedBuilder()
     .setURL(message.url)
@@ -99,7 +102,9 @@ export async function quoteMessage(
       {
         name: `+${plural('Attachment', listedAttachments.length)}`,
         value: listedAttachments
-          .map((a) => hyperlink(escapeAllMarkdown(a.name), a.proxyURL))
+          .map((a) =>
+            hyperlink(inlineCode(escapeInlineCode(a.name)), a.proxyURL),
+          )
           .join(', '),
       },
     ])
@@ -123,7 +128,7 @@ export async function quoteMessage(
       {
         name: 'Stickers:',
         value: message.stickers
-          .map((s) => hyperlink(escapeAllMarkdown(s.name), s.url))
+          .map((s) => hyperlink(inlineCode(escapeInlineCode(s.name)), s.url))
           .join(', '),
       },
     ])
@@ -194,6 +199,10 @@ export async function addToEmbed(message: Message, embed: EmbedBuilder) {
     case MessageType.AutoModerationAction:
       quoteAutoModerationAction(message, embed)
       break
+  }
+
+  if (message.poll != null) {
+    quotePoll(message, embed)
   }
 }
 
@@ -326,9 +335,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
     return
   }
 
-  const content = (reference.content || 'Click to see message')
-    .split('\n')
-    .join(' ')
+  const content = reference.content.split('\n').join(' ')
 
   const shortContent =
     content.length > MAX_REPLY_LENGTH
@@ -342,7 +349,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
         id: false,
         escapeMarkdown: false,
       })}`,
-      value: `${shortContent} [${hyperlink('Message Link', reference.url)}]`,
+      value: `${reference.url}\n${shortContent}`,
     },
   ])
 }
@@ -367,6 +374,26 @@ function quoteAutoModerationAction(message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     `${message.author} triggered AutoMod. Details follow below:`,
   )
+}
+
+function quotePoll(message: Message, embed: EmbedBuilder) {
+  if (!message.poll) return
+
+  const { poll } = message
+  const totalVotes = poll.answers.reduce((acc, v) => acc + v.voteCount, 0)
+
+  embed
+    .setTitle(`${escapeAllMarkdown(poll.question.text).substring(0, 256)}`)
+    .addFields(
+      poll.answers.map((v) => ({
+        name: `${v.emoji ? `${v.emoji} ` : ''}${v.text}`,
+        value: plural('vote', v.voteCount),
+      })),
+    )
+    .addFields({
+      name: '\u200b',
+      value: `${plural('Vote', totalVotes)} ∙ Ends ${time(poll.expiresAt, 'R')}`,
+    })
 }
 
 function formatQuoteContent(content: string): string | null {
