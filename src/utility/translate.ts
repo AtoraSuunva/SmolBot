@@ -8,8 +8,8 @@ import {
   type ChatInputCommandInteraction,
   type CommandInteraction,
   type MessageContextMenuCommandInteraction,
+  cleanCodeBlockContent,
   codeBlock,
-  escapeCodeBlock,
   inlineCode,
 } from 'discord.js'
 import { languages, translate } from 'google-translate-api-x'
@@ -228,9 +228,10 @@ async function runTranslate(
   try {
     res = await translate(text, { from, to, autoCorrect })
   } catch (e) {
-    await interaction.editReply(
-      `Failed to translate, try again later. Received an error:\n${codeBlock(escapeCodeBlock(String(e)))}`,
-    )
+    await interaction.editReply({
+      content: `Failed to translate, try again later. Received an error:\n${codeBlock(cleanCodeBlockContent(String(e)))}`,
+      allowedMentions: { parse: [] },
+    })
 
     return
   }

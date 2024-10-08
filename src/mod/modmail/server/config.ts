@@ -85,12 +85,13 @@ async function runConfigServer(interaction: ChatInputCommandInteraction) {
     create: mergedConfig,
   })
 
-  await interaction.editReply(
-    `Server modmail config updated:\n${formatConfig({
+  await interaction.editReply({
+    content: `Server modmail config updated:\n${formatConfig({
       config: newConfig,
       guild,
     })}`,
-  )
+    allowedMentions: { parse: [] },
+  })
 }
 
 const invalidSubstrings = /@|#|:|```|discord/i

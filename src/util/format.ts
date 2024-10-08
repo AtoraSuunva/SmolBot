@@ -1,4 +1,9 @@
-import { type ForumChannel, type Guild, codeBlock } from 'discord.js'
+import {
+  type ForumChannel,
+  type Guild,
+  codeBlock,
+  escapeCodeBlock,
+} from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 
@@ -108,7 +113,7 @@ export function formatConfig<Config extends Record<string, Value>>(
     })
     .join('\n')
 
-  return codeBlock('ini', formatted)
+  return codeBlock('ini', escapeCodeBlock(formatted))
 }
 
 /**

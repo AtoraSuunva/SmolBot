@@ -1,4 +1,3 @@
-import { InteractionContextType } from 'discord-api-types/v10'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -6,6 +5,7 @@ import {
   DMChannel,
   type FetchMessagesOptions,
   GuildMember,
+  InteractionContextType,
   type Message,
   type Snowflake,
   User,
@@ -301,6 +301,7 @@ function filterMessages(
   }: FilterOptions,
 ): FetchedMessages {
   return messages.filter((message) => {
+    if (!message.bulkDeletable) return false
     if (after && !isAfter(message, after)) return false
     if (before && !isBefore(message, before)) return false
     if (content && !hasContent(message, content)) return false
@@ -310,7 +311,6 @@ function filterMessages(
     if (emoji && !hasCountEmoji(message, emoji)) return false
     if (onlyEmoji && !hasOnlyEmoji(message)) return false
     if (embeds && !hasCountEmbeds(message, embeds)) return false
-    if (!message.bulkDeletable) return false
     return true
   })
 }

@@ -227,6 +227,7 @@ async function runCreateModMailButton(
     const message = error instanceof Error ? error.message : String(error)
     await interaction.editReply({
       content: `Failed to create the button:\nError: \`${escapeInlineCode(message)}\``,
+      allowedMentions: { parse: [] },
     })
     return
   }
@@ -518,6 +519,7 @@ async function handleCreateTicketButton(
         content: embed.data.fields?.[0].value.slice(0, 256) ?? 'No Preview',
         embeds: [embed],
         files,
+        allowedMentions: { parse: [] },
       },
     })
   } catch (e) {

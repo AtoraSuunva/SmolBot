@@ -77,6 +77,7 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     return interaction.reply({
       content: `There was an error in your dice notation: ${message}`,
       ephemeral: true,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -109,5 +110,6 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
   return interaction.reply({
     content,
     ephemeral,
+    allowedMentions: { parse: [] },
   })
 }

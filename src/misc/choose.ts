@@ -84,6 +84,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content: `There's only 1 option, so **${options[0]}**!\nUse commas (,) to separate multiple options if you didn't mean to only put 1 option, like this "otter, ferret, weasel".`,
       ephemeral,
+      allowedMentions: { parse: [] },
     })
     return
   }
@@ -136,6 +137,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
 
   if (content.length > 2000) {
     await interaction.reply({
+      content: 'The result was too long, see the attached file:',
       files: [
         {
           name: 'choice.txt',
@@ -148,6 +150,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content,
       ephemeral,
+      allowedMentions: { parse: [] },
     })
   }
 }

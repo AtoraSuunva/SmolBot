@@ -76,6 +76,7 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content: codeBlock('yaml', output),
       ephemeral,
+      allowedMentions: { parse: [] },
     })
   }
 }

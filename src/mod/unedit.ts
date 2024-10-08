@@ -127,6 +127,7 @@ function runUnedit(
   return interaction.reply({
     content: edits,
     ephemeral,
+    allowedMentions: { parse: [] },
   })
 }
 

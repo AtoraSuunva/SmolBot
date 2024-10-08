@@ -62,5 +62,6 @@ async function runLockThreadConfig(interaction: ChatInputCommandInteraction) {
       config: oldConfig,
       guild,
     })}`,
+    allowedMentions: { parse: [] },
   })
 }

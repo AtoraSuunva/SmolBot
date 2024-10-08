@@ -113,6 +113,7 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
         config: oldConfig,
         guild,
       })}`,
+      allowedMentions: { parse: [] },
     })
     return
   }
@@ -154,6 +155,7 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
       oldConfig,
       guild,
     })}`,
+    allowedMentions: { parse: [] },
   })
 }
 

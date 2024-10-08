@@ -15,6 +15,13 @@ export enum AntiRaidActions {
   Timeout = 'timeout',
 }
 
+export const AntiRaidActionVerb = {
+  [AntiRaidActions.None]: 'ignored',
+  [AntiRaidActions.Kick]: 'kicked',
+  [AntiRaidActions.Ban]: 'banned',
+  [AntiRaidActions.Timeout]: 'timed out',
+}
+
 export const antiRaidChoices: APIApplicationCommandOptionChoice<string>[] =
   makeChoices(Object.values(AntiRaidActions))
 

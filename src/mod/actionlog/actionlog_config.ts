@@ -91,6 +91,7 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
           archiveChannel: channelFormatter,
         },
       })}`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -144,5 +145,6 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
         archiveChannel: channelFormatter,
       },
     })}`,
+    allowedMentions: { parse: [] },
   })
 }

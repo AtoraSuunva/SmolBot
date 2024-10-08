@@ -246,6 +246,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   await interaction.editReply({
     content,
     files,
+    allowedMentions: { parse: [] },
   })
 }
 
