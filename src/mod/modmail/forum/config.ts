@@ -77,8 +77,8 @@ async function runConfigForum(interaction: ChatInputCommandInteraction) {
 
   const tagFormatter = makeForumTagFormatter(forum)
 
-  await interaction.editReply(
-    `Forum modmail config updated:\n${formatConfig({
+  await interaction.editReply({
+    content: `Forum modmail config updated:\n${formatConfig({
       config: newConfig,
       guild,
       formatters: {
@@ -86,5 +86,6 @@ async function runConfigForum(interaction: ChatInputCommandInteraction) {
         closedTag: tagFormatter,
       },
     })}`,
-  )
+    allowedMentions: { parse: [] },
+  })
 }

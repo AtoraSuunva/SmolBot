@@ -104,6 +104,7 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
         config: oldConfig,
         guild,
       })}`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -148,5 +149,6 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
 
   return interaction.reply({
     content: `Mute config:\n${config}`,
+    allowedMentions: { parse: [] },
   })
 }

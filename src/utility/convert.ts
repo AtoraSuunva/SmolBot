@@ -114,7 +114,10 @@ async function runConvert(interaction: ChatInputCommandInteraction) {
   const fromUnit = units.find((unit) => unit.abbr === from)?.abbr
 
   if (!fromUnit) {
-    await interaction.reply(`Invalid \`from\` unit "${from}"`)
+    await interaction.reply({
+      content: `Invalid \`from\` unit "${from}"`,
+      allowedMentions: { parse: [] },
+    })
     return
   }
 
@@ -122,11 +125,12 @@ async function runConvert(interaction: ChatInputCommandInteraction) {
   const toUnit = possibleUnits.find((unit) => unit === to)
 
   if (to && !toUnit) {
-    await interaction.reply(
-      `Invalid \`to\` unit "${to}"\nPossible units: ${possibleUnits.join(
+    await interaction.reply({
+      content: `Invalid \`to\` unit "${to}"\nPossible units: ${possibleUnits.join(
         ', ',
       )}`,
-    )
+      allowedMentions: { parse: [] },
+    })
     return
   }
 
@@ -138,5 +142,6 @@ async function runConvert(interaction: ChatInputCommandInteraction) {
   await interaction.reply({
     content: `${value.toLocaleString()}${fromUnit} = ${val.toLocaleString()}${unit}`,
     ephemeral,
+    allowedMentions: { parse: [] },
   })
 }

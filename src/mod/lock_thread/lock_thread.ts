@@ -79,7 +79,10 @@ async function logToChannel(
     `**Reason:** ${reason}`,
   ].join('\n')
 
-  return channel.send({ content: formattedReason })
+  return channel.send({
+    content: formattedReason,
+    allowedMentions: { parse: [] },
+  })
 }
 
 async function runLockThread(interaction: ChatInputCommandInteraction) {
@@ -138,6 +141,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
     await defer
     await interaction.editReply({
       content: `Locking thread ${thread} for "${reason}"...`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -160,6 +164,7 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
     await defer
     return interaction.editReply({
       content: `An error occurred while locking the thread: ${String(error)}`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -168,5 +173,6 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
 
   return interaction.editReply({
     content: `Locked thread ${thread} for "${reason}"`,
+    allowedMentions: { parse: [] },
   })
 }

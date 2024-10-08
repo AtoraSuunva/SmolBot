@@ -68,10 +68,11 @@ async function runConfigTicket(interaction: ChatInputCommandInteraction) {
     create: mergedConfig,
   })
 
-  await interaction.editReply(
-    `Ticket config updated:\n${formatConfig({
+  await interaction.editReply({
+    content: `Ticket config updated:\n${formatConfig({
       config: newConfig,
       guild,
     })}`,
-  )
+    allowedMentions: { parse: [] },
+  })
 }

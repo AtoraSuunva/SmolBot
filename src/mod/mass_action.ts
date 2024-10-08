@@ -605,6 +605,7 @@ async function runMassAction({
   await interaction.editReply({
     content: content.join('\n'),
     files,
+    allowedMentions: { parse: [] },
   })
 }
 

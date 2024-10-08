@@ -62,6 +62,7 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
         config: oldConfig,
         guild,
       })}`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -155,6 +156,7 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
       oldConfig,
       guild,
     })}`,
+    allowedMentions: { parse: [] },
   })
 }
 

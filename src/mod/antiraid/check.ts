@@ -6,8 +6,9 @@ import {
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
-import { baseLogger, notNullish } from 'sleetcord-common'
+import { MINUTE, baseLogger, notNullish } from 'sleetcord-common'
 import {
+  AntiRaidActionVerb,
   AntiRaidActions,
   antiRaidOptions,
   getAntiRaidConfigOrDefault,
@@ -176,8 +177,8 @@ async function handleGuildMemberAdd(member: GuildMember) {
   if (logChannel?.isTextBased()) {
     await logChannel.send({
       content: `${formatUser(member, { id: true, mention: true })} got ${
-        result[0].action
-      } for ${result[0].weight} weight (over ${config.threshold})`,
+        AntiRaidActionVerb[result[0].action]
+      } for ${result[0].weight} weight (>= ${config.threshold})`,
     })
   }
 }
@@ -221,7 +222,7 @@ function checkMembers(
 
       let weight = 0
       const age = Date.now() - member.user.createdTimestamp
-      const ageInMinutes = age / 1000 / 60
+      const ageInMinutes = age / MINUTE
 
       if (ageInMinutes <= config.accountAgeLimitMin) {
         weight += config.accountAgeWeight

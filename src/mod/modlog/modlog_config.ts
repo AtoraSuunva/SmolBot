@@ -241,5 +241,6 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
       oldConfig,
       guild,
     })}`,
+    allowedMentions: { parse: [] },
   })
 }

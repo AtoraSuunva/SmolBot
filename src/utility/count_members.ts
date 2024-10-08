@@ -132,11 +132,12 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
     )
   }
 
-  return interaction.editReply(
-    `${plural('member', count)} ${plural('has', count, {
+  return interaction.editReply({
+    content: `${plural('member', count)} ${plural('has', count, {
       includeCount: false,
     })} ${intlList.format(checks)}.`,
-  )
+    allowedMentions: { parse: [] },
+  })
 }
 
 type MemberNameGetter = (member: GuildMember) => string[]

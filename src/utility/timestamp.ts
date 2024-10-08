@@ -87,6 +87,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content: `Invalid date time:\n> ${anchor.invalidExplanation}`,
       ephemeral: true,
+      allowedMentions: { parse: [] },
     })
     return
   }

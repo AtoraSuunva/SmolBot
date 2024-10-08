@@ -77,7 +77,10 @@ export async function messageDeleteWithAuditLog(
       message.channel
     } at \`${formatTime(message.createdAt)}\``
 
-    await channel.send(formatLog('🗑️', 'Message deleted', msg))
+    await channel.send({
+      content: formatLog('🗑️', 'Message deleted', msg),
+      allowedMentions: { parse: [] },
+    })
     return
   }
 

@@ -91,5 +91,6 @@ async function handleRunConfig(interaction: ChatInputCommandInteraction) {
 
   await interaction.editReply({
     content: `Updated antiraid config:\n${formattedConfig}`,
+    allowedMentions: { parse: [] },
   })
 }

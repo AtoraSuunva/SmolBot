@@ -66,6 +66,7 @@ async function runReportManage(interaction: ChatInputCommandInteraction) {
         config: oldConfig,
         guild,
       })}`,
+      allowedMentions: { parse: [] },
     })
   }
 

@@ -311,6 +311,7 @@ async function runMute(
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
     return interaction.editReply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
+      allowedMentions: { parse: [] },
     })
   }
 
@@ -356,6 +357,7 @@ async function runMute(
   if (toAction.length === 0) {
     return interaction.editReply({
       content: `No valid users to ${action}.\n${formatFails(earlyFailed)}`,
+      allowedMentions: { parse: [] },
     })
   }
 
