@@ -11,6 +11,7 @@ import {
   cleanCodeBlockContent,
   codeBlock,
   escapeInlineCode,
+  time,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { plural } from '../../../util/format.js'
@@ -73,9 +74,9 @@ export async function messageDeleteWithAuditLog(
   const { channel } = conf
 
   if (message.partial) {
-    const msg = `(${message.id}) (uncached) in ${
+    const msg = `(\`${message.id}\`) uncached in ${
       message.channel
-    } at \`${formatTime(message.createdAt)}\``
+    } around ${message.url} sent ${time(message.createdAt, 'f')} `
 
     await channel.send({
       content: formatLog('🗑️', 'Message deleted', msg),
@@ -136,7 +137,7 @@ export async function messageDeleteWithAuditLog(
 
   const { executor, reason } = auditLog ?? {}
 
-  let msg = `(${message.id}) in ${message.channel}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
+  let msg = `(${message.id}) in ${message.channel} around ${message.url} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
     attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
       : ''
