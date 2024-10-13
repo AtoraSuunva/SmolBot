@@ -109,7 +109,6 @@ export async function logChannelModified(
     guild.client,
   )
   const channelText = formatChannel(modifiedChannel)
-  const verb = LogVerb[auditLogEntry.action]
   const execUser = executor ? formatUser(executor) : '<unknown user>'
   const changelog = auditLogEntry.changes
     .map((change) => {
@@ -126,7 +125,7 @@ export async function logChannelModified(
     })
     .join('\n')
 
-  const headline = `${channelText} ${verb} by ${execUser}`
+  const headline = `${channelText} by ${execUser}`
 
   let message = ''
   let files: AttachmentPayload[] = []
@@ -188,12 +187,6 @@ const LogName = {
   [AuditLogEvent.ChannelCreate]: 'Channel Created',
   [AuditLogEvent.ChannelDelete]: 'Channel Deleted',
   [AuditLogEvent.ChannelUpdate]: 'Channel Updated',
-}
-
-const LogVerb = {
-  [AuditLogEvent.ChannelCreate]: 'created',
-  [AuditLogEvent.ChannelDelete]: 'deleted',
-  [AuditLogEvent.ChannelUpdate]: 'updated',
 }
 
 interface TargetChannel {
