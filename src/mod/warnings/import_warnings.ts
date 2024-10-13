@@ -17,7 +17,6 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import { fetch } from 'undici'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'
 
