@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { Readable } from 'node:stream'
 import type { ReadableStream } from 'node:stream/web'
 import type { Message } from 'discord.js'
-import { fetch } from 'undici'
 
 const hashCache = new WeakMap<Message, Promise<string[]>>()
 
