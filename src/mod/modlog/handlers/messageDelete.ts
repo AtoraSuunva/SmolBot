@@ -137,7 +137,7 @@ export async function messageDeleteWithAuditLog(
 
   const { executor, reason } = auditLog ?? {}
 
-  let msg = `(${message.id}) in ${message.channel} around ${message.url} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
+  let msg = `(${message.id}) in ${message.channel ?? '#deleted-channel'}${message.channel ? ` around ${message.url}` : ''} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
     attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
       : ''
