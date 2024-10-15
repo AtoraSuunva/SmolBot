@@ -70,7 +70,7 @@ function hashStream(stream: ReadableStream): Promise<string> {
 
   return new Promise((resolve, reject) => {
     Readable.fromWeb(stream)
-      .pipe(hash as unknown as NodeJS.WritableStream)
+      .pipe(hash)
       .on('error', reject)
       .on('finish', () => {
         resolve(hash.digest('hex'))

@@ -9,7 +9,7 @@ import {
   Result,
   s,
 } from '@sapphire/shapeshift'
-import { type Parser, parse } from 'csv-parse'
+import { parse } from 'csv-parse'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -84,10 +84,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const parseStream = Readable.fromWeb(response.body).pipe(
-    // Typescript complains about the types, though Parser _does_ implement NodeJS.WritableStream through inheritance. Guess not?
-    parser as unknown as NodeJS.WritableStream,
-  ) as unknown as Parser
+  const parseStream = Readable.fromWeb(response.body).pipe(parser)
 
   const creates: PrismaPromise<unknown>[] = []
   let count = 0
