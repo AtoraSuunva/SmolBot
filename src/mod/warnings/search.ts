@@ -21,6 +21,11 @@ export const warningsSearch = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.User,
       },
       {
+        name: 'warning_id',
+        description: 'Get warning by ID',
+        type: ApplicationCommandOptionType.Integer,
+      },
+      {
         name: 'reason',
         description: 'Filter warnings containing this in the reason',
         type: ApplicationCommandOptionType.String,
@@ -50,6 +55,11 @@ export const warningsSearch = new SleetSlashSubcommand(
         description: 'Show the results in reverse order (oldest first)',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'ephemeral',
+        description: 'Only show the results to you (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
     ],
   },
   {
@@ -59,15 +69,18 @@ export const warningsSearch = new SleetSlashSubcommand(
 
 async function warningsViewRun(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser('user')
+  const warningID = interaction.options.getInteger('warning_id')
   const reason = interaction.options.getString('reason')
   const modNote = interaction.options.getString('mod_note')
   const permanent = interaction.options.getBoolean('permanent')
   const voidWarning = interaction.options.getBoolean('void')
   const expired = interaction.options.getBoolean('expired')
   const reverse = interaction.options.getBoolean('reverse') ?? false
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   const filters = {
     ...(user ? { userID: user.id } : {}),
+    ...(warningID ? { warningID } : {}),
     ...(reason ? { reason: { contains: reason } } : {}),
     ...(modNote ? { modNote: { contains: modNote } } : {}),
     ...(permanent !== null ? { permanent } : {}),
@@ -89,5 +102,6 @@ async function warningsViewRun(interaction: ChatInputCommandInteraction) {
     formatAuthor: () => formattedUser,
     showUserOnWarning: !user,
     modView: true,
+    ephemeral,
   })
 }
