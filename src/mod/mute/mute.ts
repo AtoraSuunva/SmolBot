@@ -107,7 +107,7 @@ export const mute = new SleetSlashCommand(
 
         if (
           i.user.id !== userId ||
-          !i.memberPermissions.has('ManageChannels')
+          !channel?.permissionsFor(i.user)?.has('ManageChannels')
         ) {
           await i.reply({
             content: 'No.',
@@ -116,7 +116,7 @@ export const mute = new SleetSlashCommand(
           return
         }
 
-        if (!channel?.isTextBased()) {
+        if (!channel.isTextBased()) {
           await i.reply({
             content:
               "That isn't a text channel, or the channel doesn't exist anymore.",
