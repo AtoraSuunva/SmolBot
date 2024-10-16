@@ -24,7 +24,7 @@ import { plural } from '../util/format.js'
 export const purge = new SleetSlashCommand(
   {
     name: 'purge',
-    description: 'Purges a number of messages',
+    description: 'Purges a number of messages, options work as AND conditions',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
     options: [
@@ -49,45 +49,51 @@ export const purge = new SleetSlashCommand(
       {
         name: 'mentions',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages that mention a user/role (default: none)',
+        description: 'Purge messages that mention a user/role (default: none)',
       },
       {
         name: 'bots',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Purge only bots (default: false)',
+        description: 'Purge bots (default: false)',
       },
       {
         name: 'emoji',
         type: ApplicationCommandOptionType.Integer,
-        description:
-          'Purge only messages with this many or more emoji (default: 0)',
+        description: 'Purge messages with this many or more emoji (default: 0)',
         min_value: 0,
       },
       {
         name: 'only_emoji',
         type: ApplicationCommandOptionType.Boolean,
-        description:
-          'Purge only messages that only contain emoji (default: false)',
+        description: 'Purge messages that only contain emoji (default: false)',
       },
       {
         name: 'embeds',
         type: ApplicationCommandOptionType.Integer,
         description:
-          'Purge only messages with this many or more embeds (default: 0)',
+          'Purge messages with this many or more embeds (default: 0)',
         min_value: 0,
+      },
+      {
+        name: 'stickers',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Purge messages with stickers (default: False)',
+      },
+      {
+        name: 'reacts',
+        type: ApplicationCommandOptionType.Boolean,
+        description:
+          'Purge reactions instead of messages, still matches using the other options (default: False)',
       },
       {
         name: 'before',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages before this message ID (default: none)',
+        description: 'Purge messages before this message ID (default: none)',
       },
       {
         name: 'after',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages after this message ID (default: none)',
+        description: 'Purge messages after this message ID (default: none)',
       },
       {
         name: 'channel',
@@ -96,9 +102,9 @@ export const purge = new SleetSlashCommand(
           'The channel to purge messages from (default: current channel)',
       },
       {
-        name: 'silent',
+        name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Silent purge (default: true)',
+        description: 'Send purge results only to you (default: true)',
       },
     ],
   },
@@ -129,6 +135,8 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   const emoji = interaction.options.getInteger('emoji') ?? 0
   const onlyEmoji = interaction.options.getBoolean('only_emoji') ?? false
   const embeds = interaction.options.getInteger('embeds') ?? 0
+  const stickers = interaction.options.getBoolean('stickers') ?? false
+  const reacts = interaction.options.getBoolean('reacts') ?? false
   const before = interaction.options.getString('before')
   const after = interaction.options.getString('after')
 
@@ -145,9 +153,9 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
     throw new PreRunError('You must provide a guild channel')
   }
 
-  const silent = interaction.options.getBoolean('silent') ?? true
+  const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
 
-  await interaction.deferReply({ ephemeral: silent })
+  await interaction.deferReply({ ephemeral })
 
   /**
    * Fetch messages after this offset
@@ -200,6 +208,8 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       emoji,
       onlyEmoji,
       embeds,
+      stickers,
+      reacts,
     })
 
     if (filteredMessages.size === 0) {
@@ -211,7 +221,10 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       .sort(youngestFirst)
       .first(count - deletedCount)
 
-    const { size } = await channel.bulkDelete(toPurge, true)
+    const { size } = await (reacts
+      ? bulkDeleteReacts(messages)
+      : channel.bulkDelete(toPurge, true))
+
     deletedCount += size
 
     // When searching backwards:
@@ -232,7 +245,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.editReply({
-    content: `🗑️ Deleted ${plural('message', deletedCount)}...`,
+    content: `🗑️ ${reacts ? 'Removed reactions from' : 'Deleted'} ${plural('message', deletedCount)}...`,
   })
 }
 
@@ -276,6 +289,8 @@ interface FilterOptions {
   emoji: number
   onlyEmoji: boolean
   embeds: number
+  stickers: boolean
+  reacts: boolean
 }
 
 type FetchedMessages = Collection<Snowflake, Message>
@@ -298,10 +313,12 @@ function filterMessages(
     emoji,
     onlyEmoji,
     embeds,
+    stickers,
+    reacts,
   }: FilterOptions,
 ): FetchedMessages {
   return messages.filter((message) => {
-    if (!message.bulkDeletable) return false
+    if (!reacts && !message.bulkDeletable) return false
     if (after && !isAfter(message, after)) return false
     if (before && !isBefore(message, before)) return false
     if (content && !hasContent(message, content)) return false
@@ -311,6 +328,8 @@ function filterMessages(
     if (emoji && !hasCountEmoji(message, emoji)) return false
     if (onlyEmoji && !hasOnlyEmoji(message)) return false
     if (embeds && !hasCountEmbeds(message, embeds)) return false
+    if (stickers && message.stickers.size === 0) return false
+
     return true
   })
 }
@@ -389,4 +408,14 @@ function hasOnlyEmoji(message: Message): boolean {
 function hasCountEmbeds(message: Message, maxEmbeds: number): boolean {
   const count = message.embeds.length + message.attachments.size
   return count >= maxEmbeds
+}
+
+async function bulkDeleteReacts(
+  messages: Collection<string, Message>,
+): Promise<{ size: number }> {
+  for (const message of messages.values()) {
+    await message.reactions.removeAll()
+  }
+
+  return { size: messages.size }
 }
