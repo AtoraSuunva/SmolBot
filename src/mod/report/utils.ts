@@ -268,9 +268,7 @@ async function replyToReport(
 
   const newLog = `${interaction.user} ${hyperlink('Replied', reply.url)}`
 
-  const actionLog = new EmbedBuilder(
-    originalMessage.embeds[originalMessage.embeds.length - 1].data,
-  )
+  const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
   actionLog.setDescription(
     `${actionLog.data.description ?? ''}\n${newLog}`.trim(),
@@ -378,9 +376,7 @@ async function blockReportUser(
     reply.url,
   )}`
 
-  const actionLog = new EmbedBuilder(
-    originalMessage.embeds[originalMessage.embeds.length - 1].data,
-  )
+  const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
   actionLog.setDescription(
     `${actionLog.data.description ?? ''}\n${newLog}`.trim(),
@@ -455,9 +451,7 @@ async function unblockReportUser(
     reply.url,
   )}`
 
-  const actionLog = new EmbedBuilder(
-    originalMessage.embeds[originalMessage.embeds.length - 1].data,
-  )
+  const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
   actionLog.setDescription(
     `${actionLog.data.description ?? ''}\n${newLog}`.trim(),

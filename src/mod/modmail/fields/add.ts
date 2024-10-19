@@ -64,7 +64,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const lastField = existingFields[existingFields.length - 1]
+  const lastField = existingFields.at(-1)
 
   const mergedField: Omit<ModMailTicketModalField, 'updatedAt'> = {
     modmailID: modmail_id,
