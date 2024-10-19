@@ -222,7 +222,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       .first(count - deletedCount)
 
     const { size } = await (reacts
-      ? bulkDeleteReacts(messages)
+      ? bulkDeleteReacts(toPurge)
       : channel.bulkDelete(toPurge, true))
 
     deletedCount += size
@@ -410,12 +410,16 @@ function hasCountEmbeds(message: Message, maxEmbeds: number): boolean {
   return count >= maxEmbeds
 }
 
+interface BulkDeleteResult {
+  size: number
+}
+
 async function bulkDeleteReacts(
-  messages: Collection<string, Message>,
-): Promise<{ size: number }> {
-  for (const message of messages.values()) {
+  messages: Message[],
+): Promise<BulkDeleteResult> {
+  for (const message of messages) {
     await message.reactions.removeAll()
   }
 
-  return { size: messages.size }
+  return { size: messages.length }
 }
