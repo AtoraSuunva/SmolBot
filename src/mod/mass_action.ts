@@ -1,8 +1,10 @@
 import {
   type APIApplicationCommandOption,
   ApplicationCommandOptionType,
+  type Attachment,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
+  type CommandInteraction,
   type Guild,
   GuildMember,
   InteractionContextType,
@@ -169,125 +171,141 @@ type BulkActionUsers = (
 
 type CheckMember = (member: GuildMember) => boolean
 
-async function runMassBan(interaction: ChatInputCommandInteraction) {
-  const deleteDays = interaction.options.getInteger('delete_days') ?? 0
-  const forceBan = interaction.options.getBoolean('force_ban') ?? true
-
-  const deleteMessageSeconds = (deleteDays * DAY) / 1000
-
-  await runMassAction({
-    interaction,
-    action: 'ban',
-    actioned: 'banned',
-    actionUser: (g, u, reason) =>
-      g.bans.create(typeof u === 'string' ? u : u.id, {
-        reason,
-        deleteMessageSeconds,
-      }),
-    bulkActionUsers: async (g, users, reason) => {
-      try {
-        const { bannedUsers, failedUsers } = await g.bans.bulkCreate(users, {
-          reason,
-          deleteMessageSeconds,
-        })
-
-        return {
-          success: bannedUsers,
-          failure: failedUsers.map((fail) => ({
-            user: fail,
-            reason: 'Failed to bulk ban',
-          })),
-        }
-      } catch (e: unknown) {
-        return {
-          success: [],
-          failure: users.map((user) => ({
-            user,
-            reason: String(e),
-          })),
-        }
-      }
-    },
-    bulkActionBatchSize: 200,
-    checkMember: (m) => m.bannable,
-    actionUserType: forceBan ? UserType.Everyone : UserType.MembersOnly,
-  })
-}
-
-async function runMassKick(interaction: ChatInputCommandInteraction) {
-  await runMassAction({
-    interaction,
-    action: 'kick',
-    actioned: 'kicked',
-    actionUser: (g, u, reason) =>
-      g.members.kick(typeof u === 'string' ? u : u.id, reason),
-    checkMember: (m) => m.kickable,
-    actionUserType: UserType.MembersOnly,
-  })
-}
-
-async function runMassFind(interaction: ChatInputCommandInteraction) {
-  await runMassAction({
-    interaction,
-    action: 'find',
-    actioned: 'found',
-    actionUser: async () => Promise.resolve(undefined),
-    checkMember: () => true,
-    actionUserType: UserType.MembersOnly,
-    checkRoleHierarchy: false,
-  })
-}
-
-async function runMassUnban(interaction: ChatInputCommandInteraction) {
-  await runMassAction({
-    interaction,
-    action: 'unban',
-    actioned: 'unbanned',
-    actionUser: (g, u, reason) => g.members.unban(u, reason),
-    checkMember: () => true,
-    actionUserType: UserType.NonMembersOnly,
-  })
-}
-
-async function runMassSoftban(interaction: ChatInputCommandInteraction) {
-  const deleteDays = interaction.options.getInteger('delete_days') ?? 1
-  const deleteMessageSeconds = (deleteDays * DAY) / 1000
-
-  await runMassAction({
-    interaction,
-    action: 'softban',
-    actioned: 'softbanned',
-    actionUser: async (g, u, reason) => {
-      try {
-        await g.members.unban(u, reason)
-        // Success = they were banned before, just re-ban them
-        return g.members.ban(u, {
-          reason,
-          deleteMessageSeconds,
-        })
-      } catch {
-        // Failure = they weren't banned before, ban then unban them
-        await g.members.ban(u, {
-          reason,
-          deleteMessageSeconds,
-        })
-
-        return g.members.unban(u, reason)
-      }
-    },
-    checkMember: (m) => m.bannable,
-    actionUserType: UserType.Everyone,
-  })
-}
-
 enum UserType {
   Everyone = 0,
   MembersOnly = 1,
   NonMembersOnly = 2,
 }
 
+export const createMassBanOptions: (
+  deleteMessageSeconds: number,
+  forceBan: boolean,
+) => ChatInputMassActionOptions = (deleteMessageSeconds, forceBan) => ({
+  action: 'ban',
+  actioned: 'banned',
+  actionUser: (g, u, reason) =>
+    g.bans.create(typeof u === 'string' ? u : u.id, {
+      reason,
+      deleteMessageSeconds,
+    }),
+  bulkActionUsers: async (g, users, reason) => {
+    try {
+      const { bannedUsers, failedUsers } = await g.bans.bulkCreate(users, {
+        reason,
+        deleteMessageSeconds,
+      })
+
+      return {
+        success: bannedUsers,
+        failure: failedUsers.map((fail) => ({
+          user: fail,
+          reason: 'Failed to bulk ban',
+        })),
+      }
+    } catch (e: unknown) {
+      return {
+        success: [],
+        failure: users.map((user) => ({
+          user,
+          reason: String(e),
+        })),
+      }
+    }
+  },
+  bulkActionBatchSize: 200,
+  checkMember: (m) => m.bannable,
+  actionUserType: forceBan ? UserType.Everyone : UserType.MembersOnly,
+})
+
+async function runMassBan(interaction: ChatInputCommandInteraction) {
+  const deleteDays = interaction.options.getInteger('delete_days') ?? 0
+  const forceBan = interaction.options.getBoolean('force_ban') ?? true
+
+  const deleteMessageSeconds = (deleteDays * DAY) / 1000
+
+  await chatInputMassAction(
+    interaction,
+    createMassBanOptions(deleteMessageSeconds, forceBan),
+  )
+}
+
+export const massKickOptions: ChatInputMassActionOptions = {
+  action: 'kick',
+  actioned: 'kicked',
+  actionUser: (g, u, reason) =>
+    g.members.kick(typeof u === 'string' ? u : u.id, reason),
+  checkMember: (m) => m.kickable,
+  actionUserType: UserType.MembersOnly,
+}
+
+async function runMassKick(interaction: ChatInputCommandInteraction) {
+  await chatInputMassAction(interaction, massKickOptions)
+}
+
+export const massFindOptions: ChatInputMassActionOptions = {
+  action: 'find',
+  actioned: 'found',
+  actionUser: async () => Promise.resolve(undefined),
+  checkMember: () => true,
+  actionUserType: UserType.MembersOnly,
+  checkRoleHierarchy: false,
+}
+
+async function runMassFind(interaction: ChatInputCommandInteraction) {
+  await chatInputMassAction(interaction, massFindOptions)
+}
+
+export const massUnbanOptions: ChatInputMassActionOptions = {
+  action: 'unban',
+  actioned: 'unbanned',
+  actionUser: (g, u, reason) => g.members.unban(u, reason),
+  checkMember: () => true,
+  actionUserType: UserType.NonMembersOnly,
+}
+
+async function runMassUnban(interaction: ChatInputCommandInteraction) {
+  await chatInputMassAction(interaction, massUnbanOptions)
+}
+
+export const createMassSoftbanOptions: (
+  deleteMessageSeconds: number,
+) => ChatInputMassActionOptions = (deleteMessageSeconds) => ({
+  action: 'softban',
+  actioned: 'softbanned',
+  actionUser: async (g, u, reason) => {
+    try {
+      await g.members.unban(u, reason)
+      // Success = they were banned before, just re-ban them
+      return g.members.ban(u, {
+        reason,
+        deleteMessageSeconds,
+      })
+    } catch {
+      // Failure = they weren't banned before, ban then unban them
+      await g.members.ban(u, {
+        reason,
+        deleteMessageSeconds,
+      })
+
+      return g.members.unban(u, reason)
+    }
+  },
+  checkMember: (m) => m.bannable,
+  actionUserType: UserType.Everyone,
+})
+
+async function runMassSoftban(interaction: ChatInputCommandInteraction) {
+  const deleteDays = interaction.options.getInteger('delete_days') ?? 1
+  const deleteMessageSeconds = (deleteDays * DAY) / 1000
+
+  await chatInputMassAction(
+    interaction,
+    createMassSoftbanOptions(deleteMessageSeconds),
+  )
+}
+
 interface RunMassActionOptions {
-  interaction: ChatInputCommandInteraction
+  interaction: CommandInteraction
   /** Verb to describe the action: "Mass {action} by..." */
   action: string
   /** Past tense of the verb: "{actioned} user for" */
@@ -322,12 +340,57 @@ interface RunMassActionOptions {
    * @default true
    */
   checkRoleHierarchy?: boolean
+  /**
+   * User-provided reason to add
+   *
+   * @default 'No reason provided'
+   */
+  userReason?: string
+  /**
+   * Only output the user ID instead of full username + id
+   *
+   * @default false
+   */
+  idOnly?: boolean
+  /**
+   * The users to action, as a space separated list of IDs
+   */
+  users?: string | null
+  /**
+   * The users to action, as a space separated list of IDs in an attachment
+   */
+  usersFile?: Attachment | null
+  /**
+   * If responses should be ephemeral
+   *
+   * @default false
+   */
+  ephemeral?: boolean
+}
+
+type ChatInputMassActionOptions = Omit<
+  RunMassActionOptions,
+  'interaction' | 'userReason' | 'idOnly' | 'users' | 'usersFile'
+>
+
+function chatInputMassAction(
+  interaction: ChatInputCommandInteraction,
+  options: ChatInputMassActionOptions,
+) {
+  return runMassAction({
+    ...options,
+    interaction,
+    userReason: interaction.options.getString('reason') ?? 'No reason provided',
+    idOnly: interaction.options.getBoolean('id_only') ?? false,
+    users: interaction.options.getString('users'),
+    usersFile: interaction.options.getAttachment('users_file'),
+  })
 }
 
 const MAX_MEMBER_FETCH = 100
 const TIME_BETWEEN_PROGRESS_UPDATES = 5 * SECOND
 
-async function runMassAction({
+export async function runMassAction({
   interaction,
   action,
   actioned,
@@ -337,27 +400,38 @@ async function runMassAction({
   checkMember,
   actionUserType,
   checkRoleHierarchy = true,
+  userReason = 'No reason provided',
+  idOnly = false,
+  users,
+  usersFile,
+  ephemeral = false,
 }: RunMassActionOptions) {
   inGuildGuard(interaction)
 
   const guild = await getGuild(interaction, true)
-  const userReason =
-    interaction.options.getString('reason') ?? 'No reason provided'
   const reason = `${capitalize(action)} by ${formatUser(interaction.user, {
     markdown: false,
   })}: ${userReason}`
-  const idOnly = interaction.options.getBoolean('id_only') ?? false
-  const users = interaction.options.getString('users')
-  const usersFile = interaction.options.getAttachment('users_file')
 
   if (!users && !usersFile) {
-    await interaction.reply(
-      'You must provide either a list of users or a file of user IDs',
-    )
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({
+        content:
+          'You must provide either a list of users or a file of user IDs',
+      })
+    } else {
+      await interaction.reply({
+        ephemeral,
+        content:
+          'You must provide either a list of users or a file of user IDs',
+      })
+    }
     return
   }
 
-  await interaction.deferReply()
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ ephemeral })
+  }
 
   const userList: string[] = []
 
@@ -370,9 +444,11 @@ async function runMassAction({
 
     const rawIds = getAllIDs(users)
     const resolvedDataUsers =
-      interaction.options.resolved?.users
-        ?.filter((u) => users.includes(u.id) && !rawIds.includes(u.id))
-        .map((u) => u.id) ?? []
+      'options' in interaction
+        ? (interaction.options.resolved?.users
+            ?.filter((u) => users.includes(u.id) && !rawIds.includes(u.id))
+            .map((u) => u.id) ?? [])
+        : []
 
     userList.push(...rawIds, ...resolvedDataUsers)
   }
