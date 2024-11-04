@@ -5,6 +5,7 @@ import {
   type GuildTextBasedChannel,
   InteractionContextType,
   type VoiceState,
+  time,
 } from 'discord.js'
 import {
   SleetSlashCommand,
@@ -254,22 +255,10 @@ function sendLog(
   message: string,
   { timestamp = new Date() } = {},
 ) {
-  const d = timestamp instanceof Date ? timestamp : new Date(timestamp)
-  const time = padExpressions`${d.getUTCHours()}:${d.getUTCMinutes()}:${d.getUTCSeconds()}`
-  const content = `${emoji} \`[${time}]\` \`[${type}]\`: ${message}`
+  const content = `${emoji} ${time(timestamp, 'T')} \`[${type}]\`: ${message}`
   const allowedMentions = {
     parse: [],
   }
 
   return channel.send({ content, allowedMentions })
-}
-
-/** Pads the expressions in tagged template literals */
-function padExpressions(str: TemplateStringsArray, ...args: unknown[]) {
-  return str
-    .map(
-      (v, i) =>
-        v + (args[i] !== undefined ? String(args[i]).padStart(2, '0') : ''),
-    )
-    .join('')
 }
