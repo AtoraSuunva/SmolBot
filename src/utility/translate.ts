@@ -5,6 +5,7 @@ import {
   type ChatInputCommandInteraction,
   type CommandInteraction,
   InteractionContextType,
+  type Message,
   type MessageContextMenuCommandInteraction,
   cleanCodeBlockContent,
   codeBlock,
@@ -161,10 +162,12 @@ async function runTranslateSlash(interaction: ChatInputCommandInteraction) {
 async function runTranslateMessage(
   interaction: MessageContextMenuCommandInteraction,
 ) {
-  if (!interaction.targetMessage.content) {
+  const text = getTranslateText(interaction.targetMessage)
+
+  if (!text) {
     await interaction.reply({
       content:
-        "The message you're trying to translate doesn't have any text content.",
+        "The message you're trying to translate doesn't have any text content to translate.",
       ephemeral: true,
     })
 
@@ -172,7 +175,7 @@ async function runTranslateMessage(
   }
 
   await runTranslate(interaction, {
-    text: interaction.targetMessage.content,
+    text,
     fromInput: 'auto',
     toInput: interaction.locale,
     autoCorrect: false,
@@ -281,6 +284,15 @@ async function runTranslate(
     files,
     allowedMentions: { parse: [] },
   })
+}
+
+function getTranslateText(message: Message): string | null {
+  if (message.content) return message.content
+
+  const possibleEmbed = message.embeds.find((e) => e.description)
+  if (possibleEmbed) return possibleEmbed.description
+
+  return null
 }
 
 const formattedLanguage = /.*\((\w{2,4}(?:-\w{2,4})?)\)/
