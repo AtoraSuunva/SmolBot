@@ -30,8 +30,8 @@ importers:
         specifier: ^6.5.1
         version: 6.5.1
       discord-api-types:
-        specifier: ^0.37.102
-        version: 0.37.102
+        specifier: ^0.37.103
+        version: 0.37.103
       discord.js:
         specifier: ~14.16.3
         version: 14.16.3
@@ -60,8 +60,8 @@ importers:
         specifier: ~9.1.0
         version: 9.1.0
       sleetcord:
-        specifier: 2.1.0
-        version: 2.1.0(discord.js@14.16.3)
+        specifier: 2.2.0
+        version: 2.2.0(discord.js@14.16.3)
       sleetcord-common:
         specifier: ^9.1.0
         version: 9.1.0(prisma@5.21.1)
@@ -73,8 +73,8 @@ importers:
         specifier: 1.9.4
         version: 1.9.4
       '@sentry/cli':
-        specifier: ^2.37.0
-        version: 2.37.0
+        specifier: ^2.38.1
+        version: 2.38.1
       '@types/convert-units':
         specifier: ^2.3.11
         version: 2.3.11
@@ -82,8 +82,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       '@types/node':
-        specifier: ~22.7.7
-        version: 22.7.7
+        specifier: ~22.8.7
+        version: 22.8.7
       '@types/pluralize':
         specifier: ^0.0.33
         version: 0.0.33
@@ -397,49 +397,49 @@ packages:
     resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
-  '@sentry/cli-darwin@2.37.0':
-    resolution: {integrity: sha512-CsusyMvO0eCPSN7H+sKHXS1pf637PWbS4rZak/7giz/z31/6qiXmeMlcL3f9lLZKtFPJmXVFO9uprn1wbBVF8A==}
+  '@sentry/cli-darwin@2.38.1':
+    resolution: {integrity: sha512-IHuxm072aSTAvwuHtLg065cF00Pxm2wprnrRr2lkyWp8nLOoO7DmumWZ4pjHvhB8yZXsAbM/PSxLRBoDIRDPzQ==}
     engines: {node: '>=10'}
     os: [darwin]
 
-  '@sentry/cli-linux-arm64@2.37.0':
-    resolution: {integrity: sha512-2vzUWHLZ3Ct5gpcIlfd/2Qsha+y9M8LXvbZE26VxzYrIkRoLAWcnClBv8m4XsHLMURYvz3J9QSZHMZHSO7kAzw==}
+  '@sentry/cli-linux-arm64@2.38.1':
+    resolution: {integrity: sha512-3bj5DS4wDusL0YHwG5qeI+O19kz4N4KDDmnWqIew56MmSSAEM5B0qKk5Hivu1vRU5vPKFwVn8BVjLnKXu9idjg==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [linux, freebsd]
 
-  '@sentry/cli-linux-arm@2.37.0':
-    resolution: {integrity: sha512-Dz0qH4Yt+gGUgoVsqVt72oDj4VQynRF1QB1/Sr8g76Vbi+WxWZmUh0iFwivYVwWxdQGu/OQrE0tx946HToCRyA==}
+  '@sentry/cli-linux-arm@2.38.1':
+    resolution: {integrity: sha512-xyf4f56O4/eeirol8t1tTQw0cwF34b3v69zn6wHtKfx2lW5IEBGO+agVNdOdosnCx6j3UadgdRXUJlSyM9kx/w==}
     engines: {node: '>=10'}
     cpu: [arm]
     os: [linux, freebsd]
 
-  '@sentry/cli-linux-i686@2.37.0':
-    resolution: {integrity: sha512-MHRLGs4t/CQE1pG+mZBQixyWL6xDZfNalCjO8GMcTTbZFm44S3XRHfYJZNVCgdtnUP7b6OHGcu1v3SWE10LcwQ==}
+  '@sentry/cli-linux-i686@2.38.1':
+    resolution: {integrity: sha512-VygJO2oTc6GfiqqmPYNpO2bW1hzszuNyn37SSmeRuuhq1/kRwD+ZQj4OmXYEASjSLg+8mDPoWOurPjHEPKNtNw==}
     engines: {node: '>=10'}
     cpu: [x86, ia32]
     os: [linux, freebsd]
 
-  '@sentry/cli-linux-x64@2.37.0':
-    resolution: {integrity: sha512-k76ClefKZaDNJZU/H3mGeR8uAzAGPzDRG/A7grzKfBeyhP3JW09L7Nz9IQcSjCK+xr399qLhM2HFCaPWQ6dlMw==}
+  '@sentry/cli-linux-x64@2.38.1':
+    resolution: {integrity: sha512-9SaPJK5yAGR7qGsDubTT9O7VpNQG9KIolCOov4xJU7scbmjGaFyYBm9c7ZIqbq6B+56YchPbtD0RewZC6CiF2w==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [linux, freebsd]
 
-  '@sentry/cli-win32-i686@2.37.0':
-    resolution: {integrity: sha512-FFyi5RNYQQkEg4GkP2f3BJcgQn0F4fjFDMiWkjCkftNPXQG+HFUEtrGsWr6mnHPdFouwbYg3tEPUWNxAoypvTw==}
+  '@sentry/cli-win32-i686@2.38.1':
+    resolution: {integrity: sha512-BVUM5y+ZDBK/LqyVvt0C7oolmg8aq7PI/u04/Pp6FLRExySqwyQim0vNyL2FRjIeX1yhbk7x4Z79UjEKqJBltA==}
     engines: {node: '>=10'}
     cpu: [x86, ia32]
     os: [win32]
 
-  '@sentry/cli-win32-x64@2.37.0':
-    resolution: {integrity: sha512-nSMj4OcfQmyL+Tu/jWCJwhKCXFsCZW1MUk6wjjQlRt9SDLfgeapaMlK1ZvT1eZv5ZH6bj3qJfefwj4U8160uOA==}
+  '@sentry/cli-win32-x64@2.38.1':
+    resolution: {integrity: sha512-+HgsdM3LFSzUNlDpicPRdTKfr5u+nJ2C5p4aDYPb2G+qoYW+66FI4NxgWSyzJsj3nVQ8lW5/6AoMP6U5z/e/0A==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [win32]
 
-  '@sentry/cli@2.37.0':
-    resolution: {integrity: sha512-fM3V4gZRJR/s8lafc3O07hhOYRnvkySdPkvL/0e0XW0r+xRwqIAgQ5ECbsZO16A5weUiXVSf03ztDL1FcmbJCQ==}
+  '@sentry/cli@2.38.1':
+    resolution: {integrity: sha512-XFO04nP7cn0tboMQ4ALR81QRF/6xoWAFzNld7Io6jHbaFzihqewjxAqy7pSvVPaieepUjqe7m/Ippt00kKOACg==}
     engines: {node: '>= 10'}
     hasBin: true
 
@@ -502,8 +502,8 @@ packages:
   '@types/mysql@2.15.22':
     resolution: {integrity: sha512-wK1pzsJVVAjYCSZWQoWHziQZbNggXFDUEIGf54g4ZM/ERuP86uGdWeKZWMYlqTPMZfHJJvLPyogXGvCOg87yLQ==}
 
-  '@types/node@22.7.7':
-    resolution: {integrity: sha512-SRxCrrg9CL/y54aiMCG3edPKdprgMVGDXjA3gB8UmmBW5TcXzRUYAh8EWzTnSJFAd1rgImPELza+A3bJ+qxz8Q==}
+  '@types/node@22.8.7':
+    resolution: {integrity: sha512-LidcG+2UeYIWcMuMUpBKOnryBWG/rnmOHQR5apjn8myTQcx3rinFRn7DcIFhMnS0PPFSC6OafdIKEad0lj6U0Q==}
 
   '@types/pg-pool@2.0.4':
     resolution: {integrity: sha512-qZAvkv1K3QbmHHFYSNRYPkRjOWRLBYrL4B9c+wG0GSVGBw0NtJwPcgx/DSddeDJvRGMHCEQ4VMEVfuJ/0gZ3XQ==}
@@ -650,8 +650,8 @@ packages:
   discord-api-types@0.37.100:
     resolution: {integrity: sha512-a8zvUI0GYYwDtScfRd/TtaNBDTXwP5DiDVX7K5OmE+DRT57gBqKnwtOC5Ol8z0mRW8KQfETIgiB8U0YZ9NXiCA==}
 
-  discord-api-types@0.37.102:
-    resolution: {integrity: sha512-5+m5twqG8n77rLhKuh2c/971UWszEL/c3KbdvVLUBTPXuS8PbYC/7W7NYhwP02qowjj6CHoKYZbD0ppOUCsT6g==}
+  discord-api-types@0.37.103:
+    resolution: {integrity: sha512-r+qitxXKe2l6KFw5odPdZSSqdEou+7eNC7BfbZ7mny5Me/K06wCTeKUMVeH/YsI9+4QQudskeQ307kr/7ppQ1A==}
 
   discord-api-types@0.37.83:
     resolution: {integrity: sha512-urGGYeWtWNYMKnYlZnOnDHm8fVRffQs3U0SpE8RHeiuLKb/u92APS8HoQnPTFbnXmY1vVnXjXO4dOxcAn3J+DA==}
@@ -1023,8 +1023,8 @@ packages:
   sleetcord-common@9.1.0:
     resolution: {integrity: sha512-4HFd7YK62wwvZFzED0j1utMqElZ6WzzkFG/0cP4dk/kk6mTyjbwFaHNBM3wZBmj4CIBWtk53NFuO+vHaoOx8kw==}
 
-  sleetcord@2.1.0:
-    resolution: {integrity: sha512-Sn+DNPcMFdE7a/J6yTTyZ2pxmZNlBD+RXyS4tQDJsiZhwdINCCAlnl4gdjPXt7SSZUKs0qP95eo6YEw7vpZtRg==}
+  sleetcord@2.2.0:
+    resolution: {integrity: sha512-rqc7JWhbXDEwfGjhI3Q9lBC4b4OtYprmTi39jlnXns3RKqcgtMzzupwqYiy2rpqf7S5Dpl2ladLYBt/BJlpbQg==}
     peerDependencies:
       discord.js: ^14.12.1
 
@@ -1476,28 +1476,28 @@ snapshots:
 
   '@sapphire/snowflake@3.5.3': {}
 
-  '@sentry/cli-darwin@2.37.0':
+  '@sentry/cli-darwin@2.38.1':
     optional: true
 
-  '@sentry/cli-linux-arm64@2.37.0':
+  '@sentry/cli-linux-arm64@2.38.1':
     optional: true
 
-  '@sentry/cli-linux-arm@2.37.0':
+  '@sentry/cli-linux-arm@2.38.1':
     optional: true
 
-  '@sentry/cli-linux-i686@2.37.0':
+  '@sentry/cli-linux-i686@2.38.1':
     optional: true
 
-  '@sentry/cli-linux-x64@2.37.0':
+  '@sentry/cli-linux-x64@2.38.1':
     optional: true
 
-  '@sentry/cli-win32-i686@2.37.0':
+  '@sentry/cli-win32-i686@2.38.1':
     optional: true
 
-  '@sentry/cli-win32-x64@2.37.0':
+  '@sentry/cli-win32-x64@2.38.1':
     optional: true
 
-  '@sentry/cli@2.37.0':
+  '@sentry/cli@2.38.1':
     dependencies:
       https-proxy-agent: 5.0.1
       node-fetch: 2.7.0
@@ -1505,13 +1505,13 @@ snapshots:
       proxy-from-env: 1.1.0
       which: 2.0.2
     optionalDependencies:
-      '@sentry/cli-darwin': 2.37.0
-      '@sentry/cli-linux-arm': 2.37.0
-      '@sentry/cli-linux-arm64': 2.37.0
-      '@sentry/cli-linux-i686': 2.37.0
-      '@sentry/cli-linux-x64': 2.37.0
-      '@sentry/cli-win32-i686': 2.37.0
-      '@sentry/cli-win32-x64': 2.37.0
+      '@sentry/cli-darwin': 2.38.1
+      '@sentry/cli-linux-arm': 2.38.1
+      '@sentry/cli-linux-arm64': 2.38.1
+      '@sentry/cli-linux-i686': 2.38.1
+      '@sentry/cli-linux-x64': 2.38.1
+      '@sentry/cli-win32-i686': 2.38.1
+      '@sentry/cli-win32-x64': 2.38.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -1605,7 +1605,7 @@ snapshots:
 
   '@types/connect@3.4.36':
     dependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.8.7
 
   '@types/convert-units@2.3.11': {}
 
@@ -1613,9 +1613,9 @@ snapshots:
 
   '@types/mysql@2.15.22':
     dependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.8.7
 
-  '@types/node@22.7.7':
+  '@types/node@22.8.7':
     dependencies:
       undici-types: 6.19.8
 
@@ -1625,7 +1625,7 @@ snapshots:
 
   '@types/pg@8.6.1':
     dependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.8.7
       pg-protocol: 1.6.1
       pg-types: 2.2.0
 
@@ -1635,7 +1635,7 @@ snapshots:
 
   '@types/ws@8.5.12':
     dependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.8.7
 
   '@vladfrangu/async_event_emitter@2.4.6': {}
 
@@ -1746,7 +1746,7 @@ snapshots:
 
   discord-api-types@0.37.100: {}
 
-  discord-api-types@0.37.102: {}
+  discord-api-types@0.37.103: {}
 
   discord-api-types@0.37.83: {}
 
@@ -2145,16 +2145,16 @@ snapshots:
       env-var: 7.5.0
       pino: 9.4.0
       pretty-ms: 9.1.0
-      sleetcord: 2.1.0(discord.js@14.16.3)
+      sleetcord: 2.2.0(discord.js@14.16.3)
     transitivePeerDependencies:
       - bufferutil
       - prisma
       - supports-color
       - utf-8-validate
 
-  sleetcord@2.1.0(discord.js@14.16.3):
+  sleetcord@2.2.0(discord.js@14.16.3):
     dependencies:
-      discord-api-types: 0.37.102
+      discord-api-types: 0.37.103
       discord.js: 14.16.3
       tseep: 1.3.1
 
