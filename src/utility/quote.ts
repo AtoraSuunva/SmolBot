@@ -195,7 +195,10 @@ async function tryFetchMessage(
   messageId: string,
 ): Promise<Message | null> {
   try {
-    return await channel.messages.fetch(messageId)
+    return await channel.messages.fetch({
+      message: messageId,
+      force: true,
+    })
   } catch {
     return null
   }
