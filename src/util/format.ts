@@ -211,12 +211,12 @@ export function tableFormat<T extends object>(
       ...data.map((d) => String(d[key]).length),
     )
     header.push(name.padEnd(longest, ' '))
-    separator.push('-'.repeat(longest))
+    separator.push('─'.repeat(longest))
   }
 
-  const joinedHeader = header.join(' | ')
+  const joinedHeader = header.join(' │ ')
   currentLength += joinedHeader.length + 1 // +1 for the newline
-  const joinedSeparator = separator.join(' | ')
+  const joinedSeparator = separator.join('─┼─')
   currentLength += joinedSeparator.length + 1 // +1 for the newline
 
   for (const row of data) {
@@ -230,7 +230,7 @@ export function tableFormat<T extends object>(
 
         return String(value).padEnd(header[keys.indexOf(k)].length, ' ')
       })
-      .join(' | ')
+      .join(' │ ')
 
     currentLength += newRow.length + 1 // +1 for the newline
     if (currentLength > characterLimit) break

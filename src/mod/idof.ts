@@ -1,9 +1,20 @@
 import {
+  type APIGuildMember,
+  ActionRowBuilder,
   ApplicationCommandOptionType,
+  ButtonBuilder,
+  type ButtonInteraction,
+  ButtonStyle,
   type ChatInputCommandInteraction,
+  ComponentType,
   type Guild,
   type GuildMember,
+  type Interaction,
   InteractionContextType,
+  type RestOrArray,
+  type Snowflake,
+  UserSelectMenuBuilder,
+  type UserSelectMenuInteraction,
   cleanCodeBlockContent,
   codeBlock,
 } from 'discord.js'
@@ -23,7 +34,7 @@ interface MemberMatch {
   username: string
   nickname: string | null
   id: string
-  member: GuildMember
+  member: GuildMember | APIGuildMember
 }
 
 const userAutocomplete: AutocompleteHandler<string> = async ({
@@ -55,30 +66,69 @@ export const idof = new SleetSlashCommand(
         required: true,
       },
       {
-        name: 'ephemeral',
+        name: 'exact_match',
+        description:
+          'Short-circuit on exact match if the user has a matching global name or username (default: False)',
         type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'ephemeral',
         description: 'Only show the result to you (default: False)',
+        type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
   {
     run: runIdof,
+    interactionCreate: handleInteractionCreate,
   },
 )
 
+const USER_SELECT_ID = 'idof:user'
+const MENTION_ID = 'idof:mention'
+const ID_ID = 'idof:id'
+
+const MENTION_BUTTON = new ButtonBuilder()
+  .setCustomId(MENTION_ID)
+  .setEmoji('🪪')
+  .setLabel('Mention')
+  .setStyle(ButtonStyle.Secondary)
+const ID_BUTTON = new ButtonBuilder()
+  .setCustomId(ID_ID)
+  .setEmoji('🆔')
+  .setLabel('ID')
+  .setStyle(ButtonStyle.Secondary)
+const ACTION_BUTTON_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents([
+  MENTION_BUTTON,
+  ID_BUTTON,
+])
+
+function createUserSelect(...users: RestOrArray<Snowflake>) {
+  const userSelect = new UserSelectMenuBuilder()
+    .setCustomId(USER_SELECT_ID)
+    .setMinValues(1)
+    .setMaxValues(25)
+    .setPlaceholder('Members to action')
+    .addDefaultUsers(...users)
+
+  return new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(userSelect)
+}
+
 async function runIdof(interaction: ChatInputCommandInteraction) {
+  const user = interaction.options.getString('user', true)
+  const exactMatch = interaction.options.getBoolean('exact_match') ?? false
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+
   await interaction.deferReply({ ephemeral })
 
-  const user = interaction.options.getString('user', true)
   const guild = await getGuild(interaction, true)
   const matches = await matchMembers(guild, user, {
-    shortCircuitOnExactMatch: true,
+    shortCircuitOnExactMatch: exactMatch,
   })
 
   if (matches.length === 0) {
     return interaction.editReply({
-      content: `No users found matching "${escapeAllMarkdown(user)}"`,
+      content: `No members found matching "${escapeAllMarkdown(user)}"`,
       allowedMentions: { parse: [] },
     })
   }
@@ -90,12 +140,89 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
     })
   }
 
+  const selectRow = createUserSelect(
+    matches
+      .sort((a, b) => a.username.localeCompare(b.username))
+      .slice(0, 25)
+      .map((m) => m.member.user.id),
+  )
+
   return interaction.editReply({
-    content: `Multiple users found matching "${escapeAllMarkdown(
+    content: `Multiple members found matching "${escapeAllMarkdown(
       user,
     )}":\n${resultFormat(matches)}`,
     allowedMentions: { parse: [] },
+    components: [ACTION_BUTTON_ROW, selectRow],
   })
+}
+
+function handleInteractionCreate(interaction: Interaction) {
+  if (
+    interaction.isUserSelectMenu() &&
+    interaction.customId === USER_SELECT_ID
+  ) {
+    handleUserSelectInteraction(interaction)
+  } else if (interaction.isButton()) {
+    switch (interaction.customId) {
+      case MENTION_ID:
+        handleMentionButton(interaction)
+        break
+      case ID_ID:
+        handleIDButton(interaction)
+        break
+    }
+  }
+}
+
+async function handleUserSelectInteraction(
+  interaction: UserSelectMenuInteraction,
+) {
+  const members = interaction.members.map(formatSuggestion)
+
+  const selectRow = createUserSelect(
+    interaction.members
+      .sort((a, b) => a.user.username.localeCompare(b.user.username))
+      .map((m) => m.user.id),
+  )
+
+  interaction.reply({
+    content: resultFormat(members),
+    ephemeral: true,
+    components: [ACTION_BUTTON_ROW, selectRow],
+  })
+}
+
+async function handleMentionButton(interaction: ButtonInteraction) {
+  const members = await getInteractionMembers(interaction)
+
+  interaction.reply({
+    ephemeral: true,
+    content: members.map((m) => `<@${m}>`).join('\n') || 'No members selected',
+  })
+}
+
+async function handleIDButton(interaction: ButtonInteraction) {
+  const members = await getInteractionMembers(interaction)
+
+  interaction.reply({
+    ephemeral: true,
+    content: members.join('\n') || 'No members selected',
+  })
+}
+
+async function getInteractionMembers(interaction: ButtonInteraction) {
+  for (const row of interaction.message.components) {
+    for (const component of row.components) {
+      if (
+        component.type === ComponentType.UserSelect &&
+        component.customId === USER_SELECT_ID
+      ) {
+        return component.data.default_values?.map((d) => d.id) ?? []
+      }
+    }
+  }
+
+  return []
 }
 
 function resultFormat(data: MemberMatch[]): string {
@@ -201,7 +328,11 @@ async function matchMembers(
     .sort((a, b) => a.username.localeCompare(b.username))
 }
 
-function formatSuggestion(m: GuildMember): MemberMatch {
+function formatSuggestion(m: GuildMember | APIGuildMember): MemberMatch {
+  if ('joined_at' in m) {
+    return formatAPISuggestion(m)
+  }
+
   const formattedUser = formatUser(m.user, {
     id: false,
     markdown: false,
@@ -214,6 +345,27 @@ function formatSuggestion(m: GuildMember): MemberMatch {
     globalName: m.user.globalName,
     username: m.user.tag,
     nickname: m.nickname,
+    id: m.user.id,
+    member: m,
+  }
+}
+
+function formatAPISuggestion(m: APIGuildMember): MemberMatch {
+  const formattedUser = formatUser(m.user, {
+    id: false,
+    markdown: false,
+    escapeMarkdown: false,
+  })
+
+  const tag =
+    m.user.username + (m.user.discriminator ? `#${m.user.discriminator}` : '')
+
+  return {
+    name: `${formattedUser}${m.nick ? ` (Nickname: ${m.nick})` : ''}`,
+    value: m.user.global_name ?? tag,
+    globalName: m.user.global_name,
+    username: tag,
+    nickname: m.nick ?? null,
     id: m.user.id,
     member: m,
   }
