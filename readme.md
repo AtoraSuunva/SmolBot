@@ -8,7 +8,8 @@ Various (mostly) moderation- or utility-focused commands I've needed, in a Disco
 
 Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were made because of my own requirements. You are free to invite and use the "public" version [RobotOtter](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0). You cannot invite Smol Bot.
 
-> ⚠️ This is currently still a WIP. Most things are pretty stable, but nothing's guaranteed.
+> [!WARNING]  
+> This is currently still a WIP. Most things are pretty stable, but nothing's guaranteed.
 
 ## RobotOtter?
 
@@ -40,10 +41,9 @@ You can either run the bot via the pre-built Docker image, Docker, or installing
 
 A pre-built image is available from [GitHub](https://github.com/AtoraSuunva/SmolBot/pkgs/container/smolbot), currently building off the latest development commit.
 
-Create a `docker-smolbot.yml` (or whatever name you want):
+Create a `.env` file and a `docker-smolbot.yml` file (or whatever name you want):
 
 ```yml
-version: '3.7'
 services:
   bot:
     image: 'ghcr.io/atorasuunva/smolbot:development'
@@ -60,6 +60,7 @@ volumes:
 
 Then run it via `docker compose -f docker-smolbot.yml`. This avoids needing to clone the repo and wait for builds. A `docker run` will work as well, but require copy-pasting the command to keep the config.
 
+> [!NOTE]  
 > Currently, the activities files `activities-smol.txt` etc are baked into the image. You can't change the activities without needing to rebuild the image. Someday I'll change it, but it's pretty low priority.
 
 ### Docker
@@ -68,7 +69,7 @@ If you prefer/need to re-build the image (ie. you've changed the code), you can 
 
 ### Installing dependencies yourself
 
-You'll need Node.js (At **least** >=20.6.0), pnpm, patience, and prayers.
+You'll need Node.js (At **least** >=22.0.0), pnpm, patience, and prayers.
 
 Assuming you have Node.js and pnpm installed and working:
 
