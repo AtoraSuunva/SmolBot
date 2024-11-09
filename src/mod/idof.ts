@@ -230,11 +230,11 @@ function resultFormat(data: MemberMatch[]): string {
     'm',
     cleanCodeBlockContent(
       tableFormat(data, {
-        keys: ['username', 'globalName', 'id', 'nickname'],
+        keys: ['username', 'id', 'globalName', 'nickname'],
         columnsNames: {
           username: 'Username',
-          globalName: 'Global Name',
           id: 'ID',
+          globalName: 'Global Name',
           nickname: 'Nickname',
         },
         showNullish: false,
