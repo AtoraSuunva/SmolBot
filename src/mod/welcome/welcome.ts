@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util'
 import type { WelcomeSettings } from '@prisma/client'
 import {
   type AttachmentPayload,
@@ -11,7 +12,6 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { ANSI_REGEX } from '../modlog/ansiColors.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import { type SendPayload, formatLog, sendToModLog } from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
@@ -170,7 +170,7 @@ async function handleJoin(
       files.push({
         name: 'first_message.txt',
         attachment: Buffer.from(
-          formattedPreview.replaceAll(ANSI_REGEX, ''),
+          stripVTControlCharacters(formattedPreview),
           'utf-8',
         ),
       })

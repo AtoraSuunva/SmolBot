@@ -1,4 +1,10 @@
-import { uniGetBlock, uniGetCategories, uniGetScripts } from 'char-info'
+import { stripVTControlCharacters } from 'node:util'
+import {
+  UnicodeCategory,
+  uniGetBlock,
+  uniGetCategories,
+  uniGetScripts,
+} from 'char-info'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -7,6 +13,10 @@ import {
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+import { unicodeName } from 'unicode-name'
+import { TextColor, ansiFormat } from '../util/ansiColors.js'
+
+const DOTTED_CIRCLE = '◌'
 
 export const char_info = new SleetSlashCommand(
   {
@@ -29,6 +39,12 @@ export const char_info = new SleetSlashCommand(
         required: true,
       },
       {
+        name: 'details',
+        type: ApplicationCommandOptionType.Boolean,
+        description:
+          'Include block, script, and category info (default: False)',
+      },
+      {
         name: 'ephemeral',
         type: ApplicationCommandOptionType.Boolean,
         description: 'Only show the result to you (default: False)',
@@ -42,6 +58,7 @@ export const char_info = new SleetSlashCommand(
 
 async function runCharInfo(interaction: ChatInputCommandInteraction) {
   const string = interaction.options.getString('string', true)
+  const details = interaction.options.getBoolean('details') ?? false
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   if (string.length === 0) {
@@ -55,7 +72,7 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
   const characters: string[] = []
 
   for (const char of string) {
-    characters.push(...characterInfo(char))
+    characters.push(...characterInfo(char, details))
   }
 
   const output = characters.join('\n')
@@ -65,26 +82,21 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
       files: [
         {
           name: 'char_info.txt',
-          attachment: Buffer.from(output, 'utf-8'),
+          attachment: Buffer.from(stripVTControlCharacters(output), 'utf-8'),
         },
       ],
       ephemeral,
     })
   } else {
     await interaction.reply({
-      content: codeBlock('yaml', output),
+      content: codeBlock('ansi', output),
       ephemeral,
       allowedMentions: { parse: [] },
     })
   }
 }
 
-const intlList = new Intl.ListFormat('en', {
-  style: 'short',
-  type: 'unit',
-})
-
-function characterInfo(char: string): string[] {
+function characterInfo(char: string, details = false): string[] {
   let i = 0
   const info: string[] = []
 
@@ -100,17 +112,31 @@ function characterInfo(char: string): string[] {
       .toString(16)
       .toUpperCase()
       .padStart(4, '0')}`
-    const block = uniGetBlock.code(charCode)
+
+    const name = unicodeName(codePoint)
     const categories = uniGetCategories.code(charCode)
-    const scripts = uniGetScripts.code(charCode)
 
-    const prelude = i === 0 ? `- '${char}':` : '  -'
+    const isMark = categories.some((c) => c.name === UnicodeCategory.Mark)
 
-    const unicodeInfo = `${unicodePoint} (${
-      block.displayName
-    }; ${displayUnicodeGroup(categories)}; ${displayUnicodeGroup(scripts)})`
+    const basicInfo = `${ansiFormat(TextColor.Pink, unicodePoint)} ${ansiFormat(TextColor.Green, name)}`
 
-    info.push(`${prelude} ${unicodeInfo}`)
+    const prelude =
+      i === 0 ? `│ ${isMark ? DOTTED_CIRCLE : ''}${char} │` : '│   ├─'
+
+    let charDetails = ''
+
+    if (details) {
+      const block = uniGetBlock.code(charCode)
+      const scripts = uniGetScripts.code(charCode)
+
+      charDetails = ` (${renderGroup(
+        block,
+      )}; ${renderGroupArray(scripts)}; ${renderGroupArray(categories)})`
+    }
+
+    info.push(
+      `${ansiFormat(TextColor.Blue, prelude)} ${basicInfo}${charDetails}`,
+    )
 
     i++
   }
@@ -121,6 +147,14 @@ function characterInfo(char: string): string[] {
 // unfortunately internal, but we can just pull it out like this
 type UnicodeCharGroup = ReturnType<(typeof uniGetCategories)['code']>[0]
 
-function displayUnicodeGroup(group: UnicodeCharGroup[]): string {
-  return intlList.format(group.map((g) => g.displayName))
+function renderGroupArray(group: UnicodeCharGroup[]): string {
+  return group.map(renderGroup).join(', ')
+}
+
+function renderGroup(group: UnicodeCharGroup): string {
+  if (group.displayName === group.name) {
+    return group.displayName
+  }
+
+  return `${group.displayName} (${group.name})`
 }

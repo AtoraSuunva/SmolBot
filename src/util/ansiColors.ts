@@ -1,7 +1,5 @@
 export const ESCAPE = '\u001b'
 export const RESET = `${ESCAPE}[0m`
-// biome-ignore lint/suspicious/noControlCharactersInRegex: we need to match the escape character for ansi codes
-export const ANSI_REGEX = /\u001b.*?m/g
 
 export enum Format {
   Normal = 0,
