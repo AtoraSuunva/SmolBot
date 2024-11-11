@@ -28,13 +28,13 @@
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.0",
-    "@prisma/client": "~5.21.1",
+    "@prisma/client": "~5.22.0",
     "@sapphire/shapeshift": "^4.0.0",
     "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
     "csv-parse": "^5.5.6",
     "csv-stringify": "^6.5.1",
-    "discord-api-types": "^0.37.103",
+    "discord-api-types": "^0.37.104",
     "discord.js": "~14.16.3",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.1",
@@ -52,12 +52,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@sentry/cli": "^2.38.1",
+    "@sentry/cli": "^2.38.2",
     "@types/convert-units": "^2.3.11",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~22.8.7",
+    "@types/node": "~22.9.0",
     "@types/pluralize": "^0.0.33",
-    "prisma": "~5.21.1",
+    "prisma": "~5.22.0",
     "typescript": "~5.6.3"
   }
 }
