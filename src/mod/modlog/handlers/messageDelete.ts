@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util'
 import {
   type AttachmentPayload,
   type Embed,
@@ -14,6 +15,11 @@ import {
   time,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
+import {
+  BackgroundColor,
+  TextColor,
+  ansiFormat,
+} from '../../../util/ansiColors.js'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import {
@@ -21,12 +27,6 @@ import {
   deleteEvents,
 } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
-import {
-  ANSI_REGEX,
-  BackgroundColor,
-  TextColor,
-  ansiFormat,
-} from '../ansiColors.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
 
 export const logMessageDelete = new SleetModule(
@@ -152,7 +152,7 @@ export async function messageDeleteWithAuditLog(
     files.push({
       name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
       attachment: Buffer.from(
-        messageContent.replaceAll(ANSI_REGEX, ''),
+        stripVTControlCharacters(messageContent),
         'utf-8',
       ),
       description: `Deleted Message by ${formatUser(message.author, {
