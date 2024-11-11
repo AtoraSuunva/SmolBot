@@ -6,6 +6,7 @@ import {
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
+import stringWidth from 'string-width'
 
 type Value = string | number | boolean | Date | null | undefined
 type Formatter = (value: Value, guild?: Guild) => string
@@ -197,7 +198,6 @@ export function tableFormat<T extends object>(
     options?.columnsNames ?? ({} as Record<keyof T, string | undefined>)
   const showNullish = options?.showNullish ?? true
   const characterLimit = options?.characterLimit ?? Number.POSITIVE_INFINITY
-  let currentLength = 0
 
   const header: string[] = []
   const separator: string[] = []
@@ -207,17 +207,19 @@ export function tableFormat<T extends object>(
     const name: string = columnNames[key] ?? String(key)
     // TODO: truncated rows still count towards longest, is there an easy way to solve that?
     const longest = Math.max(
-      name.length,
-      ...data.map((d) => String(d[key]).length),
+      stringWidth(name),
+      ...data.map((d) => stringWidth(String(d[key]))),
     )
     header.push(name.padEnd(longest, ' '))
     separator.push('─'.repeat(longest))
   }
 
   const joinedHeader = header.join(' │ ')
-  currentLength += joinedHeader.length + 1 // +1 for the newline
   const joinedSeparator = separator.join('─┼─')
-  currentLength += joinedSeparator.length + 1 // +1 for the newline
+
+  const head = `${joinedHeader}\n${joinedSeparator}\n`
+  // +20 for headroom for "Truncated ..." in case that needs to be added
+  let currentLength = head.length + 20
 
   for (const row of data) {
     const newRow = keys
@@ -228,7 +230,7 @@ export function tableFormat<T extends object>(
           value = ''
         }
 
-        return String(value).padEnd(header[keys.indexOf(k)].length, ' ')
+        return padEndTo(String(value), stringWidth(header[keys.indexOf(k)]))
       })
       .join(' │ ')
 
@@ -238,8 +240,16 @@ export function tableFormat<T extends object>(
     rows.push(newRow)
   }
 
-  return `${joinedHeader}\n${joinedSeparator}\n${rows.join('\n')}`.substring(
-    0,
-    characterLimit,
-  )
+  const removed =
+    rows.length < data.length
+      ? `\nTruncated ${plural('row', data.length - rows.length)}.`
+      : ''
+
+  return `${head}${rows.join('\n')}${removed}`.substring(0, characterLimit)
+}
+
+function padEndTo(str: string, length: number, character = ' '): string {
+  const offset = str.length - stringWidth(str)
+
+  return str.padEnd(length + offset, character)
 }
