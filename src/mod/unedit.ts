@@ -1,5 +1,7 @@
+import { stripVTControlCharacters } from 'node:util'
 import {
   ApplicationCommandOptionType,
+  type AttachmentPayload,
   type ChatInputCommandInteraction,
   Collection,
   type CommandInteraction,
@@ -7,10 +9,12 @@ import {
   type Message,
   type MessageContextMenuCommandInteraction,
   type PartialMessage,
+  cleanCodeBlockContent,
   codeBlock,
 } from 'discord.js'
 import { SleetMessageCommand, SleetSlashCommand, isLikelyID } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
+import { messageArrayToLog } from './modlog/handlers/messageDelete.js'
 
 export const unedit = new SleetSlashCommand(
   {
@@ -107,25 +111,40 @@ async function runUneditContextMenu(
   await runUnedit(interaction, message.id, true)
 }
 
-function runUnedit(
+async function runUnedit(
   interaction: CommandInteraction,
   messageID: string,
   ephemeral: boolean,
 ) {
-  const previousEdits = editStore.get(messageID)
+  const edits = editStore.get(messageID)?.edits ?? []
 
-  if (!previousEdits || previousEdits.edits.length === 0) {
+  if (edits.length === 0) {
     return interaction.reply({
       ephemeral: true,
       content: 'That message has no cached edits, or was never edited',
     })
   }
 
-  const contents = previousEdits.edits.map((m) => m.content)
-  const edits = codeBlock('json', JSON.stringify(contents, null, 2))
+  const messageContent = await messageArrayToLog(edits)
+  const codeContent = codeBlock('ansi', cleanCodeBlockContent(messageContent))
+  let content = ''
+  const files: AttachmentPayload[] = []
+
+  if (codeContent.length > 2000) {
+    files.push({
+      name: 'message-edits.txt',
+      attachment: Buffer.from(
+        stripVTControlCharacters(messageContent),
+        'utf-8',
+      ),
+    })
+  } else {
+    content = codeContent
+  }
 
   return interaction.reply({
-    content: edits,
+    content,
+    files,
     ephemeral,
     allowedMentions: { parse: [] },
   })
