@@ -86,58 +86,20 @@ export async function messageDeleteWithAuditLog(
   }
 
   const edits = editStore.get(message.id)?.edits ?? []
-  // Set to dedupe identical logs, often just discord editing in link embeds after the message was sent
-
-  const formattedLogs = await Promise.all(
-    [...edits.slice(0, -1), message].map((m, i) =>
-      messageToLog(m, {
-        includeInteraction: i === 0,
-        includeReference: i === 0,
-        includeUser: i === 0,
-        includeTimestamp: i === 0,
-        includeAttachments: false,
-        includeEmbeds: true,
-        includePoll: i === 0,
-        includeStickers: false,
-      }),
-    ),
-  )
-
-  const editsLog: string[] = formattedLogs
-    .map((v, i, arr) => {
-      const keep: string[] = []
-
-      if (i === 0) {
-        keep.push(v.header, v.content, v.footer)
-      } else {
-        if (v.header !== arr[i - 1].header) {
-          keep.push(v.header)
-        }
-        if (v.content !== arr[i - 1].content) {
-          keep.push(v.content)
-        }
-        if (v.footer !== arr[i - 1].footer) {
-          keep.push(v.footer)
-        }
-      }
-
-      return keep
-        .map((v) => v.trim())
-        .filter((v) => v.length > 0)
-        .join('\n')
-    })
-    .filter((v) => v.length > 0)
 
   const attachProxy = message.attachments.map((a) =>
     formatEscapedLink(a.name, a.proxyURL),
   )
   const stickers = message.stickers.map((s) => formatEscapedLink(s.name, s.url))
 
-  const messageContent = editsLog.join('\n┈ ┈ ┈\n')
+  const messageContent = await messageArrayToLog([
+    ...edits.slice(0, -1),
+    message,
+  ])
 
   const { executor, reason } = auditLog ?? {}
 
-  let msg = `(${message.id}) in ${message.channel ?? '#deleted-channel'}${message.channel ? ` around ${message.url}` : ''} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${editsLog.length > 1 ? `, ${plural('revision', editsLog.length)}` : ''}\n${
+  let msg = `(${message.id}) in ${message.channel ?? '#deleted-channel'}${message.channel ? ` around ${message.url}` : ''} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${edits.length > 1 ? `, ${plural('revision', edits.length)}` : ''}\n${
     attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
       : ''
@@ -193,6 +155,50 @@ function formatLogUser(user: User | GuildMember) {
       }
     },
   })
+}
+
+export async function messageArrayToLog(messages: Message[]): Promise<string> {
+  const formattedLogs = await Promise.all(
+    messages.map((m, i) =>
+      messageToLog(m, {
+        includeInteraction: i === 0,
+        includeReference: i === 0,
+        includeUser: i === 0,
+        includeTimestamp: i === 0,
+        includeAttachments: false,
+        includeEmbeds: true,
+        includePoll: i === 0,
+        includeStickers: false,
+      }),
+    ),
+  )
+
+  const editsLog: string[] = formattedLogs
+    .map((v, i, arr) => {
+      const keep: string[] = []
+
+      if (i === 0) {
+        keep.push(v.header, v.content, v.footer)
+      } else {
+        if (v.header !== arr[i - 1].header) {
+          keep.push(v.header)
+        }
+        if (v.content !== arr[i - 1].content) {
+          keep.push(v.content)
+        }
+        if (v.footer !== arr[i - 1].footer) {
+          keep.push(v.footer)
+        }
+      }
+
+      return keep
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
+        .join('\n')
+    })
+    .filter((v) => v.length > 0)
+
+  return editsLog.join('\n┈ ┈ ┈\n')
 }
 
 interface LogMessageOptions {
