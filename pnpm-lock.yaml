@@ -30,8 +30,8 @@ importers:
         specifier: ^6.5.1
         version: 6.5.1
       discord-api-types:
-        specifier: ^0.37.104
-        version: 0.37.104
+        specifier: ^0.37.105
+        version: 0.37.105
       discord.js:
         specifier: ~14.16.3
         version: 14.16.3
@@ -57,8 +57,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       pretty-ms:
-        specifier: ~9.1.0
-        version: 9.1.0
+        specifier: ~9.2.0
+        version: 9.2.0
       sleetcord:
         specifier: 2.2.0
         version: 2.2.0(discord.js@14.16.3)
@@ -660,8 +660,8 @@ packages:
   discord-api-types@0.37.100:
     resolution: {integrity: sha512-a8zvUI0GYYwDtScfRd/TtaNBDTXwP5DiDVX7K5OmE+DRT57gBqKnwtOC5Ol8z0mRW8KQfETIgiB8U0YZ9NXiCA==}
 
-  discord-api-types@0.37.104:
-    resolution: {integrity: sha512-kIX9RXGekag1Yd/R/douqBTRyt5GY5mCoxntKLuyqfYpKQ1fl8XpHNFIMtnoDSD343TJWsah49XylrsNFfTu0Q==}
+  discord-api-types@0.37.105:
+    resolution: {integrity: sha512-TSNlLF5Q9vFLMeHjYskhmDj/zCQ4dFA+OLxQrHUypGW48gt8ttGaB+opCD9w3Zkq1otyoBoetrwaoDFZAFuGng==}
 
   discord-api-types@0.37.83:
     resolution: {integrity: sha512-urGGYeWtWNYMKnYlZnOnDHm8fVRffQs3U0SpE8RHeiuLKb/u92APS8HoQnPTFbnXmY1vVnXjXO4dOxcAn3J+DA==}
@@ -965,8 +965,8 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
-  pretty-ms@9.1.0:
-    resolution: {integrity: sha512-o1piW0n3tgKIKCwk2vpM/vOV13zjJzvP37Ioze54YlTHE06m4tjEbzg9WsKkvTuyYln2DHjo5pY4qrZGI0otpw==}
+  pretty-ms@9.2.0:
+    resolution: {integrity: sha512-4yf0QO/sllf/1zbZWYnvWw3NxCQwLXKzIj0G849LSufP15BXKM0rbD2Z3wVnkMfjdn/CB0Dpp444gYAACdsplg==}
     engines: {node: '>=18'}
 
   prisma@5.22.0:
@@ -1777,7 +1777,7 @@ snapshots:
 
   discord-api-types@0.37.100: {}
 
-  discord-api-types@0.37.104: {}
+  discord-api-types@0.37.105: {}
 
   discord-api-types@0.37.83: {}
 
@@ -2105,7 +2105,7 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  pretty-ms@9.1.0:
+  pretty-ms@9.2.0:
     dependencies:
       parse-ms: 4.0.0
 
@@ -2179,7 +2179,7 @@ snapshots:
       discord.js: 14.16.3
       env-var: 7.5.0
       pino: 9.4.0
-      pretty-ms: 9.1.0
+      pretty-ms: 9.2.0
       sleetcord: 2.2.0(discord.js@14.16.3)
     transitivePeerDependencies:
       - bufferutil
@@ -2189,7 +2189,7 @@ snapshots:
 
   sleetcord@2.2.0(discord.js@14.16.3):
     dependencies:
-      discord-api-types: 0.37.104
+      discord-api-types: 0.37.105
       discord.js: 14.16.3
       tseep: 1.3.1
 
