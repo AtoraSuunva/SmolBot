@@ -252,7 +252,7 @@ async function runTranslate(
     )
   }
 
-  lines.push(`> ${escapeAllMarkdown(res.text)}`)
+  lines.push(`> ${escapeAllMarkdown(res.text).replaceAll(/\n/g, '\n> ')}`)
 
   if (res.pronunciation) {
     lines.push(`> -# ${res.pronunciation}`)
