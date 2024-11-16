@@ -198,7 +198,7 @@ export async function messageArrayToLog(messages: Message[]): Promise<string> {
     })
     .filter((v) => v.length > 0)
 
-  return editsLog.join('\n┈ ┈ ┈\n')
+  return editsLog.join('\n╭┈┄╌\n')
 }
 
 interface LogMessageOptions {
@@ -246,6 +246,7 @@ export async function messageToLog(
   }: LogMessageOptions = {},
 ): Promise<MessageLogOutput> {
   const lines: string[] = []
+  let hasUpper = false
 
   if (includeInteraction && message.interaction) {
     const { interaction } = message
@@ -254,6 +255,7 @@ export async function messageToLog(
       (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
       interaction.commandName
 
+    hasUpper = true
     lines.push(
       `╭╼ ${formatLogUser(interaction.user)} used ${ansiFormat(TextColor.Blue, commandName)}`,
     )
@@ -261,6 +263,7 @@ export async function messageToLog(
 
   if (includeReference && message.reference?.messageId) {
     const ref = await message.fetchReference().catch(() => null)
+    hasUpper = true
 
     if (ref) {
       const preview =
@@ -268,11 +271,11 @@ export async function messageToLog(
         (ref.content.length > 50 ? '…' : '')
 
       lines.push(
-        `╭╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
+        `${hasUpper ? '├' : '╭'}╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
       )
     } else {
       lines.push(
-        `╭╼ Original message was deleted (${message.reference.messageId})`,
+        `${hasUpper ? '├' : '╭'}╼ Original message was deleted (${message.reference.messageId})`,
       )
     }
   }
@@ -357,6 +360,14 @@ export async function messageToLog(
     lines.push(
       `╰╼ Edited [${ansiFormat(TextColor.Blue, formatTime(message.editedAt))}]`,
     )
+  }
+
+  const hasMultipleFooter = lines.filter((l) => l.startsWith('╰')).length > 1
+
+  if (hasMultipleFooter) {
+    for (let i = 0; i < lines.length - 1; i++) {
+      lines[i] = lines[i].replace(/^╰/, '├')
+    }
   }
 
   const footer = lines.join('\n').trim()
