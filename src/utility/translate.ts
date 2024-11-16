@@ -252,7 +252,11 @@ async function runTranslate(
     )
   }
 
-  lines.push(`> ${escapeAllMarkdown(res.text).replaceAll(/\n/g, '\n> ')}`)
+  lines.push(
+    // Google Translate replaces `\n` with `\n ` in the final translation for some reason, adding in extra whitespace
+    // The replacer function makes sure there's at least 1 whitespace
+    `> ${escapeAllMarkdown(res.text).replaceAll(/\n(\s*)/g, (_, p1) => `\n>${p1 || ' '}`)}`,
+  )
 
   if (res.pronunciation) {
     lines.push(`> -# ${res.pronunciation}`)
