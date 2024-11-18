@@ -255,15 +255,14 @@ export async function messageToLog(
       (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
       interaction.commandName
 
-    hasUpper = true
     lines.push(
       `╭╼ ${formatLogUser(interaction.user)} used ${ansiFormat(TextColor.Blue, commandName)}`,
     )
+    hasUpper = true
   }
 
   if (includeReference && message.reference?.messageId) {
     const ref = await message.fetchReference().catch(() => null)
-    hasUpper = true
 
     if (ref) {
       const preview =
@@ -278,6 +277,7 @@ export async function messageToLog(
         `${hasUpper ? '├' : '╭'}╼ Original message was deleted (${message.reference.messageId})`,
       )
     }
+    hasUpper = true
   }
 
   if (includeUser) {
@@ -379,13 +379,6 @@ export async function messageToLog(
   }
 }
 
-const TL_CHAR = '╭'
-const TR_CHAR = '╮'
-const BL_CHAR = '╰'
-const BR_CHAR = '╯'
-const H_CHAR = '─'
-const V_CHAR = '│'
-
 interface ToEmbedOptions {
   minimal?: boolean
 }
@@ -440,23 +433,21 @@ function embedToLog(
 
   if (minimal) {
     for (let i = 0; i < lines.length; i++) {
-      lines[i] = `${ansiFormat(TextColor.Cyan, V_CHAR)} ${lines[i]}`
+      lines[i] = `┊ ${ansiFormat(TextColor.Cyan, '│')} ${lines[i]}`
     }
 
-    lines.unshift(
-      ansiFormat(TextColor.Cyan, `${TL_CHAR}${H_CHAR} Embed ${H_CHAR}`),
-    )
-    lines.push(ansiFormat(TextColor.Cyan, `${BL_CHAR}${H_CHAR.repeat(9)}`))
+    lines.unshift(`┊ ${ansiFormat(TextColor.Cyan, '╭─ Embed ┈┄╌')}`)
+    lines.push(`┊ ${ansiFormat(TextColor.Cyan, '╰────────┈┄╌')}`)
   } else {
     const maxLineLength = Math.max(...lines.map((l) => l.length), 0)
     const boxWidth = maxLineLength + 2
 
     for (let i = 0; i < lines.length; i++) {
-      lines[i] = `${V_CHAR} ${lines[i].padEnd(maxLineLength)} ${V_CHAR}`
+      lines[i] = `┊ │ ${lines[i].padEnd(maxLineLength)} │`
     }
 
-    lines.unshift(`${TL_CHAR}${H_CHAR.repeat(boxWidth)}${TR_CHAR}`)
-    lines.push(`${BL_CHAR}${H_CHAR.repeat(boxWidth)}${BR_CHAR}`)
+    lines.unshift(`┊ ╭${'─'.repeat(boxWidth)}╮`)
+    lines.push(`┊ ╰${'─'.repeat(boxWidth)}╯`)
   }
 
   return lines.join('\n')
