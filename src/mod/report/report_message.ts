@@ -19,7 +19,7 @@ import { sendReport } from './utils.js'
 
 export const report_message = new SleetMessageCommand(
   {
-    name: 'Report Message',
+    name: 'Report to Mods',
     contexts: [InteractionContextType.Guild],
   },
   {

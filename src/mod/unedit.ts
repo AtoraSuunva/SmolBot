@@ -39,7 +39,7 @@ export const unedit = new SleetSlashCommand(
 
 export const unedit_message = new SleetMessageCommand(
   {
-    name: 'Unedit Message',
+    name: 'Unedit',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
   },
