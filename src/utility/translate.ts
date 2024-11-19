@@ -122,7 +122,7 @@ export const translateSlash = new SleetSlashCommand(
 
 export const translateMessage = new SleetMessageCommand(
   {
-    name: 'Translate Message',
+    name: 'Translate',
     contexts: [
       InteractionContextType.Guild,
       InteractionContextType.BotDM,
