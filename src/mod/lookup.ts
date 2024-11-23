@@ -849,7 +849,10 @@ function formatPreviewEmojis(
 ): string {
   let formattedEmojis = emojis
     .first(100)
-    .map((e) => e.toString())
+    // Bots can't use emojis from guilds they aren't in inside embeds anymore
+    // This will still work if the bot is in the guild, which leaks info about the guild that isn't public
+    // So we just format every emoji to :name:
+    .map((e) => `:${e.name}:`)
     .join(' ')
 
   if (formattedEmojis.length > 1024) {
