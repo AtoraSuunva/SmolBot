@@ -79,27 +79,31 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     })
   }
 
-  let rollOutput = roll.output
+  const rollOutput = roll.output
   const split = rollOutput.split(' = ')
   const total = split.pop()
 
   const result = [`# ${total}`, `-# ${escapeAllMarkdown(split.join(' = '))}`]
 
   if (statistics) {
-    const stats = `min: ${roll.minTotal}, max: ${roll.maxTotal}, average: ${roll.averageTotal}`
-    result.push(stats)
-    rollOutput += `\n${stats}`
+    result.push(
+      `min: ${roll.minTotal.toLocaleString()} | max: ${roll.maxTotal.toLocaleString()} | average: ${roll.averageTotal.toLocaleString()}`,
+    )
   }
 
   const content = result.join('\n')
 
   if (content.length > 2000) {
+    // Remove the detailed rolls
+    result.splice(1, 1)
+    const content = result.join('\n')
+
     return interaction.reply({
-      content: 'Your roll result was too big! Check the file for the result.',
+      content: `${content}\nYour dice rolls were too big! Check the file for individual rolls:`,
       files: [
         {
           name: 'roll.txt',
-          attachment: Buffer.from(rollOutput),
+          attachment: Buffer.from(split.join(' = ')),
         },
       ],
       ephemeral,
