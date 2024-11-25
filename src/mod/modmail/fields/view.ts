@@ -46,9 +46,11 @@ async function runView(interaction: ChatInputCommandInteraction) {
 }
 
 export function formatField(field: ModMailTicketModalField): string {
-  return `**${escapeAllMarkdown(field.customID)}**: ${escapeAllMarkdown(field.label)}${
+  return `\`${escapeAllMarkdown(field.customID)}\`: "${escapeAllMarkdown(field.label)}"${
     field.required ? ' (required)' : ''
-  }, ${TextInputStyle[field.style]} (${field.minLength}-${field.maxLength} characters)${
-    field.placeholder ? `, "${escapeAllMarkdown(field.placeholder)}"` : ''
+  }${field.useAsTitle ? ' (title)' : ''}, ${TextInputStyle[field.style]} (${field.minLength ?? 0}-${field.maxLength ?? 4000} characters)${
+    field.placeholder
+      ? `, Placeholder: "${escapeAllMarkdown(field.placeholder)}"`
+      : ''
   }`
 }

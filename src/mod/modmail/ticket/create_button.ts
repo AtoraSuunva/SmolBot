@@ -25,7 +25,7 @@ import {
   getGuild,
   inGuildGuard,
 } from 'sleetcord'
-import { MINUTE, SECOND } from 'sleetcord-common'
+import { MINUTE, SECOND, notNullish } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
 import { modmailIdAutocomplete } from './../fields/utils.js'
 
@@ -273,6 +273,7 @@ const DEFAULT_FIELDS: TicketField[] = [
     required: true,
     minLength: 1,
     maxLength: 2000,
+    useAsTitle: false,
   },
 ]
 
@@ -421,7 +422,11 @@ async function handleCreateTicketButton(
     markdown: false,
   })
 
+  let title = ''
   let totalCharacters = formattedUser.length
+  const fieldIDMap = new Map<string, (typeof fields)[number]>(
+    fields.map((f) => [f.customID, f]),
+  )
 
   const embed = new EmbedBuilder()
     .setAuthor({
@@ -430,16 +435,21 @@ async function handleCreateTicketButton(
     })
     .addFields(
       int.fields.components.flatMap((v) => {
-        if (totalCharacters > MAX_EMBED_LENGTH) {
+        if (
+          totalCharacters > MAX_EMBED_LENGTH ||
+          v.components[0].value === ''
+        ) {
           return []
         }
 
         const name =
-          fields.find((f) => f.customID === v.components[0].customId)?.label ??
-          'Unknown Field'
+          fieldIDMap.get(v.components[0].customId)?.label ?? 'Unknown Field'
         const value = v.components[0].value
-
         const length = value.length + name.length
+
+        if (fieldIDMap.get(v.components[0].customId)?.useAsTitle) {
+          title = v.components[0].value
+        }
 
         if (totalCharacters + length > MAX_EMBED_LENGTH) {
           totalCharacters += length
@@ -457,40 +467,45 @@ async function handleCreateTicketButton(
           }
         }
 
-        return toChunks(value, 1024).flatMap((chunk, i) => {
-          if (totalCharacters > MAX_EMBED_LENGTH) {
-            return []
-          }
-
-          const length = chunk.length + (i === 0 ? name : 'Continued').length
-
-          if (totalCharacters + length > MAX_EMBED_LENGTH) {
-            totalCharacters += length
-            return {
-              name: 'Ticket Truncated',
-              value: 'Ticket too long, see attachment',
+        return toChunksGenerator(value, 1024)
+          .map((chunk, i) => {
+            if (totalCharacters > MAX_EMBED_LENGTH) {
+              return null
             }
-          }
 
-          totalCharacters += length
+            const length = chunk.length + (i === 0 ? name : 'Continued').length
 
-          return {
-            name: i === 0 ? name : 'Continued',
-            value: chunk,
-          }
-        })
+            if (totalCharacters + length > MAX_EMBED_LENGTH) {
+              totalCharacters += length
+              return {
+                name: 'Ticket Truncated',
+                value: 'Ticket too long, see attachment',
+              }
+            }
+
+            totalCharacters += length
+
+            return {
+              name: i === 0 ? name : 'Continued',
+              value: chunk,
+            }
+          })
+          .filter(notNullish)
+          .toArray()
       }),
     )
 
   const files: AttachmentPayload[] = []
 
   if (totalCharacters > MAX_EMBED_LENGTH) {
-    const string = int.fields.fields
-      .map((v, k) => `${k}: ${v.value}`)
-      .join('\n')
+    const fields = int.fields.fields
+      .map((v, k) => `## ${fieldIDMap.get(k)?.label ?? k}\n\n${v.value}`)
+      .join('\n\n')
+
+    const string = `- Modmail ID: ${modmailId}\n- User: ${formattedUser}\n\n${fields}`
 
     files.push({
-      name: 'ticket.txt',
+      name: 'ticket.md',
       attachment: Buffer.from(string, 'utf-8'),
     })
   }
@@ -506,15 +521,15 @@ async function handleCreateTicketButton(
   })
 
   let modThread: ThreadChannel | undefined
+  const appliedTags = [forumTag, forumConfig?.openTag].filter(notNullish)
 
   try {
     modThread = await modChannel.threads.create({
-      name: `${modmailId} - ${formattedUser}`,
+      // Max name length is 100
+      name: expandTo`${100}${modmailId} - ${formattedUser}${title ? `: ${title}` : ''}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-      appliedTags: forumTag
-        ? [forumTag, forumConfig?.openTag ?? '']
-        : [forumConfig?.openTag ?? ''],
-      reason: `Ticket created by ${formattedUser}`,
+      appliedTags,
+      reason: `Ticket created by ${interaction.user.tag}`,
       message: {
         content: embed.data.fields?.[0].value.slice(0, 256) ?? 'No Preview',
         embeds: [embed],
@@ -569,6 +584,7 @@ async function handleCreateTicketButton(
     content:
       'This is your thread to see replies from and reply to moderators for this ticket. Any message you send here will be forwarded to the moderators. A copy of your ticket is below:',
     embeds: [embed],
+    files,
   })
 
   await prisma.modMailTicket.create({
@@ -590,12 +606,65 @@ async function handleCreateTicketButton(
   })
 }
 
-function toChunks(str: string, size: number): string[] {
-  const chunks = []
-
+function* toChunksGenerator(
+  str: string,
+  size: number,
+): Generator<string, void, void> {
   for (let i = 0; i < str.length; i += size) {
-    chunks.push(str.slice(i, i + size))
+    yield str.slice(i, i + size)
+  }
+}
+
+/**
+ * "Expand" expressions within a template string up until a character limit.
+ * The first expression must be a number to set the limit (and will be ignored in the output).
+ * The expression that reaches the limit will be truncated and terminated with "…", and any further expressions will be omitted.
+ *
+ * If the strings themselves reach the limit, then no expressions will be output.
+ *
+ * @example
+ * expandTo`${10}Hello ${'World'}!` // 'Hello wo…!'
+ *
+ * @param strings - A template string array containing the static parts of the string.
+ * @param limit - The maximum length allowed for the resulting string.
+ * @param expressions - Additional expressions to be included in the resulting string.
+ * @returns A string that is the result of expanding the template string with the provided expressions, ensuring the total length does not exceed the given limit.
+ */
+function expandTo(
+  strings: TemplateStringsArray,
+  limit: number,
+  ...expressions: unknown[]
+): string {
+  // Calculate the length of the provided strings first
+  const stringsLength = strings.reduce((acc, s) => acc + s.length, 0)
+
+  if (stringsLength >= limit) {
+    return strings.join('')
   }
 
-  return chunks
+  // Add a "dummy" expression to the start since the limit "eats" one up
+  expressions.unshift('')
+
+  let budget = limit - stringsLength
+  const out: string[] = []
+  const longest = Math.max(strings.length, expressions.length)
+
+  for (let i = 0; i < longest; i++) {
+    if (i < strings.length) {
+      out.push(strings[i])
+    }
+
+    if (budget && i < expressions.length) {
+      const exp = String(expressions[i])
+      if (exp.length < budget) {
+        out.push(exp)
+        budget -= exp.length
+      } else {
+        out.push(`${exp.substring(0, budget - 1)}…`)
+        budget = 0
+      }
+    }
+  }
+
+  return out.join('')
 }

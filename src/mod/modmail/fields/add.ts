@@ -28,11 +28,12 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
   const custom_id = interaction.options.getString('custom_id', true)
   const order = interaction.options.getInteger('order')
   const label = interaction.options.getString('label', true)
-  const style = interaction.options.getInteger('style') ?? TextInputStyle.Short
+  const style = interaction.options.getInteger('style')
   const placeholder = interaction.options.getString('placeholder')
   const required = interaction.options.getBoolean('required')
-  const min_length = interaction.options.getInteger('min_length') ?? 0
-  const max_length = interaction.options.getInteger('max_length') ?? 4000
+  const min_length = interaction.options.getInteger('min_length')
+  const max_length = interaction.options.getInteger('max_length')
+  const use_as_title = interaction.options.getBoolean('use_as_title')
 
   const existingFields = await prisma.modMailTicketModalField.findMany({
     where: {
@@ -46,6 +47,18 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
       order: 'asc',
     },
   })
+
+  const titleField = use_as_title
+    ? existingFields.find((f) => f.useAsTitle)
+    : undefined
+
+  if (titleField) {
+    await interaction.reply({
+      content: `You already have a field set to be used as the title: \`${titleField.customID}\`. Either edit or remove that field first.`,
+      ephemeral: true,
+    })
+    return
+  }
 
   if (existingFields.length >= 5) {
     await interaction.reply({
@@ -73,11 +86,12 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     order:
       order ?? previousField?.order ?? (lastField ? lastField.order + 1 : 0),
     label: label ?? previousField?.label,
-    style: style ?? previousField?.style,
+    style: style ?? previousField?.style ?? TextInputStyle.Short,
     placeholder: placeholder ?? previousField?.placeholder ?? null,
     required: required ?? previousField?.required ?? null,
     minLength: min_length ?? previousField?.minLength ?? null,
     maxLength: max_length ?? previousField?.maxLength ?? null,
+    useAsTitle: use_as_title ?? previousField?.useAsTitle ?? null,
   }
 
   const newField = await prisma.modMailTicketModalField.upsert({

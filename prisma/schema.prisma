@@ -315,6 +315,13 @@ model ModMailTicket {
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
+model ModMailTicketMessage {
+  userMessageID    String @id @map("user_message_id")
+  webhookMessageID String @map("webhook_message_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
 model ModMailTicketModalField {
   // Mod-given Id for this set of fields
   modmailID String @map("modmail_id")
@@ -330,6 +337,7 @@ model ModMailTicketModalField {
   required    Boolean?
   minLength   Int?     @map("min_length")
   maxLength   Int?     @map("max_length")
+  useAsTitle  Boolean? @map("use_as_title")
 
   @@id([modmailID, guildID, customID])
 }

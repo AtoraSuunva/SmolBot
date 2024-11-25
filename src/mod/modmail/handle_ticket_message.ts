@@ -1,18 +1,24 @@
 import type { Prisma } from '@prisma/client'
 import {
+  type APIEmbed,
+  type AttachmentPayload,
   type ForumChannel,
+  type JSONEncodable,
   LimitedCollection,
   type MediaChannel,
   type Message,
   type NewsChannel,
+  type PartialMessage,
   type TextChannel,
   type User,
   type Webhook,
   type WebhookMessageCreateOptions,
+  type WebhookMessageEditOptions,
   type WebhookType,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
 import { prisma } from '../../util/db.js'
+import { quoteMessage } from '../../util/quoteMessage.js'
 
 export const handle_ticket_message = new SleetModule(
   {
@@ -20,10 +26,23 @@ export const handle_ticket_message = new SleetModule(
   },
   {
     messageCreate: handleMessageCreate,
+    messageUpdate: handleMessageUpdate,
   },
 )
 
+async function handleMessageUpdate(
+  _oldMessage: Message | PartialMessage,
+  newMessage: Message | PartialMessage,
+) {
+  const message = newMessage.partial ? await newMessage.fetch() : newMessage
+  await syncMessage(message, true)
+}
+
 async function handleMessageCreate(message: Message) {
+  await syncMessage(message)
+}
+
+async function syncMessage(message: Message, isEdit = false) {
   if (
     !message.inGuild() ||
     (message.webhookId !== null && message.interaction === null) ||
@@ -74,6 +93,17 @@ async function handleMessageCreate(message: Message) {
   if (replyType === ReplyType.None) {
     return
   }
+
+  const existingWebhookMessage = !isEdit
+    ? null
+    : await prisma.modMailTicketMessage.findFirst({
+        select: {
+          webhookMessageID: true,
+        },
+        where: {
+          userMessageID: message.id,
+        },
+      })
 
   const forwardChannel = await client.channels
     .fetch(forwardChannelID)
@@ -152,28 +182,81 @@ async function handleMessageCreate(message: Message) {
     return
   }
 
+  let content = getMessageContent(message, config, replyType)
+  const files: (AttachmentPayload | string)[] = message.attachments.map(
+    (attachment) => attachment.url,
+  )
+  const embeds: (JSONEncodable<APIEmbed> | APIEmbed)[] = message.embeds.slice()
+
+  if (content.length > 2000) {
+    files.unshift({
+      name: 'message.txt',
+      attachment: Buffer.from(content, 'utf-8'),
+    })
+    content = ''
+  }
+
+  const quote = await quoteMessage(message, {
+    includeAttachments: false,
+    includeAuthor: false,
+    includeChannel: false,
+    includeEmbeds: false,
+    includeTimestamp: false,
+  })
+
+  if (
+    quote[0].data.fields?.length ||
+    quote[0].data.image ||
+    quote[0].data.title
+  ) {
+    quote[0].setDescription(null)
+    embeds.unshift(quote[0])
+  }
+
+  const mainOptions = {
+    threadId: forwardThread.id,
+    allowedMentions: { parse: isUserMessage ? [] : ['users'] },
+    content,
+    files,
+    embeds,
+  } satisfies WebhookMessageCreateOptions | WebhookMessageEditOptions
+
   try {
-    const options: WebhookMessageCreateOptions = {
-      threadId: forwardThread.id,
-      allowedMentions: { parse: isUserMessage ? [] : ['users'] },
-      content: getMessageContent(message, config, replyType),
-      files: message.attachments.map((attachment) => attachment.url),
-      embeds: message.embeds,
-    }
-
-    if (replyType === ReplyType.User) {
-      options.username = formatWebhookUser(message.author)
-      options.avatarURL = message.author.displayAvatarURL()
-    } else {
-      options.username = config.modTeamName
-
-      if (message.guild.icon) {
-        // biome-ignore lint/style/noNonNullAssertion: we just tested for an icon url
-        options.avatarURL = message.guild.iconURL()!
+    if (isEdit) {
+      if (!existingWebhookMessage?.webhookMessageID) {
+        return
       }
-    }
 
-    await webhook.send(options)
+      const webhookMessage = await webhook.fetchMessage(
+        existingWebhookMessage?.webhookMessageID,
+        { threadId: forwardThread.id },
+      )
+
+      await webhook.editMessage(webhookMessage, mainOptions)
+    } else {
+      const options: WebhookMessageCreateOptions = mainOptions
+
+      if (replyType === ReplyType.Anonymous) {
+        options.username = config.modTeamName
+
+        if (message.guild.icon) {
+          // biome-ignore lint/style/noNonNullAssertion: we just tested for an icon url
+          options.avatarURL = message.guild.iconURL()!
+        }
+      } else {
+        options.username = formatWebhookUser(message.author)
+        options.avatarURL = message.author.displayAvatarURL()
+      }
+
+      const webhookMessage = await webhook.send(options)
+
+      await prisma.modMailTicketMessage.create({
+        data: {
+          userMessageID: message.id,
+          webhookMessageID: webhookMessage.id,
+        },
+      })
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 
@@ -189,17 +272,22 @@ async function handleMessageCreate(message: Message) {
     return
   }
 
-  await message.react('📨').catch(() => {
-    /* ignore */
-  })
+  if (!isEdit) {
+    await message.react('📨').catch(() => {
+      /* ignore */
+    })
+  }
 }
 
-const formatWebhookUser = (user: User): string =>
-  formatUser(user, {
+const formatWebhookUser = (user: User): string => {
+  const formatted = formatUser(user, {
     escapeMarkdown: false,
     markdown: false,
     id: false,
-  }).slice(0, 32)
+  })
+
+  return formatted.length > 32 ? user.tag : formatted
+}
 
 const webhookCache = new LimitedCollection<
   string,
@@ -240,10 +328,12 @@ export async function getWebhookFor(
 enum ReplyType {
   /** Don't forward the message */
   None = 0,
-  /** Forward the message and include the user */
+  /** Forward the message for a user */
   User = 1,
+  /** Forward the message for a mod (with their name) */
+  Mod = 2,
   /** Forward the message anonymously */
-  Anonymous = 2,
+  Anonymous = 3,
 }
 
 function getReplyType(
@@ -255,7 +345,7 @@ function getReplyType(
   let replyType = ReplyType.None
 
   if (message.content.startsWith(modReplyPrefix)) {
-    replyType = ReplyType.User
+    replyType = ReplyType.Mod
   }
 
   if (message.content.startsWith(modAnonReplyPrefix)) {
@@ -279,11 +369,11 @@ function getMessageContent(
   const { modReplyPrefix, modAnonReplyPrefix } = config
 
   switch (replyType) {
-    case ReplyType.User:
+    case ReplyType.Mod:
       return message.content.slice(modReplyPrefix.length).trim()
     case ReplyType.Anonymous:
       return message.content.slice(modAnonReplyPrefix.length).trim()
-    case ReplyType.None:
+    default:
       return message.content
   }
 }
