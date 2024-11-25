@@ -200,4 +200,10 @@ export const FIELD_OPTIONS: SleetCommandOption[] = [
     min_value: 0,
     max_value: 25,
   },
+  {
+    name: 'use_as_title',
+    description:
+      "Use the user's input for the post title (only 1 field per modmail ID)",
+    type: ApplicationCommandOptionType.Boolean,
+  },
 ]

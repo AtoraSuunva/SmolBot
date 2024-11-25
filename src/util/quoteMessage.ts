@@ -18,32 +18,56 @@ const MAX_QUOTE_LINES = 10
 const MAX_REPLY_LENGTH = 100
 
 interface QuoteOptions {
+  includeAuthor?: boolean
   includeChannel?: boolean
   includeTimestamp?: boolean
+  includeAttachments?: boolean
+  includeStickers?: boolean
+  includeEmbeds?: boolean
 }
 
 export async function quoteMessage(
   message: Message<true>,
-  { includeChannel = true, includeTimestamp = true }: QuoteOptions = {},
+  {
+    includeAuthor = true,
+    includeChannel = true,
+    includeTimestamp = true,
+    includeAttachments = true,
+    includeStickers = true,
+    includeEmbeds = true,
+  }: QuoteOptions = {},
 ): Promise<EmbedBuilder[]> {
   const embeds: EmbedBuilder[] = []
 
   const quoteContent = formatQuoteContent(message.content)
 
-  const channelLine = includeChannel ? ` ∙ #${message.channel.name}` : ''
-
-  const embed = new EmbedBuilder()
-    .setURL(message.url)
-    .setAuthor({
-      name: `${formatUser(message.author, {
+  const authorLine = includeAuthor
+    ? formatUser(message.author, {
         markdown: false,
         id: false,
         escapeMarkdown: false,
-      })}${channelLine}`,
-      iconURL: message.author.displayAvatarURL(),
-      url: message.url,
-    })
+      })
+    : ''
+  const channelLine = includeChannel ? `#${message.channel.name}` : ''
+
+  const embed = new EmbedBuilder()
+    .setURL(message.url)
     .setDescription(quoteContent)
+
+  if (includeAuthor || includeChannel) {
+    if (includeAuthor) {
+      embed.setAuthor({
+        name: [authorLine, channelLine].join(' ∙ '),
+        iconURL: message.author.displayAvatarURL(),
+        url: message.url,
+      })
+    } else {
+      embed.setAuthor({
+        name: [authorLine, channelLine].join(' ∙ '),
+        url: message.url,
+      })
+    }
+  }
 
   if (includeTimestamp) {
     embed.setTimestamp(message.createdTimestamp)
@@ -76,77 +100,84 @@ export async function quoteMessage(
   // https://discord.com/developers/docs/resources/channel#message-object-message-types
   await addToEmbed(message, embed)
 
-  const listedAttachments: Attachment[] = []
   // Can't have more than 4 images tiled together in a single embed, so any more than that we just add into a field
   let attachedImagesCount = 0
 
-  for (const [, attachment] of message.attachments) {
-    if (attachedImagesCount < 4 && isImageAttachment(attachment)) {
-      attachedImagesCount++
-      // You can embed multiple (up to 4) images in a single embed by sending multiple embeds with the same URL
-      if (!embed.data.image) {
-        embed.setImage(attachment.url)
-      } else {
-        embeds.push(
-          new EmbedBuilder().setURL(message.url).setImage(attachment.url),
-        )
-      }
-    } else {
-      // For non-image attachments (or additional images after 4), we can just add them as fields
-      listedAttachments.push(attachment)
-    }
-  }
+  if (includeAttachments) {
+    const listedAttachments: Attachment[] = []
 
-  if (listedAttachments.length > 0) {
-    embed.addFields([
-      {
-        name: `+${plural('Attachment', listedAttachments.length)}`,
-        value: listedAttachments
-          .map((a) =>
-            hyperlink(inlineCode(escapeInlineCode(a.name)), a.proxyURL),
+    for (const [, attachment] of message.attachments) {
+      if (attachedImagesCount < 4 && isImageAttachment(attachment)) {
+        attachedImagesCount++
+        // You can embed multiple (up to 4) images in a single embed by sending multiple embeds with the same URL
+        if (!embed.data.image) {
+          embed.setImage(attachment.url)
+        } else {
+          embeds.push(
+            new EmbedBuilder().setURL(message.url).setImage(attachment.url),
           )
-          .join(', '),
-      },
-    ])
-  }
-
-  for (const [, sticker] of message.stickers) {
-    if (attachedImagesCount < 4) {
-      attachedImagesCount++
-      if (!embed.data.image) {
-        embed.setImage(sticker.url)
+        }
       } else {
-        embeds.push(
-          new EmbedBuilder().setURL(message.url).setImage(sticker.url),
-        )
+        // For non-image attachments (or additional images after 4), we can just add them as fields
+        listedAttachments.push(attachment)
       }
+    }
+
+    if (listedAttachments.length > 0) {
+      embed.addFields([
+        {
+          name: `+${plural('Attachment', listedAttachments.length)}`,
+          value: listedAttachments
+            .map((a) =>
+              hyperlink(inlineCode(escapeInlineCode(a.name)), a.proxyURL),
+            )
+            .join(', '),
+        },
+      ])
     }
   }
 
-  if (message.stickers.size > 0) {
-    embed.addFields([
-      {
-        name: 'Stickers:',
-        value: message.stickers
-          .map((s) => hyperlink(inlineCode(escapeInlineCode(s.name)), s.url))
-          .join(', '),
-      },
-    ])
+  if (includeStickers) {
+    for (const [, sticker] of message.stickers) {
+      if (attachedImagesCount < 4) {
+        attachedImagesCount++
+        if (!embed.data.image) {
+          embed.setImage(sticker.url)
+        } else {
+          embeds.push(
+            new EmbedBuilder().setURL(message.url).setImage(sticker.url),
+          )
+        }
+      }
+    }
+
+    if (message.stickers.size > 0) {
+      embed.addFields([
+        {
+          name: 'Stickers:',
+          value: message.stickers
+            .map((s) => hyperlink(inlineCode(escapeInlineCode(s.name)), s.url))
+            .join(', '),
+        },
+      ])
+    }
   }
 
-  if (message.embeds[0]) {
-    // Some embeds (like twitter embeds) use multiple embeds to have multiple images in 1 embed
-    // You can tell by if they share the same Url, so just check that to get them all
-    const embedUrl = message.embeds[0].url
+  if (includeEmbeds) {
+    if (message.embeds[0]) {
+      // Some embeds (like twitter embeds) use multiple embeds to have multiple images in 1 embed
+      // You can tell by if they share the same Url, so just check that to get them all
+      const embedUrl = message.embeds[0].url
 
-    if (embedUrl) {
-      embeds.push(
-        ...message.embeds
-          .filter((e) => e.image && e.url === embedUrl)
-          .map((e) => EmbedBuilder.from(e)),
-      )
-    } else {
-      embeds.push(EmbedBuilder.from(message.embeds[0]))
+      if (embedUrl) {
+        embeds.push(
+          ...message.embeds
+            .filter((e) => e.image && e.url === embedUrl)
+            .map((e) => EmbedBuilder.from(e)),
+        )
+      } else {
+        embeds.push(EmbedBuilder.from(message.embeds[0]))
+      }
     }
   }
 

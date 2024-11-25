@@ -33,6 +33,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
   const required = interaction.options.getBoolean('required')
   const min_length = interaction.options.getInteger('min_length')
   const max_length = interaction.options.getInteger('max_length')
+  const use_as_title = interaction.options.getBoolean('use_as_title')
 
   const previousField = await prisma.modMailTicketModalField.findFirst({
     where: {
@@ -62,6 +63,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     required: required ?? previousField?.required ?? null,
     minLength: min_length ?? previousField?.minLength ?? null,
     maxLength: max_length ?? previousField?.maxLength ?? null,
+    useAsTitle: use_as_title ?? previousField?.useAsTitle ?? null,
   }
 
   const newField = await prisma.modMailTicketModalField.update({
