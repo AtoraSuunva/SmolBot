@@ -164,24 +164,11 @@ export async function quoteMessage(
   }
 
   if (includeEmbeds) {
-    if (message.embeds[0]) {
-      // Some embeds (like twitter embeds) use multiple embeds to have multiple images in 1 embed
-      // You can tell by if they share the same Url, so just check that to get them all
-      const embedUrl = message.embeds[0].url
-
-      if (embedUrl) {
-        embeds.push(
-          ...message.embeds
-            .filter((e) => e.image && e.url === embedUrl)
-            .map((e) => EmbedBuilder.from(e)),
-        )
-      } else {
-        embeds.push(EmbedBuilder.from(message.embeds[0]))
-      }
-    }
+    embeds.push(...message.embeds.map((e) => EmbedBuilder.from(e)))
   }
 
-  return embeds
+  // Discord caps embeds to 10
+  return embeds.slice(0, 10)
 }
 
 export async function addToEmbed(message: Message, embed: EmbedBuilder) {
