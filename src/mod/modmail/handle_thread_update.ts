@@ -40,6 +40,17 @@ const CHANGE_ADDENDUM = {
   },
 }
 
+const CHANGE_ADDENDUM_MOD = {
+  archived: {
+    true: 'Members can reply to their thread to re-open the ticket.',
+    false: '',
+  },
+  locked: {
+    true: 'Members can no longer reply to this ticket.',
+    false: 'Members can reply to this ticket again.',
+  },
+}
+
 const intlList = new Intl.ListFormat('en', {
   style: 'long',
   type: 'conjunction',
@@ -117,12 +128,25 @@ async function handleThreadUpdate(
     .filter((e): e is [keyof typeof CHANGE_WORD, boolean] => e[1] !== null)
     .map(([key, value]) => CHANGE_WORD[key][String(value) as 'true' | 'false'])
 
-  const addendums = Object.entries(threadChange)
+  const addendum = Object.entries(threadChange)
     .filter((e): e is [keyof typeof CHANGE_ADDENDUM, boolean] => e[1] !== null)
     .map(
       ([key, value]) => CHANGE_ADDENDUM[key][String(value) as 'true' | 'false'],
     )
     .filter((v) => v)
+
+  const addendumMod = Object.entries(threadChange)
+    .filter((e): e is [keyof typeof CHANGE_ADDENDUM, boolean] => e[1] !== null)
+    .map(
+      ([key, value]) =>
+        CHANGE_ADDENDUM_MOD[key][String(value) as 'true' | 'false'],
+    )
+    .filter((v) => v)
+
+  // If the ticket was locked and still is locked, don't send any update
+  if (userThread.locked && threadChange.locked !== false) {
+    return
+  }
 
   const isTicketOpen = !threadChange.locked && !threadChange.archived
 
@@ -136,11 +160,17 @@ async function handleThreadUpdate(
   })
 
   try {
+    updatingThreads.add(newThread.id)
+
+    const ticketMessage = intlList.format(changes)
+
     await webhook.send({
-      content: `This ticket was ${intlList.format(
-        changes,
-      )}.\n${addendums.join('\n')}`,
+      content: `This ticket was ${ticketMessage}.\n${addendum.join('\n')}`,
       threadId: userThread.id,
+    })
+
+    await newThread.send({
+      content: `This ticket was ${ticketMessage}.\n${addendumMod.join('\n')}`,
     })
 
     if (threadChange.locked !== null || newThread.locked !== null) {
@@ -172,7 +202,6 @@ async function handleThreadUpdate(
         }
       }
 
-      updatingThreads.add(newThread.id)
       await newThread.edit({
         appliedTags: newTags,
         archived: false,
@@ -181,8 +210,9 @@ async function handleThreadUpdate(
 
       if (!isTicketOpen || newThread.archived || newThread.locked) {
         await newThread.edit({
-          archived: newThread.archived || !isTicketOpen,
-          locked: newThread.locked ?? false,
+          archived:
+            threadChange.archived ?? (newThread.archived || !isTicketOpen),
+          locked: threadChange.locked ?? newThread.locked ?? false,
         })
       }
     }
