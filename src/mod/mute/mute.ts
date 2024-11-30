@@ -34,7 +34,7 @@ import {
   getMembers,
   inGuildGuard,
 } from 'sleetcord'
-import { SECOND, baseLogger } from 'sleetcord-common'
+import { SECOND, baseLogger, notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 
 const mutedRoles = [
@@ -237,8 +237,8 @@ async function handleUserCommand(
   const members = [
     target instanceof GuildMember
       ? target
-      : await guild.members.fetch(interaction.targetId),
-  ]
+      : await guild.members.fetch(interaction.targetId).catch(() => null),
+  ].filter(notNullish)
   const reason = null
   const ephemeral = false
   const channel = null
@@ -280,11 +280,20 @@ async function runMute(
 
   await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
+  if (members.length === 0) {
+    await interaction.reply({
+      content: `Failed to resolve any members to ${action}, are they still in the server?`,
+      ephemeral: true,
+    })
+    return
+  }
+
+  const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
+
   const deferReply = await interaction.deferReply({
     ephemeral,
     fetchReply: true,
   })
-  const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
   const config: Prisma.MuteConfigGetPayload<true> =
     (await prisma.muteConfig.findUnique({
