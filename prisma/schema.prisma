@@ -290,8 +290,9 @@ model ModMailTicketConfig {
   modmailID String @map("modmail_id")
   guildID   String @map("guild_id")
 
-  maxOpenTickets Int? @map("max_open_tickets")
+  maxOpenTickets Int?     @map("max_open_tickets")
   ratelimit      Int?
+  invitable      Boolean?
 
   @@id([modmailID, guildID])
 }

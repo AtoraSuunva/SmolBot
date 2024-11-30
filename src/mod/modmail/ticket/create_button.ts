@@ -521,7 +521,9 @@ async function handleCreateTicketButton(
   })
 
   let modThread: ThreadChannel | undefined
-  const appliedTags = [forumTag, forumConfig?.openTag].filter(notNullish)
+  const appliedTags = [forumTag, forumConfig?.openTag].filter(
+    (t): t is string => !!t,
+  )
 
   // Max name length is 100
   const threadName = expandTo`${100}${modmailId} - ${formattedUser}${title ? `: ${title}` : ''}`
@@ -569,7 +571,7 @@ async function handleCreateTicketButton(
     userThread = await userChannel.threads.create({
       name: threadName,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-      invitable: false,
+      invitable: config?.invitable ?? false,
       type: ChannelType.PrivateThread,
       reason: `Ticket created by ${formattedUser}`,
     })
