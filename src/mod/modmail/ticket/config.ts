@@ -17,7 +17,7 @@ export const modmail_ticket_config = new SleetSlashSubcommand(
       {
         name: 'max_open_tickets',
         description:
-          'The maximum amount of tickets a user can have open at a time',
+          'The maximum amount of tickets a user can have open at a time (default: 100)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
         max_value: 100,
@@ -25,9 +25,15 @@ export const modmail_ticket_config = new SleetSlashSubcommand(
       {
         name: 'ratelimit',
         description:
-          'Time (in seconds) a user must wait between creating tickets',
+          'Time (in seconds) a user must wait between creating tickets (default: 0)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
+      },
+      {
+        name: 'invitable',
+        description:
+          'If users should be allowed to invite other users by pinging them (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
@@ -40,6 +46,7 @@ async function runConfigTicket(interaction: ChatInputCommandInteraction) {
   const modmailID = interaction.options.getString('modmail_id', true)
   const maxOpenTickets = interaction.options.getInteger('max_open_tickets')
   const ratelimit = interaction.options.getInteger('ratelimit')
+  const invitable = interaction.options.getBoolean('invitable')
 
   await interaction.deferReply()
 
@@ -57,6 +64,10 @@ async function runConfigTicket(interaction: ChatInputCommandInteraction) {
 
   if (ratelimit !== null) {
     mergedConfig.ratelimit = ratelimit
+  }
+
+  if (invitable !== null) {
+    mergedConfig.invitable = invitable
   }
 
   const newConfig = await prisma.modMailTicketConfig.upsert({
