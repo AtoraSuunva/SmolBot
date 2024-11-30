@@ -7,7 +7,13 @@ export const modmail_fields_remove = new SleetSlashSubcommand(
   {
     name: 'remove',
     description: 'Remove a field from the modmail ticket modal',
-    options: [FIELD_MODMAIL_ID, FIELD_CUSTOM_ID],
+    options: [
+      FIELD_MODMAIL_ID,
+      {
+        ...FIELD_CUSTOM_ID,
+        required: true,
+      },
+    ],
   },
   {
     run: runRemove,
