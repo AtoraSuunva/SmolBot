@@ -191,6 +191,10 @@ const ROLE_BUTTON_ID = 'role-button'
 async function handleInteractionCreate(interaction: Interaction) {
   if (!interaction.isButton()) return
 
+  await interaction.deferReply({
+    ephemeral: true,
+  })
+
   const [command, roleID, onlyOneStr] = interaction.customId.split(':')
   const onlyOne = onlyOneStr === 'true'
 
@@ -207,9 +211,8 @@ async function handleInteractionCreate(interaction: Interaction) {
   const role = guild.roles.cache.get(roleID)
 
   if (!role) {
-    await interaction.reply({
+    await interaction.editReply({
       content: "That role doesn't seem to exist, maybe it was deleted?",
-      ephemeral: true,
     })
     return
   }
@@ -250,16 +253,14 @@ async function handleInteractionCreate(interaction: Interaction) {
   if (!member.roles.cache.has(role.id)) {
     memberRoles.push(role)
     await member.roles.set(memberRoles)
-    await interaction.reply({
+    await interaction.editReply({
       content: `You now have the ${role} role${addendum}.`,
-      ephemeral: true,
     })
   } else {
     memberRoles.splice(memberRoles.indexOf(role), 1)
     await member.roles.set(memberRoles)
-    await interaction.reply({
+    await interaction.editReply({
       content: `You no longer have the ${role} role${addendum}.`,
-      ephemeral: true,
     })
   }
 }
