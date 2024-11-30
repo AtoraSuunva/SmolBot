@@ -105,12 +105,10 @@ export async function messageDeleteWithAuditLog(
       : ''
   }${stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : ''}`
 
-  // +100 to give us some more headroom
-  const deletedMessageLength = messageContent.length + 100
-
+  const formatted = codeBlock('ansi', cleanCodeBlockContent(messageContent))
   const files: AttachmentPayload[] = []
 
-  if (deletedMessageLength + msg.length > 2000) {
+  if (formatted.length + msg.length > 1950) {
     files.push({
       name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
       attachment: Buffer.from(
@@ -123,7 +121,7 @@ export async function messageDeleteWithAuditLog(
       })}`,
     })
   } else {
-    msg += codeBlock('ansi', cleanCodeBlockContent(messageContent))
+    msg += formatted
   }
 
   await channel.send({
