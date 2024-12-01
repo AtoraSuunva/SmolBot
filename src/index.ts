@@ -36,16 +36,20 @@ async function main() {
           keyof SleetModuleEventHandlers,
         ]
 
-        if (
-          eventName === 'messageCreate' ||
-          eventName === 'messageUpdate' ||
-          eventName === 'userUpdate'
-        ) {
-          return 0.01
+        switch (eventName) {
+          case 'raw':
+            return 0
+
+          case 'messageCreate':
+          case 'messageUpdate':
+          case 'userUpdate':
+            return 0.01
         }
 
-        if (moduleName === 'logging' || moduleName === 'sentryLogger') {
-          return 0.01
+        switch (moduleName) {
+          case 'logging':
+          case 'sentryLogger':
+            return 0.01
         }
 
         return 0.2
