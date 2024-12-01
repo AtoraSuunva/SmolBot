@@ -191,14 +191,14 @@ const ROLE_BUTTON_ID = 'role-button'
 async function handleInteractionCreate(interaction: Interaction) {
   if (!interaction.isButton()) return
 
-  await interaction.deferReply({
-    ephemeral: true,
-  })
-
   const [command, roleID, onlyOneStr] = interaction.customId.split(':')
   const onlyOne = onlyOneStr === 'true'
 
   if (command !== ROLE_BUTTON_ID) return
+
+  await interaction.deferReply({
+    ephemeral: true,
+  })
 
   const guild = await getGuild(interaction, true)
   if (!interaction.inGuild()) return
