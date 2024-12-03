@@ -96,14 +96,14 @@ async function fetchWarningCount(
   })
 
   const expired =
-    days === 0
+    days === 0 || filters.void === true || filters.permanent === true
       ? 0
       : await prisma.warning.count({
           where: {
+            ...getExpirationWhereFilter(days),
             ...filters,
             guildID,
             validUntil: null,
-            ...getExpirationWhereFilter(days),
           },
         })
 
