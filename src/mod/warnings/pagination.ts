@@ -45,12 +45,14 @@ function defaultFormatAuthor(): EmbedAuthorOptions | null {
 }
 
 function defaultFormatTitle(result: PaginatedWarnings): string | null {
-  const warnings = result.counts.total
-  const expired = result.counts.expired
+  const { total: warnings, expired, voided } = result.counts
 
-  return `${plural('warning', warnings)}${
+  const expiredString =
     expired > 0 ? `, **${expired.toLocaleString()}** expired` : ''
-  }`
+
+  const voidedString = voided > 0 ? `, **${voided.toLocaleString()}** void` : ''
+
+  return `${plural('warning', warnings)}${expiredString}${voidedString}`
 }
 
 function defaultFormatDescription(): string | null {

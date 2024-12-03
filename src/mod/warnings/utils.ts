@@ -13,6 +13,7 @@ export const MAX_PER_PAGE = 5
 export interface WarningCount {
   total: number
   expired: number
+  voided: number
 }
 
 /**
@@ -94,18 +95,31 @@ async function fetchWarningCount(
     },
   })
 
-  const expired = await prisma.warning.count({
+  const expired =
+    days === 0
+      ? 0
+      : await prisma.warning.count({
+          where: {
+            ...filters,
+            guildID,
+            validUntil: null,
+            ...getExpirationWhereFilter(days),
+          },
+        })
+
+  const voided = await prisma.warning.count({
     where: {
       ...filters,
       guildID,
       validUntil: null,
-      ...getExpirationWhereFilter(days),
+      void: true,
     },
   })
 
   return {
     total,
     expired,
+    voided,
   }
 }
 
@@ -133,6 +147,7 @@ export async function fetchPaginatedWarningHistory(
     counts: {
       total,
       expired: 0,
+      voided: 0,
     },
   }
 }
@@ -242,10 +257,9 @@ function warningIsExpired(
   expireDate: Date,
 ): boolean {
   return (
-    warning.void ||
-    (config.expiresAfter > 0 &&
-      !warning.permanent &&
-      warning.createdAt <= expireDate)
+    config.expiresAfter > 0 &&
+    !warning.permanent &&
+    warning.createdAt <= expireDate
   )
 }
 
@@ -253,17 +267,11 @@ export function getExpirationWhereFilter(
   days: number,
 ): Prisma.WarningWhereInput {
   return {
-    OR: [
-      {
-        void: true,
-      },
-      {
-        permanent: false,
-        createdAt: {
-          lte: getExpirationDate(days),
-        },
-      },
-    ],
+    void: false,
+    permanent: false,
+    createdAt: {
+      lte: getExpirationDate(days),
+    },
   }
 }
 
