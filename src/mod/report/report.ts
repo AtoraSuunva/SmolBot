@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
@@ -17,6 +18,7 @@ export const report = new SleetSlashCommand(
     name: 'report',
     description: 'Report something to the moderators.',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'content',

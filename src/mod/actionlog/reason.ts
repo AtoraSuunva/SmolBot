@@ -1,6 +1,7 @@
 import type { ActionLog, ActionLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   type Guild,
   InteractionContextType,
@@ -105,6 +106,7 @@ export const actionReason = new SleetSlashCommand(
     name: 'reason',
     description: 'Reason an action',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: [
       'BanMembers',
       'KickMembers',

@@ -1,6 +1,7 @@
 import { stripVTControlCharacters } from 'node:util'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
   Collection,
@@ -22,6 +23,7 @@ export const unedit = new SleetSlashCommand(
     description: 'Unedits a message',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'message_link',
@@ -42,6 +44,7 @@ export const unedit_message = new SleetMessageCommand(
     name: 'Unedit',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: runUneditContextMenu,

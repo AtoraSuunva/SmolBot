@@ -4,6 +4,7 @@ import {
   ActionRowBuilder,
   type AnyThreadChannel,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   AuditLogEvent,
   ButtonBuilder,
   ButtonStyle,
@@ -62,6 +63,7 @@ export const mute = new SleetSlashCommand(
     description: 'Mutes a user',
     default_member_permissions: ['ManageRoles'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'members',
@@ -144,6 +146,7 @@ export const mute_menu = new SleetUserCommand(
     name: 'Mute',
     default_member_permissions: ['ManageRoles'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: (i) => handleUserCommand(i, 'mute'),
@@ -156,6 +159,7 @@ export const unmute = new SleetSlashCommand(
     description: 'Unmutes a user',
     default_member_permissions: ['ManageRoles'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'members',

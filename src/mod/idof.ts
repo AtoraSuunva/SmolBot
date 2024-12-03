@@ -2,6 +2,7 @@ import {
   type APIGuildMember,
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   ButtonBuilder,
   type ButtonInteraction,
   ButtonStyle,
@@ -57,6 +58,7 @@ export const idof = new SleetSlashCommand(
     name: 'idof',
     description: 'Get the ID of a user.',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'user',

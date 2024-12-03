@@ -1,9 +1,11 @@
 import { setTimeout } from 'node:timers/promises'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   GuildMember,
   type GuildTextBasedChannel,
+  InteractionContextType,
   type TextBasedChannel,
   cleanCodeBlockContent,
   codeBlock,
@@ -15,6 +17,8 @@ export const extract = new SleetSlashCommand(
   {
     name: 'extract',
     description: 'Extracts all the text from a file/url and posts it in chat',
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'url',

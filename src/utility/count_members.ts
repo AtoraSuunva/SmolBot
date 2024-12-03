@@ -1,6 +1,7 @@
 import { setTimeout } from 'node:timers/promises'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   type Collection,
   type GuildMember,
@@ -34,6 +35,7 @@ export const count_members = new SleetSlashCommand(
     name: 'count_members',
     description: 'Counts the number of members in a guild',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'name_contains',

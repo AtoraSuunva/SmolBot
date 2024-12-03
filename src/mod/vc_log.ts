@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   Constants,
   type GuildTextBasedChannel,
@@ -50,6 +51,7 @@ export const vc_log = new SleetSlashCommand(
     name: 'vc_log',
     description: 'Manage VC logging',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [config, disable],
   },

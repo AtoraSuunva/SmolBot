@@ -1,6 +1,8 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, makeChoices } from 'sleetcord'
@@ -21,6 +23,8 @@ export const manual_log = new SleetSlashCommand(
     name: 'manual_log',
     description:
       'Create a manual log for some action, which you can copy/paste',
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'user',

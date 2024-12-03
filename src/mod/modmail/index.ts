@@ -1,6 +1,6 @@
 import { SleetSlashCommand } from 'sleetcord'
 
-import { InteractionContextType } from 'discord.js'
+import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { modmail_fields } from './fields/index.js'
 import { modmail_forum } from './forum/index.js'
 import { handle_thread_update } from './handle_thread_update.js'
@@ -13,6 +13,7 @@ export const modmail = new SleetSlashCommand(
     name: 'modmail',
     description: 'Manage modmail settings',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [modmail_fields, modmail_ticket, modmail_server, modmail_forum],
   },
