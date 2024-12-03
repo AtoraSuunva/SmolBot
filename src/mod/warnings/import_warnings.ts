@@ -12,7 +12,9 @@ import {
 import { parse } from 'csv-parse'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  InteractionContextType,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
@@ -28,6 +30,8 @@ export const importWarnings = new SleetSlashCommand(
     name: 'import_warnings',
     description:
       'Import warnings from a CSV file. Can only create NEW warnings',
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [
       {

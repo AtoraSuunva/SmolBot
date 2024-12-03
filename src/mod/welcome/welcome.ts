@@ -1,6 +1,7 @@
 import { stripVTControlCharacters } from 'node:util'
 import type { WelcomeSettings } from '@prisma/client'
 import {
+  ApplicationIntegrationType,
   type AttachmentPayload,
   type Guild,
   type GuildMember,
@@ -26,6 +27,7 @@ export const welcome = new SleetSlashCommand(
     name: 'welcome',
     description: 'Manage the welcome message',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [fields, message, deleteCommand, config, mark_joined],
   },
@@ -71,7 +73,7 @@ async function handleMessageCreate(message: Message) {
   // We can't just rely on welcome joins since someone might want to welcome rejoins but only when
   // they send a message, but someone leaving doesn't clear the welcome joins.
   // We need to know who is "new" (including rejoins) and we should try to welcome on message
-  // This could be another table for persistance (ie. someone joins, bot dies, bot comes back,
+  // This could be another table for persistence (ie. someone joins, bot dies, bot comes back,
   // they send a message), but for now, meh, it's fine, and I'd need to cache it anyway.
   if (!newJoins?.has(member.id)) return
 

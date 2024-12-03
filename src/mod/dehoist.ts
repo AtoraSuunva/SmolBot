@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   type GuildMember,
   InteractionContextType,
@@ -21,6 +22,7 @@ export const dehoist = new SleetSlashCommand(
     description:
       'Dehoists users by placing an invisible character in front of their name',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageNicknames'],
     options: [
       {

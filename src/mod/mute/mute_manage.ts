@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   ChannelType,
   type ChatInputCommandInteraction,
   Constants,
@@ -17,6 +18,7 @@ export const mute_manage = new SleetSlashCommand(
     description: 'Configure the mute system',
     default_member_permissions: ['ManageGuild'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'role',

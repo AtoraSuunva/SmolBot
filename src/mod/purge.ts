@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   type Collection,
   DMChannel,
@@ -27,6 +28,7 @@ export const purge = new SleetSlashCommand(
     description: 'Purges a number of messages, options work as AND conditions',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'count',

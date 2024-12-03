@@ -1,6 +1,7 @@
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   ButtonBuilder,
   ButtonStyle,
   type ChatInputCommandInteraction,
@@ -19,6 +20,7 @@ export const role_buttons = new SleetSlashCommand(
     description:
       'Create a set of buttons for users to add/remove roles from themselves',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [
       {

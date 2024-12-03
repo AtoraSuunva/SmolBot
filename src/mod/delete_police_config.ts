@@ -1,6 +1,7 @@
 import type { DeletePoliceConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
   type Message,
@@ -22,6 +23,7 @@ export const delete_police_config = new SleetSlashCommand(
     description:
       'Automatically repost messages that have been deleted too quickly',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [
       {

@@ -1,6 +1,7 @@
 import {
   type APIApplicationCommandOption,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type Attachment,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
@@ -56,6 +57,7 @@ export const mass_ban = new SleetSlashCommand(
       'Mass ban a list of users, can ban only users in-guild or ban everyone on the list',
     default_member_permissions: ['BanMembers'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       ...commonOptions,
       reasonOption,
@@ -85,6 +87,7 @@ export const mass_kick = new SleetSlashCommand(
     description: 'Mass kick a list of users',
     default_member_permissions: ['KickMembers'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [...commonOptions, reasonOption],
   },
   {
@@ -98,6 +101,7 @@ export const mass_find = new SleetSlashCommand(
     description: 'Check which users in a list are members of this guild',
     default_member_permissions: ['ModerateMembers'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: commonOptions,
   },
   {
@@ -111,6 +115,7 @@ export const mass_unban = new SleetSlashCommand(
     description: 'Mass unban a list of users',
     default_member_permissions: ['BanMembers'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [...commonOptions, reasonOption],
   },
   {
@@ -125,6 +130,7 @@ export const mass_softban = new SleetSlashCommand(
       'Softbans a user (ban + unban). Unbans + bans already-banned users. Useful to purge messages.',
     default_member_permissions: ['BanMembers'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       ...commonOptions,
       reasonOption,

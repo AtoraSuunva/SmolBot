@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type Channel,
   type ChatInputCommandInteraction,
   type Client,
@@ -21,6 +22,7 @@ export const quote = new SleetSlashCommand(
     name: 'quote',
     description: 'Quotes a message',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'message_link',

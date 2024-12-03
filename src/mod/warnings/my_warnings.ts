@@ -1,5 +1,9 @@
 import type { Prisma } from '@prisma/client'
-import type { ChatInputCommandInteraction } from 'discord.js'
+import {
+  ApplicationIntegrationType,
+  type ChatInputCommandInteraction,
+  InteractionContextType,
+} from 'discord.js'
 import { SleetSlashCommand, formatUser } from 'sleetcord'
 import {
   type WarningFetcher,
@@ -11,6 +15,8 @@ export const myWarnings = new SleetSlashCommand(
   {
     name: 'my_warnings',
     description: 'View your warnings',
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: myWarningsRun,

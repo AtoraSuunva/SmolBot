@@ -1,6 +1,7 @@
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   ButtonBuilder,
   ButtonStyle,
   type ChatInputCommandInteraction,
@@ -16,6 +17,7 @@ export const timeout_button = new SleetSlashCommand(
     name: 'timeout_button',
     description: 'Create a timeout button for funny',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ModerateMembers'],
     options: [
       {

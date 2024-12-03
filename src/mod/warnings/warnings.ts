@@ -1,3 +1,4 @@
+import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { warningsAdd } from './add.js'
 import { warningsEdit } from './edit.js'
@@ -13,6 +14,8 @@ export const warnings = new SleetSlashCommand(
     name: 'warnings',
     description: 'Manage warnings on the server',
     default_member_permissions: ['ModerateMembers'],
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       warningsAdd,
       warningsSearch,

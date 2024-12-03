@@ -1,8 +1,10 @@
 import type { WarningConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   Constants,
+  InteractionContextType,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
@@ -14,6 +16,8 @@ export const warnings_manage = new SleetSlashCommand(
   {
     name: 'warnings_manage',
     description: 'View or edit the warnings system config',
+    contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [
       {
