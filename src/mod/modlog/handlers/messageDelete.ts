@@ -1,11 +1,14 @@
 import { stripVTControlCharacters } from 'node:util'
 import {
   type AttachmentPayload,
+  ButtonStyle,
+  ComponentType,
   type Embed,
   EmbedBuilder,
   type GuildMember,
   InteractionType,
   type Message,
+  type MessageActionRowComponent,
   MessageType,
   type PartialMessage,
   type User,
@@ -17,6 +20,7 @@ import {
 import { SleetModule, formatUser } from 'sleetcord'
 import {
   BackgroundColor,
+  type Markup,
   TextColor,
   ansiFormat,
 } from '../../../util/ansiColors.js'
@@ -208,10 +212,12 @@ interface LogMessageOptions {
   includeUser?: boolean
   /** Include `[TIMESTAMP]`, either appended to user line or alone */
   includeTimestamp?: boolean
-  /** Include a text version of the first embed, if any. Additional embeds shown as: `╰╼ + X more embeds` */
-  includeEmbeds?: boolean
   /** Include `╰╼ Attachments: fileName.png, fileName.jpg` */
   includeAttachments?: boolean
+  /** Include a text version of the first embed, if any. Additional embeds shown as: `╰╼ + X more embeds` */
+  includeEmbeds?: boolean
+  /** Include `╰┮ Components:` followed by `├╼ [Button] [Button]` */
+  includeComponents?: boolean
   /** Include `╰╼ Stickers: sticker, sticker2 */
   includeStickers?: boolean
   /** Include `╰┮ Poll: Question` followed by `├╼ Answer (votes)` */
@@ -237,8 +243,9 @@ export async function messageToLog(
     includeReference = true,
     includeUser = true,
     includeTimestamp = true,
-    includeEmbeds = true,
     includeAttachments = true,
+    includeEmbeds = true,
+    includeComponents = true,
     includeStickers = true,
     includePoll = true,
   }: LogMessageOptions = {},
@@ -322,6 +329,12 @@ export async function messageToLog(
   const content = lines.join('\n').trim()
   lines.splice(0, lines.length)
 
+  if (includeAttachments && message.attachments.size > 0) {
+    lines.push(
+      `╰╼ Attachments: ${message.attachments.map((a) => a.name).join(', ')}`,
+    )
+  }
+
   if (includeEmbeds && message.embeds.length > 0) {
     lines.push(embedToLog(message.embeds[0], { minimal: true }))
 
@@ -330,10 +343,18 @@ export async function messageToLog(
     }
   }
 
-  if (includeAttachments && message.attachments.size > 0) {
-    lines.push(
-      `╰╼ Attachments: ${message.attachments.map((a) => a.name).join(', ')}`,
-    )
+  if (includeComponents && message.components.length > 0) {
+    lines.push('╰┮ Components:')
+
+    const length = message.components.length
+    const last = length - 1
+
+    for (let i = 0; i < length; i++) {
+      const row = message.components[i]
+      const formattedRow = row.components.map(componentToLog).join(' ')
+
+      lines.push(` ${i === last ? '╰╼' : '├╼'} ${formattedRow}`)
+    }
   }
 
   if (includeStickers && message.stickers.size > 0) {
@@ -343,13 +364,11 @@ export async function messageToLog(
   if (includePoll && message.poll) {
     lines.push(`╰┮ Poll: ${message.poll.question.text}`)
 
-    let current = 0
-    const last = message.poll.answers.size
+    const last = message.poll.answers.lastKey()
 
-    for (const [, answer] of message.poll.answers) {
-      current++
+    for (const [key, answer] of message.poll.answers) {
       lines.push(
-        ` ${current === last ? '╰╼' : '├╼'} ${answer.text} (${ansiFormat(TextColor.Cyan, answer.voteCount)})`,
+        ` ${key === last ? '╰╼' : '├╼'} ${answer.text} (${ansiFormat(TextColor.Cyan, answer.voteCount)})`,
       )
     }
   }
@@ -449,6 +468,40 @@ function embedToLog(
   }
 
   return lines.join('\n')
+}
+
+const buttonStyleColor: Record<ButtonStyle, Markup | Markup[]> = {
+  [ButtonStyle.Primary]: [BackgroundColor.Indigo, TextColor.White],
+  [ButtonStyle.Secondary]: [BackgroundColor.MarbleBlue, TextColor.White],
+  [ButtonStyle.Success]: TextColor.Green,
+  [ButtonStyle.Danger]: [BackgroundColor.Orange, TextColor.White],
+  [ButtonStyle.Link]: [BackgroundColor.MarbleBlue, TextColor.White],
+  [ButtonStyle.Premium]: [BackgroundColor.Indigo, TextColor.White],
+}
+
+function componentToLog(component: MessageActionRowComponent): string {
+  switch (component.type) {
+    case ComponentType.Button:
+      // [💀 Button!] [Second!]
+      return ansiFormat(
+        buttonStyleColor[component.style],
+        `[${component.emoji?.name && !component.emoji.id ? `${component.emoji.name} ` : ''}${component.label}]`,
+      )
+
+    case ComponentType.StringSelect:
+    case ComponentType.UserSelect:
+    case ComponentType.RoleSelect:
+    case ComponentType.MentionableSelect:
+    case ComponentType.ChannelSelect:
+      // [Select Placeholder ∨]
+      return ansiFormat(
+        [BackgroundColor.FireflyDarkBlue, TextColor.White],
+        `[${component.placeholder ?? component.customId} ∨]`,
+      )
+
+    default:
+      return '(unknown component)'
+  }
 }
 
 function formatEscapedLink(text: string, url: string): string {
