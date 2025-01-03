@@ -120,7 +120,8 @@ export function formatLog(
   return `${emoji} ${time(timestamp, 'T')} \`[${type}]\`: ${message}`
 }
 
-export function formatTime(timestamp: Date = new Date()): string {
+export function formatTime(timestamp: Date | null = new Date()): string {
+  if (timestamp === null) return 'null'
   return padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
 }
 

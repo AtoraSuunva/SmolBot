@@ -9,6 +9,8 @@ import {
   InteractionType,
   type Message,
   type MessageActionRowComponent,
+  MessageReferenceType,
+  type MessageSnapshot,
   MessageType,
   type PartialMessage,
   type User,
@@ -206,7 +208,7 @@ export async function messageArrayToLog(messages: Message[]): Promise<string> {
 interface LogMessageOptions {
   /** Include `╭╼ User [username] (id) used /commandName` */
   includeInteraction?: boolean
-  /** Include `╭╼ Reply to User [username] (id): Message content */
+  /** Include `╭╼ Reply to User [username] (id): Message content` OR `╭→ Forwarded` */
   includeReference?: boolean
   /** Include `◯ User [username] (id) [TAG...]` */
   includeUser?: boolean
@@ -237,7 +239,7 @@ const TAG_ACTIVITY = `[${ansiFormat(TextColor.Pink, 'ACTIVITY')}] `
 const TAG_THREAD = `[${ansiFormat(TextColor.Pink, 'THREAD')}] `
 
 export async function messageToLog(
-  message: Message,
+  message: Message | MessageSnapshot,
   {
     includeInteraction = true,
     includeReference = true,
@@ -266,28 +268,69 @@ export async function messageToLog(
     hasUpper = true
   }
 
-  if (includeReference && message.reference?.messageId) {
-    const ref = await message.fetchReference().catch(() => null)
+  const earlyContent: string[] = []
 
-    if (ref) {
-      const preview =
-        cleanCodeBlockContent(ref.content.replaceAll(/\n/g, ' ').slice(0, 50)) +
-        (ref.content.length > 50 ? '…' : '')
+  if (includeReference && message.reference) {
+    switch (message.reference.type) {
+      case MessageReferenceType.Default: {
+        const ref = await message.fetchReference?.().catch(() => null)
+        if (!ref) {
+          lines.push(
+            `${hasUpper ? '├' : '╭'}╼ Original message was deleted (${message.reference.messageId})`,
+          )
+          hasUpper = true
+          break
+        }
 
-      lines.push(
-        `${hasUpper ? '├' : '╭'}╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
-      )
-    } else {
-      lines.push(
-        `${hasUpper ? '├' : '╭'}╼ Original message was deleted (${message.reference.messageId})`,
-      )
+        const preview =
+          cleanCodeBlockContent(
+            ref.content.replaceAll(/\n/g, ' ').slice(0, 50),
+          ) + (ref.content.length > 50 ? '…' : '')
+
+        lines.push(
+          `${hasUpper ? '├' : '╭'}╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
+        )
+        hasUpper = true
+        break
+      }
+
+      case MessageReferenceType.Forward: {
+        earlyContent.push(`╭→ ${ansiFormat(TextColor.Gray, 'Forwarded')}`)
+        const snapshot = message.messageSnapshots?.first()
+
+        if (!snapshot) {
+          earlyContent.push(
+            ansiFormat(TextColor.Red, 'Forward was missing message snapshot'),
+          )
+          break
+        }
+
+        const formattedForward = await messageToLog(snapshot, {
+          includeInteraction: false,
+          includeReference: false,
+          includeTimestamp: false,
+          includeUser: false,
+        })
+
+        const channel = await message.guild?.channels
+          .fetch(message.reference.channelId)
+          .catch(() => null)
+
+        const context = channel
+          ? `┊ ${ansiFormat(TextColor.Gray, `#${channel.name} (${channel.id}) • ${formatTime(snapshot.createdAt)}`)}`
+          : ''
+
+        const content =
+          `${formattedForward.header}\n${formattedForward.content || '┊'}\n${formattedForward.footer}`.trim()
+        earlyContent.push(`${content}\n${context}`.trim())
+        break
+      }
     }
-    hasUpper = true
   }
 
-  if (includeUser) {
+  if (includeUser && message.author) {
     const tags =
-      (message.author.bot ? TAG_APP : '') +
+      (message.author?.bot ? TAG_APP : '') +
       (message.system ? TAG_SYSTEM : '') +
       (message.webhookId ? TAG_WEBHOOK : '') +
       (message.activity ? TAG_ACTIVITY : '') +
@@ -311,7 +354,8 @@ export async function messageToLog(
       MessageType.Reply,
       MessageType.ChatInputCommand,
       MessageType.ContextMenuCommand,
-    ].includes(message.type)
+    ].includes(message.type) &&
+    '_cacheType' in message
   ) {
     const embed = new EmbedBuilder()
     await addToEmbed(message, embed)
@@ -320,9 +364,11 @@ export async function messageToLog(
         `╞ ${cleanCodeBlockContent(embed.data.description).split('\n').join('\n╞ ')}`,
       )
     }
-  } else if (message.content) {
+  } else if (message.content || earlyContent.length > 0) {
     lines.push(
-      `┊ ${cleanCodeBlockContent(message.content).split('\n').join('\n┊ ')}`,
+      `┊ ${cleanCodeBlockContent(message.content + earlyContent.join('\n'))
+        .split('\n')
+        .join('\n┊ ')}`,
     )
   }
 
@@ -339,7 +385,9 @@ export async function messageToLog(
     lines.push(embedToLog(message.embeds[0], { minimal: true }))
 
     if (message.embeds.length > 1) {
-      lines.push(`╰╼ +${plural('embed', message.embeds.length - 1)} omitted`)
+      lines.push(
+        `╰╼ +${plural('embed', message.embeds.length - 1, { boldNumber: false })} omitted`,
+      )
     }
   }
 

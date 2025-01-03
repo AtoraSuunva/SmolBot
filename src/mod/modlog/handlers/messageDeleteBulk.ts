@@ -49,7 +49,7 @@ export const logMessageDeleteBulk = new SleetModule(
 
 const ARCHIVE_VIEWER = 'https://log.atora.dev/'
 const FILENAME = 'archive.json'
-const generateArchiveUrl = (channelId: string, attachmentId: string) =>
+const archiveLink = (channelId: string, attachmentId: string) =>
   `${ARCHIVE_VIEWER}${channelId}/${attachmentId}/${FILENAME}`
 
 async function needsAuditLog(
@@ -271,20 +271,39 @@ export async function messageDeleteBulkWithAuditLog(
           },
         ]
 
+  const formatted = logMessage.join('')
+  let content = ''
+
+  if (formatted.length < 1950) {
+    content = formatLog('🔥', 'Channel Purged', formatted)
+  } else {
+    content = formatLog(
+      '🔥',
+      'Channel Purged',
+      logMessage.shift()?.slice(0, 1950) ?? '',
+    )
+
+    files.unshift({
+      name: 'details.txt',
+      attachment: Buffer.from(logMessage.join('')),
+      description: 'Details too big to fit',
+    })
+  }
+
   const sentMessage = await channel.send({
-    content: formatLog('🔥', 'Channel Purged', logMessage.join('')),
+    content,
     files,
     allowedMentions: { parse: [] },
   })
 
   if (files.length > 0) {
-    const attachmentUrl = sentMessage.attachments.first()?.url
+    const attachmentUrl = sentMessage.attachments.last()?.url
 
     if (attachmentUrl) {
       const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
 
       await sentMessage.edit({
-        content: `${sentMessage.content}\n<${generateArchiveUrl(
+        content: `${sentMessage.content}\n<${archiveLink(
           channelId,
           attachmentId,
         )}>`,
