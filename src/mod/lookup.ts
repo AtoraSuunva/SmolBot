@@ -907,7 +907,7 @@ function trimToLast(string: string, substring: string): string {
  * @returns A JS Date representing the Snowflake
  */
 function snowflakeToDate(snowflake: string): Date {
-  return new Date(Number(SnowflakeUtil.deconstruct(snowflake).timestamp))
+  return new Date(SnowflakeUtil.timestampFrom(snowflake))
 }
 
 function formatDate(date: Date): string {
