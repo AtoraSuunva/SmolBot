@@ -2,7 +2,9 @@ import {
   type Attachment,
   EmbedBuilder,
   InteractionType,
-  type Message,
+  Message,
+  MessageReferenceType,
+  type MessageSnapshot,
   MessageType,
   escapeInlineCode,
   hyperlink,
@@ -24,10 +26,11 @@ interface QuoteOptions {
   includeAttachments?: boolean
   includeStickers?: boolean
   includeEmbeds?: boolean
+  isSnapshot?: boolean
 }
 
 export async function quoteMessage(
-  message: Message<true>,
+  message: Message<true> | MessageSnapshot,
   {
     includeAuthor = true,
     includeChannel = true,
@@ -35,36 +38,45 @@ export async function quoteMessage(
     includeAttachments = true,
     includeStickers = true,
     includeEmbeds = true,
+    isSnapshot = false,
   }: QuoteOptions = {},
 ): Promise<EmbedBuilder[]> {
   const embeds: EmbedBuilder[] = []
 
   const quoteContent = formatQuoteContent(message.content)
 
-  const authorLine = includeAuthor
-    ? formatUser(message.author, {
-        markdown: false,
-        id: false,
-        escapeMarkdown: false,
-      })
-    : ''
-  const channelLine = includeChannel ? `#${message.channel.name}` : ''
+  const authorLine =
+    includeAuthor && message.author
+      ? formatUser(message.author, {
+          markdown: false,
+          id: false,
+          escapeMarkdown: false,
+        })
+      : ''
+  const channelLine =
+    includeChannel && message.channel && 'name' in message.channel
+      ? `#${message.channel.name}`
+      : ''
 
   const embed = new EmbedBuilder()
     .setURL(message.url)
     .setDescription(quoteContent)
 
+  embeds.push(embed)
+
   if (includeAuthor || includeChannel) {
-    if (includeAuthor) {
+    const url = message.url ?? message.channel?.url ?? ''
+
+    if (includeAuthor && message.author) {
       embed.setAuthor({
         name: [authorLine, channelLine].join(' ∙ '),
         iconURL: message.author.displayAvatarURL(),
-        url: message.url,
+        url,
       })
     } else {
       embed.setAuthor({
-        name: [authorLine, channelLine].join(' ∙ '),
-        url: message.url,
+        name: channelLine,
+        url,
       })
     }
   }
@@ -89,16 +101,30 @@ export async function quoteMessage(
     )
   }
 
-  embeds.push(embed)
-
   if (message.member) {
     embed.setColor(message.member.displayColor)
+  }
+
+  if (
+    message.reference?.type === MessageReferenceType.Forward &&
+    message.messageSnapshots
+  ) {
+    const snapshot = message.messageSnapshots.first()
+    if (snapshot) {
+      embeds.push(...(await quoteMessage(snapshot, { isSnapshot: true })))
+    }
   }
 
   // There's some interesting properties based on the message type
   // We can show better detail than just copy-pasting the message by actually parsing it
   // https://discord.com/developers/docs/resources/channel#message-object-message-types
-  await addToEmbed(message, embed)
+  if (!isSnapshot && message instanceof Message) {
+    // Snapshots don't currently support any of the interesting message types
+    // so it's not worth the effort of adding support
+    await addToEmbed(message, embed)
+  } else {
+    embed.setTitle('╭→ Forwarded')
+  }
 
   // Can't have more than 4 images tiled together in a single embed, so any more than that we just add into a field
   let attachedImagesCount = 0

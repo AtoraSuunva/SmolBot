@@ -51,32 +51,32 @@ async function handleMessageCreate(message: Message) {
     return
   }
 
-  try {
-    const embeds = await getQuoteFor(
-      message.client,
-      message.author,
-      message.content,
-      true, // ignore <bracketed links>
-    )
+  const quotedMessage = await getMessageFromLink(
+    message.client,
+    message.content,
+    true, // ignore <bracketed links>
+  ).catch(() => null)
 
-    return message.reply({
+  if (!quotedMessage) {
+    return
+  }
+
+  const embeds = await makeQuoteFrom(quotedMessage, message.author)
+
+  message
+    .reply({
       embeds,
       allowedMentions: { parse: [], repliedUser: false },
     })
-  } catch {
-    return
-  }
+    .catch(() => null)
 }
 
 async function runQuote(interaction: ChatInputCommandInteraction) {
   const messageLink = interaction.options.getString('message_link', true)
 
   try {
-    const embeds = await getQuoteFor(
-      interaction.client,
-      interaction.user,
-      messageLink,
-    )
+    const message = await getMessageFromLink(interaction.client, messageLink)
+    const embeds = await makeQuoteFrom(message, interaction.user)
     return interaction.reply({ embeds })
   } catch (e) {
     quoteLogger.warn(e, 'Failed to generate quote for %s', messageLink)
@@ -114,12 +114,11 @@ function getMessageLinkIds(str: string): MessageLinkMatches | null {
   }
 }
 
-async function getQuoteFor(
+async function getMessageFromLink(
   client: Client,
-  user: User,
   content: string,
   ignoreBracketedLinks = false,
-): Promise<EmbedBuilder[]> {
+) {
   const matches = getMessageLinkIds(content)
 
   if (!matches) {
@@ -158,10 +157,17 @@ async function getQuoteFor(
     throw new Error('Message is not in a guild')
   }
 
+  return message
+}
+
+async function makeQuoteFrom(
+  message: Message<true>,
+  quotedBy: User,
+): Promise<EmbedBuilder[]> {
   const [quote, ...extraEmbeds] = await quoteMessage(message)
 
   quote.setFooter({
-    text: `Quoted by ${formatUser(user, {
+    text: `Quoted by ${formatUser(quotedBy, {
       markdown: false,
       id: false,
       escapeMarkdown: false,

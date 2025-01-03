@@ -7,7 +7,7 @@ import {
   EmbedBuilder,
   type GuildMember,
   InteractionType,
-  type Message,
+  Message,
   type MessageActionRowComponent,
   MessageReferenceType,
   type MessageSnapshot,
@@ -355,7 +355,7 @@ export async function messageToLog(
       MessageType.ChatInputCommand,
       MessageType.ContextMenuCommand,
     ].includes(message.type) &&
-    '_cacheType' in message
+    message instanceof Message
   ) {
     const embed = new EmbedBuilder()
     await addToEmbed(message, embed)
