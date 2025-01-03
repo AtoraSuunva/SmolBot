@@ -10,6 +10,7 @@ import {
 import { DateTime } from 'luxon'
 import createParse from 'parse-human-relative-time'
 import { SleetSlashCommand } from 'sleetcord'
+import { dateTimeFrom } from '../util/time.js'
 
 const parseHumanRelativeTime = createParse(DateTime)
 const timezones = Intl.supportedValuesOf('timeZone')
@@ -31,7 +32,7 @@ export const timestamp = new SleetSlashCommand(
       {
         name: 'date_time',
         description:
-          'The date & time to use as reference (ISO 8601 YYYY-MM-DDTHH:MM:SS) (default: now)',
+          'The date & time to use as reference (ISO 8601 YYYY-MM-DDTHH:MM:SS or unix ms) (default: now)',
         type: ApplicationCommandOptionType.String,
       },
       {
@@ -79,7 +80,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   const anchor = dateTime
-    ? DateTime.fromISO(dateTime, { zone: timezone })
+    ? dateTimeFrom(dateTime, timezone)
     : DateTime.now().setZone(timezone)
 
   if (!anchor.isValid) {
@@ -102,7 +103,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
     .join('\n')
 
   await interaction.reply({
-    content: `${header}\n${content}`,
+    content: `${header}\n${content}\nUnix: \`${result.toMillis()}\``,
     flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 }
