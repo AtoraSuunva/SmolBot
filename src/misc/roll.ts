@@ -4,6 +4,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand, escapeAllMarkdown } from 'sleetcord'
 
@@ -61,7 +62,7 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
     return interaction.reply({
       content:
         'See https://dice-roller.github.io/documentation/guide/notation/ for more information on dice notation.',
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   }
 
@@ -74,7 +75,7 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
 
     return interaction.reply({
       content: `There was an error in your dice notation: ${message}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
     })
   }
@@ -106,12 +107,12 @@ async function runRoll(interaction: ChatInputCommandInteraction) {
           attachment: Buffer.from(split.join(' = ')),
         },
       ],
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   }
   return interaction.reply({
     content,
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
     allowedMentions: { parse: [] },
   })
 }

@@ -4,6 +4,7 @@ import {
   type ChatInputCommandInteraction,
   Constants,
   InteractionContextType,
+  MessageFlags,
   type PrivateThreadChannel,
   type PublicThreadChannel,
   type ThreadEditOptions,
@@ -103,39 +104,41 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   if (!thread) {
     return interaction.reply({
       content: 'Please provide a thread to lock',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!interaction.inGuild()) {
     return interaction.reply({
       content: 'You can only use this command in a server',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!thread.isThread()) {
     return interaction.reply({
       content: 'You can only lock threads & forum posts',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (thread.archived && thread.locked) {
     return interaction.reply({
       content: 'This thread is already archived & locked',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!thread.editable) {
     return interaction.reply({
       content: 'I cannot edit this thread',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
-  const defer = interaction.deferReply({ ephemeral })
+  const defer = interaction.deferReply({
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 
   if (!ephemeral) {
     await defer

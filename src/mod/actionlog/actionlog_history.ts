@@ -9,6 +9,7 @@ import {
   EmbedBuilder,
   type Guild,
   type InteractionEditReplyOptions,
+  MessageFlags,
   StringSelectMenuBuilder,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
@@ -118,7 +119,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
     if (componentInteraction.user.id !== interaction.user.id) {
       await componentInteraction.reply({
         content: 'Only the user who searched can use this button',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
       return
     }
@@ -149,7 +150,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
       if (!action) {
         await componentInteraction.reply({
           content: `Action #${actionID} version ${version} not found`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
         return
       }

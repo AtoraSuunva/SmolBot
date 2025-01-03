@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -43,7 +44,7 @@ async function warningHistoryRun(interaction: ChatInputCommandInteraction) {
   if (!warningHistory) {
     await interaction.reply({
       content: `Warning #${warningID} not found`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

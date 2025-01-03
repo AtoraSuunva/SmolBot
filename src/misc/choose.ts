@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { plural } from '../util/format.js'
@@ -60,7 +61,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
   if (inputOptions.length === 0) {
     await interaction.reply({
       content: "You didn't give me any options to choose from!",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -68,7 +69,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
   if (pickCount <= 0) {
     await interaction.reply({
       content: "I can't pick less than 1 option!",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -81,7 +82,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
   if (options.length === 1) {
     await interaction.reply({
       content: `There's only 1 option, so **${options[0]}**!\nUse commas (,) to separate multiple options if you didn't mean to only put 1 option, like this "otter, ferret, weasel".`,
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
       allowedMentions: { parse: [] },
     })
     return
@@ -93,7 +94,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
         'option',
         MAX_OPTIONS,
       )}! You gave ${plural('option', options.length)}.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -101,7 +102,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
   if (pickCount > MAX_PICKS) {
     await interaction.reply({
       content: `You can't pick more than ${plural('option', MAX_PICKS)}!`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -112,7 +113,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
         'option',
         options.length,
       )}!`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -142,12 +143,12 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
           attachment: Buffer.from(content, 'utf-8'),
         },
       ],
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   } else {
     await interaction.reply({
       content,
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
       allowedMentions: { parse: [] },
     })
   }

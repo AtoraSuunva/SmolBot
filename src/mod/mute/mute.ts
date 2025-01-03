@@ -16,6 +16,7 @@ import {
   GuildMember,
   type GuildTextBasedChannel,
   InteractionContextType,
+  MessageFlags,
   type OverwriteData,
   OverwriteType,
   type PartialGuildMember,
@@ -37,6 +38,7 @@ import {
 } from 'sleetcord'
 import { SECOND, baseLogger, notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
+import { responseMessageLink } from '../../util/format.js'
 
 const mutedRoles = [
   'muted',
@@ -112,8 +114,8 @@ export const mute = new SleetSlashCommand(
           !channel?.permissionsFor(i.user)?.has('ManageChannels')
         ) {
           await i.reply({
-            content: 'No.',
-            ephemeral: true,
+            content: "You don't have permission to do that.",
+            flags: MessageFlags.Ephemeral,
           })
           return
         }
@@ -122,7 +124,7 @@ export const mute = new SleetSlashCommand(
           await i.reply({
             content:
               "That isn't a text channel, or the channel doesn't exist anymore.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           })
           return
         }
@@ -287,16 +289,16 @@ async function runMute(
   if (members.length === 0) {
     await interaction.reply({
       content: `Failed to resolve any members to ${action}, are they still in the server?`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
 
   const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
-  const deferReply = await interaction.deferReply({
-    ephemeral,
-    fetchReply: true,
+  const response = await interaction.deferReply({
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+    withResponse: true,
   })
 
   const config: Prisma.MuteConfigGetPayload<true> =
@@ -403,7 +405,8 @@ async function runMute(
     totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
 
   const content = `**${capitalAction}:**${succ}${fail}`
-  const byLine = `By ${formatUser(interactionMember)} in ${deferReply.url}${ephemeral ? ' (ephemeral)' : ''}`
+  const url = responseMessageLink(interaction, response)
+  const byLine = `By ${formatUser(interactionMember)} in ${url}${ephemeral ? ' (ephemeral)' : ''}`
 
   const formattedAddendum =
     addendum && addendum.length > 0 ? `\n${addendum}` : ''

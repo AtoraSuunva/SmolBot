@@ -1,5 +1,9 @@
 import type { ModMailTicketModalField } from '@prisma/client'
-import { type ChatInputCommandInteraction, TextInputStyle } from 'discord.js'
+import {
+  type ChatInputCommandInteraction,
+  MessageFlags,
+  TextInputStyle,
+} from 'discord.js'
 import { SleetSlashSubcommand, escapeAllMarkdown, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 import { FIELD_MODMAIL_ID } from './utils.js'
@@ -32,7 +36,7 @@ async function runView(interaction: ChatInputCommandInteraction) {
   if (fields.length === 0) {
     await interaction.reply({
       content: 'No fields found for that modmail ID',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

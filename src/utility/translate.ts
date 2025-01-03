@@ -7,6 +7,7 @@ import {
   InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
+  MessageFlags,
   cleanCodeBlockContent,
   codeBlock,
   inlineCode,
@@ -23,9 +24,7 @@ import { notNullish } from 'sleetcord-common'
 type Language = typeof languages
 type LanguageKey = keyof Language
 
-const languageEntries = Object.entries(
-  languages as unknown as [string, string],
-).map(([iso, name]) => ({
+const languageEntries = Object.entries(languages).map(([iso, name]) => ({
   original: {
     iso,
     name,
@@ -168,7 +167,7 @@ async function runTranslateMessage(
     await interaction.reply({
       content:
         "The message you're trying to translate doesn't have any text content to translate.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
 
     return
@@ -205,7 +204,7 @@ async function runTranslate(
   if (!from) {
     interaction.reply({
       content: `${inlineCode(escapeAllMarkdown(fromInput))} is not a valid language to translate from.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -215,13 +214,13 @@ async function runTranslate(
   if (!to) {
     interaction.reply({
       content: `${inlineCode(escapeAllMarkdown(toInput))} is not a valid language to translate to.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
 
   await interaction.deferReply({
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 
   let res: Awaited<ReturnType<typeof translate<string>>>

@@ -1,8 +1,9 @@
-import type {
-  ChatInputCommandInteraction,
-  GuildMember,
-  GuildTextBasedChannel,
-  Message,
+import {
+  type ChatInputCommandInteraction,
+  type GuildMember,
+  type GuildTextBasedChannel,
+  type Message,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
@@ -36,8 +37,8 @@ const messageInfo = `There is (some) support for dynamic welcome message content
 
 function runMessage(interaction: ChatInputCommandInteraction) {
   return interaction.reply({
-    ephemeral: true,
     content: messageInfo,
+    flags: MessageFlags.Ephemeral,
   })
 }
 

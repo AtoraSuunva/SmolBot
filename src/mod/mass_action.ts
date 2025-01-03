@@ -9,6 +9,7 @@ import {
   type Guild,
   GuildMember,
   InteractionContextType,
+  MessageFlags,
   User,
   codeBlock,
 } from 'discord.js'
@@ -427,7 +428,7 @@ export async function runMassAction({
       })
     } else {
       await interaction.reply({
-        ephemeral,
+        flags: ephemeral ? MessageFlags.Ephemeral : '0',
         content:
           'You must provide either a list of users or a file of user IDs',
       })
@@ -436,7 +437,9 @@ export async function runMassAction({
   }
 
   if (!interaction.deferred && !interaction.replied) {
-    await interaction.deferReply({ ephemeral })
+    await interaction.deferReply({
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
+    })
   }
 
   const userList: string[] = []

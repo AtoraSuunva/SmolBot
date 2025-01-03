@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { plural } from '../util/format.js'
@@ -49,7 +50,7 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
   if (count <= 0) {
     await interaction.reply({
       content: "I can't flip less than 1 coin!",
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
     return
   }
@@ -57,7 +58,7 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
   if (count > MAX_COINS) {
     await interaction.reply({
       content: `I can't flip more than ${plural('coin', MAX_COINS)} at once!`,
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
     return
   }
@@ -83,7 +84,7 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
     const result = coin === HEAD ? 'heads' : 'tails'
     await interaction.reply({
       content: `I flipped a coin and got ${result} ${coin}!`,
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   } else {
     await interaction.reply({
@@ -91,7 +92,7 @@ async function runFlip(interaction: ChatInputCommandInteraction) {
         'head',
         headCount,
       )} and ${plural('tail', tailCount)}!\n${results.join(', ')}`,
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   }
 }

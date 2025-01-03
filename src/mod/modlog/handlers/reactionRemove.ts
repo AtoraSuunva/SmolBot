@@ -1,12 +1,11 @@
 import {
   type APIEmbed,
-  type GuildEmoji,
+  type Emoji,
   LimitedCollection,
   type MessageReaction,
   type MessageReactionEventDetails,
   type PartialMessageReaction,
   type PartialUser,
-  type ReactionEmoji,
   type User,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
@@ -106,7 +105,7 @@ async function messageReactionRemove(
   })
 }
 
-function formatEmoji(emoji: GuildEmoji | ReactionEmoji): string {
+function formatEmoji(emoji: Emoji): string {
   return `${escapeAllMarkdown(emoji.name ?? '?')}${emoji.id ? ` (${emoji.id})` : ''}`
 }
 

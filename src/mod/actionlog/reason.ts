@@ -5,6 +5,7 @@ import {
   type ChatInputCommandInteraction,
   type Guild,
   InteractionContextType,
+  MessageFlags,
   type User,
 } from 'discord.js'
 import {
@@ -162,13 +163,13 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   if (reason === null && redactUser === null && repost === null) {
     await interaction.reply({
       content: 'You did not provide any changes to make, so nothing was done',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
 
   await interaction.deferReply({
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 
   let actionIDs: number[]

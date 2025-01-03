@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   ChannelType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -45,7 +46,7 @@ async function runLockThreadConfig(interaction: ChatInputCommandInteraction) {
   if (!oldConfig) {
     interaction.reply({
       content: `There is no old config to delete for ${sourceChannel}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
 
     return

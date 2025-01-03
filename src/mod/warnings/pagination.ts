@@ -8,6 +8,7 @@ import {
   type EmbedAuthorOptions,
   EmbedBuilder,
   type InteractionEditReplyOptions,
+  MessageFlags,
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
@@ -137,7 +138,7 @@ export async function respondWithPaginatedWarnings(
     if (buttonInteraction.user.id !== interaction.user.id) {
       await buttonInteraction.reply({
         content: 'Only the user who searched can use this button',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
       return
     }

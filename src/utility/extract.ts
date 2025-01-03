@@ -6,6 +6,7 @@ import {
   GuildMember,
   type GuildTextBasedChannel,
   InteractionContextType,
+  MessageFlags,
   type TextBasedChannel,
   cleanCodeBlockContent,
   codeBlock,
@@ -57,9 +58,9 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
 
   if (!interaction.channel) {
     return interaction.reply({
-      ephemeral: true,
       content:
         "Failed to get the channel you're running this command in, try again later?\nIf this is a private thread, either give me `Manage Thread` permissions or `@`mention to add me to this thread.",
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -78,9 +79,9 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
 
   if (!extractFrom) {
     return interaction.reply({
-      ephemeral: true,
       content:
-        'You did not provide a url, file, and I failed to find any file to extract',
+        'You did not provide a url or file and I failed to find any file to extract',
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -89,18 +90,18 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
 
     if (text.length === 0) {
       return interaction.reply({
-        ephemeral: true,
         content: 'There was no text to extract',
+        flags: MessageFlags.Ephemeral,
       })
     }
 
     if (text.length > limit) {
       return interaction.reply({
-        ephemeral: true,
         content: `The text is too long to extract (${plural(
           'character',
           text.length,
         )} of **${limit}** max)`,
+        flags: MessageFlags.Ephemeral,
       })
     }
 
@@ -110,10 +111,10 @@ async function runExtract(interaction: ChatInputCommandInteraction) {
     await splitSend(interaction.channel, text, { code: true })
   } catch (e) {
     return interaction.reply({
-      ephemeral: true,
       content: `Failed to extract text from the provided url.\n${
         e instanceof Error ? e.message : String(e)
       }`,
+      flags: MessageFlags.Ephemeral,
     })
   }
 

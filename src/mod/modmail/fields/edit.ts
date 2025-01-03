@@ -1,5 +1,5 @@
 import type { ModMailTicketModalField } from '@prisma/client'
-import type { ChatInputCommandInteraction } from 'discord.js'
+import { type ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 import { FIELD_OPTIONS } from './utils.js'
@@ -46,7 +46,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
   if (!previousField) {
     await interaction.reply({
       content: 'No field found for that modmail and custom ID pair.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
 
     return

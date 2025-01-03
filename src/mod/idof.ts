@@ -12,6 +12,7 @@ import {
   type GuildMember,
   type Interaction,
   InteractionContextType,
+  MessageFlags,
   type RestOrArray,
   type Snowflake,
   UserSelectMenuBuilder,
@@ -189,7 +190,7 @@ async function handleUserSelectInteraction(
 
   interaction.reply({
     content: resultFormat(members),
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
     components: [ACTION_BUTTON_ROW, selectRow],
   })
 }
@@ -198,7 +199,7 @@ async function handleMentionButton(interaction: ButtonInteraction) {
   const members = await getInteractionMembers(interaction)
 
   interaction.reply({
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
     content: members.map((m) => `<@${m}>`).join('\n') || 'No members selected',
   })
 }
@@ -207,7 +208,7 @@ async function handleIDButton(interaction: ButtonInteraction) {
   const members = await getInteractionMembers(interaction)
 
   interaction.reply({
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
     content: members.join('\n') || 'No members selected',
   })
 }

@@ -4,6 +4,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
 
@@ -139,7 +140,7 @@ async function runConvert(interaction: ChatInputCommandInteraction) {
 
   await interaction.reply({
     content: `${value.toLocaleString()}${fromUnit} = ${val.toLocaleString()}${unit}`,
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
     allowedMentions: { parse: [] },
   })
 }

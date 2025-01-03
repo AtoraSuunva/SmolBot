@@ -19,6 +19,7 @@ import {
   type Interaction,
   InteractionContextType,
   type Invite,
+  MessageFlags,
   SnowflakeUtil,
   type Sticker,
   User,
@@ -105,7 +106,9 @@ async function lookupAndRespond(
 ) {
   const { client } = interaction
 
-  await interaction.deferReply({ ephemeral })
+  await interaction.deferReply({
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 
   let error: unknown | null
 

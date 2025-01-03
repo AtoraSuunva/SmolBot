@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
   time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
@@ -49,7 +50,7 @@ function runTimeSince(interaction: ChatInputCommandInteraction) {
   if (Number.isNaN(parsedDate)) {
     return interaction.reply({
       content: 'Could not parse date, try `yyyy-mm-dd`.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -62,6 +63,6 @@ function runTimeSince(interaction: ChatInputCommandInteraction) {
       dateSeconds,
       'R',
     )}) is ${duration}`,
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 }

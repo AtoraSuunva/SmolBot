@@ -8,6 +8,7 @@ import {
   GuildMember,
   InteractionContextType,
   type Message,
+  MessageFlags,
   type Snowflake,
   User,
 } from 'discord.js'
@@ -157,7 +158,9 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
 
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
 
-  await interaction.deferReply({ ephemeral })
+  await interaction.deferReply({
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 
   /**
    * Fetch messages after this offset
