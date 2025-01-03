@@ -9,6 +9,7 @@ import {
   GuildMember,
   type Interaction,
   InteractionContextType,
+  MessageFlags,
   type Role,
   codeBlock,
 } from 'discord.js'
@@ -90,7 +91,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content:
         'Failed to parse any roles to show, did you use the right format?\n`[emoji|custom emote] [description] @Role Mention` 1 or more times.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -163,7 +164,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
   if (fails.length > 0) {
     await interaction.reply({
       content: `Found some issues while trying to setup roles, try again:\n${codeBlock(fails.join('\n'))}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -184,7 +185,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
 
   await interaction.reply({
     content: 'Role buttons sent!',
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 }
 
@@ -199,7 +200,7 @@ async function handleInteractionCreate(interaction: Interaction) {
   if (command !== ROLE_BUTTON_ID) return
 
   await interaction.deferReply({
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 
   const guild = await getGuild(interaction, true)

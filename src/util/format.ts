@@ -1,8 +1,12 @@
 import {
+  type BaseInteraction,
   type ForumChannel,
   type Guild,
+  type InteractionCallbackResponse,
+  type Snowflake,
   cleanCodeBlockContent,
   codeBlock,
+  messageLink,
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
@@ -252,4 +256,21 @@ function padEndTo(str: string, length: number, character = ' '): string {
   const offset = str.length - stringWidth(str)
 
   return str.padEnd(length + offset, character)
+}
+
+export function responseMessageLink(
+  interaction: BaseInteraction & { channelId: Snowflake },
+  response: InteractionCallbackResponse,
+) {
+  if (!response.interaction.responseMessageId) {
+    return '<missing response message id>'
+  }
+
+  return interaction.inGuild()
+    ? messageLink(
+        interaction.channelId,
+        response.interaction.responseMessageId,
+        interaction.guildId,
+      )
+    : messageLink(interaction.channelId, response.interaction.responseMessageId)
 }

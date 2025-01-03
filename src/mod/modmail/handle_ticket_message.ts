@@ -32,10 +32,9 @@ export const handle_ticket_message = new SleetModule(
 
 async function handleMessageUpdate(
   _oldMessage: Message | PartialMessage,
-  newMessage: Message | PartialMessage,
+  newMessage: Message,
 ) {
-  const message = newMessage.partial ? await newMessage.fetch() : newMessage
-  await syncMessage(message, true)
+  await syncMessage(newMessage, true)
 }
 
 async function handleMessageCreate(message: Message) {

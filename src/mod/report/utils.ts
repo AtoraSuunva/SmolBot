@@ -13,6 +13,7 @@ import {
   type EmbedFooterOptions,
   type Interaction,
   type MessageActionRowComponent,
+  MessageFlags,
   type ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
@@ -25,6 +26,7 @@ import {
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
+import { responseMessageLink } from '../../util/format.js'
 import type { ReportConfigResolved } from './manage/config.js'
 
 const REPORT = 'report'
@@ -96,7 +98,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   if (!interaction.inGuild()) {
     await interaction.reply({
       content: 'You can only use report buttons in servers.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -110,7 +112,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   if (!report || report.guildID !== interaction.guildId) {
     await interaction.reply({
       content: 'That report does not exist.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -122,7 +124,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   if (!user) {
     await interaction.reply({
       content: 'That user is invalid or does not exist.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -140,7 +142,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
     default:
       return interaction.reply({
         content: 'Somehow you sent an invalid command. Good job.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
   }
 }
@@ -313,7 +315,7 @@ async function blockReportUser(
 
     return interaction.reply({
       content: 'This user is already blocked from reporting.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -366,16 +368,13 @@ async function blockReportUser(
     },
   })
 
-  const reply = await modalInteraction.reply({
+  const response = await modalInteraction.reply({
     content: `Blocked user from reporting. Reason:\n${blockQuote(reason)}`,
-    fetchReply: true,
+    withResponse: true,
   })
 
-  const newLog = `${interaction.user} ${hyperlink(
-    'Blocked the user',
-    reply.url,
-  )}`
-
+  const url = responseMessageLink(interaction, response)
+  const newLog = `${interaction.user} ${hyperlink('Blocked the user', url)}`
   const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
   actionLog.setDescription(
@@ -428,7 +427,7 @@ async function unblockReportUser(
 
     return interaction.reply({
       content: 'This user is not blocked from reporting.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 

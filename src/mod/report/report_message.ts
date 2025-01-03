@@ -5,6 +5,7 @@ import {
   InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
+  MessageFlags,
   type ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
@@ -36,7 +37,7 @@ async function runReportMessage(
   if (!message.inGuild()) {
     await interaction.reply({
       content: 'You can only report messages from servers.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -48,7 +49,7 @@ async function runReportMessage(
   if (typeof config === 'string') {
     await interaction.reply({
       content: config,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -153,13 +154,13 @@ async function runReportMessage(
       content:
         "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     await modalInteraction.reply({
       content: `Failed to send report: ${msg}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 }

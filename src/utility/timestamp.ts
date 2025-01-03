@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
   TimestampStyles,
   time,
 } from 'discord.js'
@@ -84,7 +85,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
   if (!anchor.isValid) {
     await interaction.reply({
       content: `Invalid date time:\n> ${anchor.invalidExplanation}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
     })
     return
@@ -100,5 +101,8 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
     .map((t) => `\`${t}\` • ${t}`)
     .join('\n')
 
-  await interaction.reply({ content: `${header}\n${content}`, ephemeral })
+  await interaction.reply({
+    content: `${header}\n${content}`,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 }

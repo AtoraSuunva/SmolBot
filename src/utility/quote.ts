@@ -8,6 +8,7 @@ import {
   type Guild,
   InteractionContextType,
   type Message,
+  MessageFlags,
   type TextBasedChannel,
   type User,
 } from 'discord.js'
@@ -80,8 +81,8 @@ async function runQuote(interaction: ChatInputCommandInteraction) {
   } catch (e) {
     quoteLogger.warn(e, 'Failed to generate quote for %s', messageLink)
     return interaction.reply({
-      ephemeral: true,
       content: e instanceof Error ? e.message : String(e),
+      flags: MessageFlags.Ephemeral,
     })
   }
 }

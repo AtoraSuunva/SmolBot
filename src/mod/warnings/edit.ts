@@ -3,6 +3,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -73,7 +74,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
   if (!oldWarning) {
     await interaction.reply({
       content: 'That warning does not exist',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

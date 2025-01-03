@@ -6,6 +6,7 @@ import {
   EmbedBuilder,
   type EmbedFooterOptions,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, getGuild } from 'sleetcord'
 import { fetchConfig } from './manage/config.js'
@@ -56,7 +57,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
   if (typeof config === 'string') {
     await interaction.reply({
       content: config,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -108,13 +109,13 @@ async function runReport(interaction: ChatInputCommandInteraction) {
       content:
         "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     await interaction.reply({
       content: `Failed to send report: ${msg}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 }

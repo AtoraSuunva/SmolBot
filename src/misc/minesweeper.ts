@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { PreRunError, SleetSlashCommand } from 'sleetcord'
 
@@ -68,8 +69,8 @@ function runMinesweeper(interaction: ChatInputCommandInteraction) {
 
   if (message.length > 2000) {
     return interaction.reply({
-      ephemeral: true,
       content: 'The board is too big! Try a smaller one!',
+      flags: MessageFlags.Ephemeral,
     })
   }
 

@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
@@ -54,7 +55,7 @@ async function runConfigServer(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content:
         "Mod team name is an invalid username, [see Discord's documentation](<https://discord.com/developers/docs/resources/user#usernames-and-nicknames>) for details",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

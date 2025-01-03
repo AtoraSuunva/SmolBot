@@ -26,7 +26,7 @@ async function runRestoreEmbeds(
   if (!flags.has(MessageFlags.SuppressEmbeds)) {
     return interaction.reply({
       content: 'This message does not have suppressed embeds.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -35,7 +35,7 @@ async function runRestoreEmbeds(
   if (interaction.channel === null) {
     return interaction.reply({
       content: 'This message is not in a cached channel.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -43,6 +43,6 @@ async function runRestoreEmbeds(
 
   return interaction.reply({
     content: 'Embeds restored.',
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 }

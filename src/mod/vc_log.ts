@@ -5,6 +5,7 @@ import {
   Constants,
   type GuildTextBasedChannel,
   InteractionContextType,
+  MessageFlags,
   type VoiceState,
   time,
 } from 'discord.js'
@@ -80,7 +81,7 @@ async function runVCLogConfig(interaction: ChatInputCommandInteraction) {
 
   await interaction.reply({
     content: 'VC logging configured',
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 }
 
@@ -97,7 +98,7 @@ async function runDisableVClog(interaction: ChatInputCommandInteraction) {
   if (!vcConfig) {
     await interaction.reply({
       content: 'VC logging is not configured',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -110,7 +111,7 @@ async function runDisableVClog(interaction: ChatInputCommandInteraction) {
 
   await interaction.reply({
     content: 'VC logging disabled',
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 }
 

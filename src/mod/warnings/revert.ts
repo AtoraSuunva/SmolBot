@@ -3,6 +3,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -58,7 +59,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
     const versions = warningHistory.map((w) => w.version).join(', ')
     await interaction.reply({
       content: `No version ${version} found for warning #${warningID} version ${version}\nAvailable versions: ${versions}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

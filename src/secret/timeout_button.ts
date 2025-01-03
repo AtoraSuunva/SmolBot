@@ -7,6 +7,7 @@ import {
   type ChatInputCommandInteraction,
   type Interaction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
@@ -73,12 +74,12 @@ async function handleInteractionCreate(interaction: Interaction) {
 
         await interaction.reply({
           content: `You have been timed out for ${plural('second', time)}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       } catch {
         await interaction.reply({
           content: 'Failed to time you out, pretend it happened.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
     }

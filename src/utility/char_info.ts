@@ -10,6 +10,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
@@ -64,7 +65,7 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
   if (string.length === 0) {
     await interaction.reply({
       content: "You didn't give me any string to get information about!",
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
     return
   }
@@ -85,12 +86,12 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
           attachment: Buffer.from(stripVTControlCharacters(output), 'utf-8'),
         },
       ],
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   } else {
     await interaction.reply({
       content: codeBlock('ansi', output),
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
       allowedMentions: { parse: [] },
     })
   }

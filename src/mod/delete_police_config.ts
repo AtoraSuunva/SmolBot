@@ -5,6 +5,7 @@ import {
   type ChatInputCommandInteraction,
   InteractionContextType,
   type Message,
+  MessageFlags,
   type PartialMessage,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
@@ -103,7 +104,7 @@ async function runDeletePolice(interaction: ChatInputCommandInteraction) {
       await interaction.reply({
         content:
           'Quick delete police is not configured, use `/delete_police_config` to configure it.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
       return
     }

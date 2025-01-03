@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, makeChoices } from 'sleetcord'
@@ -76,7 +77,7 @@ async function runManualLog(interaction: ChatInputCommandInteraction) {
   })
 
   await interaction.reply({
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
     content: codeBlock(log),
   })
 }

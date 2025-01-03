@@ -1,4 +1,8 @@
-import { type ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
+import {
+  type ChatInputCommandInteraction,
+  EmbedBuilder,
+  MessageFlags,
+} from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const fields = new SleetSlashSubcommand(
@@ -43,7 +47,7 @@ async function runHelp(interaction: ChatInputCommandInteraction) {
   ])
 
   await interaction.reply({
-    ephemeral: true,
     embeds: [embed],
+    flags: MessageFlags.Ephemeral,
   })
 }

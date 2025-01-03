@@ -3,6 +3,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   Constants,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild, makeChoices } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
@@ -194,7 +195,7 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
   if (!channelID) {
     await interaction.reply({
       content: 'Please specify a channel to log to.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

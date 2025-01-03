@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   InteractionContextType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand, getTextBasedChannel, inGuildGuard } from 'sleetcord'
 
@@ -40,22 +41,22 @@ async function runSend(interaction: ChatInputCommandInteraction) {
 
   if (channel === null) {
     return interaction.reply({
-      ephemeral: true,
       content: 'Failed to get the channel to send a message in.',
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!channel.permissionsFor(interaction.user)?.has('SendMessages')) {
     return interaction.reply({
-      ephemeral: true,
       content: `You do not have permission to send messages in ${channel}`,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!channel.permissionsFor(interaction.client.user)?.has('SendMessages')) {
     return interaction.reply({
-      ephemeral: true,
       content: `I do not have permission to send messages in ${channel}`,
+      flags: MessageFlags.Ephemeral,
     })
   }
 

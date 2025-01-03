@@ -1,5 +1,9 @@
 import type { ModMailTicketModalField } from '@prisma/client'
-import { type ChatInputCommandInteraction, TextInputStyle } from 'discord.js'
+import {
+  type ChatInputCommandInteraction,
+  MessageFlags,
+  TextInputStyle,
+} from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 import { FIELD_OPTIONS } from './utils.js'
@@ -55,7 +59,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
   if (titleField) {
     await interaction.reply({
       content: `You already have a field set to be used as the title: \`${titleField.customID}\`. Either edit or remove that field first.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -64,7 +68,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     await interaction.reply({
       content:
         'You can only have up to 5 fields in a modmail ticket modal! You need to remove a field first.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }

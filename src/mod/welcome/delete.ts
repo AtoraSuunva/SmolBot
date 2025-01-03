@@ -6,6 +6,7 @@ import {
   type ChatInputCommandInteraction,
   ComponentType,
   type Guild,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
@@ -25,7 +26,7 @@ export const deleteCommand = new SleetSlashSubcommand(
 async function runDelete(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  const defer = interaction.deferReply({ fetchReply: true })
+  await interaction.deferReply()
 
   const guild = await getGuild(interaction, true)
 
@@ -34,8 +35,6 @@ async function runDelete(
       guildID: guild.id,
     },
   })
-
-  const message = await defer
 
   if (welcome === null) {
     return void interaction
@@ -54,7 +53,7 @@ async function runDelete(
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
 
-  await interaction.editReply({
+  const message = await interaction.editReply({
     content: 'Are you sure? You **CANNOT** undo this!!!',
     components: [row],
   })
@@ -74,8 +73,8 @@ async function runDelete(
       collector.stop()
     } else {
       await i.reply({
-        ephemeral: true,
         content: `Only ${interaction.user} can confirm this deletion.`,
+        flags: MessageFlags.Ephemeral,
       })
     }
   })
@@ -99,7 +98,7 @@ async function deleteWelcomeSettingsFrom(
   interaction: ButtonInteraction,
 ) {
   const defer = interaction.deferReply({
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 
   await prisma.welcomeSettings

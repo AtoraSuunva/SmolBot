@@ -10,6 +10,7 @@ import {
   type ChatInputCommandInteraction,
   EmbedBuilder,
   type Interaction,
+  MessageFlags,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -172,7 +173,7 @@ async function runCreateModMailButton(
     interaction.reply({
       content:
         'You cannot create threads in this channel type. Try a text channel, announcement channel, or forum channel.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     return
   }
@@ -189,7 +190,7 @@ async function runCreateModMailButton(
 
   const forumTag = interaction.options.getString('forum_tag') ?? ''
 
-  await interaction.deferReply({ ephemeral: true })
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
   // Create the button
   const button = new ButtonBuilder()
@@ -255,7 +256,10 @@ async function handleModMailButtonInteraction(interaction: Interaction) {
       })
       break
     default:
-      await interaction.reply({ content: 'Unknown action', ephemeral: true })
+      await interaction.reply({
+        content: 'Unknown action',
+        flags: MessageFlags.Ephemeral,
+      })
   }
 }
 
@@ -310,7 +314,7 @@ async function handleCreateTicketButton(
       if (tickets >= config.maxOpenTickets) {
         await interaction.reply({
           content: `You have reached the maximum number of open tickets (${tickets}/${config.maxOpenTickets}).\nYou can create more tickets once a moderator closes some of your existing tickets.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
         return
       }
@@ -342,7 +346,7 @@ async function handleCreateTicketButton(
 
         await interaction.reply({
           content: `You are creating tickets too quickly, try again ${time(nextTime, 'R')}.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
         return
       }
@@ -394,7 +398,7 @@ async function handleCreateTicketButton(
 
   if (!int) return
 
-  await int.deferReply({ ephemeral: true })
+  await int.deferReply({ flags: MessageFlags.Ephemeral })
 
   // Create the modmail ticket
   const modChannel = interaction.guild?.channels.cache.get(forumId)

@@ -9,6 +9,7 @@ import {
   InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
+  MessageFlags,
   type PartialMessage,
   cleanCodeBlockContent,
   codeBlock,
@@ -66,12 +67,8 @@ const editSweeper = (value: EditStoreEntry) =>
 
 function handleMessageUpdate(
   oldMessage: Message | PartialMessage,
-  newMessage: Message | PartialMessage,
+  newMessage: Message,
 ) {
-  if (newMessage.partial) {
-    return
-  }
-
   const previousEdits = editStore.get(newMessage.id) ?? {
     lastEditTimestamp: 0,
     edits: [],
@@ -99,7 +96,7 @@ function runUneditSlashCommand(interaction: ChatInputCommandInteraction) {
 
   if (messageID === null) {
     return interaction.reply({
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       content: 'Invalid message link or message ID.',
     })
   }
@@ -123,7 +120,7 @@ async function runUnedit(
 
   if (edits.length === 0) {
     return interaction.reply({
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       content: 'That message has no cached edits, or was never edited',
     })
   }
@@ -148,7 +145,7 @@ async function runUnedit(
   return interaction.reply({
     content,
     files,
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
     allowedMentions: { parse: [] },
   })
 }
