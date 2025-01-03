@@ -96,6 +96,12 @@ export async function messageDeleteWithAuditLog(
   const attachProxy = message.attachments.map((a) =>
     formatEscapedLink(a.name, a.proxyURL),
   )
+
+  const forwardedAttach = message.messageSnapshots
+    .values()
+    .flatMap((m) => m.attachments.map((a) => formatEscapedLink(a.name, a.url)))
+    .toArray()
+
   const stickers = message.stickers.map((s) => formatEscapedLink(s.name, s.url))
 
   const messageContent = await messageArrayToLog([
@@ -108,6 +114,10 @@ export async function messageDeleteWithAuditLog(
   let msg = `(${message.id}) in ${message.channel ?? '#deleted-channel'}${message.channel ? ` around ${message.url}` : ''} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${edits.length > 1 ? `, ${plural('revision', edits.length)}` : ''}\n${
     attachProxy.length > 0
       ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
+      : ''
+  }${
+    forwardedAttach.length > 0
+      ? `Forwarded Attachments: ${forwardedAttach.join(', ')}\n`
       : ''
   }${stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : ''}`
 
@@ -224,6 +234,8 @@ interface LogMessageOptions {
   includeStickers?: boolean
   /** Include `╰┮ Poll: Question` followed by `├╼ Answer (votes)` */
   includePoll?: boolean
+  /** String to use for the left line, default `┊` */
+  leftLine?: string
 }
 
 interface MessageLogOutput {
@@ -250,6 +262,7 @@ export async function messageToLog(
     includeComponents = true,
     includeStickers = true,
     includePoll = true,
+    leftLine = '┊',
   }: LogMessageOptions = {},
 ): Promise<MessageLogOutput> {
   const lines: string[] = []
@@ -310,6 +323,7 @@ export async function messageToLog(
           includeReference: false,
           includeTimestamp: false,
           includeUser: false,
+          leftLine: '│',
         })
 
         const channel = await message.guild?.channels
@@ -317,12 +331,12 @@ export async function messageToLog(
           .catch(() => null)
 
         const context = channel
-          ? `┊ ${ansiFormat(TextColor.Gray, `#${channel.name} (${channel.id}) • ${formatTime(snapshot.createdAt)}`)}`
+          ? `│ ${ansiFormat(TextColor.Gray, `#${channel.name} (${channel.id}) • ${formatTime(snapshot.createdAt)}`)}`
           : ''
 
         const content =
-          `${formattedForward.header}\n${formattedForward.content || '┊'}\n${formattedForward.footer}`.trim()
-        earlyContent.push(`${content}\n${context}`.trim())
+          `${formattedForward.header}\n${formattedForward.content || '│'}\n${context}`.trim()
+        earlyContent.push(`${content}\n${formattedForward.footer}`.trim())
         break
       }
     }
@@ -366,9 +380,11 @@ export async function messageToLog(
     }
   } else if (message.content || earlyContent.length > 0) {
     lines.push(
-      `┊ ${cleanCodeBlockContent(message.content + earlyContent.join('\n'))
+      `${leftLine} ${cleanCodeBlockContent(
+        message.content + earlyContent.join('\n'),
+      )
         .split('\n')
-        .join('\n┊ ')}`,
+        .join(`\n${leftLine} `)}`,
     )
   }
 
