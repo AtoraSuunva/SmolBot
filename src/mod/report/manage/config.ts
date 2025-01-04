@@ -80,7 +80,7 @@ async function runReportManage(interaction: ChatInputCommandInteraction) {
       guildID: guild.id,
     },
     update: {
-      enabled: enabled ?? oldConfig?.enabled ?? false,
+      enabled: enabled ?? oldConfig?.enabled ?? true,
       channelID: channel?.id ?? oldConfig?.channelID ?? null,
       message: message ?? oldConfig?.message ?? '',
     },
