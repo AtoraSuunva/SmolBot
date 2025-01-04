@@ -53,6 +53,7 @@ export async function quoteMessage(
           escapeMarkdown: false,
         })
       : ''
+
   const channelLine =
     includeChannel && message.channel && 'name' in message.channel
       ? `#${message.channel.name}`
@@ -64,7 +65,7 @@ export async function quoteMessage(
 
   embeds.push(embed)
 
-  if (includeAuthor || includeChannel) {
+  if (!isSnapshot && (includeAuthor || includeChannel)) {
     const url = message.url ?? message.channel?.url ?? ''
 
     if (includeAuthor && message.author) {
