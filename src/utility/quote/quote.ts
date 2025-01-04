@@ -1,20 +1,18 @@
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
-  type Channel,
   type ChatInputCommandInteraction,
   type Client,
   type EmbedBuilder,
-  type Guild,
   InteractionContextType,
   type Message,
   MessageFlags,
-  type TextBasedChannel,
   type User,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import { quoteMessage } from '../util/quoteMessage.js'
+import { prisma } from '../../util/db.js'
+import { quoteMessage } from '../../util/quoteMessage.js'
 
 const quoteLogger = baseLogger.child({ module: 'quote' })
 
@@ -46,8 +44,21 @@ async function handleMessageCreate(message: Message) {
     !message.guild.members.me ||
     !message.channel
       .permissionsFor(message.guild.members.me)
-      .has('SendMessages')
+      .has(['SendMessages', 'EmbedLinks'])
   ) {
+    return
+  }
+
+  const { enabled } = (await prisma.quoteConfig.findUnique({
+    where: {
+      guildID: message.guildId,
+    },
+    select: {
+      enabled: true,
+    },
+  })) ?? { enabled: true }
+
+  if (!enabled) {
     return
   }
 
@@ -55,9 +66,15 @@ async function handleMessageCreate(message: Message) {
     message.client,
     message.content,
     true, // ignore <bracketed links>
+    message.guildId,
   ).catch(() => null)
 
-  if (!quotedMessage) {
+  if (
+    !quotedMessage ||
+    !quotedMessage.channel
+      .permissionsFor(message.author)
+      ?.has(['ViewChannel', 'ReadMessageHistory'])
+  ) {
     return
   }
 
@@ -68,18 +85,24 @@ async function handleMessageCreate(message: Message) {
       embeds,
       allowedMentions: { parse: [], repliedUser: false },
     })
-    .catch(() => null)
+    .catch((e) => {
+      quoteLogger.warn(e, 'Failed to generate quote for %s', message.content)
+    })
 }
 
 async function runQuote(interaction: ChatInputCommandInteraction) {
   const messageLink = interaction.options.getString('message_link', true)
 
   try {
-    const message = await getMessageFromLink(interaction.client, messageLink)
+    const message = await getMessageFromLink(
+      interaction.client,
+      messageLink,
+      false,
+      interaction.guildId,
+    )
     const embeds = await makeQuoteFrom(message, interaction.user)
     return interaction.reply({ embeds })
   } catch (e) {
-    quoteLogger.warn(e, 'Failed to generate quote for %s', messageLink)
     return interaction.reply({
       content: e instanceof Error ? e.message : String(e),
       flags: MessageFlags.Ephemeral,
@@ -118,6 +141,7 @@ async function getMessageFromLink(
   client: Client,
   content: string,
   ignoreBracketedLinks = false,
+  contextGuildId: string | null = null,
 ) {
   const matches = getMessageLinkIds(content)
 
@@ -131,13 +155,17 @@ async function getMessageFromLink(
 
   const { guildId, channelId, messageId } = matches
 
-  const guild = await tryFetchGuild(client, guildId)
+  if (contextGuildId && contextGuildId !== guildId) {
+    throw new Error('Tried to quote message from another guild')
+  }
+
+  const guild = await client.guilds.fetch(guildId).catch(() => null)
 
   if (!guild) {
     throw new Error('Guild not found')
   }
 
-  const channel = await tryFetchChannel(client, channelId)
+  const channel = await client.channels.fetch(channelId).catch(() => null)
 
   if (!channel) {
     throw new Error('Channel not found')
@@ -147,7 +175,12 @@ async function getMessageFromLink(
     throw new Error('Channel is not a text channel')
   }
 
-  const message = await tryFetchMessage(channel, messageId)
+  const message = await channel.messages
+    .fetch({
+      message: messageId,
+      force: true,
+    })
+    .catch(() => null)
 
   if (!message) {
     throw new Error('Message not found')
@@ -175,40 +208,4 @@ async function makeQuoteFrom(
   })
 
   return [quote, ...extraEmbeds]
-}
-
-async function tryFetchGuild(
-  client: Client,
-  guildId: string,
-): Promise<Guild | null> {
-  try {
-    return await client.guilds.fetch(guildId)
-  } catch {
-    return null
-  }
-}
-
-async function tryFetchChannel(
-  client: Client,
-  channelId: string,
-): Promise<Channel | null> {
-  try {
-    return await client.channels.fetch(channelId)
-  } catch {
-    return null
-  }
-}
-
-async function tryFetchMessage(
-  channel: TextBasedChannel,
-  messageId: string,
-): Promise<Message | null> {
-  try {
-    return await channel.messages.fetch({
-      message: messageId,
-      force: true,
-    })
-  } catch {
-    return null
-  }
 }

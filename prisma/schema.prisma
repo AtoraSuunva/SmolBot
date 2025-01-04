@@ -354,3 +354,9 @@ model LockThreadConfig {
   sourceChannelID String  @id @map("source_channel_id")
   logChannelID    String? @map("log_channel_id")
 }
+
+model QuoteConfig {
+  guildID String @id @map("guild_id")
+
+  enabled Boolean @default(true)
+}

@@ -2,7 +2,8 @@ import { char_info } from './char_info.js'
 import { convert } from './convert.js'
 import { count_members } from './count_members.js'
 import { extract } from './extract.js'
-import { quote } from './quote.js'
+import { manage_quote } from './quote/manage_quote.js'
+import { quote } from './quote/quote.js'
 import { restore_embeds } from './restore_embeds.js'
 import { role_buttons } from './role_buttons.js'
 import { snowflake } from './snowflake.js'
@@ -15,6 +16,7 @@ export const utilityModules = [
   convert,
   count_members,
   extract,
+  manage_quote,
   quote,
   restore_embeds,
   role_buttons,
