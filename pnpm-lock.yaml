@@ -12,8 +12,8 @@ importers:
         specifier: ^5.5.0
         version: 5.5.0
       '@prisma/client':
-        specifier: ~6.1.0
-        version: 6.1.0(prisma@6.1.0)
+        specifier: ~6.0.1
+        version: 6.0.1(prisma@6.1.0)
       '@sapphire/shapeshift':
         specifier: ^4.0.0
         version: 4.0.0
@@ -63,8 +63,8 @@ importers:
         specifier: 2.3.1
         version: 2.3.1(discord.js@14.17.2)
       sleetcord-common:
-        specifier: ^10.0.1
-        version: 10.0.1(prisma@6.1.0)
+        specifier: ^10.0.2
+        version: 10.0.2(prisma@6.1.0)
       string-width:
         specifier: ^7.2.0
         version: 7.2.0
@@ -410,8 +410,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
 
-  '@prisma/client@6.1.0':
-    resolution: {integrity: sha512-AbQYc5+EJKm1Ydfq3KxwcGiy7wIbm4/QbjCKWWoNROtvy7d6a3gmAGkKjK0iUCzh+rHV8xDhD5Cge8ke/kiy5Q==}
+  '@prisma/client@6.0.1':
+    resolution: {integrity: sha512-60w7kL6bUxz7M6Gs/V+OWMhwy94FshpngVmOY05TmGD0Lhk+Ac0ZgtjlL6Wll9TD4G03t4Sq1wZekNVy+Xdlbg==}
     engines: {node: '>=18.18'}
     peerDependencies:
       prisma: '*'
@@ -1062,8 +1062,8 @@ packages:
   shimmer@1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
 
-  sleetcord-common@10.0.1:
-    resolution: {integrity: sha512-K3j9J1y5qaDKAlsQKvAjB7zM4TmDTOQ79+PvpBcabAcVURUn99fYpjwcSBhyTRx+e43cfeRDPD7tamLA+4O46g==}
+  sleetcord-common@10.0.2:
+    resolution: {integrity: sha512-chr/YHevTEpKW3SjPS2ldbfVKbISe/o3WmRzYiIsD/G6hx1aarQRSjKE2S9S+dspXDGpaGJY5/qAkMkrKYsHmA==}
 
   sleetcord@2.3.1:
     resolution: {integrity: sha512-0DDeJ8iZaaPo3nzvtur5LzjI65OxsQm/JxKA6WF4EWzvimfLHimdY6CCkq6rsXt+d1HVWkBh/j49+5KMdE4U8A==}
@@ -1550,7 +1550,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 1.30.0(@opentelemetry/api@1.9.0)
 
-  '@prisma/client@6.1.0(prisma@6.1.0)':
+  '@prisma/client@6.0.1(prisma@6.1.0)':
     optionalDependencies:
       prisma: 6.1.0
 
@@ -2230,9 +2230,9 @@ snapshots:
 
   shimmer@1.2.1: {}
 
-  sleetcord-common@10.0.1(prisma@6.1.0):
+  sleetcord-common@10.0.2(prisma@6.1.0):
     dependencies:
-      '@prisma/client': 6.1.0(prisma@6.1.0)
+      '@prisma/client': 6.0.1(prisma@6.1.0)
       '@sentry/integrations': 7.114.0
       '@sentry/node': 8.47.0
       '@sentry/profiling-node': 8.47.0
