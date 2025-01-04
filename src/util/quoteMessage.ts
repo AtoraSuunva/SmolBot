@@ -73,7 +73,7 @@ export async function quoteMessage(
         iconURL: message.author.displayAvatarURL(),
         url,
       })
-    } else {
+    } else if (channelLine) {
       embed.setAuthor({
         name: channelLine,
         url,
