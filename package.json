@@ -35,7 +35,7 @@
     "csv-parse": "^5.6.0",
     "csv-stringify": "^6.5.2",
     "discord-api-types": "^0.37.115",
-    "discord.js": "~14.17.2",
+    "discord.js": "~14.17.3",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.2",
     "luxon": "^3.5.0",
@@ -45,7 +45,7 @@
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.2.0",
     "sleetcord": "2.3.1",
-    "sleetcord-common": "^10.0.2",
+    "sleetcord-common": "^11.0.0",
     "string-width": "^7.2.0",
     "tseep": "^1.3.1",
     "unicode-name": "^1.0.4"
@@ -55,9 +55,9 @@
     "@sentry/cli": "^2.40.0",
     "@types/convert-units": "^2.3.11",
     "@types/luxon": "^3.4.2",
-    "@types/node": "~22.10.5",
+    "@types/node": "~22.10.6",
     "@types/pluralize": "^0.0.33",
-    "prisma": "~6.1.0",
-    "typescript": "~5.7.2"
+    "prisma": "~6.2.1",
+    "typescript": "~5.7.3"
   }
 }
