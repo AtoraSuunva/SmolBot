@@ -105,7 +105,13 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
         .fetch()
         .then((members) =>
           members
-            .filter((m) => !m.user.bot && m.manageable && m.permissions.has('ManageNicknames') && hoistCharacters.includes(m.displayName[0]))
+            .filter(
+              (m) =>
+                !m.user.bot &&
+                m.manageable &&
+                m.permissions.has('ManageNicknames') &&
+                hoistCharacters.includes(m.displayName[0]),
+            )
             .toJSON(),
         )
 
@@ -182,11 +188,18 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
 async function checkToDehoist(members: DehoistableMember[]) {
   const [firstMember] = members
 
-  if (!firstMember || !(await firstMember.guild.members.fetchMe().then(me => me.permissions.has('ManageNicknames')))) {
+  if (
+    !firstMember ||
+    !(await firstMember.guild.members
+      .fetchMe()
+      .then((me) => me.permissions.has('ManageNicknames')))
+  ) {
     return
   }
 
-  const dehoistable = members.filter((m) => !m.user.bot && m.permissions.has('ManageNicknames') && m.manageable )
+  const dehoistable = members.filter(
+    (m) => !m.user.bot && m.permissions.has('ManageNicknames') && m.manageable,
+  )
 
   if (dehoistable.length === 0) return
 
