@@ -16,6 +16,8 @@ import {
 import { prisma } from '../util/db.js'
 import { plural } from '../util/format.js'
 
+const DEFAULT_PREPEND = '\u{17B5}' // Khmer Vowel Inherent Aa "◌឵"
+
 export const dehoist = new SleetSlashCommand(
   {
     name: 'dehoist',
@@ -92,7 +94,7 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
     interaction.options.getString('hoist_characters') ?? '!'
   ).split('')
   const dehoistPrepend =
-    interaction.options.getString('dehoist_prepend') ?? '\u{17B5}'
+    interaction.options.getString('dehoist_prepend') ?? DEFAULT_PREPEND
   const automatic = interaction.options.getBoolean('automatic')
 
   await interaction.deferReply()
@@ -103,7 +105,7 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
         .fetch()
         .then((members) =>
           members
-            .filter((m) => hoistCharacters.includes(m.displayName[0]))
+            .filter((m) => !m.user.bot && m.manageable && m.permissions.has('ManageNicknames') && hoistCharacters.includes(m.displayName[0]))
             .toJSON(),
         )
 
@@ -178,7 +180,13 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
 }
 
 async function checkToDehoist(members: DehoistableMember[]) {
-  const dehoistable = members.filter((m) => m.manageable)
+  const [firstMember] = members
+
+  if (!firstMember || !(await firstMember.guild.members.fetchMe().then(me => me.permissions.has('ManageNicknames')))) {
+    return
+  }
+
+  const dehoistable = members.filter((m) => !m.user.bot && m.permissions.has('ManageNicknames') && m.manageable )
 
   if (dehoistable.length === 0) return
 
@@ -205,7 +213,7 @@ async function* dehoistMembers(
   members: DehoistableMember[],
   settings: DehoistSettings = {
     hoistCharacters: ['!'],
-    dehoistPrepend: '\u{17B5}',
+    dehoistPrepend: DEFAULT_PREPEND,
     force: false,
   },
 ): AsyncGenerator<DehoistResult, DehoistBatchResult, void> {
