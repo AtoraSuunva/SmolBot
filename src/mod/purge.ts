@@ -6,11 +6,14 @@ import {
   DMChannel,
   type FetchMessagesOptions,
   GuildMember,
+  type GuildTextBasedChannel,
   InteractionContextType,
   type Message,
   MessageFlags,
   type Snowflake,
   User,
+  cleanCodeBlockContent,
+  codeBlock,
 } from 'discord.js'
 import {
   type Mentionable,
@@ -22,6 +25,10 @@ import {
   inGuildGuard,
 } from 'sleetcord'
 import { plural } from '../util/format.js'
+import { workerMatch } from '../util/regexWorker.js'
+
+const MAX_FETCH_MESSAGES = 100
+const REGEX_TIMEOUT = 100
 
 export const purge = new SleetSlashCommand(
   {
@@ -34,7 +41,7 @@ export const purge = new SleetSlashCommand(
       {
         name: 'count',
         type: ApplicationCommandOptionType.Integer,
-        description: 'The number of messages to purge (default: 100)',
+        description: `The number of messages to purge (default: ${MAX_FETCH_MESSAGES})`,
         min_value: 1,
         max_value: 300,
       },
@@ -42,6 +49,11 @@ export const purge = new SleetSlashCommand(
         name: 'content',
         type: ApplicationCommandOptionType.String,
         description: 'Purge messages with this content (case-insensitive)',
+      },
+      {
+        name: 'regex',
+        type: ApplicationCommandOptionType.String,
+        description: `Purge messages with content matching this regex pattern (${REGEX_TIMEOUT}ms timeout, 'v' flag)`,
       },
       {
         name: 'from',
@@ -116,8 +128,6 @@ export const purge = new SleetSlashCommand(
   },
 )
 
-const MAX_FETCH_MESSAGES = 100
-
 /**
  * Purge a set of messages based on a couple filter criteria.
  * @param interaction The interaction to use
@@ -131,7 +141,9 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   ])
 
   const count = interaction.options.getInteger('count') ?? MAX_FETCH_MESSAGES
-  const content = interaction.options.getString('content')
+  const content =
+    interaction.options.getString('content')?.toLowerCase() ?? null
+  const regexString = interaction.options.getString('regex')
   const from = await getMentionables(interaction, 'from')
   const mentions = await getMentionables(interaction, 'mentions')
   const bots = interaction.options.getBoolean('bots') ?? false
@@ -154,6 +166,19 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
 
   if (channel instanceof DMChannel) {
     throw new PreRunError('You must provide a guild channel')
+  }
+
+  let regex: RegExp | null = null
+
+  if (regexString) {
+    try {
+      regex = new RegExp(regexString, 'v')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      throw new PreRunError(
+        `Invalid regex pattern:\n${codeBlock('js', cleanCodeBlockContent(message))}`,
+      )
+    }
   }
 
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
@@ -203,10 +228,11 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       beforeOffset = oldestMessage.id
     }
 
-    const filteredMessages = filterMessages(messages, {
+    const filteredMessages = await filterMessages(messages, {
       after,
       before,
       content,
+      regex,
       from,
       mentions,
       bots,
@@ -228,7 +254,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
 
     const { size } = await (reacts
       ? bulkDeleteReacts(toPurge)
-      : channel.bulkDelete(toPurge, true))
+      : bulkDelete(channel, toPurge))
 
     deletedCount += size
 
@@ -252,6 +278,32 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   await interaction.editReply({
     content: `🗑️ ${reacts ? 'Removed reactions from' : 'Deleted'} ${plural('message', deletedCount)}...`,
   })
+}
+
+async function bulkDelete(
+  channel: GuildTextBasedChannel,
+  messages: Message[],
+): Promise<{ size: number }> {
+  const bulkDeleteable: Message[] = []
+  let deleted = 0
+
+  for (const m of messages) {
+    if (m.bulkDeletable) {
+      bulkDeleteable.push(m)
+    } else if (m.deletable) {
+      await m
+        .delete()
+        .then(() => deleted++)
+        .catch(() => {})
+    }
+  }
+
+  if (bulkDeleteable.length > 1) {
+    const { size } = await channel.bulkDelete(bulkDeleteable, true)
+    deleted += size
+  }
+
+  return { size: deleted }
 }
 
 /**
@@ -288,6 +340,7 @@ interface FilterOptions {
   after?: string | null
   before?: string | null
   content?: string | null
+  regex?: RegExp | null
   from?: Mentionable[] | null
   mentions?: Mentionable[] | null
   bots: boolean
@@ -306,12 +359,13 @@ type FetchedMessages = Collection<Snowflake, Message>
  * @param options How to filter the messages
  * @returns A Collection of messages that passed the filter
  */
-function filterMessages(
+async function filterMessages(
   messages: FetchedMessages,
   {
     after,
     before,
     content,
+    regex,
     from,
     mentions,
     bots,
@@ -319,14 +373,14 @@ function filterMessages(
     onlyEmoji,
     embeds,
     stickers,
-    reacts,
+    // reacts,
   }: FilterOptions,
-): FetchedMessages {
-  return messages.filter((message) => {
-    if (!reacts && !message.bulkDeletable) return false
+): Promise<FetchedMessages> {
+  let msgs = messages.filter((message) => {
+    // In case supporting non-bulk deletes ends up being too bad
+    // if (!reacts && !message.bulkDeletable) return false
     if (after && !isAfter(message, after)) return false
     if (before && !isBefore(message, before)) return false
-    if (content && !hasContent(message, content)) return false
     if (from && !isFrom(message, from)) return false
     if (mentions && !doesMention(message, mentions)) return false
     if (bots && !isBot(message)) return false
@@ -334,9 +388,29 @@ function filterMessages(
     if (onlyEmoji && !hasOnlyEmoji(message)) return false
     if (embeds && !hasCountEmbeds(message, embeds)) return false
     if (stickers && message.stickers.size === 0) return false
+    if (content && !hasContent(message, content)) return false
 
     return true
   })
+
+  if (regex) {
+    // It's hard to make a more efficient version that doesn't end up with everything being an array
+    // Though this will hardly ever be the bottleneck when a regex is involved
+    const noMatch: Snowflake[] = []
+
+    for (const [id, message] of msgs) {
+      try {
+        const result = await workerMatch(regex, message.content, REGEX_TIMEOUT)
+        if (!result) noMatch.push(id)
+      } catch {
+        noMatch.push(id)
+      }
+    }
+
+    msgs = msgs.filter((_, id) => !noMatch.includes(id))
+  }
+
+  return msgs
 }
 
 interface HasTimestamp {
@@ -362,7 +436,7 @@ function isBefore(message: Message, before: string): boolean {
 }
 
 function hasContent(message: Message, content: string): boolean {
-  return message.content.toLowerCase().includes(content.toLowerCase())
+  return message.content.toLowerCase().includes(content)
 }
 
 function isFrom(message: Message, from: Mentionable[]): boolean {
