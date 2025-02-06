@@ -73,7 +73,7 @@ async function messageDelete(message: Message | PartialMessage) {
   const possibleEntries = auditLogs.entries.filter((entry) => {
     if (
       // Not our target
-      entry.target.id !== message.author.id ||
+      entry.targetId !== message.author.id ||
       // Not the same channel
       entry.extra.channel.id !== message.channel.id ||
       // Count === 1 and not created within the last 5 seconds
