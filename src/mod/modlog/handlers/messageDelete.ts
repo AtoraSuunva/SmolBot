@@ -124,7 +124,7 @@ export async function messageDeleteWithAuditLog(
   const formatted = codeBlock('ansi', cleanCodeBlockContent(messageContent))
   const files: AttachmentPayload[] = []
 
-  if (formatted.length + msg.length > 1950) {
+  if (formatted.length + msg.length > 1850) {
     files.push({
       name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
       attachment: Buffer.from(
@@ -141,7 +141,7 @@ export async function messageDeleteWithAuditLog(
   }
 
   await channel.send({
-    content: formatLog('🗑️', 'Message Deleted', msg),
+    content: formatLog('🗑️', 'Message Deleted', msg).slice(0, 2000),
     files,
     allowedMentions: { parse: [] },
   })
