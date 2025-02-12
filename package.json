@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
   "dependencies": {
-    "@dice-roller/rpg-dice-roller": "^5.5.0",
+    "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@prisma/client": "~6.3.1",
     "@prisma/instrumentation": "^6.3.1",
     "@sapphire/shapeshift": "^4.0.0",
@@ -36,7 +36,7 @@
     "csv-parse": "^5.6.0",
     "csv-stringify": "^6.5.2",
     "discord-api-types": "^0.37.119",
-    "discord.js": "~14.17.3",
+    "discord.js": "~14.18.0",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.2",
     "luxon": "^3.5.0",
