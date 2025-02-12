@@ -70,7 +70,7 @@ export async function quoteMessage(
 
     if (includeAuthor && message.author) {
       embed.setAuthor({
-        name: [authorLine, channelLine].join(' ∙ '),
+        name: [authorLine, channelLine].filter((l) => l.trim()).join(' ∙ '),
         iconURL: message.author.displayAvatarURL(),
         url,
       })
