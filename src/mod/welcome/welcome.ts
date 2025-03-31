@@ -3,6 +3,7 @@ import type { WelcomeSettings } from '@prisma/client'
 import {
   ApplicationIntegrationType,
   type AttachmentPayload,
+  ChannelType,
   type Guild,
   type GuildMember,
   type GuildTextBasedChannel,
@@ -107,6 +108,11 @@ async function handleJoin(
     const set = newMembers.get(member.guild.id) ?? new Set()
     set.add(member.id)
     newMembers.set(member.guild.id, set)
+    return
+  }
+
+  // Don't welcome users who sent a message in a private thread
+  if (channel?.type === ChannelType.PrivateThread) {
     return
   }
 
