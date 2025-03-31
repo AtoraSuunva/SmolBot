@@ -1,6 +1,7 @@
 import { activity, info, ping, stats } from 'sleetcord-common'
 import { autoreply, thanksAutoreply } from './autoreply.js'
 import { choose } from './choose.js'
+import { deltarune } from './deltarune.js'
 import { flip } from './flip.js'
 import { furrygen } from './furrygen.js'
 import { minesweeper } from './minesweeper.js'
@@ -10,6 +11,7 @@ export const miscModules = [
   activity,
   autoreply,
   choose,
+  deltarune,
   flip,
   furrygen,
   info,
