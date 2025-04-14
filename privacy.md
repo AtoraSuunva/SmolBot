@@ -43,6 +43,6 @@ For a copy of your data, or to delete the data by request, you may contact the d
 
 The Bot is run by atorasuunva (74768773940256768)
 
-You may contact the developer of The Bot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (atora@giraffeduck.com)
+You may contact the developer of The Bot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (bots@atora.dev)
 
 See also [The Bot's Terms of Service](./tos.md)

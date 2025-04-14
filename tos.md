@@ -29,6 +29,6 @@ Any user or guild found to be maliciously abusing the bot may be blocked partial
 
 The Bot is run by atorasuunva (74768773940256768)
 
-You may contact the developer of The Bot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (atora@giraffeduck.com)
+You may contact the developer of The Bot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (bots@atora.dev)
 
 See also [The Bot's Privacy Policy](./privacy.md)
