@@ -1,5 +1,4 @@
 import { stripVTControlCharacters } from 'node:util'
-import type { WelcomeSettings } from '@prisma/client'
 import {
   ApplicationIntegrationType,
   type AttachmentPayload,
@@ -13,6 +12,7 @@ import {
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
+import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import { type SendPayload, formatLog, sendToModLog } from '../modlog/utils.js'

@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   type BaseValidator,
   type MappedObjectValidator,
@@ -10,6 +9,7 @@ import {
   type Message,
 } from 'discord.js'
 import type { SleetSlashSubcommandBody } from 'sleetcord'
+import type { Prisma } from '../../../generated/prisma/client.js'
 
 export interface RuleTriggerInfo {
   readonly causedBy?: Message[]

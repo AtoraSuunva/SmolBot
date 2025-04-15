@@ -1,4 +1,3 @@
-import type { ActionLog, ActionLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -14,6 +13,10 @@ import {
   formatUser,
   getGuild,
 } from 'sleetcord'
+import type {
+  ActionLog,
+  ActionLogConfig,
+} from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { capitalize, plural } from '../../util/format.js'
 import { sleep } from '../../util/functions.js'

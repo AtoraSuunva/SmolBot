@@ -1,4 +1,3 @@
-import type { WarningConfig } from '@prisma/client'
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -12,6 +11,7 @@ import {
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+import type { WarningConfig } from '../../generated/prisma/client.js'
 import { plural } from '../../util/format.js'
 import {
   MAX_PER_PAGE,

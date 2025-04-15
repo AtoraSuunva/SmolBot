@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   type APIRole,
   ActionRowBuilder,
@@ -37,6 +36,7 @@ import {
   inGuildGuard,
 } from 'sleetcord'
 import { SECOND, baseLogger, notNullish } from 'sleetcord-common'
+import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { responseMessageLink } from '../../util/format.js'
 

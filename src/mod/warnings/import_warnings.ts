@@ -1,5 +1,4 @@
 import { Readable } from 'node:stream'
-import type { Prisma, PrismaPromise, Warning } from '@prisma/client'
 import {
   BaseError,
   type BaseErrorJsonified,
@@ -19,6 +18,11 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+import type {
+  Prisma,
+  PrismaPromise,
+  Warning,
+} from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'
 

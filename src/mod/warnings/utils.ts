@@ -1,11 +1,11 @@
+import { type APIEmbedField, time } from 'discord.js'
+import { DAY, MINUTE } from 'sleetcord-common'
 import type {
   Prisma,
   Warning,
   WarningConfig,
   WarningDirtyTracker,
-} from '@prisma/client'
-import { type APIEmbedField, time } from 'discord.js'
-import { DAY, MINUTE } from 'sleetcord-common'
+} from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 
 export const MAX_PER_PAGE = 5

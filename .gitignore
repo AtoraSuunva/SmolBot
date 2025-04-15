@@ -2,10 +2,8 @@ node_modules
 .tsbuildinfo
 *.env
 .vscode
-.swc
 dist/
 prisma/db/
 prisma/**/*.db
 prisma/**/*.sqlite
-csv
-src/import-parse.ts
+src/generated

@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -27,6 +26,7 @@ import {
   inGuildGuard,
 } from 'sleetcord'
 import { MINUTE, SECOND, notNullish } from 'sleetcord-common'
+import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { modmailIdAutocomplete } from './../fields/utils.js'
 

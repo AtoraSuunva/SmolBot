@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   ChannelType,
   type Client,
@@ -8,6 +7,7 @@ import {
 import env from 'env-var'
 import { SleetClient, SleetModule } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import '../../util/dbLogging.js'
 

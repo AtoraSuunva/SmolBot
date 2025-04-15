@@ -1,4 +1,3 @@
-import type { ActionLogConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -6,6 +5,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+import type { ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markActionlogArchiveDirty } from './utils.js'

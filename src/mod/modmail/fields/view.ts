@@ -1,10 +1,10 @@
-import type { ModMailTicketModalField } from '@prisma/client'
 import {
   type ChatInputCommandInteraction,
   MessageFlags,
   TextInputStyle,
 } from 'discord.js'
 import { SleetSlashSubcommand, escapeAllMarkdown, getGuild } from 'sleetcord'
+import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { FIELD_MODMAIL_ID } from './utils.js'
 

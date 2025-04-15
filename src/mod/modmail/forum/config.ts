@@ -1,10 +1,10 @@
-import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ChannelType,
   type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { formatConfig, makeForumTagFormatter } from '../../../util/format.js'
 import { createTagAutocomplete } from '../ticket/create_button.js'

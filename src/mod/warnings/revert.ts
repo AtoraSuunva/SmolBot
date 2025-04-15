@@ -1,4 +1,3 @@
-import type { Warning } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -6,6 +5,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import type { Warning } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { updateWarning } from './edit.js'
 import {

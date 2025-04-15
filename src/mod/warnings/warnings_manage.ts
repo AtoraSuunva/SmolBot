@@ -1,4 +1,3 @@
-import type { WarningConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -8,6 +7,7 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+import type { WarningConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { channelFormatter, formatConfig } from '../../util/format.js'
 import { markWarningArchiveDirty } from './utils.js'
