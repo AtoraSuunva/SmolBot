@@ -74,12 +74,14 @@ You'll need Node.js (At **least** >=22.0.0), pnpm, and patience.
 Assuming you have Node.js and pnpm installed and working:
 
 ```sh
-# Install dependencies (*should* generate prisma client)
+# Install dependencies
 pnpm install
+# Generate prisma client
+pnpm run generate
 
 # Either
-pnpm build
-pnpm start:prod
+pnpm run build
+pnpm run start:prod
 # Or, doing both steps in 1 command
-pnpm start:dev
+pnpm run start:dev
 ```
