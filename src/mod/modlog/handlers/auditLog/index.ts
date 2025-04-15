@@ -1,4 +1,3 @@
-import type { ModLogConfig } from '@prisma/client'
 import {
   AuditLogEvent,
   type Client,
@@ -8,6 +7,7 @@ import {
   type User,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
+import type { ModLogConfig } from '../../../../generated/prisma/client.js'
 import { getValidatedConfigFor } from '../../utils.js'
 import {
   type ChannelAuditLog,

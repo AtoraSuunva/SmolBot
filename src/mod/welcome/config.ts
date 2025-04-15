@@ -1,4 +1,3 @@
-import type { Prisma, WelcomeSettings } from '@prisma/client'
 import {
   type APIEmbedField,
   ApplicationCommandOptionType,
@@ -13,6 +12,7 @@ import {
   getTextBasedChannel,
 } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+import type { Prisma, WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'
 

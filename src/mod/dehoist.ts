@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -13,6 +12,7 @@ import {
   getGuild,
   getMembers,
 } from 'sleetcord'
+import type { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../util/db.js'
 import { plural } from '../util/format.js'
 

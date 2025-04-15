@@ -1,4 +1,3 @@
-import type { ActionLog } from '@prisma/client'
 import {
   type APIEmbedField,
   ActionRowBuilder,
@@ -14,6 +13,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+import type { ActionLog } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { updateActionLog } from './reason.js'
 import { type ActionLogEntry, formatToLog } from './utils.js'

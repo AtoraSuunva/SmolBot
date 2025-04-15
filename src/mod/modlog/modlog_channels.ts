@@ -1,4 +1,3 @@
-import { type ModLogChannels, Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -6,6 +5,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+import { type ModLogChannels, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { formatConfig, toSnakeCase } from '../../util/format.js'
 import { type LoggedAction, getValidatedConfigFor } from './utils.js'

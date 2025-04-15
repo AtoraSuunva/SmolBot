@@ -1,4 +1,3 @@
-import type { UserReport } from '@prisma/client'
 import {
   type ActionRow,
   ActionRowBuilder,
@@ -25,6 +24,7 @@ import {
 } from 'discord.js'
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
+import type { UserReport } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { responseMessageLink } from '../../util/format.js'
 import type { ReportConfigResolved } from './manage/config.js'

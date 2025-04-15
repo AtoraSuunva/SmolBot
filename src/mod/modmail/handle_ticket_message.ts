@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   type APIEmbed,
   type AttachmentPayload,
@@ -17,6 +16,7 @@ import {
   type WebhookType,
 } from 'discord.js'
 import { SleetModule, formatUser } from 'sleetcord'
+import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { quoteMessage } from '../../util/quoteMessage.js'
 

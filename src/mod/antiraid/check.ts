@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
@@ -7,6 +6,7 @@ import {
 import pluralize from 'pluralize'
 import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
 import { MINUTE, baseLogger, notNullish } from 'sleetcord-common'
+import type { Prisma } from '../../generated/prisma/client.js'
 import {
   AntiRaidActionVerb,
   AntiRaidActions,

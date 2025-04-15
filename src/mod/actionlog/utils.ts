@@ -1,7 +1,10 @@
-import type { ActionLogConfig, ActionLogDirtyTracker } from '@prisma/client'
 import { Guild, type GuildMember, type User, time } from 'discord.js'
 import { PreRunError, formatUser } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+import type {
+  ActionLogConfig,
+  ActionLogDirtyTracker,
+} from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { capitalize } from '../../util/format.js'
 

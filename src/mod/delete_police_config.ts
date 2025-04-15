@@ -1,4 +1,3 @@
-import type { DeletePoliceConfig } from '@prisma/client'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -10,6 +9,7 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { SECOND, getOptionCount } from 'sleetcord-common'
+import type { DeletePoliceConfig } from '../generated/prisma/client.js'
 import { prisma } from '../util/db.js'
 import { formatConfig } from '../util/format.js'
 import { quoteMessage } from '../util/quoteMessage.js'
