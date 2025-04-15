@@ -10,10 +10,12 @@ COPY package.json ./
 COPY pnpm-workspace.yaml ./
 RUN pnpm fetch
 RUN pnpm install --frozen-lockfile --offline
-COPY src/ ./src/
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
-RUN pnpm exec prisma generate && pnpm run build
+COPY /scripts ./scripts/
+RUN pnpm run generate
+COPY src/ ./src/
+RUN pnpm run build
 COPY /resources ./resources/
 RUN pnpm sentry:sourcemaps:inject
 
