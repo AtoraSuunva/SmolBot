@@ -16,6 +16,7 @@ COPY /scripts ./scripts/
 RUN pnpm run generate
 COPY src/ ./src/
 RUN pnpm run build
+COPY src/generated/prisma/*.node dist/generated/prisma/
 COPY /resources ./resources/
 RUN pnpm sentry:sourcemaps:inject
 
