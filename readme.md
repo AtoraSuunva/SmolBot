@@ -9,7 +9,7 @@ Various (mostly) moderation- or utility-focused commands I've needed, in a Disco
 Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were made because of my own requirements. You are free to invite and use the "public" version [RobotOtter](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0). You cannot invite Smol Bot.
 
 > [!WARNING]  
-> Most parts of the bot are stable but I maintain this bot as a solo dev in my spare time for mainly my own use. I have tried my best but I make no promises about the stability or uptime on the bot. Any bug reports or feature requests will be done when (and if) I can get to it. Issues are open for bug reports and feature requests. PRs are okay but I might take a while to get to them (make sure they past lints).
+> Most parts of the bot are stable but I maintain this bot as a solo dev in my spare time for mainly my own use. I make no promises about the stability or uptime on the bot. Any bug reports or feature requests will be done when (and if) I can get to it. Issues are open for bug reports and feature requests. PRs are okay but I might take a while to get to them (make sure they pass `pnpm run lint:fix`).
 
 ## RobotOtter?
 
