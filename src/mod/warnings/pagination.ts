@@ -75,7 +75,9 @@ export async function respondWithPaginatedWarnings(
   } = options
 
   if (!interaction.deferred) {
-    await interaction.deferReply({ ephemeral })
+    await interaction.deferReply({
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
+    })
   }
 
   const guild = await getGuild(interaction, true)

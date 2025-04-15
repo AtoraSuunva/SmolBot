@@ -122,7 +122,9 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   const exactMatch = interaction.options.getBoolean('exact_match') ?? false
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  await interaction.deferReply({ ephemeral })
+  await interaction.deferReply({
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 
   const guild = await getGuild(interaction, true)
   const matches = await matchMembers(guild, user, {
