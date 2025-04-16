@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  type Guild,
   type GuildMember,
   InteractionContextType,
   type PartialGuildMember,
@@ -101,19 +102,7 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
 
   const members = interaction.options.getString('members')
     ? await getMembers(interaction, 'members', true)
-    : await guild.members
-        .fetch()
-        .then((members) =>
-          members
-            .filter(
-              (m) =>
-                !m.user.bot &&
-                m.manageable &&
-                m.permissions.has('ManageNicknames') &&
-                hoistCharacters.includes(m.displayName[0]),
-            )
-            .toJSON(),
-        )
+    : await fetchMembers({ guild, startingWith: hoistCharacters })
 
   if (members.length === 0) {
     await interaction.editReply('Found no matching members to dehoist!')
@@ -185,6 +174,36 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
   )
 }
 
+interface FetchMemberOptions {
+  guild: Guild
+  startingWith: string[]
+}
+
+async function fetchMembers({
+  guild,
+  startingWith,
+}: FetchMemberOptions): Promise<GuildMember[]> {
+  const guildMembers: GuildMember[] = []
+
+  for (const char of startingWith) {
+    const members = await guild.members
+      .fetch({
+        query: char,
+      })
+      .then((members) =>
+        members.filter(
+          (m) => !m.user.bot && m.manageable && m.displayName.startsWith(char),
+        ),
+      )
+
+    if (members.size > 0) {
+      guildMembers.push(...members.values())
+    }
+  }
+
+  return guildMembers
+}
+
 async function checkToDehoist(members: DehoistableMember[]) {
   const [firstMember] = members
 
@@ -197,9 +216,7 @@ async function checkToDehoist(members: DehoistableMember[]) {
     return
   }
 
-  const dehoistable = members.filter(
-    (m) => !m.user.bot && m.permissions.has('ManageNicknames') && m.manageable,
-  )
+  const dehoistable = members.filter((m) => !m.user.bot && m.manageable)
 
   if (dehoistable.length === 0) return
 
