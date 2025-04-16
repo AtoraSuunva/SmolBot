@@ -183,25 +183,18 @@ async function fetchMembers({
   guild,
   startingWith,
 }: FetchMemberOptions): Promise<GuildMember[]> {
-  const guildMembers: GuildMember[] = []
-
-  for (const char of startingWith) {
-    const members = await guild.members
-      .fetch({
-        query: char,
-      })
-      .then((members) =>
-        members.filter(
-          (m) => !m.user.bot && m.manageable && m.displayName.startsWith(char),
-        ),
-      )
-
-    if (members.size > 0) {
-      guildMembers.push(...members.values())
-    }
-  }
-
-  return guildMembers
+  return guild.members
+    .fetch()
+    .then((members) =>
+      members
+        .filter(
+          (m) =>
+            !m.user.bot &&
+            m.manageable &&
+            startingWith.includes(m.displayName[0]),
+        )
+        .toJSON(),
+    )
 }
 
 async function checkToDehoist(members: DehoistableMember[]) {
