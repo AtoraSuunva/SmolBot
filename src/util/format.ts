@@ -246,7 +246,7 @@ export function tableFormat<T extends object>(
 
   const removed =
     rows.length < data.length
-      ? `\nTruncated ${plural('row', data.length - rows.length)}.`
+      ? `\nTruncated ${plural('row', data.length - rows.length, { boldNumber: false })}.`
       : ''
 
   return `${head}${rows.join('\n')}${removed}`.substring(0, characterLimit)
