@@ -345,7 +345,7 @@ interface AttachmentBodyV1 {
 // If d.js disposes of the message for some reason (hitting cache limits...) then we're storing extra data that won't be in message delete bulk events
 // If we just attach it to the message... then we know it'll be there on every message and when we see message delete bulk events :)
 // The alternative is either storing data and listening to raw events ourselves (effort) or converting messages to APIMessages (effort)
-interface MessageWithRaw {
+export interface MessageWithRaw {
   rawData: APIMessage
 }
 

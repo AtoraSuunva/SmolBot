@@ -1,11 +1,12 @@
 import { stripVTControlCharacters } from 'node:util'
+import type { APIMessageInteractionMetadata } from 'discord-api-types/v10'
 import {
+  ApplicationCommandType,
   type AttachmentPayload,
   ButtonStyle,
   ComponentType,
   type Embed,
   EmbedBuilder,
-  type GuildMember,
   InteractionType,
   Message,
   type MessageActionRowComponent,
@@ -13,7 +14,6 @@ import {
   type MessageSnapshot,
   MessageType,
   type PartialMessage,
-  type User,
   cleanCodeBlockContent,
   codeBlock,
   escapeInlineCode,
@@ -34,6 +34,7 @@ import {
 } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
 import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
+import type { MessageWithRaw } from './messageDeleteBulk.js'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -147,7 +148,7 @@ export async function messageDeleteWithAuditLog(
   })
 }
 
-function formatLogUser(user: User | GuildMember) {
+function formatLogUser(user: Parameters<typeof formatUser>[0]) {
   return formatUser(user, {
     markdown: false,
     id: true,
@@ -250,6 +251,29 @@ const TAG_WEBHOOK = `[${ansiFormat(TextColor.Pink, 'WEBHOOK')}] `
 const TAG_ACTIVITY = `[${ansiFormat(TextColor.Pink, 'ACTIVITY')}] `
 const TAG_THREAD = `[${ansiFormat(TextColor.Pink, 'THREAD')}] `
 
+interface APIUndocumentedInteractionMetadataExtension {
+  command_type: ApplicationCommandType
+  name: string
+}
+
+type APIUndocumentedInteractionMetadata = APIMessageInteractionMetadata &
+  APIUndocumentedInteractionMetadataExtension
+
+function formatCommandName(name: string, type: ApplicationCommandType): string {
+  switch (type) {
+    case ApplicationCommandType.ChatInput:
+      return `/${name}`
+    case ApplicationCommandType.User:
+      return `${name} › User`
+    case ApplicationCommandType.Message:
+      return `${name} › Message`
+    case ApplicationCommandType.PrimaryEntryPoint:
+      return `${name} › Entry Point`
+    default:
+      return name
+  }
+}
+
 export async function messageToLog(
   message: Message | MessageSnapshot,
   {
@@ -267,18 +291,31 @@ export async function messageToLog(
 ): Promise<MessageLogOutput> {
   const lines: string[] = []
   let hasUpper = false
+  let messageCommand = false
+  let isFollowUp = false
 
-  if (includeInteraction && message.interaction) {
-    const { interaction } = message
+  if (includeInteraction && message.interactionMetadata) {
+    const { interactionMetadata } = message
+    // witness the beauty of working with undocumented properties, thank you discord
+    const raw = (message as unknown as MessageWithRaw).rawData
+    const rawIM =
+      raw?.interaction_metadata as unknown as APIUndocumentedInteractionMetadata
 
-    const commandName =
-      (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
-      interaction.commandName
+    messageCommand = rawIM.command_type === ApplicationCommandType.Message
+    isFollowUp = !!rawIM.original_response_message_id
+
+    const commandName = formatCommandName(rawIM.name, rawIM.command_type)
 
     lines.push(
-      `╭╼ ${formatLogUser(interaction.user)} used ${ansiFormat(TextColor.Blue, commandName)}`,
+      `╭╼ ${formatLogUser(interactionMetadata.user)} used ${ansiFormat(TextColor.Blue, commandName)}`,
     )
     hasUpper = true
+
+    if (rawIM && rawIM.type === InteractionType.ApplicationCommand) {
+      if (rawIM.target_user) {
+        lines.push(`├╼ On user ${formatLogUser(rawIM.target_user)}`)
+      }
+    }
   }
 
   const earlyContent: string[] = []
@@ -287,9 +324,10 @@ export async function messageToLog(
     switch (message.reference.type) {
       case MessageReferenceType.Default: {
         const ref = await message.fetchReference?.().catch(() => null)
+
         if (!ref) {
           lines.push(
-            `${hasUpper ? '├' : '╭'}╼ Original message was deleted (${message.reference.messageId})`,
+            `${hasUpper ? '├' : '╭'}╼ Original message was deleted${isFollowUp ? ' or ephemeral' : ''} (${message.reference.messageId})`,
           )
           hasUpper = true
           break
@@ -301,7 +339,7 @@ export async function messageToLog(
           ) + (ref.content.length > 50 ? '…' : '')
 
         lines.push(
-          `${hasUpper ? '├' : '╭'}╼ Reply to ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
+          `${hasUpper ? '├' : '╭'}╼ ${messageCommand ? 'On message' : 'Reply to'} ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
         )
         hasUpper = true
         break
