@@ -4,6 +4,7 @@ import {
   type Guild,
   type GuildAuditLogsEntry,
   type GuildTextBasedChannel,
+  type PartialUser,
   type User,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
@@ -58,26 +59,11 @@ async function guildAuditLogEntryCreate(
 }
 
 export async function resolveUser(
-  maybeUser: User | null,
+  maybeUser: User | PartialUser | null,
   maybeUserId: string | null,
   client: Client,
 ): Promise<User | null> {
-  // Against all odds, username **can** be null!!!
-  // I was receiving errors due to users that looked like this:
-  // User {
-  //   id: '509179566783332353',
-  //   bot: null,
-  //   system: null,
-  //   flags: null,
-  //   username: null,
-  //   globalName: null,
-  //   discriminator: null,
-  //   avatar: null,
-  //   banner: undefined,
-  //   accentColor: undefined,
-  //   avatarDecoration: null
-  // }
-  if (maybeUser === null || (maybeUser.username as unknown) === null) {
+  if (maybeUser === null || maybeUser.username === null) {
     return maybeUserId
       ? await client.users.fetch(maybeUserId).catch(() => null)
       : null

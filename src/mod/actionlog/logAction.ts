@@ -3,6 +3,7 @@ import PQueue from 'p-queue'
 import { SleetModule } from 'sleetcord'
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
+import { resolveUser } from '../modlog/handlers/auditLog/index.js'
 import {
   type ActionLogEntry,
   fetchActionLogConfigFor,
@@ -66,14 +67,25 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
   const type = getLogAction(auditLogEntry, config)
   if (!type) return
 
+  const user = await resolveUser(
+    auditLogEntry.target,
+    auditLogEntry.targetId,
+    guild.client,
+  )
+  const reasonBy = await resolveUser(
+    auditLogEntry.executor,
+    auditLogEntry.executorId,
+    guild.client,
+  )
+
   const entry: ActionLogEntry = {
     id: 0,
     action: type,
-    user: auditLogEntry.target,
+    user,
     redactUser: false,
     reason: auditLogEntry.reason?.trim() ?? null,
-    reasonBy: auditLogEntry.executor,
-    responsibleModerator: auditLogEntry.executor,
+    reasonBy,
+    responsibleModerator: reasonBy,
     createdAt: auditLogEntry.createdAt,
   }
 

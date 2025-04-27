@@ -25,6 +25,7 @@ import {
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
 import type { UserReport } from '../../generated/prisma/client.js'
+import { getComponentsOfType } from '../../util/components.js'
 import { prisma } from '../../util/db.js'
 import { responseMessageLink } from '../../util/format.js'
 import type { ReportConfigResolved } from './manage/config.js'
@@ -302,7 +303,7 @@ async function blockReportUser(
     const newComponents = changeBlockButtonTo(
       'unblock',
       report.reportID,
-      originalMessage.components,
+      getComponentsOfType(originalMessage.components, ComponentType.ActionRow),
     )
 
     originalMessage
@@ -384,7 +385,7 @@ async function blockReportUser(
   const newComponents = changeBlockButtonTo(
     'unblock',
     report.reportID,
-    originalMessage.components,
+    getComponentsOfType(originalMessage.components, ComponentType.ActionRow),
   )
 
   return originalMessage.edit({
@@ -414,7 +415,7 @@ async function unblockReportUser(
     const newComponents = changeBlockButtonTo(
       'block',
       report.reportID,
-      originalMessage.components,
+      getComponentsOfType(originalMessage.components, ComponentType.ActionRow),
     )
 
     originalMessage
@@ -459,7 +460,7 @@ async function unblockReportUser(
   const newComponents = changeBlockButtonTo(
     'block',
     report.reportID,
-    originalMessage.components,
+    getComponentsOfType(originalMessage.components, ComponentType.ActionRow),
   )
 
   return originalMessage.edit({

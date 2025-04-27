@@ -5,6 +5,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   type ChatInputCommandInteraction,
+  ComponentType,
   EmbedBuilder,
   GuildMember,
   type Interaction,
@@ -14,6 +15,7 @@ import {
   codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getComponentsOfType } from '../util/components.js'
 
 export const role_buttons = new SleetSlashCommand(
   {
@@ -225,17 +227,20 @@ async function handleInteractionCreate(interaction: Interaction) {
   if (onlyOne) {
     const otherRoles: Role[] = []
 
-    for (const row of interaction.message.components) {
-      for (const button of row.components) {
-        if (button.customId === interaction.customId || !button.customId) {
-          continue
-        }
+    const buttons = getComponentsOfType(
+      interaction.message.components,
+      ComponentType.Button,
+    )
 
-        const otherRole = guild.roles.cache.get(button.customId.split(':')[1])
+    for (const button of buttons) {
+      if (button.customId === interaction.customId || !button.customId) {
+        continue
+      }
 
-        if (otherRole) {
-          otherRoles.push(otherRole)
-        }
+      const otherRole = guild.roles.cache.get(button.customId.split(':')[1])
+
+      if (otherRole) {
+        otherRoles.push(otherRole)
       }
     }
 

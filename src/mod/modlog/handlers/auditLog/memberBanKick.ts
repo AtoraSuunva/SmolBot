@@ -4,12 +4,11 @@ import { type LoggedAction, formatLog, getChannelFor } from '../../utils.js'
 import { type AuditInfo, resolveUser } from './index.js'
 
 export type BanAuditLog = GuildAuditLogsEntry<
-  AuditLogEvent,
-  'Create' | 'Delete',
-  'User',
   | AuditLogEvent.MemberBanAdd
   | AuditLogEvent.MemberBanRemove
-  | AuditLogEvent.MemberKick
+  | AuditLogEvent.MemberKick,
+  'Create' | 'Delete',
+  'User'
 >
 
 /**

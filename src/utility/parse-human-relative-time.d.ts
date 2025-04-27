@@ -1,10 +1,9 @@
-declare module 'parse-human-relative-time' {
+declare module 'parse-human-relative-time/luxon.js' {
   import type { DateTime } from 'luxon'
 
-  function createParse(
+  export function createParseHumanRelativeTime(
     createDateTime: typeof DateTime,
   ): typeof parseHumanRelativeTime
-  function parseHumanRelativeTime(str: string, now: DateTime): DateTime
 
-  export = createParse
+  function parseHumanRelativeTime(str: string, now: DateTime): DateTime
 }

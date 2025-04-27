@@ -9,7 +9,7 @@ import {
   EmbedBuilder,
   InteractionType,
   Message,
-  type MessageActionRowComponent,
+  MessageFlags,
   MessageReferenceType,
   type MessageSnapshot,
   MessageType,
@@ -26,6 +26,7 @@ import {
   TextColor,
   ansiFormat,
 } from '../../../util/ansiColors.js'
+import type { AnyComponent } from '../../../util/components.js'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import {
@@ -400,6 +401,11 @@ export async function messageToLog(
   const header = lines.join('\n').trim()
   lines.splice(0, lines.length)
 
+  const IsComponentsV2 = message.flags.has(MessageFlags.IsComponentsV2)
+  const componentsV2Render = IsComponentsV2
+    ? message.components.map(componentToLog)
+    : []
+
   if (
     ![
       MessageType.Default,
@@ -416,13 +422,19 @@ export async function messageToLog(
         `╞ ${cleanCodeBlockContent(embed.data.description).split('\n').join('\n╞ ')}`,
       )
     }
-  } else if (message.content || earlyContent.length > 0) {
+  } else if (
+    message.content ||
+    earlyContent.length > 0 ||
+    componentsV2Render.length > 0
+  ) {
+    const toRender = [
+      ...(message.content ? message.content.split('\n') : []),
+      ...earlyContent.flatMap((l) => l.split('\n')),
+      ...componentsV2Render.flatMap((l) => l.split('\n')),
+    ]
+
     lines.push(
-      `${leftLine} ${cleanCodeBlockContent(
-        message.content + earlyContent.join('\n'),
-      )
-        .split('\n')
-        .join(`\n${leftLine} `)}`,
+      `${leftLine} ${cleanCodeBlockContent(toRender.join(`\n${leftLine} `))}`,
     )
   }
 
@@ -445,18 +457,18 @@ export async function messageToLog(
     }
   }
 
-  if (includeComponents && message.components.length > 0) {
+  // Renders components for components v1
+  if (includeComponents && message.components.length > 0 && !IsComponentsV2) {
     lines.push('╰┮ Components:')
 
     const length = message.components.length
     const last = length - 1
 
-    for (let i = 0; i < length; i++) {
-      const row = message.components[i]
-      const formattedRow = row.components.map(componentToLog).join(' ')
+    const formatted = message.components.map(
+      (v, i) => ` ${i === last ? '╰╼' : '├╼'} ${componentToLog(v)}`,
+    )
 
-      lines.push(` ${i === last ? '╰╼' : '├╼'} ${formattedRow}`)
-    }
+    lines.push(...formatted)
   }
 
   if (includeStickers && message.stickers.size > 0) {
@@ -581,8 +593,12 @@ const buttonStyleColor: Record<ButtonStyle, Markup | Markup[]> = {
   [ButtonStyle.Premium]: [BackgroundColor.Indigo, TextColor.White],
 }
 
-function componentToLog(component: MessageActionRowComponent): string {
+function componentToLog(component: AnyComponent): string {
   switch (component.type) {
+    case ComponentType.ActionRow:
+      // <Component/> <Component/> <Component/>
+      return component.components.map((c) => componentToLog(c)).join(' ')
+
     case ComponentType.Button:
       // [💀 Button!] [Second!]
       return ansiFormat(
@@ -601,8 +617,51 @@ function componentToLog(component: MessageActionRowComponent): string {
         `[${component.placeholder ?? component.customId} ∨]`,
       )
 
+    case ComponentType.Section: {
+      // ╭─ Section ┈┄╌
+      // ├╼ <Accessory/>
+      // │ <Text/>
+      // │ <Button/> <Button/>
+      // ╰──────────┈┄╌
+      const components = component.components.map(componentToLog).join('\n│ ')
+
+      return `╭─ Section ┈┄╌\n├╼ ${ansiFormat(TextColor.Green, componentToLog(component.accessory))}\n│ ${components}\n╰──────────┈┄╌`
+    }
+
+    case ComponentType.TextDisplay:
+      // <Text/>
+      return component.data.content
+
+    case ComponentType.Thumbnail:
+      // [Thumbnail] <url/>
+      return `[Thumbnail] ${ansiFormat(TextColor.Gray, component.media.url)}`
+
+    case ComponentType.MediaGallery:
+      // [Media] <url/> [Media] <url/> [Media] <url/>
+      return component.items
+        .map((i) => `[Media] ${ansiFormat(TextColor.Gray, i.media.url)}`)
+        .join(' ')
+
+    case ComponentType.File:
+      // [File] <url/>
+      return `[File] ${ansiFormat(TextColor.Gray, component.file.data.url)}`
+
+    case ComponentType.Separator:
+      // ──────────
+      return ansiFormat(TextColor.Gray, '──────────')
+
+    case ComponentType.Container: {
+      // ╭─ Container ┈┄╌
+      // │ <Button/> <Button/>
+      // │ <Text/>
+      // ╰────────────┈┄╌
+      const components = component.components.map(componentToLog).join('\n│ ')
+
+      return `╭─ Container ┈┄╌\n│ ${components}\n╰────────────┈┄╌`
+    }
+
     default:
-      return '(unknown component)'
+      return ansiFormat(TextColor.Red, '[Unknown Component]')
   }
 }
 

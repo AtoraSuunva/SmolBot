@@ -27,6 +27,7 @@ import {
   formatUser,
   getGuild,
 } from 'sleetcord'
+import { getComponentsOfType } from '../util/components.js'
 import { tableFormat } from '../util/format.js'
 
 interface MemberMatch {
@@ -216,14 +217,14 @@ async function handleIDButton(interaction: ButtonInteraction) {
 }
 
 async function getInteractionMembers(interaction: ButtonInteraction) {
-  for (const row of interaction.message.components) {
-    for (const component of row.components) {
-      if (
-        component.type === ComponentType.UserSelect &&
-        component.customId === USER_SELECT_ID
-      ) {
-        return component.data.default_values?.map((d) => d.id) ?? []
-      }
+  const userSelects = getComponentsOfType(
+    interaction.message.components,
+    ComponentType.UserSelect,
+  )
+
+  for (const component of userSelects) {
+    if (component.customId === USER_SELECT_ID) {
+      return component.data.default_values?.map((d) => d.id) ?? []
     }
   }
 

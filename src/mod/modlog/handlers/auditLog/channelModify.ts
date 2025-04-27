@@ -25,12 +25,11 @@ import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
 import { type AuditInfo, resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
-  AuditLogEvent,
-  'Create' | 'Delete' | 'Update',
-  'Channel',
   | AuditLogEvent.ChannelCreate
   | AuditLogEvent.ChannelDelete
-  | AuditLogEvent.ChannelUpdate
+  | AuditLogEvent.ChannelUpdate,
+  'Create' | 'Delete' | 'Update',
+  'Channel'
 >
 
 const tempStoredChannels = new LimitedCollection<

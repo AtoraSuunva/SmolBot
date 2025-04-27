@@ -8,11 +8,11 @@ import {
   time,
 } from 'discord.js'
 import { DateTime } from 'luxon'
-import createParse from 'parse-human-relative-time'
+import { createParseHumanRelativeTime } from 'parse-human-relative-time/luxon.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { dateTimeFrom } from '../util/time.js'
 
-const parseHumanRelativeTime = createParse(DateTime)
+const parseHumanRelativeTime = createParseHumanRelativeTime(DateTime)
 const timezones = Intl.supportedValuesOf('timeZone')
 
 export const timestamp = new SleetSlashCommand(
