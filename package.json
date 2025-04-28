@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "start:dev": "tsc --build && node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
+    "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
     "generate": "prisma generate && node scripts/fix-prisma-types.js",
     "build": "tsc --build",
