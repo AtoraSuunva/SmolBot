@@ -53,7 +53,6 @@ async function handleGuildMemberRemove(
     .setFooter({
       text: `Joined ${joinedAgo} ago`,
     })
-    .setTimestamp(new Date())
 
   await channel.send({
     content: formatLog(

@@ -82,7 +82,6 @@ async function guildMemberAdd(member: GuildMember) {
       text: `${prettyMilliseconds(userCreatedAt, { unitCount: 3 })} old`,
       iconURL: member.user.displayAvatarURL(),
     })
-    .setTimestamp(new Date())
 
   await channel.send({
     content: formatLog('📥', 'Member Join', msg),
