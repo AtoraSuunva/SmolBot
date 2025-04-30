@@ -27,7 +27,7 @@ import { unedit, unedit_message } from './unedit.js'
 import { vc_log } from './vc_log.js'
 import { warningsModules } from './warnings/index.js'
 import { welcome } from './welcome/welcome.js'
-
+import { auto_tag } from './auto_tag.js'
 export const modModules = [
   ...actionLogModules,
   ...antiraidModules,
@@ -35,6 +35,7 @@ export const modModules = [
   ...muteModules,
   ...warningsModules,
   // automod,
+  auto_tag,
   modmail,
   dehoist,
   delete_police_config,

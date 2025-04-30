@@ -34,6 +34,11 @@ type AutocompleteCreator = (
   channelOption: string,
 ) => AutocompleteHandler<string>
 
+/**
+ * Creates an autocomplete handler that returns a list of suggested tags using another option as the forum channel.
+ * @param channelOption The name of the option that contains the forum channel. Will be used to fetch the forum channel and its tags
+ * @returns An autocomplete handler for a forum tag.
+ */
 export const createTagAutocomplete: AutocompleteCreator =
   (channelOption: string) =>
   async ({ interaction, value }) => {
