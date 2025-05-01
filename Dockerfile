@@ -16,7 +16,6 @@ COPY /scripts ./scripts/
 RUN pnpm run generate
 COPY src/ ./src/
 RUN pnpm run build
-RUN cp src/generated/prisma/*.node dist/generated/prisma/
 COPY /resources ./resources/
 RUN pnpm sentry:sourcemaps:inject
 
@@ -44,5 +43,7 @@ RUN apk upgrade --update-cache --available && \
     rm -rf /var/cache/apk/*
 WORKDIR /home/node/app
 COPY --from=prod-build /home/node/app ./
+RUN mkdir -p /home/node/app/prisma/db
+RUN chown -R node:node /home/node/app/prisma/db
 USER node
 CMD [ "npm", "run", "start:prod" ]

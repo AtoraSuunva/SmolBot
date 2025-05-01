@@ -6,8 +6,18 @@ import { PrismaClient } from '../generated/prisma/client.js'
 const NODE_ENV = env.get('NODE_ENV').required().asString()
 const DATABASE_URL = env.get('DATABASE_URL').required().asString()
 
+// DATABASE_URL will be something like "file:./db/dev.db" (required by prisma CLI)
+// We need to transform it to "file:./prisma/db/dev.db" (required by better-sqlite3)
+const dbPath = DATABASE_URL.split('file:')[1]
+const dbPathParts = dbPath.split('/')
+
+if (!dbPath.startsWith('./prisma')) {
+  // If the path doesn't start with ./prisma, we need to add it
+  dbPathParts.splice(1, 0, 'prisma')
+}
+
 const adapter = new PrismaBetterSQLite3({
-  url: DATABASE_URL,
+  url: `file:${dbPathParts.join('/')}`,
   timeout: 5000,
 })
 
