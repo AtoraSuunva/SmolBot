@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type AttachmentPayload,
   ChannelType,
   type ChatInputCommandInteraction,
@@ -73,6 +74,7 @@ export const auto_tag = new SleetSlashCommand(
     name: 'auto_tag',
     description: 'Configure automatic tagging for forum posts',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageChannels'],
     options: [enable, disable, config],
   },
