@@ -47,9 +47,6 @@ async function updateEvents(client: Client) {
     )
 
     if (!deltaruneEvent) {
-      deltaruneLogger.error(
-        `Deltarune event not found in guild ${guildId}, creating it`,
-      )
       continue
     }
 
