@@ -2,6 +2,7 @@
 import { actionLogModules } from './actionlog/index.js'
 import { manual_log } from './actionlog/manual_log.js'
 import { antiraidModules } from './antiraid/index.js'
+import { auto_tag } from './auto_tag.js'
 import { maliciousFile } from './automod/maliciousFile.js'
 import { dehoist } from './dehoist.js'
 import { delete_police_config } from './delete_police_config.js'
@@ -27,7 +28,6 @@ import { unedit, unedit_message } from './unedit.js'
 import { vc_log } from './vc_log.js'
 import { warningsModules } from './warnings/index.js'
 import { welcome } from './welcome/welcome.js'
-import { auto_tag } from './auto_tag.js'
 export const modModules = [
   ...actionLogModules,
   ...antiraidModules,
