@@ -1,0 +1,5 @@
+model VoiceLogConfig {
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}

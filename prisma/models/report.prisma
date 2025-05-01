@@ -1,0 +1,24 @@
+model ReportConfig {
+  guildID   String   @id @map("guild_id")
+  enabled   Boolean
+  channelID String?  @map("channel_id")
+  message   String
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model UserReport {
+  reportID  String   @id @default(cuid()) @map("report_id")
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+model ReportBan {
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  reason    String
+  moderator String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([guildID, userID])
+}

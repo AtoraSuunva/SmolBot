@@ -1,0 +1,19 @@
+model DeletePoliceConfig {
+  guildID        String  @id @map("guild_id")
+  enabled        Boolean
+  // Time in seconds until a message is no longer considered "quick deleted"
+  threshold      Int
+  // Time in seconds that can be randomly added to the quick delete time, i.e. threshold = 10, fuzziness = 5, message is considered quick deleted if deleted within 10-15 seconds (random limit)
+  fuzziness      Int
+  // Message added to the repost footer
+  footerMessage  String? @map("footer_message")
+  ignoreBots     Boolean @default(true) @map("ignore_bots")
+  ignoreMods     Boolean @default(true) @map("ignore_mods")
+  ignoreStickers Boolean @default(false) @map("ignore_stickers")
+  // Only repost if the user deleted it themselves (bot-deleted messages don't cause audit log entries and may still be reposted)
+  onlySelfDelete Boolean @default(false) @map("only_self_delete")
+  // Time (in ms) to give bots to delete the message. There's no reliable way to check for bot deletes besides "it was inhumanly fast"
+  botGraceTimeMs Int     @default(0) @map("bot_grace_time_ms")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+}

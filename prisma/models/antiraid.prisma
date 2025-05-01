@@ -1,0 +1,16 @@
+model AntiRaidConfig {
+  guildID         String  @id @map("guild_id")
+  enabled         Boolean
+  action          String
+  timeoutDuration Int     @map("timeout_duration")
+  threshold       Float
+  reason          String?
+  logChannelID    String? @map("log_channel_id")
+
+  accountAgeLimitMin     Float @map("account_age_limit_min")
+  accountAgeLimitMax     Float @map("account_age_limit_max")
+  accountAgeWeight       Float @map("account_age_weight")
+  noProfilePictureWeight Float @map("no_profile_picture_weight")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+}

@@ -1,0 +1,22 @@
+model AutomodConfig {
+  guildID String  @id @map("guild_id")
+  // Message to prepend to the automod trigger message
+  prepend String?
+}
+
+model AutomodRule {
+  ruleID      Int     @id @map("rule_id")
+  guildID     String  @map("guild_id")
+  // Discriminator between rule types, bot-set
+  type        String
+  // Description shown to admins when viewing rules
+  description String  @map("name")
+  // Message shown to users when rule is triggered
+  message     String
+  // Action to apply
+  action      String
+  // Whether to delete the message(s) that triggered the rule
+  delete      Boolean
+  // Parameters the rule takes, as JSON
+  parameters  String
+}

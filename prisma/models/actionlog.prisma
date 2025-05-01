@@ -1,0 +1,37 @@
+model ActionLogConfig {
+  guildID            String   @id @map("guild_id")
+  logBans            Boolean  @map("log_bans")
+  logUnbans          Boolean  @map("log_unbans")
+  logKicks           Boolean  @map("log_kicks")
+  logTimeouts        Boolean  @map("log_timeouts")
+  logTimeoutRemovals Boolean  @map("log_timeout_removals")
+  logChannelID       String?  @map("log_channel_id")
+  archiveEnabled     Boolean  @default(false) @map("archive_enabled")
+  archiveChannel     String?  @map("archive_channel")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+}
+
+model ActionLogDirtyTracker {
+  guildID      String   @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty      Boolean  @map("is_dirty")
+}
+
+model ActionLog {
+  guildID  String @map("guild_id")
+  actionID Int    @map("action_id")
+  version  Int
+
+  action      String
+  userID      String?   @map("user_id")
+  redactUser  Boolean   @default(false) @map("redact_user")
+  reason      String?
+  reasonByID  String?   @map("reason_by_id")
+  moderatorID String?   @map("moderator_id")
+  channelID   String    @map("channel_id")
+  messageID   String?   @map("message_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, actionID, version])
+}

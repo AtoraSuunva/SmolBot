@@ -1,0 +1,6 @@
+model RevokeConfig {
+  guildID String @id @map("guild_id")
+
+  enabled   Boolean @default(false)
+  channelID String?
+}

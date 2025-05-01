@@ -1,0 +1,7 @@
+model AutoTagConfig {
+  guildID   String @map("guild_id")
+  channelID String @map("channel_id")
+  tagID     String @map("tag_id")
+
+  @@id([guildID, channelID])
+}

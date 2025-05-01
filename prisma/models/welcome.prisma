@@ -1,0 +1,17 @@
+model WelcomeSettings {
+  guildID     String   @id @map("guild_id")
+  message     String
+  channel     String?
+  rejoins     Boolean  @default(false)
+  instant     Boolean  @default(false)
+  ignoreRoles String   @default("") @map("ignore_roles")
+  reactWith   String?  @map("react_with")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
+
+model WelcomeJoins {
+  guildID String @map("guild_id")
+  userID  String @map("user_id")
+
+  @@id([guildID, userID])
+}

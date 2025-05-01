@@ -18,11 +18,8 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand, getGuild } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import type {
-  Prisma,
-  PrismaPromise,
-  Warning,
-} from '../../generated/prisma/client.js'
+import type { Prisma, Warning } from '../../generated/prisma/client.js'
+import type { PrismaPromise } from '../../generated/prisma/internal/prismaNamespace.js'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'
 

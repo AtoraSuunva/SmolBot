@@ -1,0 +1,5 @@
+model QuoteConfig {
+  guildID String @id @map("guild_id")
+
+  enabled Boolean @default(true)
+}

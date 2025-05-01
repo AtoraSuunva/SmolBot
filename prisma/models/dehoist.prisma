@@ -1,0 +1,7 @@
+model AutomaticDehoist {
+  guildID         String   @id @map("guild_id")
+  enabled         Boolean
+  hoistCharacters String   @map("hoist_characters")
+  dehoistPrepend  String   @map("dehoist_prepend")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+}

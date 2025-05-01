@@ -1,0 +1,31 @@
+model WarningConfig {
+  guildID        String   @id @map("guild_id")
+  expiresAfter   Int      @map("expires_after")
+  archiveEnabled Boolean  @default(false) @map("archive_enabled")
+  archiveChannel String?  @map("archive_channel")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+}
+
+model WarningDirtyTracker {
+  guildID      String   @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty      Boolean  @map("is_dirty")
+}
+
+model Warning {
+  guildID   String @map("guild_id")
+  warningID Int    @map("warning_id")
+  version   Int
+
+  user        String
+  userID      String    @map("user_id")
+  reason      String
+  permanent   Boolean   @default(false)
+  void        Boolean   @default(false)
+  moderatorID String?   @map("moderator_id")
+  modNote     String?   @map("mod_note")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, warningID, version])
+}

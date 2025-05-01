@@ -1,18 +1,25 @@
-// See https://github.com/prisma/prisma/issues/26841#issuecomment-2788215418
-// The regex replacement can be removed once https://github.com/prisma/prisma/pull/26867 is released
-// But the @ts-nocheck might have to stay for a while :/
-import fs from 'node:fs';
+// @ts-check
+// See https://github.com/prisma/prisma/issues/26884#issuecomment-2840063551
+// They added `/* @ts-nocheck */` to the generated files, but typescript only supports `// @ts-nocheck` (the single-line comment version).
+// So until they fix this, we need to change it manually.
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const filePath = path.join(import.meta.dirname, '../src/generated/prisma/client.ts');
+const generatedPath = path.join(import.meta.dirname, '../src/generated/prisma/');
 
-let content = fs.readFileSync(filePath, 'utf8');
+for await (const file of fs.glob('**/*.ts', { cwd: generatedPath })) {
+    const filePath = path.join(generatedPath, file);
 
-content = '// @ts-nocheck\n' + content.replace(
-  /export const (DbNull|JsonNull|AnyNull) = runtime\.objectEnumValues\.instances\.\1/g,
-  'export const $1 = NullTypes.$1',
-);
+    let content = await fs.readFile(filePath, 'utf8');
 
-fs.writeFileSync(filePath, content);
+    content = content.replaceAll(
+      '/* @ts-nocheck */',
+      '// @ts-nocheck',
+    );
+
+    await fs.writeFile(filePath, content);
+
+    console.log(`✔️  Fixed ${filePath}`);
+}
 
 console.log('✅ Prisma types have been successfully modified.');

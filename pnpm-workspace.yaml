@@ -2,8 +2,10 @@ onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@prisma/client'
   - '@prisma/engines'
+  - '@sentry-internal/node-cpu-profiler'
   - '@sentry/cli'
   - '@sentry/profiling-node'
+  - better-sqlite3
   - esbuild
   - prisma
 strictDepBuilds: true
