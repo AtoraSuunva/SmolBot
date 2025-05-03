@@ -41,7 +41,7 @@
     "csv-parse": "^5.6.0",
     "csv-stringify": "^6.5.2",
     "discord-api-types": "^0.38.2",
-    "discord.js": "~14.19.2",
+    "discord.js": "~14.19.3",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.2",
     "luxon": "^3.6.1",
