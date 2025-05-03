@@ -1,3 +1,4 @@
+import { calculator } from './calculator.js'
 import { char_info } from './char_info.js'
 import { convert } from './convert.js'
 import { count_members } from './count_members.js'
@@ -11,6 +12,7 @@ import { timestamp } from './timestamp.js'
 import { translateMessage, translateSlash } from './translate.js'
 
 export const utilityModules = [
+  calculator,
   char_info,
   convert,
   count_members,
