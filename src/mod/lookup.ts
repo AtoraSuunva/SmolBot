@@ -2,6 +2,7 @@ import {
   type APIApplication,
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationFlags,
   ApplicationIntegrationType,
   ButtonBuilder,
   type ButtonInteraction,
@@ -10,6 +11,8 @@ import {
   type ChatInputCommandInteraction,
   type Client,
   type Collection,
+  ComponentType,
+  ContainerBuilder,
   DiscordAPIError,
   EmbedBuilder,
   GuildNSFWLevel,
@@ -19,18 +22,30 @@ import {
   type Interaction,
   InteractionContextType,
   type Invite,
+  MediaGalleryBuilder,
   MessageFlags,
+  SectionBuilder,
+  SeparatorBuilder,
   SnowflakeUtil,
   type Sticker,
+  TextDisplayBuilder,
   User,
   UserFlags,
+  type UserFlagsBitField,
   Widget,
   codeBlock,
-  escapeInlineCode,
+  hyperlink,
+  inlineCode,
   time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetSlashCommand, formatUser, isLikelyID } from 'sleetcord'
+import {
+  SleetSlashCommand,
+  escapeAllMarkdown,
+  formatUser,
+  isLikelyID,
+} from 'sleetcord'
+import { notNullish } from 'sleetcord-common'
 import { plural } from '../util/format.js'
 
 export const lookup = new SleetSlashCommand(
@@ -115,7 +130,7 @@ async function lookupAndRespond(
   if (isLikelyID(data)) {
     // Probably an ID, check if it's a user or guild
     try {
-      const user = await client.users.fetch(data)
+      const user = await client.users.fetch(data, { force: true })
       return sendUserLookup(interaction, user)
     } catch (e) {
       error = e
@@ -291,11 +306,11 @@ const Badges: Record<keyof typeof UserFlags, string> = {
 
 /**
  * Pretty-format badges by turning them into emojis!
- * @param user The user to get details for
+ * @param flags The flags to get details for
  * @returns An array of badge emojis/text that can be displayed
  */
-function getUserBadgeEmojis(user: User): string[] {
-  if (!user.flags) return []
+function getUserBadgeEmojis(flags: UserFlagsBitField | null): string[] {
+  if (!flags) return []
 
   const badges: string[] = []
 
@@ -307,17 +322,32 @@ function getUserBadgeEmojis(user: User): string[] {
   //       'BitString' is '1', '2', '4' etc.
   // UserFlags is both a map 'string' -> bit and bit -> 'string'
   for (const [key, flag] of Object.entries(UserFlags)) {
-    if (
-      typeof flag === 'number' &&
-      key !== 'VerifiedBot' &&
-      user.flags.has(flag) &&
-      key in Badges
-    ) {
-      badges.push(Badges[key as keyof typeof Badges])
+    if (typeof flag === 'number' && key !== 'VerifiedBot' && flags.has(flag)) {
+      badges.push(Badges[key as keyof typeof Badges] || key)
     }
   }
 
   return badges
+}
+
+/**
+ * Serialize a flag bitfield into an array of strings representing which flags are enabled, e.g.
+ * `["GatewayMessageContentLimited", "ApplicationCommandBadge"]`
+ * @param flags The flags bitfield to get details for
+ * @returns An array of strings representing the flags in the bitfield
+ */
+function getRPCFlags(flags: ApplicationFlags | null): string[] {
+  if (!flags) return []
+
+  const stringFlags: string[] = []
+
+  for (const [key, flag] of Object.entries(ApplicationFlags)) {
+    if (typeof flag === 'number' && flags & flag) {
+      stringFlags.push(key)
+    }
+  }
+
+  return stringFlags
 }
 
 /**
@@ -337,59 +367,89 @@ async function sendUserLookup(
       })
   }
 
-  const rawUser = `\`\`${escapeInlineCode(user.discriminator === '0' ? user.username : user.tag)}\`\``
-  const badges = getUserBadgeEmojis(user)
+  const badges = getUserBadgeEmojis(user.flags)
   const formattedBadges =
     badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
 
-  const components: ActionRowBuilder<ButtonBuilder>[] = []
-  const embed = new EmbedBuilder()
-    .setTitle(
-      user.discriminator === '0'
-        ? user.username
-        : formatUser(user, {
-            id: false,
-            markdown: false,
-            escapeMarkdown: false,
-          }),
-      // Use format user to add in the bidi control characters before the #
-    )
-    .setThumbnail(user.displayAvatarURL({ size: 4096 }))
-    .setDescription(
-      `${user}\n**ID:** ${user.id}\n**Raw Username:** ${rawUser}${formattedBadges}`,
-    )
-    .addFields([{ name: 'Created at:', value: formatDate(user.createdAt) }])
-
-  if (user.globalName) {
-    embed.setAuthor({
-      name: user.globalName,
-    })
-  }
+  const container = new ContainerBuilder()
 
   if (typeof user.accentColor === 'number') {
-    embed.setColor(user.accentColor)
+    container.setAccentColor(user.accentColor)
   }
 
-  if (user.banner) {
-    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
-    embed.setImage(user.bannerURL({ size: 4096 })!)
+  const avatarUrl = user.avatarURL({ size: 4096 })
+  const bannerUrl = user.bannerURL({ size: 256 })
+  const fullSizeBannerUrl = user.bannerURL({ size: 4096 })
+  if (bannerUrl) {
+    const bannerGallery = new MediaGalleryBuilder({
+      items: [
+        {
+          media: {
+            url: bannerUrl,
+          },
+        },
+      ],
+    })
+
+    container.addMediaGalleryComponents(bannerGallery)
   }
+
+  const links = [
+    avatarUrl ? `${hyperlink('Avatar', avatarUrl)}` : '',
+    fullSizeBannerUrl ? `${hyperlink('Banner', fullSizeBannerUrl)}` : '',
+  ]
+    .filter((t) => !!t)
+    .join(', ')
+
+  const section = new SectionBuilder({
+    accessory: {
+      type: ComponentType.Thumbnail,
+      media: {
+        url: user.displayAvatarURL({ size: 4096 }),
+      },
+    },
+    components: [
+      {
+        type: ComponentType.TextDisplay,
+        content: `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`,
+      },
+      {
+        type: ComponentType.TextDisplay,
+        content: `### ${escapeAllMarkdown(user.tag)}`,
+      },
+      {
+        type: ComponentType.TextDisplay,
+        content: `**ID:** \`${user.id}\`${formattedBadges}${links ? `\n${links}` : ''}`,
+      },
+    ],
+  })
+
+  container.addSectionComponents(section)
+
+  const createdAt = new TextDisplayBuilder({
+    content: `**Created At**:\n${formatDate(user.createdAt)}`,
+  })
+
+  container.addTextDisplayComponents(createdAt)
 
   if (user.bot) {
     const verifiedBot = user.flags?.has('VerifiedBot')
     const rpc = await tryFetchRPCDetails(user.id)
-    const details: string[] = []
+    const details: string[] = ['## **Bot Info:**']
 
     if (verifiedBot) {
       details.push(`${Badges.VerifiedBot} **Verified Bot**\n`)
     }
 
+    let botRow: ActionRowBuilder<ButtonBuilder> | null = null
+
     if (rpc) {
-      const row = new ActionRowBuilder<ButtonBuilder>()
-      components.push(row)
+      botRow = new ActionRowBuilder<ButtonBuilder>()
+
+      const availability = rpc.bot_public ? 'Public' : 'Private'
 
       const inviteUrl = oAuthUrl(rpc.id)
-      row.addComponents([
+      botRow.addComponents([
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Invite')
@@ -401,22 +461,20 @@ async function sendUserLookup(
         rpc.install_params?.permissions ?? '0',
         rpc.install_params?.scopes ?? ['bot'],
       )
-      row.addComponents([
+      botRow.addComponents([
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Invite (Scoped)')
           .setURL(inviteUrlScoped),
       ])
 
-      const availability = rpc.bot_public ? 'Public' : 'Private'
-
       details.push(
-        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}\n`,
         `**${availability} Bot**`,
+        `> ${rpc.description.trim().replaceAll(/\n/g, '\n> ')}\n`,
       )
 
       if (rpc.terms_of_service_url) {
-        row.addComponents([
+        botRow.addComponents([
           new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setLabel('Terms of Service')
@@ -425,7 +483,7 @@ async function sendUserLookup(
       }
 
       if (rpc.privacy_policy_url) {
-        row.addComponents([
+        botRow.addComponents([
           new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setLabel('Privacy Policy')
@@ -438,10 +496,18 @@ async function sendUserLookup(
       }
 
       if (rpc.tags) {
-        details.push(`**Tags:** ${rpc.tags.map((t) => `\`${t}\``).join(', ')}`)
+        details.push(
+          `**Tags:** ${rpc.tags.filter(notNullish).map(inlineCode).join(', ')}`,
+        )
       }
 
-      row.addComponents([
+      const flags = getRPCFlags(rpc.flags)
+
+      if (flags.length > 0) {
+        details.push(`**Flags:** ${flags.map(inlineCode).join(', ')}`)
+      }
+
+      botRow.addComponents([
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('RPC Details')
@@ -451,11 +517,27 @@ async function sendUserLookup(
       details.push('No RPC information available. This bot is likely too old.')
     }
 
-    const formattedDetails = details.join('\n').trim()
-    embed.addFields([{ name: 'Bot Details:', value: formattedDetails }])
+    container.addSeparatorComponents(
+      new SeparatorBuilder({
+        divider: true,
+      }),
+    )
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder({
+        content: details.join('\n').trim(),
+      }),
+    )
+
+    if (botRow) {
+      container.addActionRowComponents(botRow)
+    }
   }
 
-  await interaction.editReply({ components, embeds: [embed] })
+  await interaction.editReply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [container],
+  })
 }
 
 const ONLINE = '<:i_online:468214881623998464>'
