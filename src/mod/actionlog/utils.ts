@@ -54,7 +54,7 @@ export async function formatToLog(
   if (options.user) {
     if (entry.redactUser) {
       log.push(
-        `> **User:** \`[Username Redacted by Moderators]\` (${entry.user?.id ?? 'unknown user'})`,
+        `> **User:** \`[Username Redacted by Moderators]\` (\`${entry.user?.id ?? 'unknown user'}\`)`,
       )
     } else {
       log.push(
