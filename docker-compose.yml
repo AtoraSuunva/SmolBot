@@ -9,6 +9,25 @@ services:
       - .env
     volumes:
       - db-data:/home/node/app/prisma/db
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+  litestream:
+    image: litestream/litestream
+    command: replicate
+    restart: always
+    volumes:
+      - db-data:/data
+      - ./litestream.yml:/etc/litestream.yml
+    depends_on:
+      bot:
+        condition: service_healthy
+        restart: true
+    profiles:
+      - production
 
 volumes:
   db-data:

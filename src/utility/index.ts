@@ -2,6 +2,7 @@ import { calculator } from './calculator.js'
 import { char_info } from './char_info.js'
 import { convert } from './convert.js'
 import { count_members } from './count_members.js'
+import { healthcheck } from './healthcheck.js'
 import { manage_quote } from './quote/manage_quote.js'
 import { quote } from './quote/quote.js'
 import { restore_embeds } from './restore_embeds.js'
@@ -16,6 +17,7 @@ export const utilityModules = [
   char_info,
   convert,
   count_members,
+  healthcheck,
   manage_quote,
   quote,
   restore_embeds,

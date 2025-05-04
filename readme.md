@@ -30,6 +30,7 @@ APPLICATION_ID=<discord application id>
 USE_PINO_PRETTY=true # or false for default pino logs
 DATABASE_URL="file:./db/data.db" # or anywhere else you want an sqlite db to be
 ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the activities you want the bot to show
+HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:PORT/healthcheck with HTTP 200 once the bot is ready and the database works
 SENTRY_DSN=<access token> # A sentry DSN for error reporting, optional
 ```
 
@@ -52,10 +53,32 @@ services:
     env_file:
       - .env
     volumes:
-      - smolbot-db:/home/node/app/prisma/db
+      - db-data:/home/node/app/prisma/db
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:$$HEALTHCHECK_PORT/healthcheck || exit 1" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+  # Optional, if you want litestream to replicate the DB
+  # You will need to config litestream if you include this
+  # Use `docker docker --profile production up` to run with litestream
+  litestream:
+    image: litestream/litestream
+    command: replicate
+    restart: always
+    volumes:
+      - db-data:/data
+      - ./litestream.yml:/etc/litestream.yml
+    depends_on:
+      bot:
+        condition: service_healthy
+        restart: true
+    profiles:
+      - production
 
 volumes:
-  smolbot-db:
+  db-data:
 ```
 
 Then run it via `docker compose -f docker-smolbot.yml`. This avoids needing to clone the repo and wait for builds. A `docker run` will work as well, but require copy-pasting the command to keep the config.
