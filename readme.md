@@ -62,7 +62,7 @@ services:
       start_period: 5s
   # Optional, if you want litestream to replicate the DB
   # You will need to config litestream if you include this
-  # Use `docker docker --profile production up` to run with litestream
+  # Use `docker compose --profile production up` to run with litestream
   litestream:
     image: litestream/litestream
     command: replicate
