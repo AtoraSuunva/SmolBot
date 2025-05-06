@@ -33,7 +33,8 @@ const REGEX_TIMEOUT = 100
 export const purge = new SleetSlashCommand(
   {
     name: 'purge',
-    description: 'Purges a number of messages, options work as AND conditions',
+    description:
+      'Purge messages. By default all messages match, options filter messages and work as AND conditions',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
@@ -48,51 +49,59 @@ export const purge = new SleetSlashCommand(
       {
         name: 'content',
         type: ApplicationCommandOptionType.String,
-        description: 'Purge messages with this content (case-insensitive)',
+        description: 'Purge only messages with this content (case-insensitive)',
       },
       {
         name: 'regex',
         type: ApplicationCommandOptionType.String,
-        description: `Purge messages with content matching this regex pattern (${REGEX_TIMEOUT}ms timeout, 'v' flag)`,
+        description: `Purge only messages with content matching this regex pattern (${REGEX_TIMEOUT}ms timeout, 'v' flag)`,
       },
       {
         name: 'from',
         type: ApplicationCommandOptionType.String,
         description:
-          'The users/roles to purge messages from (default: everyone)',
+          'Purge only messages from these users/roles (default: everyone)',
       },
       {
         name: 'mentions',
         type: ApplicationCommandOptionType.String,
-        description: 'Purge messages that mention a user/role (default: none)',
+        description:
+          'Purge only messages that mention a user/role (default: none)',
       },
       {
         name: 'bots',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Purge bots (default: false)',
+        description: 'Purge only bots (default: false)',
       },
       {
         name: 'emoji',
         type: ApplicationCommandOptionType.Integer,
-        description: 'Purge messages with this many or more emoji (default: 0)',
+        description:
+          'Purge only messages with this many or more emoji (default: 0)',
         min_value: 0,
       },
       {
         name: 'only_emoji',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Purge messages that only contain emoji (default: false)',
+        description:
+          'Purge only messages that only contain emoji (default: false)',
       },
       {
         name: 'embeds',
         type: ApplicationCommandOptionType.Integer,
         description:
-          'Purge messages with this many or more embeds (default: 0)',
+          'Purge only messages with this many or more embeds (default: 0)',
         min_value: 0,
       },
       {
         name: 'stickers',
         type: ApplicationCommandOptionType.Boolean,
-        description: 'Purge messages with stickers (default: False)',
+        description: 'Purge only messages with stickers (default: False)',
+      },
+      {
+        name: 'webhooks',
+        type: ApplicationCommandOptionType.Boolean,
+        description: 'Purge only messages sent by webhooks (default: false)',
       },
       {
         name: 'reacts',
@@ -103,12 +112,14 @@ export const purge = new SleetSlashCommand(
       {
         name: 'before',
         type: ApplicationCommandOptionType.String,
-        description: 'Purge messages before this message ID (default: none)',
+        description:
+          'Purge only messages before this message ID, exclusive (default: none)',
       },
       {
         name: 'after',
         type: ApplicationCommandOptionType.String,
-        description: 'Purge messages after this message ID (default: none)',
+        description:
+          'Purge only messages after this message ID, exclusive (default: none)',
       },
       {
         name: 'channel',
@@ -154,6 +165,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
   const reacts = interaction.options.getBoolean('reacts') ?? false
   const before = interaction.options.getString('before')
   const after = interaction.options.getString('after')
+  const webhooks = interaction.options.getBoolean('webhooks') ?? false
 
   const channelOption = interaction.options.getChannel('channel')
   const channel = channelOption
@@ -241,6 +253,7 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       embeds,
       stickers,
       reacts,
+      webhooks,
     })
 
     if (filteredMessages.size === 0) {
@@ -349,6 +362,7 @@ interface FilterOptions {
   embeds: number
   stickers: boolean
   reacts: boolean
+  webhooks: boolean
 }
 
 type FetchedMessages = Collection<Snowflake, Message>
@@ -373,6 +387,7 @@ async function filterMessages(
     onlyEmoji,
     embeds,
     stickers,
+    webhooks,
     // reacts,
   }: FilterOptions,
 ): Promise<FetchedMessages> {
@@ -389,6 +404,7 @@ async function filterMessages(
     if (embeds && !hasCountEmbeds(message, embeds)) return false
     if (stickers && message.stickers.size === 0) return false
     if (content && !hasContent(message, content)) return false
+    if (webhooks && !isWebhook(message)) return false
 
     return true
   })
@@ -487,6 +503,10 @@ function hasOnlyEmoji(message: Message): boolean {
 function hasCountEmbeds(message: Message, maxEmbeds: number): boolean {
   const count = message.embeds.length + message.attachments.size
   return count >= maxEmbeds
+}
+
+function isWebhook(message: Message): boolean {
+  return message.webhookId !== undefined
 }
 
 interface BulkDeleteResult {
