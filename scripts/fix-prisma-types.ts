@@ -1,4 +1,3 @@
-// @ts-check
 // See https://github.com/prisma/prisma/issues/26884#issuecomment-2840063551
 // They added `/* @ts-nocheck */` to the generated files, but typescript only supports `// @ts-nocheck` (the single-line comment version).
 // So until they fix this, we need to change it manually.
