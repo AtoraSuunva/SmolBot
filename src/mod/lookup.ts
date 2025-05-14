@@ -277,21 +277,21 @@ async function tryFetchRPCDetails(app: string): Promise<APIApplication | null> {
 }
 
 const Badges: Record<keyof typeof UserFlags, string> = {
-  Staff: '<:BadgeStaff:909313939911897138>',
-  Partner: '<:BadgePartner:909313940725571604>',
-  Hypesquad: '<:BadgeHypeSquadEvents:909313941178548246>',
-  BugHunterLevel1: '<:BadgeBugHunter:909313942407483402>',
-  HypeSquadOnlineHouse1: '<:BadgeBravery:909313943233789972>',
-  HypeSquadOnlineHouse2: '<:BadgeBrilliance:909313944047468544>',
-  HypeSquadOnlineHouse3: '<:BadgeBalance:909313944869564416>',
-  PremiumEarlySupporter: '<:BadgeEarlySupporter:909313946132029440>',
+  Staff: '[Staff]]',
+  Partner: '[Partner]',
+  Hypesquad: '[Hypesquad]',
+  BugHunterLevel1: '[Bug Hunter Lvl 1]',
+  HypeSquadOnlineHouse1: '[Bravery]',
+  HypeSquadOnlineHouse2: '[Brilliance]',
+  HypeSquadOnlineHouse3: '[Balance]',
+  PremiumEarlySupporter: '[Early Supporter]',
   TeamPseudoUser: '[Team User]',
-  BugHunterLevel2: '<:BadgeBugHunterLvl2:909313947172233266>',
-  VerifiedBot: '<:VerifiedBot:910427927160709180>',
-  VerifiedDeveloper: '<:BadgeEarlyVerifiedBotDeveloper:909313948355018752>',
-  CertifiedModerator: '<:BadgeModeratorProgramsAlumni:1242694571385946152>',
+  BugHunterLevel2: '[Bug Hunter Lvl 2]',
+  VerifiedBot: '[Verified Bot]',
+  VerifiedDeveloper: '[Early Verified Bot Developer]',
+  CertifiedModerator: '[Moderator Programs Alumni]',
   BotHTTPInteractions: '[HTTP Interactions]',
-  ActiveDeveloper: '<:activeDev:1242646832828387500>',
+  ActiveDeveloper: '[Active Developer]',
 
   // Not officially documented, but "known"
   Spammer: '[Spammer]',
@@ -367,9 +367,16 @@ async function sendUserLookup(
       })
   }
 
+  const displayNameLine = `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`
+  const tagLine = `### ${escapeAllMarkdown(user.tag)}`
+
+  const details = [`**ID:** \`${user.id}\``]
+
   const badges = getUserBadgeEmojis(user.flags)
-  const formattedBadges =
-    badges.length > 0 ? `\n**Badges:** ${badges.join(' ')}` : ''
+
+  if (badges.length > 0) {
+    details.push(`**Badges:** ${badges.join(' ')}`)
+  }
 
   const container = new ContainerBuilder()
 
@@ -377,15 +384,17 @@ async function sendUserLookup(
     container.setAccentColor(user.accentColor)
   }
 
-  const avatarUrl = user.avatarURL({ size: 4096 })
-  const bannerUrl = user.bannerURL({ size: 256 })
-  const fullSizeBannerUrl = user.bannerURL({ size: 4096 })
-  if (bannerUrl) {
+  const avatarURL = user.avatarURL({ size: 4096 })
+  const bannerURL = user.bannerURL({ size: 256 })
+  const fullSizeBannerURL = user.bannerURL({ size: 4096 })
+  const avatarDecorationURL = user.avatarDecorationURL({ size: 4096 })
+
+  if (bannerURL) {
     const bannerGallery = new MediaGalleryBuilder({
       items: [
         {
           media: {
-            url: bannerUrl,
+            url: bannerURL,
           },
         },
       ],
@@ -395,11 +404,18 @@ async function sendUserLookup(
   }
 
   const links = [
-    avatarUrl ? `${hyperlink('Avatar', avatarUrl)}` : '',
-    fullSizeBannerUrl ? `${hyperlink('Banner', fullSizeBannerUrl)}` : '',
+    avatarURL ? `${hyperlink('Avatar', avatarURL)}` : '',
+    fullSizeBannerURL ? `${hyperlink('Banner', fullSizeBannerURL)}` : '',
+    avatarDecorationURL
+      ? `${hyperlink('Avatar Decoration', avatarDecorationURL)}`
+      : '',
   ]
     .filter((t) => !!t)
     .join(', ')
+
+  if (links) {
+    details.push(links)
+  }
 
   const section = new SectionBuilder({
     accessory: {
@@ -411,15 +427,15 @@ async function sendUserLookup(
     components: [
       {
         type: ComponentType.TextDisplay,
-        content: `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`,
+        content: displayNameLine,
       },
       {
         type: ComponentType.TextDisplay,
-        content: `### ${escapeAllMarkdown(user.tag)}`,
+        content: tagLine,
       },
       {
         type: ComponentType.TextDisplay,
-        content: `**ID:** \`${user.id}\`${formattedBadges}${links ? `\n${links}` : ''}`,
+        content: details.join('\n'),
       },
     ],
   })
