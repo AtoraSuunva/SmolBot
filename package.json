@@ -8,7 +8,7 @@
     "start:dev": "tsc --build && node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
     "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
-    "generate": "prisma generate && node --experimental-strip-types scripts/fix-prisma-types.ts",
+    "generate": "prisma generate",
     "build": "tsc --build",
     "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write && prisma format && tsc --noEmit",
