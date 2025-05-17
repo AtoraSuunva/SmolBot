@@ -1,5 +1,6 @@
 import {
   type APIApplication,
+  type APIUser,
   ActionRowBuilder,
   ApplicationCommandOptionType,
   ApplicationFlags,
@@ -24,6 +25,7 @@ import {
   type Invite,
   MediaGalleryBuilder,
   MessageFlags,
+  Routes,
   SectionBuilder,
   SeparatorBuilder,
   SnowflakeUtil,
@@ -46,6 +48,7 @@ import {
   isLikelyID,
 } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+import { mapComponents } from '../util/components.js'
 import { plural } from '../util/format.js'
 
 export const lookup = new SleetSlashCommand(
@@ -88,20 +91,43 @@ async function interactionCreate(interaction: Interaction) {
     interaction.isButton() &&
     interaction.customId.startsWith(`${LOOKUP_ID}:`)
   ) {
-    const [, data, ephemeral] = interaction.customId.split(':')
-    await lookupAndRespond(interaction, data, ephemeral === 'true').catch(
-      () => {
-        /* ignore */
-      },
-    )
+    const ephemeral = interaction.message.flags.has('Ephemeral')
+
+    const [, data] = interaction.customId.split(':')
+    await lookupAndRespond(interaction, data, ephemeral).catch(() => {
+      /* ignore */
+    })
+
     // Then disable the button
-    await interaction.message
-      .edit({
-        components: [],
-      })
-      .catch(() => {
-        /* ignore */
-      })
+    // With components v2 this is a little more complicated, since removing all components just
+    // removes all the content. So we need to find the button (via customId) and disable it
+
+    const { components } = interaction.message
+
+    const newComponents = mapComponents(components, (component) => {
+      if (
+        component.type === ComponentType.Button &&
+        component.customId === interaction.customId
+      ) {
+        return new ButtonBuilder(component.data)
+          .setDisabled(true)
+          .setStyle(ButtonStyle.Secondary)
+      }
+
+      return component
+    })
+
+    // We can't edit the ephemeral message directly, we would need to update it in response to the interaction
+    // But lookupAndRespond already responds to the message
+    if (!ephemeral) {
+      await interaction.message
+        .edit({
+          components: newComponents,
+        })
+        .catch(() => {
+          /* ignore */
+        })
+    }
   }
 }
 
@@ -130,7 +156,7 @@ async function lookupAndRespond(
   if (isLikelyID(data)) {
     // Probably an ID, check if it's a user or guild
     try {
-      const user = await client.users.fetch(data, { force: true })
+      const user = await fetchUser(client, data)
       return sendUserLookup(interaction, user)
     } catch (e) {
       error = e
@@ -148,7 +174,6 @@ async function lookupAndRespond(
           return sendInviteLookup(
             interaction,
             await client.fetchInvite(guild.instantInvite),
-            ephemeral,
           )
         }
 
@@ -163,13 +188,60 @@ async function lookupAndRespond(
     // Likely an invite code
     try {
       const invite = await client.fetchInvite(data)
-      return sendInviteLookup(interaction, invite, ephemeral)
+      return sendInviteLookup(interaction, invite)
     } catch (e) {
       error = e
     }
   }
 
   await interaction.editReply(`Failed to do lookup, got:\n> ${String(error)}`)
+}
+
+// TODO: remove this hack once clans are supported in discord.js
+type APIUserWithClan = APIUser & { clan?: UserClan }
+
+interface UserDetails {
+  apiUser: APIUserWithClan
+  user: User
+}
+
+/**
+ * Represents a user's clan information.
+ */
+interface UserClan {
+  /**
+   * The ID of the user's primary clan.
+   */
+  identity_guild_id: string
+
+  /**
+   * Indicates whether the user is displaying their clan tag.
+   */
+  identity_enabled: boolean
+
+  /**
+   * The text of the user's clan tag. Limited to 4 characters.
+   */
+  tag: string
+
+  /**
+   * The clan badge hash.
+   */
+  badge: string
+}
+
+async function fetchUser(client: Client, id: string): Promise<UserDetails> {
+  const apiUser = (await client.rest.get(Routes.user(id))) as APIUserWithClan
+  // biome-ignore lint/complexity/useLiteralKeys: we're accessing a private function
+  const user = client.users['_add'](apiUser, true)
+
+  return { apiUser, user }
+}
+
+function clanBadgeUrl(clan: UserClan, size = 2048): string {
+  // https://cdn.discordapp.com/clan-badges/[guild_id]/[badge_hash].[ext]?size=2048
+  const ext = clan.badge.startsWith('a_') ? 'gif' : 'png'
+  return `https://cdn.discordapp.com/clan-badges/${clan.identity_guild_id}/${clan.badge}.${ext}?size=${size}`
 }
 
 interface GuildExists {
@@ -199,7 +271,7 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
       if (e.status === 403) {
         return {
           exists: true,
-          message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created at: ${formatDate(
+          message: `Guild found with ID "\`${guildId}\`", no more information found.\nGuild created: ${formatDate(
             snowflakeToDate(guildId),
           )}`,
         }
@@ -357,8 +429,10 @@ function getRPCFlags(flags: ApplicationFlags | null): string[] {
  */
 async function sendUserLookup(
   interaction: LookupInteraction,
-  user: User,
+  userDetails: UserDetails,
 ): Promise<void> {
+  const { user, apiUser } = userDetails
+
   if (!(user instanceof User)) {
     return void interaction
       .editReply('Did not find info for that user.')
@@ -411,10 +485,10 @@ async function sendUserLookup(
       : '',
   ]
     .filter((t) => !!t)
-    .join(', ')
+    .join(' | ')
 
   if (links) {
-    details.push(links)
+    details.push(`**Images:** ${links}`)
   }
 
   const section = new SectionBuilder({
@@ -443,10 +517,50 @@ async function sendUserLookup(
   container.addSectionComponents(section)
 
   const createdAt = new TextDisplayBuilder({
-    content: `**Created At**:\n${formatDate(user.createdAt)}`,
+    content: `**Created**:\n${formatDate(user.createdAt)}`,
   })
 
   container.addTextDisplayComponents(createdAt)
+
+  const buttonRow = new ActionRowBuilder<ButtonBuilder>()
+
+  if (apiUser.clan) {
+    const { clan } = apiUser
+    const clanBadge = clanBadgeUrl(clan)
+
+    const section = new SectionBuilder({
+      accessory: {
+        type: ComponentType.Thumbnail,
+        media: {
+          url: clanBadge,
+        },
+      },
+      components: [
+        {
+          type: ComponentType.TextDisplay,
+          content: `**Tag:** ${inlineCode(clan.tag)}`,
+        },
+        {
+          type: ComponentType.TextDisplay,
+          content: `**Guild:** ${inlineCode(clan.identity_guild_id)}`,
+        },
+        {
+          type: ComponentType.TextDisplay,
+          content: `**Images:** ${hyperlink('Badge', clanBadge)}`,
+        },
+      ],
+    })
+
+    container.addSeparatorComponents(new SeparatorBuilder())
+    container.addSectionComponents(section)
+    buttonRow.addComponents(
+      new ButtonBuilder()
+        .setEmoji('🔎')
+        .setLabel('Lookup Guild')
+        .setStyle(ButtonStyle.Primary)
+        .setCustomId(`${LOOKUP_ID}:${clan.identity_guild_id}`),
+    )
+  }
 
   if (user.bot) {
     const verifiedBot = user.flags?.has('VerifiedBot')
@@ -457,32 +571,28 @@ async function sendUserLookup(
       details.push(`${Badges.VerifiedBot} **Verified Bot**\n`)
     }
 
-    let botRow: ActionRowBuilder<ButtonBuilder> | null = null
-
     if (rpc) {
-      botRow = new ActionRowBuilder<ButtonBuilder>()
-
       const availability = rpc.bot_public ? 'Public' : 'Private'
 
       const inviteUrl = oAuthUrl(rpc.id)
-      botRow.addComponents([
+      buttonRow.addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Invite')
           .setURL(inviteUrl),
-      ])
+      )
 
       const inviteUrlScoped = oAuthUrlScoped(
         rpc.id,
         rpc.install_params?.permissions ?? '0',
         rpc.install_params?.scopes ?? ['bot'],
       )
-      botRow.addComponents([
+      buttonRow.addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Invite (Scoped)')
           .setURL(inviteUrlScoped),
-      ])
+      )
 
       details.push(
         `**${availability} Bot**`,
@@ -490,21 +600,21 @@ async function sendUserLookup(
       )
 
       if (rpc.terms_of_service_url) {
-        botRow.addComponents([
+        buttonRow.addComponents(
           new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setLabel('Terms of Service')
             .setURL(rpc.terms_of_service_url),
-        ])
+        )
       }
 
       if (rpc.privacy_policy_url) {
-        botRow.addComponents([
+        buttonRow.addComponents(
           new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setLabel('Privacy Policy')
             .setURL(rpc.privacy_policy_url),
-        ])
+        )
       }
 
       if (rpc.guild_id) {
@@ -523,7 +633,7 @@ async function sendUserLookup(
         details.push(`**Flags:** ${flags.map(inlineCode).join(', ')}`)
       }
 
-      botRow.addComponents([
+      buttonRow.addComponents([
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('RPC Details')
@@ -544,10 +654,10 @@ async function sendUserLookup(
         content: details.join('\n').trim(),
       }),
     )
+  }
 
-    if (botRow) {
-      container.addActionRowComponents(botRow)
-    }
+  if (buttonRow.components.length > 0) {
+    container.addActionRowComponents(buttonRow)
   }
 
   await interaction.editReply({
@@ -556,10 +666,10 @@ async function sendUserLookup(
   })
 }
 
-const ONLINE = '<:i_online:468214881623998464>'
-const OFFLINE = '<:i_offline2:468215162244038687>'
-const PARTNERED = '<:serverPartnered:1242647914119954484>'
-const VERIFIED = '<:serverVerifiedIcon:1242647914917003285>'
+const ONLINE = 'Online:'
+const OFFLINE = 'Offline:'
+const PARTNERED = '[Partnered]'
+const VERIFIED = '[Verified]'
 
 /**
  * Send a guild or group DM invite based on which kind of invite it is
@@ -569,11 +679,10 @@ const VERIFIED = '<:serverVerifiedIcon:1242647914917003285>'
 async function sendInviteLookup(
   interaction: LookupInteraction,
   invite: Invite,
-  ephemeral: boolean,
 ): Promise<void> {
   if (invite.guild) {
     // Guild Invite
-    return sendGuildInviteLookup(interaction, invite, ephemeral)
+    return sendGuildInviteLookup(interaction, invite)
   }
 
   // Group DM invite? Maybe something else?
@@ -588,7 +697,6 @@ async function sendInviteLookup(
 async function sendGuildInviteLookup(
   interaction: LookupInteraction,
   invite: Invite,
-  ephemeral: boolean,
 ): Promise<void> {
   const { guild, code, presenceCount, memberCount } = invite
 
@@ -651,10 +759,10 @@ async function sendGuildInviteLookup(
 
     components.addComponents([
       new ButtonBuilder()
-        .setEmoji('📫')
+        .setEmoji('🔎')
         .setLabel('Lookup Inviter')
         .setStyle(ButtonStyle.Primary)
-        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}:${ephemeral}`),
+        .setCustomId(`${LOOKUP_ID}:${invite.inviter.id}`),
     ])
   }
 
@@ -789,7 +897,7 @@ async function sendGroupDMInviteLookup(
         inline: true,
       },
       {
-        name: 'GDM Created At:',
+        name: 'GDM Created:',
         value: formatDate(createdAt),
       },
     ])
@@ -797,7 +905,7 @@ async function sendGroupDMInviteLookup(
   if (invite.expiresAt) {
     embed.addFields([
       {
-        name: 'Invite Expires At:',
+        name: 'Invite Expires:',
         value: formatDate(invite.expiresAt),
       },
     ])
@@ -850,7 +958,7 @@ async function sendGuildWidgetLookup(
         value: `${widget.presenceCount.toLocaleString()} online`,
         inline: true,
       },
-      { name: 'Guild Created At:', value: formatDate(created) },
+      { name: 'Guild Created:', value: formatDate(created) },
     ])
     .setFooter({
       text: 'Source: Guild Widget',
@@ -887,7 +995,7 @@ async function sendGuildPreviewLookup(
           `${OFFLINE} **${memberCount.toLocaleString()}** Total`,
         inline: true,
       },
-      { name: 'Guild Created At:', value: formatDate(preview.createdAt) },
+      { name: 'Guild Created:', value: formatDate(preview.createdAt) },
     ])
     .setFooter({
       text: 'Source: Guild Preview',
