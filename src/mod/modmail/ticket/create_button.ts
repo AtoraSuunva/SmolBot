@@ -366,9 +366,7 @@ async function handleCreateTicketButton(
   const fields = dbFields.length > 0 ? dbFields : DEFAULT_FIELDS
 
   const modal = new ModalBuilder()
-    .setCustomId(
-      `${MODMAIL}:${TICKET_MODAL}:${modmailId}:${forumId}:${forumTag}`,
-    )
+    .setCustomId(`${MODMAIL}:${TICKET_MODAL}:${interaction.id}`)
     .setTitle('Create a Modmail Ticket')
 
   modal.addComponents(
