@@ -22,7 +22,7 @@ async function handleReady(_client: Client<true>) {
   if (!HEALTHCHECK_PORT) return
 
   // Ensure we have connection to the DB
-  await prisma.$queryRaw`SELECT 1`
+  await prisma.$executeRaw`SELECT 1`
 
   const base = `http://localhost:${HEALTHCHECK_PORT}/`
 
