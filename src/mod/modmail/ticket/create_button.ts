@@ -598,6 +598,8 @@ async function handleCreateTicketButton(
     files,
   })
 
+  await modThread.send(`User thread created: ${userThread}`)
+
   await prisma.modMailTicket.create({
     data: {
       modmailID: modmailId,
