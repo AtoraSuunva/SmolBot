@@ -120,7 +120,8 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
   const starterMessage = interaction.options.getString('starter_message')
   const unset = interaction.options.getString('unset')
 
-  const toUpsert: Omit<Prisma.MuteConfigCreateInput, 'guildID'> = {
+  const mergedConfig: Prisma.MuteConfigCreateInput = {
+    guildID: guild.id,
     roleID: unset === 'role' ? null : (role?.id ?? oldConfig?.roleID ?? null),
     logChannelID:
       unset === 'log_channel'
@@ -138,13 +139,8 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
     where: {
       guildID: guild.id,
     },
-    create: {
-      ...toUpsert,
-      guildID: guild.id,
-    },
-    update: {
-      ...toUpsert,
-    },
+    update: mergedConfig,
+    create: mergedConfig,
   })
 
   const config = formatConfig({ config: newConfig, oldConfig, guild })

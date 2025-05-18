@@ -73,10 +73,12 @@ async function syncMessage(message: Message, isEdit = false) {
     where: {
       guildID: message.guildId,
     },
+    update: {
+      guildID: message.guildId,
+    },
     create: {
       guildID: message.guildId,
     },
-    update: {},
   })
 
   const { client } = message

@@ -8,7 +8,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand, getGuild } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import type { ReportConfig } from '../../../generated/prisma/client.js'
+import type { Prisma, ReportConfig } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { formatConfig } from '../../../util/format.js'
 import { handleReportButtonInteraction } from '../utils.js'
@@ -75,21 +75,19 @@ async function runReportManage(interaction: ChatInputCommandInteraction) {
   const messageArg = interaction.options.getString('message')
   const message = messageArg?.toLowerCase() === 'none' ? '' : messageArg
 
+  const mergedConfig: Prisma.ReportConfigCreateInput = {
+    guildID: guild.id,
+    enabled: enabled ?? oldConfig?.enabled ?? true,
+    channelID: channel?.id ?? oldConfig?.channelID ?? null,
+    message: message ?? oldConfig?.message ?? '',
+  }
+
   const newConfig = await prisma.reportConfig.upsert({
     where: {
       guildID: guild.id,
     },
-    update: {
-      enabled: enabled ?? oldConfig?.enabled ?? true,
-      channelID: channel?.id ?? oldConfig?.channelID ?? null,
-      message: message ?? oldConfig?.message ?? '',
-    },
-    create: {
-      guildID: guild.id,
-      enabled: enabled ?? true,
-      channelID: channel?.id ?? null,
-      message: message ?? '',
-    },
+    update: mergedConfig,
+    create: mergedConfig,
   })
 
   const warnings: string[] = []

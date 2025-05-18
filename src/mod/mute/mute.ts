@@ -1063,12 +1063,12 @@ function setStoredRoles(member: GuildMember, roles: string[]) {
         userID: member.user.id,
       },
     },
+    update: {
+      previousRoles,
+    },
     create: {
       guildID: member.guild.id,
       userID: member.user.id,
-      previousRoles,
-    },
-    update: {
       previousRoles,
     },
   })

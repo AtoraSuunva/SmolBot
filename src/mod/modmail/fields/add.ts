@@ -106,8 +106,8 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
         customID: custom_id,
       },
     },
-    create: mergedField,
     update: mergedField,
+    create: mergedField,
   })
 
   await interaction.reply({

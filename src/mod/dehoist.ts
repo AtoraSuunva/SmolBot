@@ -159,13 +159,13 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
 
     await prisma.automaticDehoist.upsert({
       where: { guildID: guild.id },
+      update,
       create: {
         guildID: guild.id,
         enabled: automatic,
         dehoistPrepend,
         hoistCharacters: hoistCharacters.join(''),
       },
-      update,
     })
   }
 

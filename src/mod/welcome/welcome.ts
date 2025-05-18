@@ -243,7 +243,9 @@ async function addJoin(guildID: string, userID: string) {
       guildID,
       userID,
     },
-    update: {},
+    update: {
+      guildID,
+    },
   })
 }
 
