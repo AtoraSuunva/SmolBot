@@ -12,7 +12,6 @@ RUN pnpm fetch
 RUN pnpm install --frozen-lockfile --offline
 COPY tsconfig.json ./
 COPY /prisma ./prisma/
-COPY /scripts ./scripts/
 RUN pnpm run generate
 COPY src/ ./src/
 RUN pnpm run build
