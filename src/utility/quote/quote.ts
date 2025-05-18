@@ -44,21 +44,9 @@ async function handleMessageCreate(message: Message) {
     !message.guild.members.me ||
     !message.channel
       .permissionsFor(message.guild.members.me)
-      .has(['SendMessages', 'EmbedLinks'])
+      .has(['SendMessages', 'EmbedLinks']) ||
+    !message.content.includes('.com/channels/')
   ) {
-    return
-  }
-
-  const { enabled } = (await prisma.quoteConfig.findUnique({
-    where: {
-      guildID: message.guildId,
-    },
-    select: {
-      enabled: true,
-    },
-  })) ?? { enabled: true }
-
-  if (!enabled) {
     return
   }
 
@@ -75,6 +63,19 @@ async function handleMessageCreate(message: Message) {
       .permissionsFor(message.author)
       ?.has(['ViewChannel', 'ReadMessageHistory'])
   ) {
+    return
+  }
+
+  const { enabled } = (await prisma.quoteConfig.findUnique({
+    where: {
+      guildID: message.guildId,
+    },
+    select: {
+      enabled: true,
+    },
+  })) ?? { enabled: true }
+
+  if (!enabled) {
     return
   }
 
