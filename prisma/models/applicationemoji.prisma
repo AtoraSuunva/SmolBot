@@ -1,0 +1,21 @@
+model ApplicationEmoji {
+  /**
+   * The ID of the emoji
+   */
+  id     String @id
+  /**
+   * The name of the emoji
+   */
+  name   String
+  /**
+   * The module the emoji belongs to
+   */
+  module String
+  /**
+   * The hash of the emoji (murmur3 hash)
+   */
+  hash   Int
+
+  @@unique([name, module])
+  @@index(module)
+}
