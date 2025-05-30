@@ -108,7 +108,8 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
   })
 
   const discordEmojiMap = new Map(
-    discordEmojis.map((emoji) => [emoji.id, emoji]),
+    // Names for app emojis are unique, so we can use them as keys
+    discordEmojis.map((emoji) => [emoji.name, emoji]),
   )
 
   // Find emojis that are in the database, not in the new emojis, and on Discord
@@ -119,7 +120,7 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
     }
 
     // On Discord
-    return discordEmojiMap.get(emoji.id)
+    return discordEmojiMap.get(emoji.name)
   })
 
   if (toDelete.length > 0) {
@@ -143,38 +144,42 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
   for (const [name, attachment] of Object.entries(emojis)) {
     // Check if the emoji already exists in the database
     const existingEmoji = databaseEmojis.find((emoji) => emoji.name === name)
+    const discordEmoji = discordEmojiMap.get(name)
 
-    if (existingEmoji) {
-      // Check if the emoji is already on Discord
-      const discordEmoji = discordEmojiMap.get(existingEmoji.id)
-      if (discordEmoji) {
-        // Check if the emoji is updated by computing the murmur3 hash
-        const hash = await hashAttachment(attachment)
+    // Emoji exists in the database and on Discord
+    if (existingEmoji && discordEmoji) {
+      // Check if the emoji is updated by computing the murmur3 hash
+      const hash = await hashAttachment(attachment)
 
-        if (hash === existingEmoji.hash) {
-          // Emoji is up-to-date, skip
-          appEmojis[name] = new WrappedApplicationEmoji(discordEmoji)
-          continue
-        }
-
-        // Emoji is outdated, delete it from Discord and the database, update it at discord, then update the database
-        syncLogger.info(
-          `Updating emoji "${name}" for module "${module}" due to hash mismatch.`,
-        )
-
-        // Delete the emoji from Discord
-        await deleteEmoji(existingEmoji.id)
-
-        await prisma.applicationEmoji.delete({
-          where: { id: existingEmoji.id },
-        })
-
-        const newEmoji = await createEmoji(module, { name, attachment })
-        appEmojis[name] = new WrappedApplicationEmoji(newEmoji)
+      if (hash === existingEmoji.hash) {
+        // Emoji is up-to-date, skip
+        appEmojis[name] = new WrappedApplicationEmoji(discordEmoji)
         continue
       }
-      // Emoji exists but is not on Discord
-      // Fall through and create a new emoji
+
+      // Emoji is outdated, delete it from Discord and the database, update it at discord, then update the database
+      syncLogger.info(
+        `Updating emoji "${name}" for module "${module}" due to hash mismatch.`,
+      )
+
+      // Delete the emoji from Discord
+      await deleteEmoji(existingEmoji.id)
+
+      await prisma.applicationEmoji.delete({
+        where: { id: existingEmoji.id },
+      })
+
+      const newEmoji = await createEmoji(module, { name, attachment })
+      appEmojis[name] = new WrappedApplicationEmoji(newEmoji)
+      continue
+    }
+
+    // Emoji exists on Discord but not in the database
+    if (!existingEmoji && discordEmoji) {
+      syncLogger.info(
+        `Emoji "${name}" exists on Discord but not in the database, deleting it from Discord and recreating it.`,
+      )
+      await deleteEmoji(discordEmoji.id).catch(() => {})
     }
 
     // Emoji does not exist in the database or is not on Discord, create it
