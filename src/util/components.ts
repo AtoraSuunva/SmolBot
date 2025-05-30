@@ -35,7 +35,7 @@ export function* iterateAllComponents(
   }
 }
 
-type MessageComponents = Writeable<
+export type MessageComponents = Writeable<
   Exclude<BaseMessageOptions['components'], undefined>
 >
 

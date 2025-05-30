@@ -9,7 +9,7 @@ import { delete_police_config } from './delete_police_config.js'
 import { idof } from './idof.js'
 import { lock_thread } from './lock_thread/lock_thread.js'
 import { lock_thread_config } from './lock_thread/lock_thread_config.js'
-import { lookup } from './lookup.js'
+import { lookup } from './lookup/lookup.js'
 import {
   mass_ban,
   mass_find,
