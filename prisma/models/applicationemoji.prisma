@@ -6,7 +6,7 @@ model ApplicationEmoji {
   /**
    * The name of the emoji
    */
-  name   String
+  name   String @unique
   /**
    * The module the emoji belongs to
    */
@@ -16,6 +16,5 @@ model ApplicationEmoji {
    */
   hash   Int
 
-  @@unique([name, module])
   @@index(module)
 }

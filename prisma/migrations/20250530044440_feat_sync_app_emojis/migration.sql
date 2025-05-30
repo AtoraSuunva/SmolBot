@@ -7,7 +7,7 @@ CREATE TABLE "ApplicationEmoji" (
 );
 
 -- CreateIndex
-CREATE INDEX "ApplicationEmoji_module_idx" ON "ApplicationEmoji"("module");
+CREATE UNIQUE INDEX "ApplicationEmoji_name_key" ON "ApplicationEmoji"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ApplicationEmoji_name_module_key" ON "ApplicationEmoji"("name", "module");
+CREATE INDEX "ApplicationEmoji_module_idx" ON "ApplicationEmoji"("module");
