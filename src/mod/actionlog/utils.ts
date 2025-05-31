@@ -335,8 +335,8 @@ export async function resolveIDs(
  * Collapses a sequence of numbers into a string. This method dedupes and sorts the provided numbers
  *
  * @example
- * collapseSequence([1, 2, 3, 4]) // '1-4'
- * collapseSequence([1, 2, 3, 5, 6, 7, 8, 9, 10]) // 1-3, 5-10
+ * collapseSequence([1, 2, 3, 4]) // '1..4'
+ * collapseSequence([1, 2, 3, 5, 6, 7, 8, 9, 10]) // 1..3, 5..10
  * @param numbers The numbers to collapse
  */
 export function collapseSequence(numbers: number[]): string {

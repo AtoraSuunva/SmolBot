@@ -120,7 +120,8 @@ export const actionReason = new SleetSlashCommand(
       {
         name: 'action_id',
         type: ApplicationCommandOptionType.String,
-        description: 'The ID of the action to edit',
+        description:
+          'Single ID `12`, range `12..15`, multiple `12, 14`, latest `l`, offset `l~2`, or a combination',
         autocomplete: actionIDAutocomplete,
         required: true,
       },
