@@ -191,6 +191,7 @@ export const unmute_menu = new SleetUserCommand(
     name: 'Unmute',
     default_member_permissions: ['ManageRoles'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: (i) => handleUserCommand(i, 'unmute'),
