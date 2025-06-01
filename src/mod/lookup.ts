@@ -44,101 +44,108 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { SleetSlashCommand, escapeAllMarkdown, isLikelyID } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import { mapComponents } from '../../util/components.js'
-import { plural } from '../../util/format.js'
-import { syncApplicationEmojis } from '../../util/syncEmojis.js'
+import { mapComponents } from '../util/components.js'
+import { plural } from '../util/format.js'
+import { syncApplicationEmojis } from '../util/syncEmojis.js'
 
 const Emotes = await syncApplicationEmojis('lookup', {
   //------------------------------
-  online: './src/mod/lookup/emojis/online.png',
-  offline: './src/mod/lookup/emojis/offline.png',
+  online: './resources/emojis/lookup/online.png',
+  offline: './resources/emojis/lookup/offline.png',
   // #region: Badges
-  staff: './src/mod/lookup/emojis/user_badges/staff.png',
-  partner: './src/mod/lookup/emojis/user_badges/partner.png',
-  hypesquad: './src/mod/lookup/emojis/user_badges/hypesquad.png',
+  staff: './resources/emojis/lookup/user_badges/staff.png',
+  partner: './resources/emojis/lookup/user_badges/partner.png',
+  hypesquad: './resources/emojis/lookup/user_badges/hypesquad.png',
   bug_hunter_level_1:
-    './src/mod/lookup/emojis/user_badges/bug_hunter_level_1.png',
+    './resources/emojis/lookup/user_badges/bug_hunter_level_1.png',
   hypesquad_bravery:
-    './src/mod/lookup/emojis/user_badges/hypesquad_bravery.png',
+    './resources/emojis/lookup/user_badges/hypesquad_bravery.png',
   hypesquad_brilliance:
-    './src/mod/lookup/emojis/user_badges/hypesquad_brilliance.png',
+    './resources/emojis/lookup/user_badges/hypesquad_brilliance.png',
   hypesquad_balance:
-    './src/mod/lookup/emojis/user_badges/hypesquad_balance.png',
-  early_supporter: './src/mod/lookup/emojis/user_badges/early_supporter.png',
-  team_pseudo_user: './src/mod/lookup/emojis/user_badges/team_pseudo_user.png',
+    './resources/emojis/lookup/user_badges/hypesquad_balance.png',
+  early_supporter: './resources/emojis/lookup/user_badges/early_supporter.png',
+  team_pseudo_user:
+    './resources/emojis/lookup/user_badges/team_pseudo_user.png',
   bug_hunter_level_2:
-    './src/mod/lookup/emojis/user_badges/bug_hunter_level_2.png',
-  verified_bot: './src/mod/lookup/emojis/user_badges/verified_bot.png',
+    './resources/emojis/lookup/user_badges/bug_hunter_level_2.png',
+  verified_bot: './resources/emojis/lookup/user_badges/verified_bot.png',
   early_verified_bot_developer:
-    './src/mod/lookup/emojis/user_badges/early_verified_bot_developer.png',
+    './resources/emojis/lookup/user_badges/early_verified_bot_developer.png',
   moderator_programs_alumni:
-    './src/mod/lookup/emojis/user_badges/moderator_programs_alumni.png',
+    './resources/emojis/lookup/user_badges/moderator_programs_alumni.png',
   bot_http_interactions:
-    './src/mod/lookup/emojis/user_badges/bot_http_interactions.png',
-  active_developer: './src/mod/lookup/emojis/user_badges/active_developer.png',
+    './resources/emojis/lookup/user_badges/bot_http_interactions.png',
+  active_developer:
+    './resources/emojis/lookup/user_badges/active_developer.png',
 
   // Not officially documented, but "known"
-  spammer: './src/mod/lookup/emojis/user_badges/spammer.png',
-  quarantined: './src/mod/lookup/emojis/user_badges/quarantined.png',
-  collaborator: './src/mod/lookup/emojis/user_badges/collaborator.png',
-  disable_premium: './src/mod/lookup/emojis/user_badges/disable_premium.png',
+  spammer: './resources/emojis/lookup/user_badges/spammer.png',
+  quarantined: './resources/emojis/lookup/user_badges/quarantined.png',
+  collaborator: './resources/emojis/lookup/user_badges/collaborator.png',
+  disable_premium: './resources/emojis/lookup/user_badges/disable_premium.png',
   has_unread_urgent_messages:
-    './src/mod/lookup/emojis/user_badges/has_unread_urgent_messages.png',
-  mfa_sms: './src/mod/lookup/emojis/user_badges/mfa_sms.png',
+    './resources/emojis/lookup/user_badges/has_unread_urgent_messages.png',
+  mfa_sms: './resources/emojis/lookup/user_badges/mfa_sms.png',
   premium_promo_dismissed:
-    './src/mod/lookup/emojis/user_badges/premium_promo_dismissed.png',
+    './resources/emojis/lookup/user_badges/premium_promo_dismissed.png',
   restricted_collaborator:
-    './src/mod/lookup/emojis/user_badges/restricted_collaborator.png',
+    './resources/emojis/lookup/user_badges/restricted_collaborator.png',
   // #endregion: Badges
   // #region: Feature icons
-  animated_banner: './src/mod/lookup/emojis/guild_features/animated_banner.png',
-  animated_icon: './src/mod/lookup/emojis/guild_features/animated_icon.png',
+  animated_banner:
+    './resources/emojis/lookup/guild_features/animated_banner.png',
+  animated_icon: './resources/emojis/lookup/guild_features/animated_icon.png',
   app_command_permissions_v2:
-    './src/mod/lookup/emojis/guild_features/application_command_permissions_v2.png',
-  auto_moderation: './src/mod/lookup/emojis/guild_features/auto_moderation.png',
-  banner: './src/mod/lookup/emojis/guild_features/banner.png',
-  community: './src/mod/lookup/emojis/guild_features/community.png',
+    './resources/emojis/lookup/guild_features/application_command_permissions_v2.png',
+  auto_moderation:
+    './resources/emojis/lookup/guild_features/auto_moderation.png',
+  banner: './resources/emojis/lookup/guild_features/banner.png',
+  community: './resources/emojis/lookup/guild_features/community.png',
   creator_monetizable_provisional:
-    './src/mod/lookup/emojis/guild_features/creator_monetizable_provisional.png',
+    './resources/emojis/lookup/guild_features/creator_monetizable_provisional.png',
   creator_store_page:
-    './src/mod/lookup/emojis/guild_features/creator_store_page.png',
+    './resources/emojis/lookup/guild_features/creator_store_page.png',
   developer_support_server:
-    './src/mod/lookup/emojis/guild_features/developer_support_server.png',
-  discoverable: './src/mod/lookup/emojis/guild_features/discoverable.png',
-  featureable: './src/mod/lookup/emojis/guild_features/featureable.png',
+    './resources/emojis/lookup/guild_features/developer_support_server.png',
+  discoverable: './resources/emojis/lookup/guild_features/discoverable.png',
+  featureable: './resources/emojis/lookup/guild_features/featureable.png',
   has_directory_entry:
-    './src/mod/lookup/emojis/guild_features/has_directory_entry.png',
-  hub: './src/mod/lookup/emojis/guild_features/hub.png',
-  invite_splash: './src/mod/lookup/emojis/guild_features/invite_splash.png',
+    './resources/emojis/lookup/guild_features/has_directory_entry.png',
+  hub: './resources/emojis/lookup/guild_features/hub.png',
+  invite_splash: './resources/emojis/lookup/guild_features/invite_splash.png',
   invites_disabled:
-    './src/mod/lookup/emojis/guild_features/invites_disabled.png',
-  linked_to_hub: './src/mod/lookup/emojis/guild_features/linked_to_hub.png',
+    './resources/emojis/lookup/guild_features/invites_disabled.png',
+  linked_to_hub: './resources/emojis/lookup/guild_features/linked_to_hub.png',
   member_verification_gate_enabled:
-    './src/mod/lookup/emojis/guild_features/member_verification_gate_enabled.png',
+    './resources/emojis/lookup/guild_features/member_verification_gate_enabled.png',
   monetization_enabled:
-    './src/mod/lookup/emojis/guild_features/monetization_enabled.png', // duplicate of creator_monetizable_provisional
-  more_stickers: './src/mod/lookup/emojis/guild_features/more_stickers.png',
-  news: './src/mod/lookup/emojis/guild_features/news.png',
-  partnered: './src/mod/lookup/emojis/guild_features/partnered.png',
-  preview_enabled: './src/mod/lookup/emojis/guild_features/preview_enabled.png',
-  private_threads: './src/mod/lookup/emojis/guild_features/private_threads.png',
-  relay_enabled: './src/mod/lookup/emojis/guild_features/relay_enabled.png',
-  role_icons: './src/mod/lookup/emojis/guild_features/role_icons.png',
+    './resources/emojis/lookup/guild_features/monetization_enabled.png', // duplicate of creator_monetizable_provisional
+  more_stickers: './resources/emojis/lookup/guild_features/more_stickers.png',
+  news: './resources/emojis/lookup/guild_features/news.png',
+  partnered: './resources/emojis/lookup/guild_features/partnered.png',
+  preview_enabled:
+    './resources/emojis/lookup/guild_features/preview_enabled.png',
+  private_threads:
+    './resources/emojis/lookup/guild_features/private_threads.png',
+  relay_enabled: './resources/emojis/lookup/guild_features/relay_enabled.png',
+  role_icons: './resources/emojis/lookup/guild_features/role_icons.png',
   role_subscriptions_purchaseable:
-    './src/mod/lookup/emojis/guild_features/role_subscriptions_available_for_purchase.png', // duplicate of creator_monetizable_provisional
+    './resources/emojis/lookup/guild_features/role_subscriptions_available_for_purchase.png', // duplicate of creator_monetizable_provisional
   role_subscriptions_enabled:
-    './src/mod/lookup/emojis/guild_features/role_subscriptions_enabled.png', // duplicate of creator_monetizable_provisional
+    './resources/emojis/lookup/guild_features/role_subscriptions_enabled.png', // duplicate of creator_monetizable_provisional
   ticketed_events_enabled:
-    './src/mod/lookup/emojis/guild_features/ticketed_events_enabled.png',
-  vanity_url: './src/mod/lookup/emojis/guild_features/vanity_url.png',
-  verified: './src/mod/lookup/emojis/guild_features/verified.png',
-  vip_regions: './src/mod/lookup/emojis/guild_features/vip_regions.png',
+    './resources/emojis/lookup/guild_features/ticketed_events_enabled.png',
+  vanity_url: './resources/emojis/lookup/guild_features/vanity_url.png',
+  verified: './resources/emojis/lookup/guild_features/verified.png',
+  vip_regions: './resources/emojis/lookup/guild_features/vip_regions.png',
   welcome_screen_enabled:
-    './src/mod/lookup/emojis/guild_features/welcome_screen_enabled.png',
-  more_soundboard: './src/mod/lookup/emojis/guild_features/more_soundboard.png',
+    './resources/emojis/lookup/guild_features/welcome_screen_enabled.png',
+  more_soundboard:
+    './resources/emojis/lookup/guild_features/more_soundboard.png',
   raid_alerts_disabled:
-    './src/mod/lookup/emojis/guild_features/raid_alerts_disabled.png',
-  soundboard: './src/mod/lookup/emojis/guild_features/soundboard.png',
+    './resources/emojis/lookup/guild_features/raid_alerts_disabled.png',
+  soundboard: './resources/emojis/lookup/guild_features/soundboard.png',
   // #endregion: Feature icons
   //------------------------------
 })
