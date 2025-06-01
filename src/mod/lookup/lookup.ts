@@ -512,7 +512,7 @@ async function createUserLookupInfo(
   const displayNameLine = `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`
   const tagLine = `### ${escapeAllMarkdown(user.tag)}`
 
-  const details = [`**ID:** \`${user.id}\``]
+  const details = [`**ID:** ${inlineCode(user.id)}`]
 
   const badges = getUserBadgeEmojis(user.flags)
 
