@@ -6,7 +6,7 @@ import { auto_tag } from './auto_tag.js'
 import { maliciousFile } from './automod/maliciousFile.js'
 import { dehoist } from './dehoist.js'
 import { delete_police_config } from './delete_police_config.js'
-import { idof } from './idof.js'
+import { find_members } from './find_members.js'
 import { lock_thread } from './lock_thread/lock_thread.js'
 import { lock_thread_config } from './lock_thread/lock_thread_config.js'
 import { lookup } from './lookup.js'
@@ -39,7 +39,7 @@ export const modModules = [
   modmail,
   dehoist,
   delete_police_config,
-  idof,
+  find_members,
   lock_thread,
   lock_thread_config,
   lookup,

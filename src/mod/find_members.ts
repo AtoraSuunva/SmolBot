@@ -7,6 +7,7 @@ import {
   type ButtonInteraction,
   ButtonStyle,
   type ChatInputCommandInteraction,
+  type Collection,
   ComponentType,
   type Guild,
   type GuildMember,
@@ -22,13 +23,14 @@ import {
 } from 'discord.js'
 import {
   type AutocompleteHandler,
+  PreRunError,
   SleetSlashCommand,
-  escapeAllMarkdown,
   formatUser,
   getGuild,
 } from 'sleetcord'
 import { getComponentsOfType } from '../util/components.js'
 import { tableFormat } from '../util/format.js'
+import { workerMatch } from '../util/regexWorker.js'
 
 interface MemberMatch {
   name: string
@@ -49,30 +51,65 @@ const userAutocomplete: AutocompleteHandler<string> = async ({
   }
 
   const guild = await getGuild(interaction, true)
-  return (await matchMembers(guild, value)).map((m) => ({
+  const members = await fetchMembers(guild)
+  const matcher = makePartialMatcher(value, false)
+
+  return (await matchMembers(members, matcher)).map((m) => ({
     name: m.name,
     value: m.value,
   }))
 }
 
-export const idof = new SleetSlashCommand(
+const REGEX_TIMEOUT = 100
+
+export const find_members = new SleetSlashCommand(
   {
-    name: 'idof',
-    description: 'Get the ID of a user.',
+    name: 'find_members',
+    description:
+      'Find members in the server by username, global name, or nickname',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
-        name: 'user',
-        description: 'The user to get the ID of.',
+        name: 'name',
+        description:
+          'Find members with this name (default is case-insensitive partial match)',
         type: ApplicationCommandOptionType.String,
         autocomplete: userAutocomplete,
-        required: true,
+      },
+      {
+        name: 'regex',
+        description: `Use a regex to match, overrides name and exact_match (${REGEX_TIMEOUT}ms timeout, 'v' flag)`,
+        type: ApplicationCommandOptionType.String,
       },
       {
         name: 'exact_match',
-        description:
-          'Short-circuit on exact match if the user has a matching global name or username (default: False)',
+        description: 'Only show exact matches (default: False)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'case_sensitive',
+        description: 'Match case-sensitively (default: False)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'match_bot',
+        description: 'Match against bots (default: False)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'match_username',
+        description: 'Match against usernames (default: True)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'match_global_name',
+        description: 'Match against global names (default: True)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'match_nickname',
+        description: 'Match against nicknames (default: True)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -83,14 +120,14 @@ export const idof = new SleetSlashCommand(
     ],
   },
   {
-    run: runIdof,
+    run: runFindMembers,
     interactionCreate: handleInteractionCreate,
   },
 )
 
-const USER_SELECT_ID = 'idof:user'
-const MENTION_ID = 'idof:mention'
-const ID_ID = 'idof:id'
+const USER_SELECT_ID = 'find_members:user'
+const MENTION_ID = 'find_members:mention'
+const ID_ID = 'find_members:id'
 
 const MENTION_BUTTON = new ButtonBuilder()
   .setCustomId(MENTION_ID)
@@ -118,9 +155,38 @@ function createUserSelect(...users: RestOrArray<Snowflake>) {
   return new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(userSelect)
 }
 
-async function runIdof(interaction: ChatInputCommandInteraction) {
-  const user = interaction.options.getString('user', true)
+async function runFindMembers(interaction: ChatInputCommandInteraction) {
+  const name = interaction.options.getString('name')
+  const regex = interaction.options.getString('regex')
+
+  if ((!name && !regex) || (name && regex)) {
+    throw new PreRunError(
+      'You must provide either a name or a regex (but not both).',
+    )
+  }
+
   const exactMatch = interaction.options.getBoolean('exact_match') ?? false
+  const caseSensitive =
+    interaction.options.getBoolean('case_sensitive') ?? false
+
+  let regexPattern: RegExp | null = null
+  if (regex) {
+    try {
+      regexPattern = new RegExp(regex, caseSensitive ? 'v' : 'vi')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      throw new PreRunError(
+        `Invalid regex pattern:\n${codeBlock('js', cleanCodeBlockContent(message))}`,
+      )
+    }
+  }
+
+  const matchBot = interaction.options.getBoolean('match_bot') ?? true
+  const matchUsername = interaction.options.getBoolean('match_username') ?? true
+  const matchGlobalName =
+    interaction.options.getBoolean('match_global_name') ?? true
+  const matchNickname = interaction.options.getBoolean('match_nickname') ?? true
+
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   await interaction.deferReply({
@@ -128,14 +194,38 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   })
 
   const guild = await getGuild(interaction, true)
-  const matches = await matchMembers(guild, user, {
-    shortCircuitOnExactMatch: exactMatch,
+  const members = await fetchMembers(guild)
+
+  let matcher: Matcher
+  if (regexPattern) {
+    matcher = async (memberName: string) => {
+      try {
+        return await workerMatch(regexPattern, memberName, REGEX_TIMEOUT)
+      } catch (e) {
+        return false
+      }
+    }
+  } else if (exactMatch) {
+    if (caseSensitive) {
+      matcher = async (memberName: string) => memberName === name
+    } else {
+      const lName = name?.toLowerCase()
+      matcher = async (memberName: string) => memberName.toLowerCase() === lName
+    }
+  } else {
+    matcher = makePartialMatcher(name ?? '', caseSensitive)
+  }
+
+  const matches = await matchMembers(members, matcher, {
+    matchBot,
+    matchUsername,
+    matchGlobalName,
+    matchNickname,
   })
 
   if (matches.length === 0) {
     return interaction.editReply({
-      content: `No members found matching "${escapeAllMarkdown(user)}"`,
-      allowedMentions: { parse: [] },
+      content: 'No members found matching your query.',
     })
   }
 
@@ -154,9 +244,7 @@ async function runIdof(interaction: ChatInputCommandInteraction) {
   )
 
   return interaction.editReply({
-    content: `Multiple members found matching "${escapeAllMarkdown(
-      user,
-    )}":\n${resultFormat(matches)}`,
+    content: `Multiple members matched:\n${resultFormat(matches)}`,
     allowedMentions: { parse: [] },
     components: [ACTION_BUTTON_ROW, selectRow],
   })
@@ -261,18 +349,28 @@ async function fetchMembers(guild: Guild) {
 // Limit the number of autocomplete options returned
 const MAX_MATCHES = 25
 
-type Matcher = (string: string, query: string) => boolean
+type Matcher = (memberName: string) => Promise<boolean>
 
 interface MatchMemberOptions {
-  matcher?: Matcher
+  /** The maximum number of matches to return */
   limit?: number
-  caseSensitive?: boolean
+  /** Whether to match against bots */
+  matchBot?: boolean
+  /** Whether to match against usernames */
+  matchUsername?: boolean
+  /** Whether to match against global names */
+  matchGlobalName?: boolean
+  /** Whether to match against nicknames */
   matchNickname?: boolean
-  shortCircuitOnExactMatch?: boolean
 }
 
-function partialMatcher(string: string, query: string): boolean {
-  return string.includes(query)
+function makePartialMatcher(query: string, caseSensitive = true): Matcher {
+  if (caseSensitive) {
+    return async (memberName: string) => memberName.includes(query)
+  }
+
+  const lQuery = query.toLowerCase()
+  return async (memberName: string) => memberName.toLowerCase().includes(lQuery)
 }
 
 /**
@@ -283,46 +381,31 @@ function partialMatcher(string: string, query: string): boolean {
  * @returns
  */
 async function matchMembers(
-  guild: Guild,
-  query: string,
+  members: Collection<string, GuildMember>,
+  matcher: Matcher,
   {
-    matcher = partialMatcher,
     limit = MAX_MATCHES,
-    caseSensitive = false,
+    matchBot = false,
+    matchUsername = true,
+    matchGlobalName = true,
     matchNickname = true,
-    shortCircuitOnExactMatch = false,
   }: MatchMemberOptions = {},
 ): Promise<MemberMatch[]> {
-  const matchQuery = caseSensitive ? query : query.toLowerCase()
-  const members = await fetchMembers(guild)
   const matches: GuildMember[] = []
 
   limit = Math.min(limit, MAX_MATCHES)
 
   for (const m of members.values()) {
+    if (!matchBot && m.user.bot) continue
+
     const globalName = m.user.globalName
-      ? caseSensitive
-        ? m.user.globalName
-        : m.user.globalName.toLowerCase()
-      : null
-    const tag = caseSensitive ? m.user.tag : m.user.tag.toLowerCase()
+    const tag = m.user.tag
     const nickname = m.nickname
-      ? caseSensitive
-        ? m.nickname
-        : m.nickname.toLowerCase()
-      : null
 
     if (
-      shortCircuitOnExactMatch &&
-      (globalName === matchQuery || tag === matchQuery)
-    ) {
-      return [formatSuggestion(m)]
-    }
-
-    if (
-      (!!globalName && matcher(globalName, matchQuery)) ||
-      matcher(tag, matchQuery) ||
-      (matchNickname && matcher(nickname ?? '', matchQuery))
+      (matchGlobalName && globalName && (await matcher(globalName))) ||
+      (matchUsername && (await matcher(tag))) ||
+      (matchNickname && nickname && (await matcher(nickname)))
     ) {
       matches.push(m)
       if (matches.length >= limit) break
