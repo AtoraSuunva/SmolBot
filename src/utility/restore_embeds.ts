@@ -1,4 +1,5 @@
 import {
+  ApplicationIntegrationType,
   InteractionContextType,
   type MessageContextMenuCommandInteraction,
   MessageFlags,
@@ -11,6 +12,7 @@ export const restore_embeds = new SleetMessageCommand(
     name: 'Restore Embeds',
     default_member_permissions: ['ManageMessages'],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: runRestoreEmbeds,

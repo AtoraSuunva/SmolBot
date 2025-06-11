@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  ApplicationIntegrationType,
   Colors,
   DiscordjsError,
   EmbedBuilder,
@@ -22,6 +23,7 @@ export const report_user = new SleetUserCommand(
   {
     name: 'Report User to Mods',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: runReportUser,

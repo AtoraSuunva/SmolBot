@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   InteractionContextType,
   MessageFlags,
@@ -11,6 +12,7 @@ export const send = new SleetSlashCommand(
     name: 'send',
     description: 'Send a message as the bot',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'message',

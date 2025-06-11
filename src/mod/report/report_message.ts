@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  ApplicationIntegrationType,
   DiscordjsError,
   type EmbedFooterOptions,
   InteractionContextType,
@@ -22,6 +23,7 @@ export const report_message = new SleetMessageCommand(
   {
     name: 'Report Message to Mods',
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     run: runReportMessage,
