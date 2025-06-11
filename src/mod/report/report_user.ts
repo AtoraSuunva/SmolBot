@@ -1,47 +1,38 @@
 import {
   ActionRowBuilder,
+  Colors,
   DiscordjsError,
+  EmbedBuilder,
   type EmbedFooterOptions,
   InteractionContextType,
-  type Message,
-  type MessageContextMenuCommandInteraction,
   MessageFlags,
   type ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  time,
+  type User,
+  type UserContextMenuCommandInteraction,
 } from 'discord.js'
-import { SleetMessageCommand, formatUser, getGuild } from 'sleetcord'
+import { SleetUserCommand, formatUser, getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
-import { quoteMessage } from '../../util/quoteMessage.js'
 import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'
 
-export const report_message = new SleetMessageCommand(
+export const report_user = new SleetUserCommand(
   {
-    name: 'Report Message to Mods',
+    name: 'Report User to Mods',
     contexts: [InteractionContextType.Guild],
   },
   {
-    run: runReportMessage,
+    run: runReportUser,
   },
 )
 
-async function runReportMessage(
-  interaction: MessageContextMenuCommandInteraction,
-  message: Message,
+async function runReportUser(
+  interaction: UserContextMenuCommandInteraction,
+  user: User,
 ) {
   const guild = await getGuild(interaction, true)
-
-  if (!message.inGuild()) {
-    await interaction.reply({
-      content: 'You can only report messages from servers.',
-      flags: MessageFlags.Ephemeral,
-    })
-    return
-  }
-
   const config = await fetchConfig(guild, interaction.user).catch(
     (err: unknown) => (err instanceof Error ? err.message : String(err)),
   )
@@ -54,26 +45,24 @@ async function runReportMessage(
     return
   }
 
-  const customId = `report_message:${message.id}:${interaction.id}`
+  const customId = `report_user:${user.id}:${interaction.id}`
 
-  const messageSummary = `Author: ${formatUser(message.author, {
+  const formattedUser = formatUser(user, {
     markdown: false,
     escapeMarkdown: false,
-  })}; Channel: #${message.channel.name}\n${message.cleanContent || 'No content.'}`
+  })
 
-  const formattedMessage = messageSummary.slice(0, 4000)
-
-  const messagePreview = new TextInputBuilder()
-    .setCustomId('messagePreview')
-    .setLabel('Message Preview')
-    .setStyle(TextInputStyle.Paragraph)
+  const userPreview = new TextInputBuilder()
+    .setCustomId('user_preview')
+    .setLabel('User Preview')
+    .setStyle(TextInputStyle.Short)
     .setRequired(false)
-    .setPlaceholder(formattedMessage.slice(0, 100))
-    .setValue(formattedMessage)
+    .setPlaceholder(formattedUser.slice(0, 100))
+    .setValue(formattedUser)
 
   const previewRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      messagePreview,
+      userPreview,
     )
 
   const reasonInput = new TextInputBuilder()
@@ -104,7 +93,7 @@ async function runReportMessage(
 
   const modal = new ModalBuilder()
     .setCustomId(customId)
-    .setTitle('Report Message')
+    .setTitle('Report User')
     .addComponents([previewRow, reasonRow, isAnonRow])
 
   await interaction.showModal(modal)
@@ -129,6 +118,13 @@ async function runReportMessage(
     modalInteraction.fields.getTextInputValue('anon') || 'yes'
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
+  const member = await guild.members.fetch(user.id).catch(() => null)
+
+  const report = new EmbedBuilder()
+    .setThumbnail(user.displayAvatarURL())
+    .setDescription(`**Reported User:** ${formatUser(user, { mention: true })}`)
+    .setColor(member?.displayColor || Colors.Default)
+
   const footer: EmbedFooterOptions = {
     text: `Reported by ${
       isAnon
@@ -144,17 +140,7 @@ async function runReportMessage(
     footer.iconURL = interaction.user.displayAvatarURL()
   }
 
-  const [report, ...extraEmbeds] = await quoteMessage(message)
-
-  const createdAt = time(message.createdAt, 'F')
-  const editedAt = message.editedAt ? time(message.editedAt, 'F') : ''
-
-  report.setFooter(footer).addFields([
-    {
-      name: `Posted${editedAt ? ' & Edited' : ''} at`,
-      value: `${createdAt}${editedAt ? `\n${editedAt}` : ''}`,
-    },
-  ])
+  report.setFooter(footer)
 
   if (reason) {
     report.addFields([
@@ -165,7 +151,7 @@ async function runReportMessage(
     ])
   }
 
-  const embeds = [report, ...extraEmbeds]
+  const embeds = [report]
 
   try {
     await sendReport(config, interaction.user, embeds)

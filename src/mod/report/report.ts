@@ -12,6 +12,7 @@ import { SleetSlashCommand, formatUser, getGuild } from 'sleetcord'
 import { fetchConfig } from './manage/config.js'
 import { report_manage } from './manage/index.js'
 import { report_message } from './report_message.js'
+import { report_user } from './report_user.js'
 import { sendReport } from './utils.js'
 
 export const report = new SleetSlashCommand(
@@ -44,7 +45,7 @@ export const report = new SleetSlashCommand(
   {
     run: runReport,
   },
-  [report_message, report_manage],
+  [report_message, report_user, report_manage],
 )
 
 async function runReport(interaction: ChatInputCommandInteraction) {
