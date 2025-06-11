@@ -25,21 +25,21 @@
     "url": "https://github.com/AtoraSuunva/smolbot/issues"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.12.1",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
-    "@prisma/adapter-better-sqlite3": "^6.8.2",
-    "@prisma/client": "^6.8.2",
+    "@prisma/adapter-better-sqlite3": "^6.9.0",
+    "@prisma/client": "^6.9.0",
     "@sapphire/shapeshift": "^4.0.0",
     "better-sqlite3": "^11.10.0",
     "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
     "csv-parse": "^5.6.0",
     "csv-stringify": "^6.5.2",
-    "discord-api-types": "^0.38.8",
+    "discord-api-types": "^0.38.11",
     "discord.js": "~14.19.3",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.2",
@@ -60,12 +60,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@sentry/cli": "^2.45.0",
-    "@types/convert-units": "^2.3.11",
+    "@sentry/cli": "^2.46.0",
+    "@types/convert-units": "^2.3.12",
     "@types/luxon": "^3.6.2",
-    "@types/node": "~22.15.18",
+    "@types/node": "~24.0.0",
     "@types/pluralize": "^0.0.33",
-    "prisma": "^6.8.2",
+    "prisma": "^6.9.0",
     "typescript": "~5.8.3"
   },
   "prisma": {

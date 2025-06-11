@@ -1,9 +1,14 @@
 # Step that pulls in everything needed to build the app and builds it
 # Pinned to avoid sudden new versions breaking builds :)
-FROM node:22.15-alpine AS dev-build
+FROM node:24.2-alpine AS dev-build
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
+# Remove this when better-sqlite3 has prebuilt binaries for node 24
+# https://github.com/WiseLibs/better-sqlite3/releases
+RUN apk upgrade --update-cache --available && \
+    apk add python3 make gcc musl-dev g++ && \
+    rm -rf /var/cache/apk/*
 RUN corepack enable
 COPY pnpm-lock.yaml ./
 COPY package.json ./
@@ -20,8 +25,11 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:22.15-alpine AS prod-build
+FROM node:24.2-alpine AS prod-build
 WORKDIR /home/node/app
+RUN apk upgrade --update-cache --available && \
+    apk add python3 make gcc musl-dev g++ && \
+    rm -rf /var/cache/apk/*
 RUN corepack enable
 COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
 COPY --from=dev-build /home/node/app/node_modules ./node_modules/
@@ -35,7 +43,7 @@ COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
-FROM node:22.15-alpine AS prod-runtime
+FROM node:24.2-alpine AS prod-runtime
 # See https://github.com/prisma/prisma/issues/19729
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
