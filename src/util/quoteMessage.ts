@@ -244,6 +244,10 @@ export async function addToEmbed(message: Message, embed: EmbedBuilder) {
     case MessageType.AutoModerationAction:
       quoteAutoModerationAction(message, embed)
       break
+
+    case MessageType.PollResult:
+      quotePollResult(message, embed)
+      break
   }
 
   if (message.poll != null) {
@@ -438,6 +442,41 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
     .addFields({
       name: '\u200b',
       value: `${plural('Vote', totalVotes)} ∙ Ends ${time(poll.expiresAt, 'R')}`,
+    })
+}
+
+function quotePollResult(message: Message, embed: EmbedBuilder) {
+  const pollEmbed = message.embeds[0]
+
+  const pollQuestionText = pollEmbed.fields.find(
+    (f) => f.name === 'poll_question_text',
+  )?.value
+  const totalVotes = pollEmbed.fields.find(
+    (f) => f.name === 'total_votes',
+  )?.value
+  const victorAnswerVotes = pollEmbed.fields.find(
+    (f) => f.name === 'victor_answer_votes',
+  )?.value
+  // const victorAnswerId = pollEmbed.fields.find(f => f.name === 'victor_answer_id')?.value
+  const victorAnswerText = pollEmbed.fields.find(
+    (f) => f.name === 'victor_answer_text',
+  )?.value
+  const victorAnswerEmojiName = pollEmbed.fields.find(
+    (f) => f.name === 'victor_answer_emoji_name',
+  )?.value
+
+  const ratio =
+    victorAnswerVotes && totalVotes
+      ? ` (${((Number.parseInt(victorAnswerVotes) / Number.parseInt(totalVotes)) * 100).toFixed(2)}%)`
+      : ''
+
+  embed
+    .setTitle(
+      `Poll Result: ${escapeAllMarkdown(pollQuestionText ?? 'Unknown')}`,
+    )
+    .addFields({
+      name: `${victorAnswerEmojiName ? `${victorAnswerEmojiName} ` : ''}**${victorAnswerText}**`,
+      value: `${victorAnswerVotes} / ${totalVotes} votes (${ratio})`,
     })
 }
 
