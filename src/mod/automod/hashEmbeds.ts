@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto'
 import { Readable } from 'node:stream'
 import type { ReadableStream } from 'node:stream/web'
 import type { Message } from 'discord.js'
+import murmurhash from 'murmurhash'
 
 const hashCache = new WeakMap<Message, Promise<string[]>>()
 
@@ -60,20 +60,24 @@ export function hashEmbeds(message: Message): Promise<string[]> {
 }
 
 /**
- * Hashes a stream using SHA256
+ * Hashes a stream using murmurhash
  *
  * @param stream The stream to hash
  * @returns A promise that resolves to the hash (hex-encoded string)
  */
 function hashStream(stream: ReadableStream): Promise<string> {
-  const hash = createHash('sha256')
-
+  // todo: use a worker to avoid blocking the event loop?
   return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
     Readable.fromWeb(stream)
-      .pipe(hash)
+      .on('data', (chunk) => {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      })
       .on('error', reject)
-      .on('finish', () => {
-        resolve(hash.digest('hex'))
+      .on('end', () => {
+        const buffer = Buffer.concat(chunks)
+        const hash = murmurhash.v3(buffer)
+        resolve(hash.toString(16))
       })
   })
 }
