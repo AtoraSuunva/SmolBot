@@ -1,7 +1,12 @@
-import { AuditLogEvent, type GuildAuditLogsEntry } from 'discord.js'
+import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
-import { type LoggedAction, formatLog, getChannelFor } from '../../utils.js'
-import { type AuditInfo, resolveUser } from './index.js'
+import {
+  type LoggedAction,
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../../utils.js'
+import { resolveUser } from './index.js'
 
 export type BanAuditLog = GuildAuditLogsEntry<
   | AuditLogEvent.MemberBanAdd
@@ -16,36 +21,33 @@ export type BanAuditLog = GuildAuditLogsEntry<
  */
 export async function logMemberBanKick(
   auditLogEntry: BanAuditLog,
-  { channel, config, guild }: AuditInfo,
+  guild: Guild,
 ) {
-  if (
-    (auditLogEntry.action === AuditLogEvent.MemberBanAdd &&
-      !config.memberBan) ||
-    (auditLogEntry.action === AuditLogEvent.MemberBanRemove &&
-      !config.memberUnban) ||
-    (auditLogEntry.action === AuditLogEvent.MemberKick && !config.memberRemove)
-  ) {
-    return
-  }
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(guild).acquireTicket()
 
-  let loggedAction: LoggedAction
+  let action: LoggedAction
 
   switch (auditLogEntry.action) {
     case AuditLogEvent.MemberBanAdd:
-      loggedAction = 'memberBan'
+      action = 'memberBan'
       break
 
     case AuditLogEvent.MemberBanRemove:
-      loggedAction = 'memberUnban'
+      action = 'memberUnban'
       break
 
     case AuditLogEvent.MemberKick:
-      loggedAction = 'memberRemove'
+      action = 'memberRemove'
       break
   }
 
-  const logChannel =
-    (await getChannelFor(guild, loggedAction, false)) ?? channel
+  const conf = await getValidatedConfigFor(
+    guild,
+    action,
+    (config) => !!config[action],
+  )
+  if (!conf) return
 
   const executor = await resolveUser(
     auditLogEntry.executor,
@@ -66,11 +68,14 @@ export async function logMemberBanKick(
 
   const message = `${targetUser} ${verb} by ${execUser}${reason}`
 
-  await logChannel.send({
+  await ticket.waitUntilFirst()
+
+  await conf.channel.send({
     content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],
       message,
+      eventDate,
     ),
     allowedMentions: { parse: [] },
   })

@@ -3,13 +3,10 @@ import {
   type Client,
   type Guild,
   type GuildAuditLogsEntry,
-  type GuildTextBasedChannel,
   type PartialUser,
   type User,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
-import type { ModLogConfig } from '../../../../generated/prisma/client.js'
-import { getValidatedConfigFor } from '../../utils.js'
 import {
   type ChannelAuditLog,
   channelDelete,
@@ -27,33 +24,21 @@ export const logAuditLog = new SleetModule(
   },
 )
 
-export interface AuditInfo {
-  channel: GuildTextBasedChannel
-  config: ModLogConfig
-  guild: Guild
-}
-
 async function guildAuditLogEntryCreate(
   auditLogEntry: GuildAuditLogsEntry,
   guild: Guild,
 ) {
-  const conf = await getValidatedConfigFor(guild, '')
-  if (!conf) return
-
-  const { config, channel } = conf
-  const auditInfo: AuditInfo = { channel, config, guild }
-
   switch (auditLogEntry.action) {
     case AuditLogEvent.ChannelCreate:
     case AuditLogEvent.ChannelDelete:
     case AuditLogEvent.ChannelUpdate:
-      await logChannelModified(auditLogEntry as ChannelAuditLog, auditInfo)
+      await logChannelModified(auditLogEntry as ChannelAuditLog, guild)
       break
 
     case AuditLogEvent.MemberBanAdd:
     case AuditLogEvent.MemberBanRemove:
     case AuditLogEvent.MemberKick:
-      await logMemberBanKick(auditLogEntry as BanAuditLog, auditInfo)
+      await logMemberBanKick(auditLogEntry as BanAuditLog, guild)
       break
   }
 }

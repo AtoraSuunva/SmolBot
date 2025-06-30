@@ -1,9 +1,5 @@
-import {
-  type Guild,
-  type GuildTextBasedChannel,
-  type TextChannel,
-  time,
-} from 'discord.js'
+import { type Guild, type GuildTextBasedChannel, time } from 'discord.js'
+import { TicketQueue } from 'ticket-queue'
 import type { ModLogConfig, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 
@@ -12,6 +8,22 @@ export enum EVENT_COLORS {
   memberRemove = 0xdd2e44,
   userBan = 0xff0000,
   userUnban = 0x55acee,
+}
+
+const modlogTicketQueueMap = new Map<Guild, TicketQueue>()
+
+export function getModlogTicketQueue(guild: Guild): TicketQueue {
+  let queue = modlogTicketQueueMap.get(guild)
+
+  if (!queue) {
+    queue = new TicketQueue({
+      ticketTimeout: 500,
+      ticketRetries: 3,
+    })
+    modlogTicketQueueMap.set(guild, queue)
+  }
+
+  return queue
 }
 
 const configCache = new Map<Guild, ModLogConfig>()
@@ -115,7 +127,7 @@ export function formatLog(
   emoji: string,
   type: string,
   message: string,
-  timestamp = new Date(),
+  timestamp: Date,
 ): string {
   return `${emoji} ${time(timestamp, 'T')} \`[${type}]\`: ${message}`
 }
@@ -123,21 +135,6 @@ export function formatLog(
 export function formatTime(timestamp: Date | null = new Date()): string {
   if (timestamp === null) return 'null'
   return padExpressions`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`
-}
-
-export type SendPayload = Parameters<TextChannel['send']>[0]
-
-export async function sendToModLog(
-  guild: Guild,
-  payload: SendPayload,
-  loggedAction: LoggedAction,
-  checker: ConfigChecker = () => true,
-) {
-  const config = await getValidatedConfigFor(guild, loggedAction, checker)
-
-  if (!config) return
-
-  return config.channel.send(payload)
 }
 
 /** Pads the expressions in tagged template literals */

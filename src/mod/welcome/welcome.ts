@@ -15,7 +15,11 @@ import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
-import { type SendPayload, formatLog, sendToModLog } from '../modlog/utils.js'
+import {
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
@@ -87,11 +91,24 @@ async function handleJoin(
   message?: Message,
 ) {
   if (member.user.bot) return
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(member.guild).acquireTicket()
 
   const welcomeSettings = await getSettingsFor(member.guild.id)
 
   // No settings for this guild
   if (welcomeSettings === null) return
+
+  const config = await getValidatedConfigFor(
+    member.guild,
+    'memberWelcome',
+    (config) => config.memberWelcome,
+  )
+
+  if (!config) {
+    // We don't need to hold the modlog ticket if we don't have a config
+    ticket.removeFromQueue()
+  }
 
   const {
     rejoins,
@@ -159,44 +176,44 @@ async function handleJoin(
       })
     : ''
 
-  const logMessage = formatLog(
-    '👋',
-    'Member Welcome',
-    `${formatUser(member)}${sentMessage ? ` at ${sentMessage.url}` : ''}${firstMessage}`,
-  )
+  if (config) {
+    const logMessage = formatLog(
+      '👋',
+      'Member Welcome',
+      `${formatUser(member)}${sentMessage ? ` at ${sentMessage.url}` : ''}${firstMessage}`,
+      eventDate,
+    )
 
-  let content = logMessage
-  const files: AttachmentPayload[] = []
+    let content = logMessage
+    const files: AttachmentPayload[] = []
 
-  if (messagePreview) {
-    const formattedPreview = `${messagePreview.header}\n${messagePreview.content || '┊'}\n${messagePreview.footer}`
+    if (messagePreview) {
+      const formattedPreview = `${messagePreview.header}\n${messagePreview.content || '┊'}\n${messagePreview.footer}`
 
-    // 1850 to give us some headroom
-    if (formattedPreview.length + logMessage.length <= 1850) {
-      content = `${logMessage}\n${codeBlock('ansi', formattedPreview)}`
-    } else {
-      files.push({
-        name: 'first_message.txt',
-        attachment: Buffer.from(
-          stripVTControlCharacters(formattedPreview),
-          'utf-8',
-        ),
+      // 1850 to give us some headroom
+      if (formattedPreview.length + logMessage.length <= 1850) {
+        content = `${logMessage}\n${codeBlock('ansi', formattedPreview)}`
+      } else {
+        files.push({
+          name: 'first_message.txt',
+          attachment: Buffer.from(
+            stripVTControlCharacters(formattedPreview),
+            'utf-8',
+          ),
+        })
+      }
+    }
+
+    const { channel } = config
+    if (channel) {
+      await channel.send({
+        content,
+        files,
+        allowedMentions: { parse: [] },
       })
     }
+    ticket.removeFromQueue()
   }
-
-  const modLogMsg: SendPayload = {
-    content,
-    files,
-    allowedMentions: { parse: [] },
-  }
-
-  await sendToModLog(
-    member.guild,
-    modLogMsg,
-    'memberWelcome',
-    (config) => config.memberWelcome,
-  )
 
   if (reactWith && message) {
     // ignore errors, not my problem really

@@ -6,6 +6,7 @@ import {
   BaseChannel,
   ChannelType,
   type DMChannel,
+  type Guild,
   type GuildAuditLogsEntry,
   type GuildBasedChannel,
   LimitedCollection,
@@ -18,11 +19,11 @@ import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import {
   type LoggedAction,
   formatLog,
-  getChannelFor,
+  getModlogTicketQueue,
   getValidatedConfigFor,
 } from '../../utils.js'
 import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
-import { type AuditInfo, resolveUser } from './index.js'
+import { resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
   | AuditLogEvent.ChannelCreate
@@ -55,39 +56,28 @@ export async function channelDelete(
   }
 }
 
+const actionMap: Partial<Record<AuditLogEvent, LoggedAction>> = {
+  [AuditLogEvent.ChannelCreate]: 'channelCreate',
+  [AuditLogEvent.ChannelDelete]: 'channelDelete',
+  [AuditLogEvent.ChannelUpdate]: 'channelUpdate',
+}
+
 export async function logChannelModified(
   auditLogEntry: ChannelAuditLog,
-  { channel, config, guild }: AuditInfo,
+  guild: Guild,
 ) {
-  if (
-    (auditLogEntry.action === AuditLogEvent.ChannelCreate &&
-      !config.channelCreate) ||
-    (auditLogEntry.action === AuditLogEvent.ChannelDelete &&
-      !config.channelDelete) ||
-    (auditLogEntry.action === AuditLogEvent.ChannelUpdate &&
-      !config.channelUpdate)
-  ) {
-    return
-  }
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(guild).acquireTicket()
 
-  let loggedAction: LoggedAction
+  const action: LoggedAction | undefined = actionMap[auditLogEntry.action]
+  if (!action) return
 
-  switch (auditLogEntry.action) {
-    case AuditLogEvent.ChannelCreate:
-      loggedAction = 'channelCreate'
-      break
-
-    case AuditLogEvent.ChannelDelete:
-      loggedAction = 'channelDelete'
-      break
-
-    case AuditLogEvent.ChannelUpdate:
-      loggedAction = 'channelUpdate'
-      break
-  }
-
-  const logChannel =
-    (await getChannelFor(guild, loggedAction, false)) ?? channel
+  const conf = await getValidatedConfigFor(
+    guild,
+    action,
+    (config) => !!config[action],
+  )
+  if (!conf) return
 
   const modifiedChannel =
     auditLogEntry.target instanceof BaseChannel
@@ -148,9 +138,12 @@ export async function logChannelModified(
     LogEmoji[auditLogEntry.action],
     LogName[auditLogEntry.action],
     message,
+    eventDate,
   )
 
-  await logChannel.send({
+  await ticket.waitUntilFirst()
+
+  await conf.channel.send({
     content,
     files,
     allowedMentions: { parse: [] },

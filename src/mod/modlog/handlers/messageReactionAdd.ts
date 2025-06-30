@@ -96,10 +96,9 @@ async function handleMessageReactionAdd(
   if (user.bot) return
   if (!messageReaction.message.guildId) return
 
-  // TODO: tryFetchGuild
-  const guild = messageReaction.client.guilds.cache.get(
-    messageReaction.message.guildId,
-  )
+  const guild = await messageReaction.client.guilds
+    .fetch(messageReaction.message.guildId)
+    .catch(() => null)
   if (!guild) return
 
   const conf = await getValidatedConfigFor(

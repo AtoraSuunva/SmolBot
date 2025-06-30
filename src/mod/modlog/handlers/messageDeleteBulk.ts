@@ -21,7 +21,11 @@ import {
   type MessageBulkDeleteAuditLog,
   deleteEvents,
 } from '../../messageDeleteAuditLog.js'
-import { formatLog, getValidatedConfigFor } from '../utils.js'
+import {
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../utils.js'
 import type { ChannelAuditLog } from './auditLog/channelModify.js'
 import { messageDeleteWithAuditLog } from './messageDelete.js'
 
@@ -80,6 +84,9 @@ export async function messageDeleteBulkWithAuditLog(
     // biome-ignore lint/style/noNonNullAssertion: there is 1 and only 1 message in the collection
     return messageDeleteWithAuditLog(messages.first()!)
   }
+
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(fromChannel.guild).acquireTicket()
 
   const conf = await getValidatedConfigFor(
     fromChannel.guild,
@@ -275,12 +282,13 @@ export async function messageDeleteBulkWithAuditLog(
   let content = ''
 
   if (formatted.length < 1950) {
-    content = formatLog('🔥', 'Channel Purged', formatted)
+    content = formatLog('🔥', 'Channel Purged', formatted, eventDate)
   } else {
     content = formatLog(
       '🔥',
       'Channel Purged',
       logMessage.shift()?.slice(0, 1950) ?? '',
+      eventDate,
     )
 
     files.unshift({
@@ -289,6 +297,8 @@ export async function messageDeleteBulkWithAuditLog(
       description: 'Details too big to fit',
     })
   }
+
+  await ticket.waitUntilFirst()
 
   const sentMessage = await channel.send({
     content,

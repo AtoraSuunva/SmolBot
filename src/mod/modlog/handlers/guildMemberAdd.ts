@@ -10,7 +10,12 @@ import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, formatUser } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
-import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
+import {
+  EVENT_COLORS,
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../utils.js'
 
 export const logGuildMemberAdd = new SleetModule(
   {
@@ -49,6 +54,9 @@ async function ready(client: Client) {
 }
 
 async function guildMemberAdd(member: GuildMember) {
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(member.guild).acquireTicket()
+
   const { guild } = member
   const conf = await getValidatedConfigFor(
     guild,
@@ -56,6 +64,7 @@ async function guildMemberAdd(member: GuildMember) {
     (config) => config.memberAdd,
   )
   if (!conf) return
+
   const { config, channel } = conf
   const msg = formatUser(member.user, { mention: true })
   const userCreatedAt = Date.now() - member.user.createdTimestamp
@@ -83,8 +92,10 @@ async function guildMemberAdd(member: GuildMember) {
       iconURL: member.user.displayAvatarURL(),
     })
 
+  await ticket.waitUntilFirst()
+
   await channel.send({
-    content: formatLog('📥', 'Member Join', msg),
+    content: formatLog('📥', 'Member Join', msg, eventDate),
     embeds: [embed],
     allowedMentions: { parse: [] },
   })

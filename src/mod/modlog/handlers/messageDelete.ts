@@ -34,7 +34,12 @@ import {
   deleteEvents,
 } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
-import { formatLog, formatTime, getValidatedConfigFor } from '../utils.js'
+import {
+  formatLog,
+  formatTime,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../utils.js'
 import type { MessageWithRaw } from './messageDeleteBulk.js'
 
 export const logMessageDelete = new SleetModule(
@@ -72,6 +77,9 @@ export async function messageDeleteWithAuditLog(
 ) {
   if (!message.guild) return
 
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(message.guild).acquireTicket()
+
   const conf = await getValidatedConfigFor(
     message.guild,
     'messageDelete',
@@ -86,8 +94,9 @@ export async function messageDeleteWithAuditLog(
       message.channel
     } around ${message.url} sent ${time(message.createdAt, 'f')} `
 
+    await ticket.waitUntilFirst()
     await channel.send({
-      content: formatLog('🗑️', 'Message deleted', msg),
+      content: formatLog('🗑️', 'Message deleted', msg, eventDate),
       allowedMentions: { parse: [] },
     })
     return
@@ -142,8 +151,9 @@ export async function messageDeleteWithAuditLog(
     msg += formatted
   }
 
+  await ticket.waitUntilFirst()
   await channel.send({
-    content: formatLog('🗑️', 'Message Deleted', msg).slice(0, 2000),
+    content: formatLog('🗑️', 'Message Deleted', msg, eventDate).slice(0, 2000),
     files,
     allowedMentions: { parse: [] },
   })

@@ -11,7 +11,11 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, escapeAllMarkdown, formatUser } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import { formatLog, getValidatedConfigFor } from '../utils.js'
+import {
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../utils.js'
 
 export const logReactionRemove = new SleetModule(
   {
@@ -57,6 +61,10 @@ async function messageReactionRemove(
   }
 
   const { guild } = reaction.message
+
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(guild).acquireTicket()
+
   const conf = await getValidatedConfigFor(
     guild,
     'reactionRemove',
@@ -98,8 +106,10 @@ async function messageReactionRemove(
     })
   }
 
+  await ticket.waitUntilFirst()
+
   await channel.send({
-    content: formatLog('💀', 'Reaction Removed', msg),
+    content: formatLog('💀', 'Reaction Removed', msg, eventDate),
     embeds,
     allowedMentions: { parse: [] },
   })

@@ -5,7 +5,12 @@ import {
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { SleetModule, formatUser } from 'sleetcord'
-import { EVENT_COLORS, formatLog, getValidatedConfigFor } from '../utils.js'
+import {
+  EVENT_COLORS,
+  formatLog,
+  getModlogTicketQueue,
+  getValidatedConfigFor,
+} from '../utils.js'
 
 export const logGuildMemberRemove = new SleetModule(
   {
@@ -19,6 +24,9 @@ export const logGuildMemberRemove = new SleetModule(
 async function handleGuildMemberRemove(
   member: GuildMember | PartialGuildMember,
 ) {
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(member.guild).acquireTicket()
+
   const conf = await getValidatedConfigFor(
     member.guild,
     'memberRemove',
@@ -54,11 +62,14 @@ async function handleGuildMemberRemove(
       text: `Joined ${joinedAgo} ago`,
     })
 
+  await ticket.waitUntilFirst()
+
   await channel.send({
     content: formatLog(
       '📤',
       'Member Remove',
       formatUser(member.user, { mention: true }),
+      eventDate,
     ),
     embeds: [embed],
     allowedMentions: { parse: [] },

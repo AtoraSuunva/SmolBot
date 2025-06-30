@@ -16,6 +16,8 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
   // We can't compare partial old user to the new version at all, since it's just an ID
   if (oldUser.partial) return
 
+  const eventDate = new Date()
+
   let usernameUpdate = ''
   let avatarUpdate = ''
 
@@ -70,7 +72,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
     }`
 
     await channel.send({
-      content: formatLog('👥', 'User Update', message),
+      content: formatLog('👥', 'User Update', message, eventDate),
       allowedMentions: { parse: [] },
     })
   }
