@@ -624,7 +624,7 @@ async function createUserLookupInfo(
   if (!minimal) {
     const buttonRow = new ActionRowBuilder<ButtonBuilder>()
 
-    if (apiUser.clan) {
+    if (apiUser.clan?.badge) {
       const { clan } = apiUser
       const clanBadge = clanBadgeUrl(clan)
 
@@ -903,24 +903,33 @@ async function sendGuildInviteLookup(
     )
   }
 
-  const guildSection = new SectionBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder({
-      content: guildInfo.join('\n'),
-    }),
-  )
+  container.addSeparatorComponents(new SeparatorBuilder())
 
+  const guildContent = guildInfo.join('\n')
   const guildIcon = guild.iconURL({ size: 4096 })
 
   if (guildIcon) {
-    guildSection.setThumbnailAccessory({
-      type: ComponentType.Thumbnail,
-      media: {
-        url: guildIcon,
+    const guildSection = new SectionBuilder({
+      accessory: {
+        type: ComponentType.Thumbnail,
+        media: {
+          url: guildIcon,
+        },
       },
+      components: [
+        {
+          type: ComponentType.TextDisplay,
+          content: guildContent,
+        },
+      ],
     })
+    container.addSectionComponents(guildSection)
+  } else {
+    const guildDisplay = new TextDisplayBuilder({
+      content: guildContent,
+    })
+    container.addTextDisplayComponents(guildDisplay)
   }
-
-  container.addSeparatorComponents(new SeparatorBuilder())
 
   if (guild.banner) {
     container.addMediaGalleryComponents(
@@ -936,8 +945,6 @@ async function sendGuildInviteLookup(
       }),
     )
   }
-
-  container.addSectionComponents(guildSection)
 
   if (guild.description) {
     container.addTextDisplayComponents(
@@ -1222,25 +1229,34 @@ async function sendGuildPreviewLookup(
     previewInfo.push(`>>> ${escapeAllMarkdown(preview.description)}`)
   }
 
-  const previewSection = new SectionBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder({
-      content: previewInfo.join('\n'),
-    }),
-  )
+  const previewContent = previewInfo.join('\n')
 
   const previewIcon = preview.iconURL({ size: 4096 })
 
   if (previewIcon) {
-    previewSection.setThumbnailAccessory({
-      type: ComponentType.Thumbnail,
-      media: {
-        url: previewIcon,
+    const previewSection = new SectionBuilder({
+      accessory: {
+        type: ComponentType.Thumbnail,
+        media: {
+          url: previewIcon,
+        },
       },
+      components: [
+        {
+          type: ComponentType.TextDisplay,
+          content: previewContent,
+        },
+      ],
     })
+    container.addSectionComponents(previewSection)
+  } else {
+    const previewDisplay = new TextDisplayBuilder({
+      content: previewContent,
+    })
+    container.addTextDisplayComponents(previewDisplay)
   }
 
   container
-    .addSectionComponents(previewSection)
     .addSeparatorComponents(new SeparatorBuilder())
     .addTextDisplayComponents(
       new TextDisplayBuilder({
