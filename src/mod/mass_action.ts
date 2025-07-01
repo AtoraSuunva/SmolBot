@@ -5,22 +5,21 @@ import {
   type Attachment,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
-  type CommandInteraction,
+  codeBlock,
   type Guild,
   GuildMember,
   InteractionContextType,
   MessageFlags,
   User,
-  codeBlock,
 } from 'discord.js'
 import {
-  SleetSlashCommand,
   formatUser,
   getAllIDs,
   getGuild,
   inGuildGuard,
   isLikelyID,
   partitionArray,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { DAY, SECOND } from 'sleetcord-common'
 import { capitalize, plural } from '../util/format.js'
@@ -312,7 +311,7 @@ async function runMassSoftban(interaction: ChatInputCommandInteraction) {
 }
 
 interface RunMassActionOptions {
-  interaction: CommandInteraction
+  interaction: ChatInputCommandInteraction
   /** Verb to describe the action: "Mass {action} by..." */
   action: string
   /** Past tense of the verb: "{actioned} user for" */

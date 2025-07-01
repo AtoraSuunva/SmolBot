@@ -3,15 +3,15 @@ import {
   ApplicationIntegrationType,
   type AttachmentPayload,
   ChannelType,
+  codeBlock,
   type Guild,
   type GuildMember,
   type GuildTextBasedChannel,
   InteractionContextType,
   type Message,
   type PartialGuildMember,
-  codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser, tryFetchMember } from 'sleetcord'
+import { formatUser, SleetSlashCommand, tryFetchMember } from 'sleetcord'
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'

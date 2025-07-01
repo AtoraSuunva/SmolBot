@@ -14,7 +14,7 @@ import {
   type User,
   type UserContextMenuCommandInteraction,
 } from 'discord.js'
-import { SleetUserCommand, formatUser, getGuild } from 'sleetcord'
+import { formatUser, getGuild, SleetUserCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'

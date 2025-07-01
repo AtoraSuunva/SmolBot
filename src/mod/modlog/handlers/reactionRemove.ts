@@ -9,7 +9,7 @@ import {
   type User,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetModule, escapeAllMarkdown, formatUser } from 'sleetcord'
+import { escapeAllMarkdown, formatUser, SleetModule } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import {
   formatLog,

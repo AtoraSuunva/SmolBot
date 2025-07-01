@@ -4,7 +4,7 @@ import {
   type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { LockThreadConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'

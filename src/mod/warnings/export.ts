@@ -5,7 +5,7 @@ import {
   type ChatInputCommandInteraction,
   type Client,
 } from 'discord.js'
-import { type SleetContext, SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, type SleetContext, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE, SECOND } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import {

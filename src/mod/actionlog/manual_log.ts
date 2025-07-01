@@ -2,11 +2,11 @@ import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  codeBlock,
   InteractionContextType,
   MessageFlags,
-  codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, makeChoices } from 'sleetcord'
+import { makeChoices, SleetSlashCommand } from 'sleetcord'
 import { formatToLog } from './utils.js'
 
 const actionChoices = makeChoices([

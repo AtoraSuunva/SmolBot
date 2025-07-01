@@ -1,8 +1,8 @@
 import {
+  ActionRowBuilder,
   type APIApplication,
   type APIApplicationEmoji,
   type APIUser,
-  ActionRowBuilder,
   ApplicationCommandOptionType,
   ApplicationFlags,
   ApplicationIntegrationType,
@@ -22,9 +22,11 @@ import {
   type GuildPreviewEmoji,
   GuildVerificationLevel,
   GuildWidgetStyle,
+  hyperlink,
   type Interaction,
   InteractionContextType,
   type Invite,
+  inlineCode,
   MediaGalleryBuilder,
   MessageFlags,
   Routes,
@@ -33,16 +35,14 @@ import {
   SnowflakeUtil,
   type Sticker,
   TextDisplayBuilder,
+  time,
   type User,
   UserFlags,
   type UserFlagsBitField,
   Widget,
-  hyperlink,
-  inlineCode,
-  time,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetSlashCommand, escapeAllMarkdown, isLikelyID } from 'sleetcord'
+import { escapeAllMarkdown, isLikelyID, SleetSlashCommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { mapComponents } from '../util/components.js'
 import { plural } from '../util/format.js'
@@ -146,6 +146,8 @@ const Emotes = await syncApplicationEmojis('lookup', {
   raid_alerts_disabled:
     './resources/emojis/lookup/guild_features/raid_alerts_disabled.png',
   soundboard: './resources/emojis/lookup/guild_features/soundboard.png',
+  enhanced_role_colors:
+    './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
   // #endregion: Feature icons
   //------------------------------
 })
@@ -359,7 +361,7 @@ type GuildData = GuildExists | GuildPreview | Widget
 async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
   try {
     return await client.fetchGuildPreview(guildId)
-  } catch (e) {
+  } catch {
     // ignore
   }
 
@@ -1407,4 +1409,5 @@ const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
   MORE_SOUNDBOARD: Emotes.more_soundboard,
   RAID_ALERTS_DISABLED: Emotes.raid_alerts_disabled,
   SOUNDBOARD: Emotes.soundboard,
+  ENHANCED_ROLE_COLORS: Emotes.enhanced_role_colors,
 }

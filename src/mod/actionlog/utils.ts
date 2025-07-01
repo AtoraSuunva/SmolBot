@@ -1,5 +1,5 @@
-import { Guild, type GuildMember, type User, time } from 'discord.js'
-import { PreRunError, formatUser } from 'sleetcord'
+import { Guild, type GuildMember, time, type User } from 'discord.js'
+import { formatUser, PreRunError } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import type {
   ActionLogConfig,

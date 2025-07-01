@@ -9,9 +9,9 @@ import {
 } from 'discord.js'
 import {
   type AutocompleteHandler,
-  SleetSlashCommand,
   formatUser,
   getGuild,
+  SleetSlashCommand,
 } from 'sleetcord'
 import type {
   ActionLog,
@@ -100,7 +100,7 @@ const actionIDAutocomplete: AutocompleteHandler<string> = async ({
         value: collapsed,
       },
     ]
-  } catch (error) {
+  } catch {
     return []
   }
 }

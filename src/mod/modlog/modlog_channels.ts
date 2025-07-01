@@ -3,12 +3,12 @@ import {
   type ChatInputCommandInteraction,
   Constants,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { type ModLogChannels, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { formatConfig, toSnakeCase } from '../../util/format.js'
-import { type LoggedAction, getValidatedConfigFor } from './utils.js'
+import { getValidatedConfigFor, type LoggedAction } from './utils.js'
 
 type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
   ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`

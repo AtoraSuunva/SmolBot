@@ -1,10 +1,10 @@
 import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
 import {
-  type LoggedAction,
   formatLog,
   getModlogTicketQueue,
   getValidatedConfigFor,
+  type LoggedAction,
 } from '../../utils.js'
 import { resolveUser } from './index.js'
 

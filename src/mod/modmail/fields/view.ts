@@ -3,7 +3,7 @@ import {
   MessageFlags,
   TextInputStyle,
 } from 'discord.js'
-import { SleetSlashSubcommand, escapeAllMarkdown, getGuild } from 'sleetcord'
+import { escapeAllMarkdown, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { FIELD_MODMAIL_ID } from './utils.js'

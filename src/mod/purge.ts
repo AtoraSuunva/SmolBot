@@ -3,6 +3,8 @@ import {
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
   type Collection,
+  cleanCodeBlockContent,
+  codeBlock,
   DMChannel,
   type FetchMessagesOptions,
   GuildMember,
@@ -12,17 +14,15 @@ import {
   MessageFlags,
   type Snowflake,
   User,
-  cleanCodeBlockContent,
-  codeBlock,
 } from 'discord.js'
 import {
-  type Mentionable,
-  PreRunError,
-  SleetSlashCommand,
   botHasPermissionsGuard,
   getMentionables,
   getTextBasedChannel,
   inGuildGuard,
+  type Mentionable,
+  PreRunError,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { plural } from '../util/format.js'
 import { workerMatch } from '../util/regexWorker.js'

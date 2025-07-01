@@ -8,18 +8,18 @@ import {
   type AttachmentPayload,
   AuditLogEvent,
   type ChannelType,
+  codeBlock,
   type GuildTextBasedChannel,
   Message,
   type PartialMessage,
   type ReadonlyCollection,
-  codeBlock,
 } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { plural } from '../../../util/format.js'
 import {
-  type MessageBulkDeleteAuditLog,
   deleteEvents,
+  type MessageBulkDeleteAuditLog,
 } from '../../messageDeleteAuditLog.js'
 import {
   formatLog,

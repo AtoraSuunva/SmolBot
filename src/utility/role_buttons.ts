@@ -6,15 +6,15 @@ import {
   ButtonStyle,
   type ChatInputCommandInteraction,
   ComponentType,
+  codeBlock,
   EmbedBuilder,
   GuildMember,
   type Interaction,
   InteractionContextType,
   MessageFlags,
   type Role,
-  codeBlock,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getComponentsOfType } from '../util/components.js'
 
 export const role_buttons = new SleetSlashCommand(

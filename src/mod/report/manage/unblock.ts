@@ -3,7 +3,7 @@ import {
   type ChatInputCommandInteraction,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
+import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 
 export const report_manage_unblock = new SleetSlashSubcommand(

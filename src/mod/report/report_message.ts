@@ -13,7 +13,7 @@ import {
   TextInputStyle,
   time,
 } from 'discord.js'
-import { SleetMessageCommand, formatUser, getGuild } from 'sleetcord'
+import { formatUser, getGuild, SleetMessageCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { quoteMessage } from '../../util/quoteMessage.js'
 import { fetchConfig } from './manage/config.js'

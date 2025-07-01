@@ -3,11 +3,11 @@ import {
   type ChatInputCommandInteraction,
   InteractionContextType,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser } from 'sleetcord'
+import { formatUser, SleetSlashCommand } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
 import {
-  type WarningFetcher,
   respondWithPaginatedWarnings,
+  type WarningFetcher,
 } from './pagination.js'
 import { fetchPaginatedWarnings } from './utils.js'
 

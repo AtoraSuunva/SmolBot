@@ -1,14 +1,14 @@
 import {
   type Attachment,
   EmbedBuilder,
+  escapeInlineCode,
+  hyperlink,
   InteractionType,
+  inlineCode,
   Message,
   MessageReferenceType,
   type MessageSnapshot,
   MessageType,
-  escapeInlineCode,
-  hyperlink,
-  inlineCode,
   time,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
@@ -374,7 +374,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
 
   try {
     reference = await message.fetchReference()
-  } catch (e) {
+  } catch {
     embed.addFields([
       {
         name: 'Reply to',

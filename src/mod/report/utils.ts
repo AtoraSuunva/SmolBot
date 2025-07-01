@@ -4,12 +4,15 @@ import {
   ButtonBuilder,
   type ButtonInteraction,
   ButtonStyle,
+  blockQuote,
   Colors,
   ComponentType,
+  codeBlock,
   DiscordjsError,
   type EmbedAuthorOptions,
   EmbedBuilder,
   type EmbedFooterOptions,
+  hyperlink,
   type Interaction,
   type MessageActionRowComponent,
   MessageFlags,
@@ -18,9 +21,6 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type User,
-  blockQuote,
-  codeBlock,
-  hyperlink,
 } from 'discord.js'
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'

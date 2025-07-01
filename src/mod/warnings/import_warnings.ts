@@ -13,10 +13,10 @@ import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
-  InteractionContextType,
   codeBlock,
+  InteractionContextType,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 import type { Prisma, Warning } from '../../generated/prisma/client.js'
 import type { PrismaPromise } from '../../generated/prisma/internal/prismaNamespace.js'

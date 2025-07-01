@@ -7,7 +7,7 @@ import {
   type Invite,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 import { prisma } from '../../../util/db.js'
 import {

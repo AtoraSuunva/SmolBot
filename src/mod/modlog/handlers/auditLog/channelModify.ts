@@ -5,6 +5,7 @@ import {
   AutoModerationActionType,
   BaseChannel,
   ChannelType,
+  codeBlock,
   type DMChannel,
   type Guild,
   type GuildAuditLogsEntry,
@@ -13,14 +14,13 @@ import {
   type NonThreadGuildBasedChannel,
   OverwriteType,
   type TextBasedChannel,
-  codeBlock,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 import {
-  type LoggedAction,
   formatLog,
   getModlogTicketQueue,
   getValidatedConfigFor,
+  type LoggedAction,
 } from '../../utils.js'
 import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
 import { resolveUser } from './index.js'

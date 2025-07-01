@@ -1,12 +1,14 @@
 import { stripVTControlCharacters } from 'node:util'
-import type { APIMessageInteractionMetadata } from 'discord-api-types/v10'
 import {
   ApplicationCommandType,
   type AttachmentPayload,
   ButtonStyle,
   ComponentType,
+  cleanCodeBlockContent,
+  codeBlock,
   type Embed,
   EmbedBuilder,
+  escapeInlineCode,
   InteractionType,
   Message,
   MessageFlags,
@@ -14,24 +16,22 @@ import {
   type MessageSnapshot,
   MessageType,
   type PartialMessage,
-  cleanCodeBlockContent,
-  codeBlock,
-  escapeInlineCode,
   time,
 } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import type { APIMessageInteractionMetadata } from 'discord-api-types/v10'
+import { formatUser, SleetModule } from 'sleetcord'
 import {
+  ansiFormat,
   BackgroundColor,
   type Markup,
   TextColor,
-  ansiFormat,
 } from '../../../util/ansiColors.js'
 import type { AnyComponent } from '../../../util/components.js'
 import { plural } from '../../../util/format.js'
 import { addToEmbed } from '../../../util/quoteMessage.js'
 import {
-  type MessageDeleteAuditLog,
   deleteEvents,
+  type MessageDeleteAuditLog,
 } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
 import {

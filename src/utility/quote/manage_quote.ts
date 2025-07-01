@@ -4,7 +4,7 @@ import {
   type ChatInputCommandInteraction,
   InteractionContextType,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'

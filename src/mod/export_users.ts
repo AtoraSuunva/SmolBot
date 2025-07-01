@@ -10,8 +10,8 @@ import {
 } from 'discord.js'
 import {
   type ClientEventHandlers,
-  SleetSlashCommand,
   getGuild,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 
@@ -107,7 +107,7 @@ async function runExportUsers(interaction: ChatInputCommandInteraction) {
 
   stringifier.on('readable', () => {
     let row: unknown
-    // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+    // biome-ignore lint/suspicious/noAssignInExpressions: this is evil
     while ((row = stringifier.read()) !== null) {
       data.push(row as Buffer)
     }

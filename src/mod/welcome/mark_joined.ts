@@ -5,7 +5,7 @@ import {
   type ChatInputCommandInteraction,
   type User,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild, getRoles, getUsers } from 'sleetcord'
+import { getGuild, getRoles, getUsers, SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { plural } from '../../util/format.js'

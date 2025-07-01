@@ -1,8 +1,8 @@
 import {
-  type MessagePort,
-  Worker,
   isMainThread,
+  type MessagePort,
   parentPort,
+  Worker,
 } from 'node:worker_threads'
 
 import { isMatch } from 'super-regex'

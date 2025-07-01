@@ -5,8 +5,8 @@ import {
 } from 'discord.js'
 import {
   type AutocompleteHandler,
-  type SleetSlashSubcommandBody,
   getGuild,
+  type SleetSlashSubcommandBody,
 } from 'sleetcord'
 import { prisma } from '../../../util/db.js'
 

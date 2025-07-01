@@ -2,7 +2,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { formatConfig } from '../../../util/format.js'

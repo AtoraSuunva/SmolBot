@@ -8,10 +8,10 @@ import {
   InteractionContextType,
 } from 'discord.js'
 import {
-  SleetSlashCommand,
   escapeAllMarkdown,
   getGuild,
   makeChoices,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { plural } from '../util/format.js'

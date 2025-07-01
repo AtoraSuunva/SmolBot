@@ -7,7 +7,7 @@ import type {
   PartialUser,
   User,
 } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import { getValidatedConfigFor } from '../utils.js'
 
 export const modlogMessageReactionAdd = new SleetModule(
@@ -48,10 +48,10 @@ async function kickMember(
 
   try {
     member = await guild.members.fetch(userId)
-  } catch (e) {
+  } catch {
     return `Could not kick '${userId}' requested by ${formatUser(
       executor,
-    )} (Did they leave?)`
+    )} (Failed to fetch them, did they leave?)`
   }
 
   if (!member.kickable) {
@@ -75,7 +75,7 @@ export const actions = {
           escapeMarkdown: false,
         })}`,
       })
-    } catch (e) {
+    } catch {
       return `Could not ban '${userId}' requested by ${formatUser(
         executor,
       )} (Missing permissions?)`

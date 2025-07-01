@@ -1,5 +1,5 @@
 import type { Guild, GuildMember, PartialUser, User } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import { UserUpdate } from '../modlog_config.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 

@@ -15,7 +15,7 @@ import {
   type WebhookMessageEditOptions,
   type WebhookType,
 } from 'discord.js'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { quoteMessage } from '../../util/quoteMessage.js'

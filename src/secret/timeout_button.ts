@@ -9,7 +9,7 @@ import {
   InteractionContextType,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
 import { plural } from '../util/format.js'
 

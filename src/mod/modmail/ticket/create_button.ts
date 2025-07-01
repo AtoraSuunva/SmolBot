@@ -8,6 +8,7 @@ import {
   ChannelType,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  escapeInlineCode,
   type Interaction,
   MessageFlags,
   ModalBuilder,
@@ -15,17 +16,16 @@ import {
   TextInputStyle,
   ThreadAutoArchiveDuration,
   type ThreadChannel,
-  escapeInlineCode,
   time,
 } from 'discord.js'
 import {
   type AutocompleteHandler,
-  SleetSlashSubcommand,
   formatUser,
   getGuild,
   inGuildGuard,
+  SleetSlashSubcommand,
 } from 'sleetcord'
-import { MINUTE, SECOND, notNullish } from 'sleetcord-common'
+import { MINUTE, notNullish, SECOND } from 'sleetcord-common'
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../util/db.js'
 import { modmailIdAutocomplete } from './../fields/utils.js'

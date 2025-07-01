@@ -6,7 +6,7 @@ import {
   InteractionContextType,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashCommand, escapeAllMarkdown } from 'sleetcord'
+import { escapeAllMarkdown, SleetSlashCommand } from 'sleetcord'
 
 export const roll = new SleetSlashCommand(
   {

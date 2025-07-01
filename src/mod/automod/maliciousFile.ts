@@ -1,5 +1,5 @@
 import type { Attachment, Message } from 'discord.js'
-import { SleetModule, escapeAllMarkdown, formatUser } from 'sleetcord'
+import { escapeAllMarkdown, formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 
 export const maliciousFile = new SleetModule(

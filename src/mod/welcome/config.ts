@@ -6,10 +6,10 @@ import {
   EmbedBuilder,
 } from 'discord.js'
 import {
-  SleetSlashSubcommand,
   getGuild,
   getRoles,
   getTextBasedChannel,
+  SleetSlashSubcommand,
 } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { Prisma, WelcomeSettings } from '../../generated/prisma/client.js'

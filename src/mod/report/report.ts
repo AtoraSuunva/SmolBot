@@ -8,7 +8,7 @@ import {
   InteractionContextType,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser, getGuild } from 'sleetcord'
+import { formatUser, getGuild, SleetSlashCommand } from 'sleetcord'
 import { fetchConfig } from './manage/config.js'
 import { report_manage } from './manage/index.js'
 import { report_message } from './report_message.js'

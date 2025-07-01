@@ -10,10 +10,10 @@ import {
   type ThreadEditOptions,
 } from 'discord.js'
 import {
-  SleetSlashCommand,
   escapeAllMarkdown,
   formatUser,
   getChannel,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 

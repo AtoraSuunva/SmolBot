@@ -7,11 +7,11 @@ import {
 import env from 'env-var'
 import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
 import {
-  Sentry,
   baseLogger,
   getModuleRunner,
   initDBLogging,
   initSentry,
+  Sentry,
 } from 'sleetcord-common'
 import { modules } from './modules.js'
 import { prisma } from './util/db.js'

@@ -1,12 +1,12 @@
 import {
   type BaseInteraction,
+  cleanCodeBlockContent,
+  codeBlock,
   type ForumChannel,
   type Guild,
   type InteractionCallbackResponse,
-  type Snowflake,
-  cleanCodeBlockContent,
-  codeBlock,
   messageLink,
+  type Snowflake,
 } from 'discord.js'
 import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'

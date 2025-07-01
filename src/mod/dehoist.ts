@@ -8,10 +8,10 @@ import {
   type PartialGuildMember,
 } from 'discord.js'
 import {
-  SleetSlashCommand,
   botHasPermissionsGuard,
   getGuild,
   getMembers,
+  SleetSlashCommand,
 } from 'sleetcord'
 import type { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../util/db.js'

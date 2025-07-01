@@ -7,15 +7,15 @@ import {
   MessageFlags,
   type PartialMessage,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild } from 'sleetcord'
-import { SECOND, getOptionCount } from 'sleetcord-common'
+import { getGuild, SleetSlashCommand } from 'sleetcord'
+import { getOptionCount, SECOND } from 'sleetcord-common'
 import type { DeletePoliceConfig } from '../generated/prisma/client.js'
 import { prisma } from '../util/db.js'
 import { formatConfig } from '../util/format.js'
 import { quoteMessage } from '../util/quoteMessage.js'
 import {
-  type MessageDeleteAuditLog,
   deleteEvents,
+  type MessageDeleteAuditLog,
 } from './messageDeleteAuditLog.js'
 
 export const delete_police_config = new SleetSlashCommand(

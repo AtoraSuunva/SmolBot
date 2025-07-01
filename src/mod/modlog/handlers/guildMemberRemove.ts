@@ -4,7 +4,7 @@ import {
   type PartialGuildMember,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
-import { SleetModule, formatUser } from 'sleetcord'
+import { formatUser, SleetModule } from 'sleetcord'
 import {
   EVENT_COLORS,
   formatLog,

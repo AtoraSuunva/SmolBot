@@ -3,11 +3,11 @@ import {
   type ChatInputCommandInteraction,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
+import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import {
-  type WarningFetcher,
   respondWithPaginatedWarnings,
+  type WarningFetcher,
 } from './pagination.js'
 import { fetchPaginatedWarningHistory } from './utils.js'
 

@@ -1,7 +1,7 @@
 import type { Client } from 'discord.js'
 import { DateTime } from 'luxon'
 import { SleetModule } from 'sleetcord'
-import { HOUR, baseLogger } from 'sleetcord-common'
+import { baseLogger, HOUR } from 'sleetcord-common'
 
 export const deltarune = new SleetModule(
   {

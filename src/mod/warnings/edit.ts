@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { Warning } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import {

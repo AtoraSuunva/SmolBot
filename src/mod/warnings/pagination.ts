@@ -14,10 +14,10 @@ import { MINUTE } from 'sleetcord-common'
 import type { WarningConfig } from '../../generated/prisma/client.js'
 import { plural } from '../../util/format.js'
 import {
-  MAX_PER_PAGE,
-  type PaginatedWarnings,
   fetchWarningConfigFor,
   formatWarningToField,
+  MAX_PER_PAGE,
+  type PaginatedWarnings,
 } from './utils.js'
 
 export type WarningFetcher = (

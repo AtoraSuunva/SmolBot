@@ -6,7 +6,7 @@ import {
   Constants,
   InteractionContextType,
 } from 'discord.js'
-import { SleetSlashCommand, getGuild, makeChoices } from 'sleetcord'
+import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'

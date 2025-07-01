@@ -9,13 +9,13 @@ import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
+  codeBlock,
   InteractionContextType,
   MessageFlags,
-  codeBlock,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { unicodeName } from 'unicode-name'
-import { TextColor, ansiFormat } from '../util/ansiColors.js'
+import { ansiFormat, TextColor } from '../util/ansiColors.js'
 
 const DOTTED_CIRCLE = '◌'
 

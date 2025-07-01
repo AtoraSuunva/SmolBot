@@ -4,7 +4,7 @@ import {
   type ChatInputCommandInteraction,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 

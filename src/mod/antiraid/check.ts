@@ -4,12 +4,12 @@ import {
   type GuildMember,
 } from 'discord.js'
 import pluralize from 'pluralize'
-import { SleetSlashSubcommand, formatUser, getGuild } from 'sleetcord'
-import { MINUTE, baseLogger, notNullish } from 'sleetcord-common'
+import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
+import { baseLogger, MINUTE, notNullish } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
 import {
-  AntiRaidActionVerb,
   AntiRaidActions,
+  AntiRaidActionVerb,
   antiRaidOptions,
   getAntiRaidConfigOrDefault,
 } from './utils.js'

@@ -4,15 +4,15 @@ import {
   type Guild,
   type GuildBan,
   type Invite,
-  type User,
   time,
+  type User,
 } from 'discord.js'
 import {
-  SleetSlashSubcommand,
   botHasPermissionsGuard,
   formatUser,
   getGuild,
   inGuildGuard,
+  SleetSlashSubcommand,
 } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 

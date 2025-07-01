@@ -1,6 +1,6 @@
 import {
-  type APIMessageTopLevelComponent,
   ActionRowBuilder,
+  type APIMessageTopLevelComponent,
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   ButtonBuilder,

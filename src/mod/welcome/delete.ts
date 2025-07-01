@@ -8,7 +8,7 @@ import {
   type Guild,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { welcomeCache } from './cache.js'

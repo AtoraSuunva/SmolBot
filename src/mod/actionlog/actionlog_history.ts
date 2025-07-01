@@ -1,6 +1,6 @@
 import {
-  type APIEmbedField,
   ActionRowBuilder,
+  type APIEmbedField,
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
@@ -11,7 +11,7 @@ import {
   MessageFlags,
   StringSelectMenuBuilder,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import type { ActionLog } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'

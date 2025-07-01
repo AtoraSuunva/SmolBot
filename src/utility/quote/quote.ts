@@ -9,7 +9,7 @@ import {
   MessageFlags,
   type User,
 } from 'discord.js'
-import { SleetSlashCommand, formatUser } from 'sleetcord'
+import { formatUser, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { quoteMessage } from '../../util/quoteMessage.js'

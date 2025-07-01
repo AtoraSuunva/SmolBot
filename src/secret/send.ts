@@ -5,7 +5,7 @@ import {
   InteractionContextType,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashCommand, getTextBasedChannel, inGuildGuard } from 'sleetcord'
+import { getTextBasedChannel, inGuildGuard, SleetSlashCommand } from 'sleetcord'
 
 export const send = new SleetSlashCommand(
   {

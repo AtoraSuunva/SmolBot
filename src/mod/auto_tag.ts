@@ -9,7 +9,7 @@ import {
   MessageFlags,
   type ThreadChannel,
 } from 'discord.js'
-import { SleetSlashCommand, SleetSlashSubcommand, getGuild } from 'sleetcord'
+import { getGuild, SleetSlashCommand, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../util/db.js'
 import { formatConfig, makeForumTagFormatter } from '../util/format.js'
 import { createTagAutocomplete } from './modmail/ticket/create_button.js'

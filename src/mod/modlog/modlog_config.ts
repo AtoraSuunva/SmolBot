@@ -4,7 +4,7 @@ import {
   Constants,
   MessageFlags,
 } from 'discord.js'
-import { SleetSlashSubcommand, getGuild, makeChoices } from 'sleetcord'
+import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { ModLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'

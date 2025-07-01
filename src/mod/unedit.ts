@@ -6,15 +6,15 @@ import {
   type ChatInputCommandInteraction,
   Collection,
   type CommandInteraction,
+  cleanCodeBlockContent,
+  codeBlock,
   InteractionContextType,
   type Message,
   type MessageContextMenuCommandInteraction,
   MessageFlags,
   type PartialMessage,
-  cleanCodeBlockContent,
-  codeBlock,
 } from 'discord.js'
-import { SleetMessageCommand, SleetSlashCommand, isLikelyID } from 'sleetcord'
+import { isLikelyID, SleetMessageCommand, SleetSlashCommand } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 import { messageArrayToLog } from './modlog/handlers/messageDelete.js'
 

@@ -1,6 +1,6 @@
 import {
-  type APIGuildMember,
   ActionRowBuilder,
+  type APIGuildMember,
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   ButtonBuilder,
@@ -9,6 +9,8 @@ import {
   type ChatInputCommandInteraction,
   type Collection,
   ComponentType,
+  cleanCodeBlockContent,
+  codeBlock,
   type Guild,
   type GuildMember,
   type Interaction,
@@ -18,15 +20,13 @@ import {
   type Snowflake,
   UserSelectMenuBuilder,
   type UserSelectMenuInteraction,
-  cleanCodeBlockContent,
-  codeBlock,
 } from 'discord.js'
 import {
   type AutocompleteHandler,
-  PreRunError,
-  SleetSlashCommand,
   formatUser,
   getGuild,
+  PreRunError,
+  SleetSlashCommand,
 } from 'sleetcord'
 import { getComponentsOfType } from '../util/components.js'
 import { tableFormat } from '../util/format.js'
@@ -198,13 +198,8 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
 
   let matcher: Matcher
   if (regexPattern) {
-    matcher = async (memberName: string) => {
-      try {
-        return await workerMatch(regexPattern, memberName, REGEX_TIMEOUT)
-      } catch (e) {
-        return false
-      }
-    }
+    matcher = (memberName: string) =>
+      workerMatch(regexPattern, memberName, REGEX_TIMEOUT).catch(() => false)
   } else if (exactMatch) {
     if (caseSensitive) {
       matcher = async (memberName: string) => memberName === name
