@@ -6,6 +6,8 @@ import {
   LimitedCollection,
   type MediaChannel,
   type Message,
+  MessageFlags,
+  MessageReferenceType,
   type NewsChannel,
   type PartialMessage,
   type TextChannel,
@@ -19,6 +21,11 @@ import { formatUser, SleetModule } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { quoteMessage } from '../../util/quoteMessage.js'
+
+const SettableMessageFlags =
+  MessageFlags.SuppressEmbeds |
+  MessageFlags.SuppressNotifications |
+  MessageFlags.IsComponentsV2
 
 export const handle_ticket_message = new SleetModule(
   {
@@ -214,12 +221,22 @@ async function syncMessage(message: Message, isEdit = false) {
     embeds.unshift(quote[0])
   }
 
+  if (message.reference?.type === MessageReferenceType.Forward) {
+    const snapshot = message.messageSnapshots.first()
+    if (snapshot) {
+      embeds.push(...(await quoteMessage(snapshot, { isSnapshot: true })))
+    }
+  }
+
   const mainOptions = {
     threadId: forwardThread.id,
     allowedMentions: { parse: isUserMessage ? [] : ['users'] },
     content,
     files,
     embeds,
+    components: message.components.slice(),
+    withComponents: message.components.length > 0,
+    flags: message.flags.valueOf() & SettableMessageFlags,
   } satisfies WebhookMessageCreateOptions | WebhookMessageEditOptions
 
   try {
