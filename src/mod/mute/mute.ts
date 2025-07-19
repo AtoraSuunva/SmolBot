@@ -110,7 +110,7 @@ export const mute = new SleetSlashCommand(
           .catch(() => null)
 
         if (
-          i.user.id !== userId ||
+          i.user.id !== userId &&
           !channel?.permissionsFor(i.user)?.has('ManageChannels')
         ) {
           await i.reply({
@@ -120,7 +120,7 @@ export const mute = new SleetSlashCommand(
           return
         }
 
-        if (!channel.isTextBased()) {
+        if (!channel?.isTextBased()) {
           await i.reply({
             content:
               "That isn't a text channel, or the channel doesn't exist anymore.",
@@ -633,7 +633,7 @@ async function muteAction(
         throw new Error('Already muted')
       }
 
-      const previousRoles = await storeRoles(member, [mutedRole])
+      const previousRoles = await storeRoles(member, [mutedRole], executor)
       const keepRoles = member.roles.cache.filter((r) => r.managed).toJSON()
       await member.roles.set([...keepRoles, mutedRole], reason)
       succeeded.push({ member, roles: previousRoles })
@@ -751,6 +751,7 @@ async function muteAction(
         },
         data: {
           muteChannel: mutedChannel.id,
+          executor: executor?.user.id ?? null,
         },
       })
     } catch (e) {
@@ -873,7 +874,8 @@ async function unmuteAction(
  */
 async function storeRoles(
   member: GuildMember,
-  ignoreRoles: Role[] = [],
+  ignoreRoles: Role[],
+  executor?: GuildMember,
 ): Promise<Role[]> {
   const { guild } = member
   const { previousRoles } = (await fetchMuteInfo(member)) ?? {
@@ -883,10 +885,11 @@ async function storeRoles(
     (r) => !ignoreRoles.includes(r) && validRole(r, guild),
   )
 
-  await setStoredRoles(member, [
-    ...(previousRoles ?? []),
-    ...roles.map((r) => r.id),
-  ])
+  await setStoredRoles(
+    member,
+    [...(previousRoles ?? []), ...roles.map((r) => r.id)],
+    executor,
+  )
 
   return roles.toJSON()
 }
@@ -1054,7 +1057,11 @@ function isMuted(member: GuildMember): Promise<boolean> {
     .then((count) => count > 0)
 }
 
-function setStoredRoles(member: GuildMember, roles: string[]) {
+function setStoredRoles(
+  member: GuildMember,
+  roles: string[],
+  executor?: GuildMember,
+) {
   const previousRoles = roles.join(ROLE_SEPARATOR)
 
   return prisma.memberMutes.upsert({
@@ -1066,11 +1073,13 @@ function setStoredRoles(member: GuildMember, roles: string[]) {
     },
     update: {
       previousRoles,
+      executor: executor?.user.id ?? null,
     },
     create: {
       guildID: member.guild.id,
       userID: member.user.id,
       previousRoles,
+      executor: executor?.user.id ?? null,
     },
   })
 }
