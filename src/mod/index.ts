@@ -23,6 +23,7 @@ import { modlogModules } from './modlog/index.js'
 import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
 import { purge } from './purge.js'
+import { purge_threads } from './purge_threads.js'
 import { report } from './report/report.js'
 import { revoke } from './revoke/index.js'
 import { unedit, unedit_message } from './unedit.js'
@@ -54,6 +55,7 @@ export const modModules = [
   mass_unban,
   messageDeleteAuditLog,
   modmail,
+  purge_threads,
   purge,
   report,
   revoke,
