@@ -31,19 +31,19 @@
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
-    "@prisma/adapter-better-sqlite3": "^6.10.1",
-    "@prisma/client": "^6.10.1",
+    "@prisma/adapter-better-sqlite3": "^6.14.0",
+    "@prisma/client": "^6.14.0",
     "@sapphire/shapeshift": "^4.0.0",
     "better-sqlite3": "^12.2.0",
     "char-info": "^0.3.5",
     "convert-units": "~2.3.4",
-    "csv-parse": "^5.6.0",
-    "csv-stringify": "^6.5.2",
-    "discord-api-types": "^0.38.14",
+    "csv-parse": "^6.1.0",
+    "csv-stringify": "^6.6.0",
+    "discord-api-types": "^0.38.20",
     "discord.js": "~14.21.0",
     "env-var": "~7.5.0",
     "google-translate-api-x": "^10.7.2",
-    "luxon": "^3.6.1",
+    "luxon": "^3.7.1",
     "magic-bytes.js": "^1.12.1",
     "murmurhash": "^2.0.1",
     "p-queue": "^8.1.0",
@@ -60,16 +60,13 @@
     "unicode-name": "^1.0.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.6",
-    "@sentry/cli": "^2.46.0",
+    "@biomejs/biome": "2.2.0",
+    "@sentry/cli": "^2.52.0",
     "@types/convert-units": "^2.3.12",
-    "@types/luxon": "^3.6.2",
-    "@types/node": "~24.0.8",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "~24.3.0",
     "@types/pluralize": "^0.0.33",
-    "prisma": "^6.10.1",
-    "typescript": "~5.8.3"
-  },
-  "prisma": {
-    "schema": "./prisma"
+    "prisma": "^6.14.0",
+    "typescript": "~5.9.2"
   }
 }

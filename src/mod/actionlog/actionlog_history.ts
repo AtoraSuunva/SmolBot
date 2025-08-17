@@ -137,7 +137,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
       componentInteraction.isStringSelectMenu() &&
       componentInteraction.customId === SELECT_REVERT
     ) {
-      const version = Number.parseInt(componentInteraction.values[0])
+      const version = Number.parseInt(componentInteraction.values[0], 10)
 
       const action = await prisma.actionLog.findFirst({
         where: {

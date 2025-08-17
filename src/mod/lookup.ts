@@ -148,6 +148,7 @@ const Emotes = await syncApplicationEmojis('lookup', {
   soundboard: './resources/emojis/lookup/guild_features/soundboard.png',
   enhanced_role_colors:
     './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
+  guild_tags: './resources/emojis/lookup/guild_features/guild_tags.png',
   // #endregion: Feature icons
   //------------------------------
 })
@@ -1426,4 +1427,5 @@ const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
   RAID_ALERTS_DISABLED: Emotes.raid_alerts_disabled,
   SOUNDBOARD: Emotes.soundboard,
   ENHANCED_ROLE_COLORS: Emotes.enhanced_role_colors,
+  GUILD_TAGS: Emotes.guild_tags,
 }

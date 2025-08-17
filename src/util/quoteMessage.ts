@@ -467,7 +467,7 @@ function quotePollResult(message: Message, embed: EmbedBuilder) {
 
   const ratio =
     victorAnswerVotes && totalVotes
-      ? ` (${((Number.parseInt(victorAnswerVotes) / Number.parseInt(totalVotes)) * 100).toFixed(2)}%)`
+      ? ` (${((Number.parseInt(victorAnswerVotes, 10) / Number.parseInt(totalVotes, 10)) * 100).toFixed(2)}%)`
       : ''
 
   embed
