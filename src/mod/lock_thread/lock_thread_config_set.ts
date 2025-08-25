@@ -7,8 +7,8 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { LockThreadConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 
 export const lock_thread_config_set = new SleetSlashSubcommand(
   {

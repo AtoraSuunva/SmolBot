@@ -3,14 +3,14 @@ import type { Client } from 'discord.js'
 import env from 'env-var'
 import { SleetModule } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import { prisma } from '../util/db.js'
+import { prisma } from '../helpers/db.js'
 
 export const healthcheck = new SleetModule(
   {
     name: 'healthcheck',
   },
   {
-    ready: handleReady,
+    clientReady: handleReady,
   },
 )
 

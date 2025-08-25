@@ -6,8 +6,8 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { RevokeConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 
 export const revoke_config = new SleetSlashSubcommand(
   {

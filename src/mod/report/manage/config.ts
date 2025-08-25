@@ -9,8 +9,8 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { Prisma, ReportConfig } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../util/db.js'
-import { formatConfig } from '../../../util/format.js'
+import { prisma } from '../../../helpers/db.js'
+import { formatConfig } from '../../../helpers/format.js'
 import { handleReportButtonInteraction } from '../utils.js'
 
 export const report_manage_config = new SleetSlashSubcommand(

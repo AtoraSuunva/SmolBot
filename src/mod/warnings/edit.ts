@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { Warning } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import {
   fetchWarningConfigFor,
   formatWarningToField,

@@ -13,7 +13,7 @@ import {
 } from 'discord.js'
 import { formatUser, SleetSlashCommand, tryFetchMember } from 'sleetcord'
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import {
   formatLog,

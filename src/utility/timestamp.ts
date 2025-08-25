@@ -10,7 +10,7 @@ import {
 import { DateTime } from 'luxon'
 import { createParseHumanRelativeTime } from 'parse-human-relative-time/luxon.js'
 import { SleetSlashCommand } from 'sleetcord'
-import { dateTimeFrom } from '../util/time.js'
+import { dateTimeFrom } from '../helpers/time.js'
 
 const parseHumanRelativeTime = createParseHumanRelativeTime(DateTime)
 const timezones = Intl.supportedValuesOf('timeZone')

@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 import { FIELD_CUSTOM_ID, FIELD_MODMAIL_ID } from './utils.js'
 
 export const modmail_fields_remove = new SleetSlashSubcommand(

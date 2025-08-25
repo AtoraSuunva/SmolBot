@@ -1,6 +1,6 @@
 import type { AnyThreadChannel, Client, ForumThreadChannel } from 'discord.js'
 import { SleetModule } from 'sleetcord'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { getWebhookFor } from './handle_ticket_message.js'
 
 export const handle_thread_update = new SleetModule(

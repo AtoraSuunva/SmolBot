@@ -8,8 +8,8 @@ import {
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { WarningConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { channelFormatter, formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { channelFormatter, formatConfig } from '../../helpers/format.js'
 import { markWarningArchiveDirty } from './utils.js'
 
 export const warnings_manage = new SleetSlashCommand(

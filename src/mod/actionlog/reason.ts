@@ -17,9 +17,9 @@ import type {
   ActionLog,
   ActionLogConfig,
 } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { capitalize, plural } from '../../util/format.js'
-import { sleep } from '../../util/functions.js'
+import { prisma } from '../../helpers/db.js'
+import { capitalize, plural } from '../../helpers/format.js'
+import { sleep } from '../../helpers/functions.js'
 import {
   type ActionLogEntry,
   collapseSequence,

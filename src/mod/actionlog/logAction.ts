@@ -2,7 +2,7 @@ import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import PQueue from 'p-queue'
 import { SleetModule } from 'sleetcord'
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { resolveUser } from '../modlog/handlers/auditLog/index.js'
 import {
   type ActionLogEntry,

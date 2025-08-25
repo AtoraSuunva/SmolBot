@@ -5,7 +5,7 @@ import {
 } from 'discord.js'
 import { escapeAllMarkdown, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 import { FIELD_MODMAIL_ID } from './utils.js'
 
 export const modmail_fields_view = new SleetSlashSubcommand(

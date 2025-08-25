@@ -16,7 +16,7 @@ import {
   SleetSlashCommand,
   SleetSlashSubcommand,
 } from 'sleetcord'
-import { prisma } from '../util/db.js'
+import { prisma } from '../helpers/db.js'
 
 const config = new SleetSlashSubcommand(
   {

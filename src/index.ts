@@ -13,8 +13,9 @@ import {
   initSentry,
   Sentry,
 } from 'sleetcord-common'
+import { prisma } from './helpers/db.js'
 import { modules } from './modules.js'
-import { prisma } from './util/db.js'
+import { startApiServer } from './utility/api/server.js'
 
 const initLogger = baseLogger.child({ module: 'init' })
 
@@ -116,6 +117,8 @@ async function main() {
   initLogger.info('Logging in')
   await sleetClient.login()
   initLogger.info('Logged in')
+
+  startApiServer()
 }
 
 // See https://docs.sentry.io/platforms/node/configuration/integrations/default-integrations/

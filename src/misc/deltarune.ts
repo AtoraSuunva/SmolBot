@@ -8,7 +8,7 @@ export const deltarune = new SleetModule(
     name: 'deltarune',
   },
   {
-    ready: onReady,
+    clientReady: onReady,
   },
 )
 
@@ -65,7 +65,7 @@ async function updateEvents(client: Client) {
         scheduledEndTime: tomorrow.plus({ hours: 1 }).toMillis(),
       })
     } catch (err) {
-      deltaruneLogger.error(`Failed to update event in guild ${guildId}:`, err)
+      deltaruneLogger.error(err, `Failed to update event in guild ${guildId}`)
     }
   }
 }

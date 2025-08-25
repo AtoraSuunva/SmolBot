@@ -7,8 +7,8 @@ import {
 import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { ModLogConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 import { clearCacheFor } from './utils.js'
 
 export enum UserUpdate {

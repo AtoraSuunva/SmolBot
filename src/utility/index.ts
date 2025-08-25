@@ -1,3 +1,4 @@
+import { api } from './api/index.js'
 import { calculator } from './calculator.js'
 import { char_info } from './char_info.js'
 import { convert } from './convert.js'
@@ -13,6 +14,7 @@ import { timestamp } from './timestamp.js'
 import { translateMessage, translateSlash } from './translate.js'
 
 export const utilityModules = [
+  api,
   calculator,
   char_info,
   convert,

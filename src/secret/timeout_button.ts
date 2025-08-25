@@ -11,7 +11,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import { plural } from '../util/format.js'
+import { plural } from '../helpers/format.js'
 
 export const timeout_button = new SleetSlashCommand(
   {

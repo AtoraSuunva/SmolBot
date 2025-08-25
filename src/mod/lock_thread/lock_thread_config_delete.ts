@@ -5,8 +5,8 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 
 export const lock_thread_config_delete = new SleetSlashSubcommand(
   {

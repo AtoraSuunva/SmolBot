@@ -6,8 +6,8 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import { type ModLogChannels, Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { formatConfig, toSnakeCase } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig, toSnakeCase } from '../../helpers/format.js'
 import { getValidatedConfigFor, type LoggedAction } from './utils.js'
 
 type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`

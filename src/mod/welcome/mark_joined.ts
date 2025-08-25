@@ -7,8 +7,8 @@ import {
 } from 'discord.js'
 import { getGuild, getRoles, getUsers, SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { plural } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { plural } from '../../helpers/format.js'
 
 export const mark_joined = new SleetSlashSubcommand(
   {

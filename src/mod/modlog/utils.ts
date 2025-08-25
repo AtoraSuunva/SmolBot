@@ -1,7 +1,7 @@
 import { type Guild, type GuildTextBasedChannel, time } from 'discord.js'
 import { TicketQueue } from 'ticket-queue'
 import type { ModLogConfig, Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 
 export enum EVENT_COLORS {
   memberAdd = 0x77b255,

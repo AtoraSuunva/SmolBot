@@ -9,8 +9,8 @@ import {
 import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 
 export const mute_manage = new SleetSlashCommand(
   {

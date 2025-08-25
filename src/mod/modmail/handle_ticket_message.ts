@@ -19,8 +19,8 @@ import {
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { quoteMessage } from '../../util/quoteMessage.js'
+import { prisma } from '../../helpers/db.js'
+import { quoteMessage } from '../../helpers/quoteMessage.js'
 
 const SettableMessageFlags =
   MessageFlags.SuppressEmbeds |

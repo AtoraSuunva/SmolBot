@@ -15,7 +15,7 @@ import {
   type Role,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
-import { getComponentsOfType } from '../util/components.js'
+import { getComponentsOfType } from '../helpers/components.js'
 
 export const role_buttons = new SleetSlashCommand(
   {

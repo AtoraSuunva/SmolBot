@@ -16,7 +16,7 @@ import {
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import { plural } from '../../../util/format.js'
+import { plural } from '../../../helpers/format.js'
 import {
   deleteEvents,
   type MessageBulkDeleteAuditLog,

@@ -6,7 +6,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import { plural } from '../util/format.js'
+import { plural } from '../helpers/format.js'
 
 const MAX_OPTIONS = 200
 const MAX_PICKS = 50

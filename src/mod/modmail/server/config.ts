@@ -5,8 +5,8 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../util/db.js'
-import { formatConfig } from '../../../util/format.js'
+import { prisma } from '../../../helpers/db.js'
+import { formatConfig } from '../../../helpers/format.js'
 
 export const modmail_server_config = new SleetSlashSubcommand(
   {

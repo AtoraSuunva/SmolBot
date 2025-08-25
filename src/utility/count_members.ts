@@ -14,7 +14,7 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import { plural } from '../util/format.js'
+import { plural } from '../helpers/format.js'
 
 const checkChoices = makeChoices([
   'username',

@@ -10,8 +10,8 @@ import {
   type ThreadChannel,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../util/db.js'
-import { formatConfig, makeForumTagFormatter } from '../util/format.js'
+import { prisma } from '../helpers/db.js'
+import { formatConfig, makeForumTagFormatter } from '../helpers/format.js'
 import { createTagAutocomplete } from './modmail/ticket/create_button.js'
 
 const enable = new SleetSlashSubcommand(

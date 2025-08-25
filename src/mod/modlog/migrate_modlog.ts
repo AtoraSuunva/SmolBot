@@ -8,15 +8,15 @@ import env from 'env-var'
 import { SleetClient, SleetModule } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import '../../util/dbLogging.js'
+import { prisma } from '../../helpers/db.js'
+import '../../helpers/dbLogging.js'
 
 const migrate_modlog = new SleetModule(
   {
     name: 'migrate_modlog',
   },
   {
-    ready: runMigrateModlog,
+    clientReady: runMigrateModlog,
   },
 )
 

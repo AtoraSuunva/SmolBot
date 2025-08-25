@@ -1,7 +1,7 @@
 import { type ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 import { FIELD_OPTIONS } from './utils.js'
 import { formatField } from './view.js'
 

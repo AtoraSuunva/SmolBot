@@ -10,7 +10,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { welcomeCache } from './cache.js'
 
 export const deleteCommand = new SleetSlashSubcommand(

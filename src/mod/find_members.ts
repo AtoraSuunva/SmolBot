@@ -28,9 +28,9 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
-import { getComponentsOfType } from '../util/components.js'
-import { tableFormat } from '../util/format.js'
-import { workerMatch } from '../util/regexWorker.js'
+import { getComponentsOfType } from '../helpers/components.js'
+import { tableFormat } from '../helpers/format.js'
+import { workerMatch } from '../helpers/regexWorker.js'
 
 interface MemberMatch {
   name: string

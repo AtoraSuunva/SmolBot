@@ -10,9 +10,9 @@ import {
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount, SECOND } from 'sleetcord-common'
 import type { DeletePoliceConfig } from '../generated/prisma/client.js'
-import { prisma } from '../util/db.js'
-import { formatConfig } from '../util/format.js'
-import { quoteMessage } from '../util/quoteMessage.js'
+import { prisma } from '../helpers/db.js'
+import { formatConfig } from '../helpers/format.js'
+import { quoteMessage } from '../helpers/quoteMessage.js'
 import {
   deleteEvents,
   type MessageDeleteAuditLog,

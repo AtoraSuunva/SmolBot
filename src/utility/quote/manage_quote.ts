@@ -6,8 +6,8 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import { prisma } from '../../util/db.js'
-import { formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { formatConfig } from '../../helpers/format.js'
 
 export const manage_quote = new SleetSlashCommand(
   {

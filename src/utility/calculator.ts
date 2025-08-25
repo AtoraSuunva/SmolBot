@@ -15,7 +15,7 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-import { getComponentsOfType } from '../util/components.js'
+import { getComponentsOfType } from '../helpers/components.js'
 
 export const calculator = new SleetSlashCommand(
   {

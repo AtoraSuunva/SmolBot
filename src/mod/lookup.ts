@@ -44,9 +44,9 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { escapeAllMarkdown, isLikelyID, SleetSlashCommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import { mapComponents } from '../util/components.js'
-import { plural } from '../util/format.js'
-import { syncApplicationEmojis } from '../util/syncEmojis.js'
+import { mapComponents } from '../helpers/components.js'
+import { plural } from '../helpers/format.js'
+import { syncApplicationEmojis } from '../helpers/syncEmojis.js'
 
 const Emotes = await syncApplicationEmojis('lookup', {
   //------------------------------
@@ -149,6 +149,7 @@ const Emotes = await syncApplicationEmojis('lookup', {
   enhanced_role_colors:
     './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
   guild_tags: './resources/emojis/lookup/guild_features/guild_tags.png',
+  guests_enabled: './resources/emojis/lookup/guild_features/guests_enabled.png',
   // #endregion: Feature icons
   //------------------------------
 })
@@ -805,7 +806,7 @@ async function sendGuildInviteLookup(
   const preview = await interaction.client
     .fetchGuildPreview(guild.id)
     .catch(() => null)
-  const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
+  const ratio = ((presenceCount ?? 0 / (memberCount ?? 1)) * 100).toFixed(0)
   const guildIcons = [
     guild.partnered ? Emotes.partnered : '',
     guild.verified ? Emotes.verified : '',
@@ -846,8 +847,8 @@ async function sendGuildInviteLookup(
   const guildInfo = [
     `## Guild: ${guildPrepend}${escapeAllMarkdown(guild.name)}`,
     `**ID:** ${inlineCode(guild.id)}`,
-    `${Emotes.online} **${presenceCount.toLocaleString()}** Online (${ratio}%)`,
-    `${Emotes.offline} **${memberCount.toLocaleString()}** Members`,
+    `${Emotes.online} **${presenceCount?.toLocaleString()}** Online (${ratio}%)`,
+    `${Emotes.offline} **${memberCount?.toLocaleString()}** Members`,
     `**Created:** ${formatDate(guild.createdAt)}`,
   ]
 
@@ -1017,7 +1018,7 @@ async function sendGroupDMInviteLookup(
       `#${invite.channel.name ?? 'Unknown Channel'}`,
       `https://discord.com/channels/@me/${invite.channel.id}`,
     )}`,
-    `${Emotes.offline} ${plural('Member', invite.memberCount)}`,
+    `${Emotes.offline} ${plural('Member', invite.memberCount ?? 0)}`,
     `**Icon:** ${iconURL ? hyperlink('Icon', iconURL) : 'None'}`,
     `**Created At:** ${formatDate(createdAt)}`,
     `**Expires At:** ${
@@ -1428,4 +1429,5 @@ const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
   SOUNDBOARD: Emotes.soundboard,
   ENHANCED_ROLE_COLORS: Emotes.enhanced_role_colors,
   GUILD_TAGS: Emotes.guild_tags,
+  GUESTS_ENABLED: Emotes.guests_enabled,
 }

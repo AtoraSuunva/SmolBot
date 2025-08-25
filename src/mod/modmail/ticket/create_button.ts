@@ -27,7 +27,7 @@ import {
 } from 'sleetcord'
 import { MINUTE, notNullish, SECOND } from 'sleetcord-common'
 import type { Prisma } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 import { modmailIdAutocomplete } from './../fields/utils.js'
 
 type AutocompleteCreator = (

@@ -7,7 +7,7 @@ import {
 } from 'discord.js'
 import { getGuild, type SleetContext, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE, SECOND } from 'sleetcord-common'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import {
   fetchGuildsPendingArchive,
   fetchWarningConfigFor,
@@ -21,7 +21,7 @@ export const warningsExport = new SleetSlashSubcommand(
   },
   {
     run: warningsExportRun,
-    ready: warningsExportReady,
+    clientReady: warningsExportReady,
   },
 )
 

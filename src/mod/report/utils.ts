@@ -25,9 +25,9 @@ import {
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
 import type { UserReport } from '../../generated/prisma/client.js'
-import { getComponentsOfType } from '../../util/components.js'
-import { prisma } from '../../util/db.js'
-import { responseMessageLink } from '../../util/format.js'
+import { getComponentsOfType } from '../../helpers/components.js'
+import { prisma } from '../../helpers/db.js'
+import { responseMessageLink } from '../../helpers/format.js'
 import type { ReportConfigResolved } from './manage/config.js'
 
 const REPORT = 'report'

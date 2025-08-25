@@ -6,8 +6,8 @@ import {
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { channelFormatter, formatConfig } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { channelFormatter, formatConfig } from '../../helpers/format.js'
 import { markActionlogArchiveDirty } from './utils.js'
 
 export const actionlog_config = new SleetSlashSubcommand(

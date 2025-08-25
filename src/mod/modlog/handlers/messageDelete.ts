@@ -25,10 +25,10 @@ import {
   BackgroundColor,
   type Markup,
   TextColor,
-} from '../../../util/ansiColors.js'
-import type { AnyComponent } from '../../../util/components.js'
-import { plural } from '../../../util/format.js'
-import { addToEmbed } from '../../../util/quoteMessage.js'
+} from '../../../helpers/ansiColors.js'
+import type { AnyComponent } from '../../../helpers/components.js'
+import { plural } from '../../../helpers/format.js'
+import { addToEmbed } from '../../../helpers/quoteMessage.js'
 import {
   deleteEvents,
   type MessageDeleteAuditLog,

@@ -6,7 +6,7 @@ import type {
   WarningConfig,
   WarningDirtyTracker,
 } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 
 export const MAX_PER_PAGE = 5
 

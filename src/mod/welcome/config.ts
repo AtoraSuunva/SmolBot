@@ -13,7 +13,7 @@ import {
 } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { Prisma, WelcomeSettings } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { welcomeCache } from './cache.js'
 
 type NewWelcomeSettings = Prisma.WelcomeSettingsCreateInput | null

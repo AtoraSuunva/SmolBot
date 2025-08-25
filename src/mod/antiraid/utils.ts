@@ -6,7 +6,7 @@ import {
   type Guild,
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 
 export enum AntiRaidActions {
   None = 'none',

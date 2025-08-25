@@ -20,8 +20,8 @@ import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 import type { Prisma, Warning } from '../../generated/prisma/client.js'
 import type { PrismaPromise } from '../../generated/prisma/internal/prismaNamespace.js'
-import { prisma } from '../../util/db.js'
-import { plural } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { plural } from '../../helpers/format.js'
 
 const importWarningsLogger = baseLogger.child({ module: 'import_warnings' })
 

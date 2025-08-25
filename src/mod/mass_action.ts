@@ -22,7 +22,7 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import { DAY, SECOND } from 'sleetcord-common'
-import { capitalize, plural } from '../util/format.js'
+import { capitalize, plural } from '../helpers/format.js'
 
 const commonOptions: APIApplicationCommandOption[] = [
   {

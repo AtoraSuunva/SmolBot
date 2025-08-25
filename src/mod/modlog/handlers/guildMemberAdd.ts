@@ -9,7 +9,7 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 import {
   EVENT_COLORS,
   formatLog,
@@ -22,7 +22,7 @@ export const logGuildMemberAdd = new SleetModule(
     name: 'logGuildMemberAdd',
   },
   {
-    ready,
+    clientReady,
     guildMemberAdd,
   },
 )
@@ -30,7 +30,7 @@ export const logGuildMemberAdd = new SleetModule(
 type InviteCollection = Collection<string, Invite>
 const invitesCache = new Map<Guild, InviteCollection>()
 
-async function ready(client: Client) {
+async function clientReady(client: Client) {
   const guildIDs = await prisma.modLogConfig.findMany({
     select: {
       guildID: true,

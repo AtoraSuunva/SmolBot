@@ -124,7 +124,7 @@ async function runPurgePosts(interaction: ChatInputCommandInteraction) {
           id: thread.id,
         })
       } catch (e) {
-        purgePostsLogger.error(`Failed to delete thread ${thread.id}`, e)
+        purgePostsLogger.error(e, `Failed to delete thread ${thread.id}`)
         failed++
         stringifier.write({
           status: 'failed',

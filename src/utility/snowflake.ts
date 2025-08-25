@@ -10,8 +10,8 @@ import {
 import { DateTime } from 'luxon'
 import { SleetSlashCommand, SleetSlashSubcommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import { formatConfig } from '../util/format.js'
-import { dateTimeFrom } from '../util/time.js'
+import { formatConfig } from '../helpers/format.js'
+import { dateTimeFrom } from '../helpers/time.js'
 
 const snowflakeParse = new SleetSlashSubcommand(
   {

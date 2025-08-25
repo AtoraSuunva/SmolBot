@@ -11,8 +11,8 @@ import {
 } from 'discord.js'
 import { formatUser, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
-import { prisma } from '../../util/db.js'
-import { quoteMessage } from '../../util/quoteMessage.js'
+import { prisma } from '../../helpers/db.js'
+import { quoteMessage } from '../../helpers/quoteMessage.js'
 
 const quoteLogger = baseLogger.child({ module: 'quote' })
 

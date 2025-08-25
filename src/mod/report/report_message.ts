@@ -15,7 +15,7 @@ import {
 } from 'discord.js'
 import { formatUser, getGuild, SleetMessageCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
-import { quoteMessage } from '../../util/quoteMessage.js'
+import { quoteMessage } from '../../helpers/quoteMessage.js'
 import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'
 

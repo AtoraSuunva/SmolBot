@@ -37,8 +37,8 @@ import {
 } from 'sleetcord'
 import { baseLogger, notNullish, SECOND } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { responseMessageLink } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { responseMessageLink } from '../../helpers/format.js'
 
 const mutedRoles = [
   'muted',

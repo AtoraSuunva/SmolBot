@@ -8,7 +8,7 @@ import {
   getGuild,
   type SleetSlashSubcommandBody,
 } from 'sleetcord'
-import { prisma } from '../../../util/db.js'
+import { prisma } from '../../../helpers/db.js'
 
 export const TEXT_INPUT_STYLES: APIApplicationCommandOptionChoice<number>[] = [
   {

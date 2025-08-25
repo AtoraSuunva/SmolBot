@@ -14,8 +14,8 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import type { Prisma } from '../generated/prisma/client.js'
-import { prisma } from '../util/db.js'
-import { plural } from '../util/format.js'
+import { prisma } from '../helpers/db.js'
+import { plural } from '../helpers/format.js'
 
 const DEFAULT_PREPEND = '\u{17B5}' // Khmer Vowel Inherent Aa "◌឵"
 

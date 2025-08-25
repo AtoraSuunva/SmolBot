@@ -15,7 +15,7 @@ import {
   getChannel,
   SleetSlashCommand,
 } from 'sleetcord'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 
 export const lock_thread = new SleetSlashCommand(
   {

@@ -24,8 +24,8 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
-import { plural } from '../util/format.js'
-import { workerMatch } from '../util/regexWorker.js'
+import { plural } from '../helpers/format.js'
+import { workerMatch } from '../helpers/regexWorker.js'
 
 const MAX_FETCH_MESSAGES = 100
 const REGEX_TIMEOUT = 100

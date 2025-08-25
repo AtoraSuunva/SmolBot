@@ -15,7 +15,7 @@ import {
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { unicodeName } from 'unicode-name'
-import { ansiFormat, TextColor } from '../util/ansiColors.js'
+import { ansiFormat, TextColor } from '../helpers/ansiColors.js'
 
 const DOTTED_CIRCLE = '◌'
 

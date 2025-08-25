@@ -12,7 +12,7 @@ import {
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import type { WarningConfig } from '../../generated/prisma/client.js'
-import { plural } from '../../util/format.js'
+import { plural } from '../../helpers/format.js'
 import {
   fetchWarningConfigFor,
   formatWarningToField,

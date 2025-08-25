@@ -5,8 +5,8 @@ import type {
   ActionLogConfig,
   ActionLogDirtyTracker,
 } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
-import { capitalize } from '../../util/format.js'
+import { prisma } from '../../helpers/db.js'
+import { capitalize } from '../../helpers/format.js'
 
 export interface ActionLogEntry {
   id: number
