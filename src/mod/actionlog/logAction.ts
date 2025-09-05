@@ -58,11 +58,13 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
   }
 
   const config = await fetchActionLogConfigFor(guild.id, false)
-  const logChannelID = config?.logChannelID
-  if (!logChannelID) return
 
-  const logChannel = guild.channels.cache.get(logChannelID)
-  if (!logChannel?.isTextBased()) return
+  if (!config) return
+
+  const { logChannelID } = config
+  const logChannel = logChannelID
+    ? await guild.channels.fetch(logChannelID)
+    : null
 
   const type = getLogAction(auditLogEntry, config)
   if (!type) return
@@ -121,7 +123,6 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
           reason: entry.reason,
           reasonByID: entry.reasonBy?.id ?? null,
           moderatorID: entry.responsibleModerator?.id ?? null,
-          channelID: logChannelID,
           // This specifically needs to be null, it's how we tell which version of the action is the latest
           validUntil: null,
         },
@@ -133,31 +134,35 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
     await markActionlogArchiveDirty(guild.id)
 
     entry.id = nextActionID
-    const log = await formatToLog(entry)
-    await logChannel
-      .send({
-        content: log,
-        allowedMentions: {
-          parse: [],
-        },
-      })
-      .then((message) =>
-        prisma.actionLog.update({
-          where: {
-            guildID_actionID_version: {
-              guildID: guild.id,
-              actionID: nextActionID,
-              version: 1,
+
+    if (logChannel?.isSendable()) {
+      const log = await formatToLog(entry)
+      await logChannel
+        .send({
+          content: log,
+          allowedMentions: {
+            parse: [],
+          },
+        })
+        .then((message) =>
+          prisma.actionLog.update({
+            where: {
+              guildID_actionID_version: {
+                guildID: guild.id,
+                actionID: nextActionID,
+                version: 1,
+              },
             },
-          },
-          data: {
-            messageID: message.id,
-          },
-        }),
-      )
-      .catch(() => {
-        // ignore, probably can't send
-      })
+            data: {
+              messageID: message.id,
+              channelID: logChannel.id,
+            },
+          }),
+        )
+        .catch(() => {
+          // ignore, probably can't send
+        })
+    }
   })
 }
 

@@ -417,13 +417,13 @@ async function editAction(
     }
   }
 
-  if (oldAction.messageID === null) {
+  if (oldAction.channelID === null || oldAction.messageID === null) {
     // Either wasn't logged before or failed to log
     // In which case we should create a new log
     return await sendMessage()
   }
 
-  const channel = guild.channels.cache.get(oldAction.channelID)
+  const channel = await guild.channels.fetch(oldAction.channelID)
 
   if (!channel?.isTextBased()) {
     return {

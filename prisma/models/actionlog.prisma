@@ -28,7 +28,7 @@ model ActionLog {
   reason      String?
   reasonByID  String?   @map("reason_by_id")
   moderatorID String?   @map("moderator_id")
-  channelID   String    @map("channel_id")
+  channelID   String?   @map("channel_id")
   messageID   String?   @map("message_id")
   createdAt   DateTime  @default(now()) @map("created_at")
   validUntil  DateTime? @map("valid_until")

@@ -159,8 +159,8 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
       await updateActionLog(guild.id, action)
 
       // Update message
-      if (action.messageID) {
-        const channel = guild.channels.cache.get(action.channelID)
+      if (action.channelID && action.messageID) {
+        const channel = await guild.channels.fetch(action.channelID)
 
         if (channel?.isTextBased()) {
           await channel.messages
