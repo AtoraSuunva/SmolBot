@@ -369,7 +369,7 @@ async function editAction(
       }
     }
 
-    const logChannel = guild.channels.cache.get(config.logChannelID)
+    const logChannel = await guild.channels.fetch(config.logChannelID)
 
     if (!logChannel?.isTextBased()) {
       return {

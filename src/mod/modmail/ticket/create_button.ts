@@ -404,7 +404,7 @@ async function handleCreateTicketButton(
   await int.deferReply({ flags: MessageFlags.Ephemeral })
 
   // Create the modmail ticket
-  const modChannel = interaction.guild?.channels.cache.get(forumId)
+  const modChannel = await interaction.guild?.channels.fetch(forumId)
 
   if (!modChannel) {
     await int.editReply({

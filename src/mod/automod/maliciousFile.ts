@@ -35,7 +35,8 @@ async function runMessageCreate(message: Message) {
         message.member?.timeout(7 * DAY, 'Malicious file'),
       ])
 
-      const logChannel = message.guild.channels.cache.get('797336365284065300')
+      const logChannel =
+        await message.guild.channels.fetch('797336365284065300')
 
       const loggedMalicious = malicious
         .map((a) => escapeAllMarkdown(a.name))

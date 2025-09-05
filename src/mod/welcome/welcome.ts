@@ -4,7 +4,6 @@ import {
   type AttachmentPayload,
   ChannelType,
   codeBlock,
-  type Guild,
   type GuildMember,
   type GuildTextBasedChannel,
   InteractionContextType,
@@ -147,18 +146,19 @@ async function handleJoin(
 
   const sendChannel =
     (welcomeChannel
-      ? await resolveTextBasedChannel(member.guild, welcomeChannel)
+      ? await member.guild.channels.fetch(welcomeChannel).catch(() => null)
       : null) ?? channel
 
   let sentMessage: Message | null = null
 
-  if (sendChannel) {
+  if (sendChannel?.isTextBased()) {
     const msg = formatMessage(welcomeMessage, {
       member,
       origin: channel,
       welcome: sendChannel,
       message,
     })
+
     sentMessage = await sendChannel.send(msg)
   }
 
@@ -223,25 +223,6 @@ async function handleJoin(
   }
 
   await addJoin(member.guild.id, member.id)
-}
-
-async function resolveTextBasedChannel(
-  guild: Guild,
-  channelID: string,
-): Promise<GuildTextBasedChannel | null> {
-  const cachedChannel = guild.channels.cache.get(channelID)
-
-  if (cachedChannel?.isTextBased()) {
-    return cachedChannel
-  }
-
-  const channel = await guild.channels.fetch(channelID)
-
-  if (channel?.isTextBased()) {
-    return channel
-  }
-
-  return null
 }
 
 async function addJoin(guildID: string, userID: string) {

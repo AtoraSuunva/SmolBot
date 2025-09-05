@@ -594,20 +594,20 @@ async function findUserResponsibleForRemovingMute(
   return entry ?? null
 }
 
-function sendToLogChannel(
+async function sendToLogChannel(
   guild: Guild,
   logChannelID: string | null,
   payload: Parameters<PartialTextBasedChannelFields['send']>[0],
 ) {
-  if (!logChannelID) return Promise.resolve()
+  if (!logChannelID) return
 
-  const logChannel = guild.channels.cache.get(logChannelID)
+  const logChannel = await guild.channels.fetch(logChannelID)
 
   if (logChannel?.isTextBased()) {
     return logChannel.send(payload)
   }
 
-  return Promise.resolve()
+  return
 }
 
 const TO_ALLOW: PermissionResolvable = ['ViewChannel', 'SendMessages']
