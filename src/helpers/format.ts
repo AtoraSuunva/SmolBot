@@ -12,14 +12,21 @@ import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 import stringWidth from 'string-width'
 
-type Value = string | number | boolean | Date | null | undefined
-type Formatter = (value: Value, guild?: Guild) => string
+type Value =
+  | string
+  | number
+  | boolean
+  | Date
+  | null
+  | undefined
+  | { toString: () => string }
+type GuildFormatter<T> = (value: T, guild?: Guild) => string
 
 interface FormatConfigOptions<Config extends Record<string, Value>> {
   /** The configuration to format into text */
   config: Config
   /** Formatters for keys */
-  formatters?: Partial<Record<keyof Config, Formatter>>
+  formatters?: { [K in keyof Config]?: GuildFormatter<Config[K]> }
   /** Whether to use the default formatters, for `*<guild|channel|role>_id` keys */
   useDefaultFormatters?: boolean
   /** The guild to use for formatting guild, channel, and role IDs */
@@ -34,33 +41,43 @@ interface FormatConfigOptions<Config extends Record<string, Value>> {
   snakeCase?: boolean
 }
 
-export const guildFormatter: Formatter = (value: Value, guild?: Guild) =>
+export const guildFormatter: GuildFormatter<Value> = (
+  value: Value,
+  guild?: Guild,
+) =>
   `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(
     value,
   )})`
 
-export const channelFormatter: Formatter = (value: Value, guild?: Guild) =>
+export const channelFormatter: GuildFormatter<Value> = (
+  value: Value,
+  guild?: Guild,
+) =>
   `#${
     guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
   } (${String(value)})`
 
-export const roleFormatter: Formatter = (value: Value, guild?: Guild) =>
+export const roleFormatter: GuildFormatter<Value> = (
+  value: Value,
+  guild?: Guild,
+) =>
   `@${
     guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
   } (${String(value)})`
 
-export const makeForumTagFormatter: (forum: ForumChannel) => Formatter =
-  (forum: ForumChannel) => (value: Value) => {
-    const tag = forum.availableTags.find((t) => t.id === value)
+export const makeForumTagFormatter: (
+  forum: ForumChannel,
+) => GuildFormatter<Value> = (forum: ForumChannel) => (value: Value) => {
+  const tag = forum.availableTags.find((t) => t.id === value)
 
-    if (!tag) {
-      return `unknown-tag (${String(value)})`
-    }
-
-    return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
+  if (!tag) {
+    return `unknown-tag (${String(value)})`
   }
 
-const defaultFormatters: Record<string, Formatter> = {
+  return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
+}
+
+const defaultFormatters: Record<string, GuildFormatter<Value>> = {
   guild_id: guildFormatter,
   channel_id: channelFormatter,
   role_id: roleFormatter,
@@ -100,7 +117,11 @@ export function formatConfig<Config extends Record<string, Value>>(
 
       if (displayKey.length > longest) longest = displayKey.length
 
-      value = formatters[key as keyof Config]?.(value, guild) ?? value
+      value =
+        formatters[key as keyof Config]?.(
+          value as Config[keyof Config],
+          guild,
+        ) ?? value
 
       if (useDefaultFormatters && notNullish(value)) {
         for (const [key, formatter] of formatterEntries) {
@@ -175,11 +196,15 @@ export function capitalize(str: string): string {
     .join(' ')
 }
 
+type Formatter<T> = (value: T) => string
+
 export interface TableFormatOptions<T> {
   /** The keys to show, by default all keys of the first object */
   keys?: (keyof T)[]
+  /** Formatters for keys */
+  formatters?: { [K in keyof T]?: Formatter<T[K]> }
   /** Map column names (taken from keys) to something else, usually `keyName` => `Key Name` */
-  columnsNames?: Partial<Record<keyof T, string>>
+  columnNames?: Partial<Record<keyof T, string>>
   /** Whether to show "nullish" (null | undefined) values as-is or as empty cells, default true (show as-is) */
   showNullish?: boolean
   /** Truncate the table if it would go over this amount of characters (extra rows are dropped) */
@@ -193,27 +218,136 @@ export interface TableFormatOptions<T> {
  * @param options Options for formatting
  * @returns A formatted table, as a string
  */
-export function tableFormat<T extends object>(
+export function tableFormat<T extends Record<string, Value>>(
   data: T[],
   options?: TableFormatOptions<T>,
 ): string {
-  const keys = options?.keys ?? (Object.keys(data[0]) as (keyof T)[])
-  const columnNames =
-    options?.columnsNames ?? ({} as Record<keyof T, string | undefined>)
-  const showNullish = options?.showNullish ?? true
-  const characterLimit = options?.characterLimit ?? Number.POSITIVE_INFINITY
+  const {
+    keys = Object.keys(data[0]),
+    columnNames: columnsNames = {} as NonNullable<
+      TableFormatOptions<T>['columnNames']
+    >,
+    showNullish = true,
+    characterLimit = Number.POSITIVE_INFINITY,
+    formatters = {} as NonNullable<TableFormatOptions<T>['formatters']>,
+  } = options ?? {}
 
   const header: string[] = []
   const separator: string[] = []
   const rows: string[] = []
 
+  // We need to measure the width of the longest row for each column to pad it correctly
+  // Unfortunately, there's no easy way to do this without having to iterate over data twice,
+  // once to measure and once to format
+
+  // Start off by measuring the longest row for each column. We'll track this in an array storing
+  // "longest so far" for each column. i.e. [key]: [headerLength, longestRowByRow1, longestRowByRow2, ...]
+  // So if the key "name" has a header length of 10, then row lengths of 3, 15, 5 would be stored as:
+  // [key]: [10, 10, 15, 15]
+  // This allows us to truncate rows once we hit the character limit and then format previous rows without extra spacing
+
+  /**
+   * Measures the required width for each column, per row. Index 0 is the length required to print the header.
+   * Indexes 1, 2, 3... are the lengths required to print 1, 2, 3... rows of data
+   *
+   * For example, given the data:
+   *
+   * ```
+   * key  | foo
+   * a    | bar
+   * bbbb | bar
+   * ccc  | bar
+   * ```
+   *
+   * `rollingLongestRow` would look something like this:
+   * ```ts
+   * {
+   *   key: [
+   *     3, // 3 characters required for the header "key"
+   *     3, // "a" only requires 1 character, but we would need 3 for all columns to align, so we need 3
+   *     4, // "bbbb" requires 4, which is > 3
+   *     4, // "ccc" requires 3, which is < 4
+   *   ],
+   *   foo: [...],
+   * }
+   * ```
+   *
+   * This allows you to quickly determine how much padding you would need if you wanted to print up to row i
+   * without having to re-measure all previous rows. i.e. if you wanted to print headers + 1 row of data then
+   * you would need `rollingLongestRow['key'][1] === 3` characters for the "key" column. If you wanted to print
+   * 3 rows you would need `rollingLongestRow['key'][3] === 4` characters for the "key" column.
+   */
+  const rollingLongestRow = Object.fromEntries(
+    keys.map((key) => [key, [] as number[]]),
+  ) as Record<keyof T, number[]>
+
+  /**
+   * Measures the total length required to print a row, including the separators. Index 0 are the headers,
+   * Indexes 1, 2, 3... are the lengths required to print 1, 2, 3... rows of data. The length uses the
+   * `rollingLongestRow` values so `rowTotalLength[3]` would be the length required for the headers and for
+   * *every* row of data for the 3 first rows of data.
+   */
+  const rowTotalLength: number[] = []
+
+  /** The ` │ ` separators between columns need to be considered when measuring character count */
+  const separatorLength = (keys.length - 1) * 3
+
+  // Measure the headers
+  let currentHeaderLength = 0
   for (const key of keys) {
-    const name: string = columnNames[key] ?? String(key)
-    // TODO: truncated rows still count towards longest, is there an easy way to solve that?
-    const longest = Math.max(
-      stringWidth(name),
-      ...data.map((d) => stringWidth(String(d[key]))),
-    )
+    const name = columnsNames[key] ?? key
+    const keyLength = stringWidth(String(name))
+    rollingLongestRow[key].push(keyLength)
+    currentHeaderLength += keyLength
+  }
+
+  rowTotalLength.push(currentHeaderLength + separatorLength)
+
+  // Measure the rows
+  for (const row of data) {
+    let currentRowLength = 0
+
+    for (const key of keys) {
+      const formatter = formatters[key] ?? String
+      const formatted = formatter(row[key])
+
+      const longestLength = Math.max(
+        stringWidth(formatted),
+        rollingLongestRow[key][rollingLongestRow[key].length - 1],
+      )
+
+      rollingLongestRow[key].push(longestLength)
+      currentRowLength += longestLength + separatorLength
+    }
+
+    rowTotalLength.push(currentRowLength)
+  }
+
+  // Now check how many rows we can print before hitting the character limit
+  let printedLength = rowTotalLength[0] * 2 // Header + separator row
+  let printRows = 0
+
+  if (characterLimit === Number.POSITIVE_INFINITY) {
+    printRows = rowTotalLength.length
+  } else {
+    for (let i = 1; i < rowTotalLength.length; i++) {
+      printedLength += rowTotalLength[i]
+      if (printedLength > characterLimit) break
+      printRows = i
+    }
+  }
+
+  if (printRows === 0) {
+    return '<table too large to display any rows>'
+  }
+
+  // Print the headers
+
+  const measureIndex = printRows - 1
+
+  for (const key of keys) {
+    const name: string = columnsNames[key] ?? String(key)
+    const longest = rollingLongestRow[key][measureIndex] ?? 0
     header.push(name.padEnd(longest, ' '))
     separator.push('─'.repeat(longest))
   }
@@ -222,26 +356,24 @@ export function tableFormat<T extends object>(
   const joinedSeparator = separator.join('─┼─')
 
   const head = `${joinedHeader}\n${joinedSeparator}\n`
-  // +20 for headroom for "Truncated ..." in case that needs to be added
-  let currentLength = head.length + 20
 
-  for (const row of data) {
-    const newRow = keys
+  for (let i = 0; i < printRows; i++) {
+    const row = data[i]
+    const formattedRow = keys
       .map((k) => {
-        let value: unknown = row[k]
+        let value: T[keyof T] = row[k]
 
         if (!showNullish && (value === null || value === undefined)) {
-          value = ''
+          value = '' as T[keyof T]
         }
 
-        return padEndTo(String(value), stringWidth(header[keys.indexOf(k)]))
+        const format = formatters[k] ?? String
+
+        return padEndTo(format(value), rollingLongestRow[k][measureIndex])
       })
       .join(' │ ')
 
-    currentLength += newRow.length + 1 // +1 for the newline
-    if (currentLength > characterLimit) break
-
-    rows.push(newRow)
+    rows.push(formattedRow)
   }
 
   const removed =

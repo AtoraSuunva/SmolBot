@@ -4,6 +4,8 @@
 
 ## [Support Server](https://discord.gg/8K3uCfb) - [Privacy Policy](./privacy.md) - [Terms of Service](./tos.md)
 
+## [API documentation](./api.md)
+
 Various (mostly) moderation- or utility-focused commands I've needed, in a Discord bot.
 
 Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were made because of my own requirements. You are free to invite and use the "public" version [RobotOtter](https://discordapp.com/oauth2/authorize?client_id=189078347207278593&scope=bot&permissions=0). You cannot invite Smol Bot.
@@ -30,7 +32,8 @@ APPLICATION_ID=<discord application id>
 USE_PINO_PRETTY=true # or false for default pino logs
 DATABASE_URL="file:./db/data.db" # or anywhere else you want an sqlite db to be
 ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the activities you want the bot to show
-HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:PORT/healthcheck with HTTP 200 once the bot is ready and the database works
+HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:HEALTHCHECK_PORT/healthcheck with HTTP 200 once the bot is ready and the database works
+WEB_API_PORT=8080 # the port to run the http web api on
 SENTRY_DSN=<access token> # A sentry DSN for error reporting, optional
 ```
 
@@ -52,6 +55,8 @@ services:
     init: true
     env_file:
       - .env
+    ports:
+      - "8080:${WEB_API_PORT}"
     volumes:
       - db-data:/home/node/app/prisma/db
     healthcheck:

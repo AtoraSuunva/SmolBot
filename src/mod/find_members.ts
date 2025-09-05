@@ -32,7 +32,7 @@ import { getComponentsOfType } from '../helpers/components.js'
 import { tableFormat } from '../helpers/format.js'
 import { workerMatch } from '../helpers/regexWorker.js'
 
-interface MemberMatch {
+type MemberMatch = {
   name: string
   value: string
   globalName: string | null
@@ -320,7 +320,7 @@ function resultFormat(data: MemberMatch[]): string {
     cleanCodeBlockContent(
       tableFormat(data, {
         keys: ['username', 'id', 'globalName', 'nickname'],
-        columnsNames: {
+        columnNames: {
           username: 'Username',
           id: 'ID',
           globalName: 'Global Name',

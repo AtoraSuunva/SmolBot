@@ -1,0 +1,15 @@
+model Token {
+  tokenID       Int     @id @default(autoincrement()) @map("token_id")
+  parentTokenID Int?    @map("parent_token_id")
+  parentToken   Token?  @relation("TokenParent", fields: [parentTokenID], references: [tokenID], onDelete: Cascade)
+  childTokens   Token[] @relation("TokenParent")
+
+  hash        String  @unique
+  name        String
+  userID      String  @map("user_id")
+  guildID     String? @map("guild_id")
+  permissions Int
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime? @map("expires_at")
+}

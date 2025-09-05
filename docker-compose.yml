@@ -7,6 +7,8 @@ services:
     init: true
     env_file:
       - .env
+    ports:
+      - "8080:${WEB_API_PORT}"
     volumes:
       - db-data:/home/node/app/prisma/db
     healthcheck:
