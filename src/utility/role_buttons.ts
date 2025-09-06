@@ -114,7 +114,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
   let row = new ActionRowBuilder<ButtonBuilder>()
 
   for (const role of parsedRoles) {
-    const roleObj = await guild.roles.fetch(role.roleId)
+    const roleObj = await guild.roles.fetch(role.roleId).catch(() => null)
 
     if (!roleObj) {
       fails.push(
@@ -213,7 +213,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       ? interaction.member
       : await guild.members.fetch(interaction.member.user.id)
 
-  const role = await guild.roles.fetch(roleID)
+  const role = await guild.roles.fetch(roleID).catch(() => null)
 
   if (!role) {
     await interaction.editReply({
@@ -237,7 +237,9 @@ async function handleInteractionCreate(interaction: Interaction) {
         continue
       }
 
-      const otherRole = await guild.roles.fetch(button.customId.split(':')[1])
+      const otherRole = await guild.roles
+        .fetch(button.customId.split(':')[1])
+        .catch(() => null)
 
       if (otherRole) {
         otherRoles.push(otherRole)

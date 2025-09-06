@@ -601,7 +601,7 @@ async function sendToLogChannel(
 ) {
   if (!logChannelID) return
 
-  const logChannel = await guild.channels.fetch(logChannelID)
+  const logChannel = await guild.channels.fetch(logChannelID).catch(() => null)
 
   if (logChannel?.isTextBased()) {
     return logChannel.send(payload)

@@ -197,7 +197,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   const configList = await Promise.all(
     configs.map(async (config) => {
       const channel =
-        (await interaction.guild?.channels.fetch(config.channelID)) ?? null
+        (await guild.channels.fetch(config.channelID).catch(() => null)) ?? null
 
       return formatConfig({
         config,

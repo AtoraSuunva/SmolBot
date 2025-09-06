@@ -168,9 +168,10 @@ const TICKET_MODAL = 'ticket_modal'
 async function runCreateModMailButton(
   interaction: ChatInputCommandInteraction,
 ) {
+  const guild = await getGuild(interaction, true)
   inGuildGuard(interaction)
 
-  const channel = await interaction.client.channels
+  const channel = await guild.channels
     .fetch(interaction.channelId)
     .catch(() => null)
 
@@ -214,8 +215,7 @@ async function runCreateModMailButton(
   // Send the message with the button
   try {
     const channel =
-      interaction.channel ??
-      (await interaction.guild?.channels.fetch(interaction.channelId))
+      interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
 
     if (!channel) {
       throw new Error('Failed to find channel to send button to')
@@ -298,10 +298,10 @@ async function handleCreateTicketButton(
   interaction: ButtonInteraction,
   { modmailId, forumId, forumTag }: CreateTicketData,
 ) {
-  inGuildGuard(interaction)
+  const guild = await getGuild(interaction, true)
 
   const config = await prisma.modMailTicketConfig.findFirst({
-    where: { modmailID: modmailId, guildID: interaction.guildId },
+    where: { modmailID: modmailId, guildID: guild.id },
   })
 
   if (config) {
@@ -309,7 +309,7 @@ async function handleCreateTicketButton(
       const tickets = await prisma.modMailTicket.count({
         where: {
           modmailID: modmailId,
-          guildID: interaction.guildId,
+          guildID: guild.id,
           userID: interaction.user.id,
           open: true,
           linkDeleted: false,
@@ -331,7 +331,7 @@ async function handleCreateTicketButton(
       const lastTicket = await prisma.modMailTicket.findFirst({
         where: {
           modmailID: modmailId,
-          guildID: interaction.guildId,
+          guildID: guild.id,
           AND: [
             {
               createdAt: {
@@ -359,7 +359,7 @@ async function handleCreateTicketButton(
   }
 
   const dbFields = await prisma.modMailTicketModalField.findMany({
-    where: { modmailID: modmailId, guildID: interaction.guildId },
+    where: { modmailID: modmailId, guildID: guild.id },
     orderBy: { order: 'asc' },
   })
 
@@ -404,7 +404,7 @@ async function handleCreateTicketButton(
   await int.deferReply({ flags: MessageFlags.Ephemeral })
 
   // Create the modmail ticket
-  const modChannel = await interaction.guild?.channels.fetch(forumId)
+  const modChannel = await guild.channels.fetch(forumId).catch(() => null)
 
   if (!modChannel) {
     await int.editReply({
@@ -522,7 +522,7 @@ async function handleCreateTicketButton(
       openTag: true,
     },
     where: {
-      guildID: interaction.guildId,
+      guildID: guild.id,
       channelID: modChannel.id,
     },
   })
@@ -557,8 +557,7 @@ async function handleCreateTicketButton(
   }
 
   const userChannel =
-    interaction.channel ??
-    (await interaction.guild?.channels.fetch(interaction.channelId))
+    interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
 
   if (!userChannel) {
     throw new Error('Failed to find user channel for ticket threads')
@@ -603,7 +602,7 @@ async function handleCreateTicketButton(
   await prisma.modMailTicket.create({
     data: {
       modmailID: modmailId,
-      guildID: interaction.guildId,
+      guildID: guild.id,
       // User
       userID: interaction.user.id,
       userChannelID: userChannel.id,

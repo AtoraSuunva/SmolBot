@@ -70,7 +70,7 @@ async function runBanRevoke(ban: GuildBan): Promise<void> {
   if (!config || !config.enabled) return
 
   const logChannel = config.channelID
-    ? await guild.channels.fetch(config.channelID)
+    ? await guild.channels.fetch(config.channelID).catch(() => null)
     : undefined
 
   const revoked = await revokeInvitesFor(guild, user)

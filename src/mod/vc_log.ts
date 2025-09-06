@@ -128,7 +128,9 @@ async function handleVoiceStateUpdate(
   if (!vcConfig) return
   if (!oldState.member) return
 
-  const channel = await oldState.guild.channels.fetch(vcConfig.channelID)
+  const channel = await oldState.guild.channels
+    .fetch(vcConfig.channelID)
+    .catch(() => null)
   if (!channel?.isTextBased()) return
 
   if (!oldState.channelId && newState.channelId) {

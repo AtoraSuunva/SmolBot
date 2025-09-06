@@ -27,7 +27,7 @@ async function onReady(client: Client) {
 
 async function updateEvents(client: Client) {
   for (const guildId of guilds) {
-    const guild = await client.guilds.fetch(guildId)
+    const guild = await client.guilds.fetch(guildId).catch(() => null)
 
     if (!guild) {
       deltaruneLogger.debug(`Guild ${guildId} not found`)

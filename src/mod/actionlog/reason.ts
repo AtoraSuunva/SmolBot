@@ -423,7 +423,9 @@ async function editAction(
     return await sendMessage()
   }
 
-  const channel = await guild.channels.fetch(oldAction.channelID)
+  const channel = await guild.channels
+    .fetch(oldAction.channelID)
+    .catch(() => null)
 
   if (!channel?.isTextBased()) {
     return {

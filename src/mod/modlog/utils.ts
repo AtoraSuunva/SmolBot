@@ -73,7 +73,7 @@ export async function getValidatedConfigFor(
     }
   }
 
-  const channel = await guild.channels.fetch(config.channelID)
+  const channel = await guild.channels.fetch(config.channelID).catch(() => null)
 
   if (!channel?.isTextBased()) return null
 
@@ -112,7 +112,7 @@ export async function getChannelFor(
     channelID = config.channelID
   }
 
-  const channel = await guild.channels.fetch(channelID)
+  const channel = await guild.channels.fetch(channelID).catch(() => null)
 
   if (!channel?.isTextBased()) return null
 
