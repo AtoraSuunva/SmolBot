@@ -47,6 +47,7 @@ export function startApiServer() {
   const server = serve({
     fetch: app.fetch,
     port: PORT,
+    overrideGlobalObjects: false,
   })
 
   server.on('listening', () => {
