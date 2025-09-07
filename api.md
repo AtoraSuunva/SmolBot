@@ -207,7 +207,7 @@ The token will only be shown once in the creation response. It will not be shown
 |------|------|-------------|
 | `name` | string | Name for the new token (max length 25) |
 | `permissions` | number | Optional. Numeric permission bitfield for the new token. Defaults to 0 (no permissions). |
-| `expiresAt` | string (ISO 8601) or null | Optional. Expiration date/time for the new token. Use `null` for no expiry. |
+| `expiresAt` | string (ISO 8601) or number (unix milliseconds) or null | Optional. Expiration date/time for the new token. Omit or use `null` for no expiry. |
 
 ### Example request (token create)
 

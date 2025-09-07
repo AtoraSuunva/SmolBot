@@ -1,4 +1,4 @@
-import { s } from '@sapphire/shapeshift'
+import { Result, s } from '@sapphire/shapeshift'
 import { Hono } from 'hono'
 import {
   authMiddleware,
@@ -7,6 +7,7 @@ import {
 } from '../../helpers/api/auth.js'
 import { shapeShiftValidator } from '../../helpers/api/hono.js'
 import { Permission } from '../../helpers/api/token.js'
+import { dateTimeFrom } from '../../helpers/time.js'
 
 const app = new Hono()
 
@@ -25,10 +26,25 @@ app.get('/info', authMiddleware(), async (c) => {
   })
 })
 
+function parseDate(
+  dateString: number | string | undefined | null,
+): Result<Date> {
+  if (!dateString) return Result.err(new Error('Date is undefined or null'))
+  const date = dateTimeFrom(dateString)
+
+  return !date.isValid
+    ? Result.err(new Error(date.invalidExplanation ?? 'Invalid date'))
+    : Result.ok(date.toJSDate())
+}
+
 const createTokenJson = s.object({
   name: s.string().lengthLessThanOrEqual(25),
   permissions: s.number().optional(),
-  expiresAt: s.date().optional().nullable(),
+  expiresAt: s
+    .union([s.string(), s.number()])
+    .optional()
+    .nullable()
+    .reshape(parseDate),
 })
 
 app.post(
@@ -39,7 +55,7 @@ app.post(
     const { name, permissions = 0, expiresAt = null } = c.req.valid('json')
     const token = c.get('token')
 
-    if ((token.permissions | permissions) !== permissions) {
+    if ((token.permissions | permissions) !== token.permissions) {
       return c.json(
         {
           error:
@@ -48,6 +64,16 @@ app.post(
           newPermissions: permissions,
         },
         403,
+      )
+    }
+
+    if (expiresAt && expiresAt <= new Date()) {
+      return c.json(
+        {
+          error: 'Expiration date is in the past',
+          expiresAt,
+        },
+        400,
       )
     }
 

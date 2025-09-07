@@ -36,37 +36,10 @@ function parseInteger(
   return Result.ok(parsed)
 }
 
-const paramSchema = s.object({
-  guildId: s.string().regex(/^\d{17,19}$/),
-  userId: s.string().regex(/^\d{17,19}$/),
-})
-
-const querySchema = s.object({
-  action: s
-    .enum(['ban', 'unban', 'kick', 'timeout', 'timeout removed'])
-    .optional(),
-  allVersions: s.string().optional().reshape(parseBoolean),
-  limit: s
-    .string()
-    .optional()
-    .default('100')
-    .reshape((v) => parseInteger(v, 1, 100)),
-  before: s
-    .string()
-    .optional()
-    .default('0')
-    .reshape((v) => parseInteger(v, 0)),
-  after: s
-    .string()
-    .optional()
-    .default('0')
-    .reshape((v) => parseInteger(v, 0)),
-})
-
 async function findActionLogs(
   guildId: string,
   userId: string | undefined,
-  options: InferType<typeof querySchema>,
+  options: InferType<typeof queryActionLogsSchema>,
 ) {
   const { action, allVersions, before, after, limit } = options
 
@@ -91,11 +64,37 @@ async function findActionLogs(
   return entries
 }
 
+const paramGuildActionLogsSchema = s.object({
+  guildId: s.string().regex(/^\d{17,19}$/),
+})
+
+const queryActionLogsSchema = s.object({
+  action: s
+    .enum(['ban', 'unban', 'kick', 'timeout', 'timeout removed'])
+    .optional(),
+  allVersions: s.string().optional().reshape(parseBoolean),
+  limit: s
+    .string()
+    .optional()
+    .default('100')
+    .reshape((v) => parseInteger(v, 1, 100)),
+  before: s
+    .string()
+    .optional()
+    .default('0')
+    .reshape((v) => parseInteger(v, 0)),
+  after: s
+    .string()
+    .optional()
+    .default('0')
+    .reshape((v) => parseInteger(v, 0)),
+})
+
 app.get(
   '/:guildId',
   authMiddleware({ requirePermissions: Permission.ReadActionLog }),
-  shapeShiftValidator('param', paramSchema),
-  shapeShiftValidator('query', querySchema),
+  shapeShiftValidator('param', paramGuildActionLogsSchema),
+  shapeShiftValidator('query', queryActionLogsSchema),
   async (c) => {
     const { guildId } = c.req.valid('param')
     const token = c.get('token')
@@ -119,11 +118,16 @@ app.get(
   },
 )
 
+const paramGuildUserActionLogsSchema = s.object({
+  guildId: s.string().regex(/^\d{17,19}$/),
+  userId: s.string().regex(/^\d{17,19}$/),
+})
+
 app.get(
   '/:guildId/:userId',
   authMiddleware({ requirePermissions: Permission.ReadActionLog }),
-  shapeShiftValidator('param', paramSchema),
-  shapeShiftValidator('query', querySchema),
+  shapeShiftValidator('param', paramGuildUserActionLogsSchema),
+  shapeShiftValidator('query', queryActionLogsSchema),
   async (c) => {
     const { guildId, userId } = c.req.valid('param')
     const token = c.get('token')
