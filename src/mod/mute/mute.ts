@@ -38,7 +38,7 @@ import {
 import { baseLogger, notNullish, SECOND } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import { responseMessageLink } from '../../helpers/format.js'
+import { plural, responseMessageLink } from '../../helpers/format.js'
 
 const mutedRoles = [
   'muted',
@@ -89,6 +89,12 @@ export const mute = new SleetSlashCommand(
           'The channel to mute the user in, if you want to join a user to an existing muted session',
         type: ApplicationCommandOptionType.Channel,
         channel_types: [ChannelType.GuildText],
+      },
+      {
+        name: 'separate_channels',
+        description:
+          'Whether to create a separate channel for each muted user, overrides `channel` (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
@@ -229,8 +235,18 @@ async function handleChatInput(
   const channel = interaction.options.getChannel(
     'channel',
   ) as NonThreadGuildTextBasedChannel | null
+  const separateChannels =
+    interaction.options.getBoolean('separate_channels') ?? false
 
-  return runMute(interaction, action, members, reason, ephemeral, channel)
+  return runMute({
+    interaction,
+    action,
+    members,
+    reason,
+    ephemeral,
+    channel,
+    separateChannels,
+  })
 }
 
 async function handleUserCommand(
@@ -246,11 +262,16 @@ async function handleUserCommand(
       ? target
       : await guild.members.fetch(interaction.targetId).catch(() => null),
   ].filter(notNullish)
-  const reason = null
-  const ephemeral = false
-  const channel = null
 
-  return runMute(interaction, action, members, reason, ephemeral, channel)
+  return runMute({
+    interaction,
+    action,
+    members,
+    reason: null,
+    ephemeral: false,
+    channel: null,
+    separateChannels: false,
+  })
 }
 
 const CONFIG_DEFAULT: Prisma.MuteConfigGetPayload<true> = {
@@ -274,14 +295,25 @@ const createDeleteChannelRow = (userId?: string | null) =>
       .setStyle(ButtonStyle.Danger),
   )
 
-async function runMute(
-  interaction: CommandInteraction,
-  action: MuteAction,
-  members: GuildMember[],
-  reason: string | null,
-  ephemeral: boolean,
-  channel: NonThreadGuildTextBasedChannel | null,
-): Promise<unknown> {
+interface MuteParams {
+  interaction: CommandInteraction
+  action: MuteAction
+  members: GuildMember[]
+  reason?: string | null
+  ephemeral?: boolean
+  channel?: NonThreadGuildTextBasedChannel | null
+  separateChannels?: boolean
+}
+
+async function runMute({
+  interaction,
+  action,
+  members,
+  reason = null,
+  ephemeral = false,
+  channel = null,
+  separateChannels = false,
+}: MuteParams): Promise<unknown> {
   inGuildGuard(interaction)
   const guild = await getGuild(interaction, true)
 
@@ -380,22 +412,23 @@ async function runMute(
   const formattedReason = `${capitalAction} by ${interactionMember.displayName}${reason ? ` for "${reason}"` : ''}`
 
   const { succeeded, failed, addendum, components } = await (action === 'mute'
-    ? muteAction(
+    ? muteAction({
         config,
-        toAction,
+        members: toAction,
         mutedRole,
-        formattedReason,
+        reason: formattedReason,
         channel,
-        interactionMember,
-      )
-    : unmuteAction(
+        separateChannels: separateChannels,
+        executor: interactionMember,
+      })
+    : unmuteAction({
         config,
-        toAction,
+        members: toAction,
         mutedRole,
-        formattedReason,
-        interaction.channel,
-        interactionMember,
-      ))
+        reason: formattedReason,
+        sourceChannel: interaction.channel,
+        executor: interactionMember,
+      }))
 
   const totalFails = [...earlyFailed, ...failed]
   const succ =
@@ -412,15 +445,40 @@ async function runMute(
   const formattedAddendum =
     addendum && addendum.length > 0 ? `\n${addendum}` : ''
 
+  const formattedContentSuccess = `${content}\n${byLine}${formattedAddendum}`
+
   if (succeeded.length > 0) {
-    await sendToLogChannel(guild, config.logChannelID, {
-      content: `${content}\n${byLine}${formattedAddendum}`,
+    if (formattedContentSuccess.length >= 1950) {
+      await sendToLogChannel(guild, config.logChannelID, {
+        content: `${capitalAction} ${plural('user', toAction.length)}\n${byLine}\nDetails are too long to show here, see attachment:`,
+        files: [
+          {
+            name: `${action}-${Date.now()}.txt`,
+            attachment: formattedContentSuccess,
+          },
+        ],
+        allowedMentions: { parse: [] },
+      })
+    } else {
+      await sendToLogChannel(guild, config.logChannelID, {
+        content: `${content}\n${byLine}${formattedAddendum}`,
+        allowedMentions: { parse: [] },
+      })
+    }
+  }
+
+  const formattedFeedback = `${content}${formattedAddendum}`
+
+  if (formattedFeedback.length >= 1950) {
+    return interaction.editReply({
+      content: `**${capitalAction}**: ${plural('user', succeeded.length)}\nDetails are too long to show here, see attachment:`,
+      components: components ?? [],
       allowedMentions: { parse: [] },
     })
   }
 
   return interaction.editReply({
-    content: `${content}${formattedAddendum}`,
+    content: formattedFeedback,
     components: components ?? [],
     allowedMentions: { parse: [] },
   })
@@ -507,13 +565,14 @@ async function handleGuildMemberAdd(member: GuildMember) {
         .catch(() => null)) as NonThreadGuildTextBasedChannel | null)
     : null
 
-  await muteAction(
+  await muteAction({
     config,
-    [member],
+    members: [member],
     mutedRole,
-    'User rejoined while muted',
+    reason: 'User rejoined while muted',
     channel,
-  )
+    separateChannels: false,
+  })
 
   if (channel) {
     await channel.send({
@@ -612,20 +671,67 @@ async function sendToLogChannel(
 
 const TO_ALLOW: PermissionResolvable = ['ViewChannel', 'SendMessages']
 
-async function muteAction(
-  config: Prisma.MuteConfigGetPayload<true>,
-  members: GuildMember[],
-  mutedRole: Role,
-  reason: string,
-  channel: NonThreadGuildTextBasedChannel | null,
-  executor?: GuildMember,
-): Promise<ActionResult> {
+interface MuteActionParams {
+  config: Prisma.MuteConfigGetPayload<true>
+  members: GuildMember[]
+  mutedRole: Role
+  reason: string
+  channel?: NonThreadGuildTextBasedChannel | null
+  separateChannels?: boolean
+  executor?: GuildMember | null
+}
+
+async function muteAction({
+  config,
+  members,
+  mutedRole,
+  reason,
+  channel = null,
+  separateChannels = false,
+  executor = null,
+}: MuteActionParams): Promise<ActionResult> {
   if (members.length === 0) {
     return { succeeded: [], failed: [] }
   }
 
   const succeeded: MuteSuccess[] = []
   const failed: MuteFail[] = []
+
+  if (separateChannels) {
+    // Recursively call muteAction on every single member individually, and then we can combine all the
+    // ActionResults at the end
+    const addendums: string[] = []
+    const components: ActionRowBuilder<ButtonBuilder>[] = []
+
+    const results = await Promise.all(
+      members.map((member) =>
+        muteAction({
+          config,
+          members: [member],
+          mutedRole,
+          reason,
+          channel: null,
+          separateChannels: false,
+          executor,
+        }),
+      ),
+    )
+
+    // Combine the results
+    results.forEach((result) => {
+      succeeded.push(...result.succeeded)
+      failed.push(...result.failed)
+      if (result.addendum) addendums.push(result.addendum)
+      if (result.components) components.push(...result.components)
+    })
+
+    return {
+      succeeded,
+      failed,
+      addendum: addendums.join('\n'),
+      components,
+    }
+  }
 
   for (const member of members) {
     try {
@@ -715,11 +821,22 @@ async function muteAction(
         })
 
         if (config.starterMessage) {
-          await mutedChannel.send(
-            config.starterMessage
-              .replace('{mention}', members.map((m) => m.user).join(', '))
-              .replace('{executor}', formattedExecutor),
-          )
+          const starterMessage = config.starterMessage
+            .replace('{mention}', members.map((m) => m.user).join(', '))
+            .replace('{executor}', formattedExecutor)
+
+          if (starterMessage.length >= 1950) {
+            await mutedChannel.send({
+              files: [
+                {
+                  name: 'starter-message.txt',
+                  attachment: starterMessage,
+                },
+              ],
+            })
+          } else {
+            await mutedChannel.send(starterMessage)
+          }
         }
       }
 
@@ -740,9 +857,20 @@ async function muteAction(
 
       await mutedChannel.permissionOverwrites.set(newOverwrites)
 
-      await mutedChannel?.send({
-        content: `🔇 ${succeeded.map((s) => formatUser(s.member)).join(', ')} ${succeeded.length > 1 ? 'have' : 'has'} been muted by ${formattedExecutor}`,
-      })
+      const formattedLog = `🔇 ${succeeded.map((s) => formatUser(s.member)).join(', ')} ${succeeded.length > 1 ? 'have' : 'has'} been muted by ${formattedExecutor}`
+
+      if (formattedLog.length >= 1950) {
+        await mutedChannel.send({
+          files: [
+            {
+              name: 'mute-log.txt',
+              attachment: formattedLog,
+            },
+          ],
+        })
+      } else {
+        await mutedChannel.send(formattedLog)
+      }
 
       await prisma.memberMutes.updateMany({
         where: {
@@ -766,14 +894,23 @@ async function muteAction(
   }
 }
 
-async function unmuteAction(
-  config: Prisma.MuteConfigGetPayload<true>,
-  members: GuildMember[],
-  mutedRole: Role,
-  reason: string,
-  sourceChannel: GuildTextBasedChannel | null,
-  executor?: GuildMember,
-): Promise<ActionResult> {
+interface UnmuteActionParams {
+  config: Prisma.MuteConfigGetPayload<true>
+  members: GuildMember[]
+  mutedRole: Role
+  reason: string
+  sourceChannel?: GuildTextBasedChannel | null
+  executor?: GuildMember
+}
+
+async function unmuteAction({
+  config,
+  members,
+  mutedRole,
+  reason,
+  sourceChannel = null,
+  executor,
+}: UnmuteActionParams): Promise<ActionResult> {
   if (members.length === 0) {
     return { succeeded: [], failed: [] }
   }
@@ -839,13 +976,24 @@ async function unmuteAction(
     }
 
     if (channel?.isTextBased()) {
-      await channel.send(
-        `🔊 ${mutedMembers
-          .map((s) => formatUser(s))
-          .join(
-            ', ',
-          )} ${mutedMembers.length > 1 ? 'have' : 'has'} been unmuted by ${formattedExecutor}`,
-      )
+      const formattedLog = `🔊 ${mutedMembers
+        .map((s) => formatUser(s))
+        .join(
+          ', ',
+        )} ${mutedMembers.length > 1 ? 'have' : 'has'} been unmuted by ${formattedExecutor}`
+
+      if (formattedLog.length >= 1950) {
+        await channel.send({
+          files: [
+            {
+              name: 'unmute-log.txt',
+              attachment: formattedLog,
+            },
+          ],
+        })
+      } else {
+        await channel.send(formattedLog)
+      }
 
       if (otherUsers === 0) {
         if (channel.id === sourceChannel?.id) {
@@ -875,7 +1023,7 @@ async function unmuteAction(
 async function storeRoles(
   member: GuildMember,
   ignoreRoles: Role[],
-  executor?: GuildMember,
+  executor: GuildMember | null = null,
 ): Promise<Role[]> {
   const { guild } = member
   const { previousRoles } = (await fetchMuteInfo(member)) ?? {
@@ -1060,7 +1208,7 @@ function isMuted(member: GuildMember): Promise<boolean> {
 function setStoredRoles(
   member: GuildMember,
   roles: string[],
-  executor?: GuildMember,
+  executor: GuildMember | null = null,
 ) {
   const previousRoles = roles.join(ROLE_SEPARATOR)
 
