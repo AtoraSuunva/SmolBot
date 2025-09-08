@@ -54,39 +54,54 @@ const SINGLEPLAYER_ID = 420
 
 const emptyDisplay = makeDisplay('0')
 
+enum Token {
+  Clear = 'C',
+  ParenthesisIcon = '()',
+  OpenParenthesis = '(',
+  CloseParenthesis = ')',
+  Exponential = '^',
+  Divide = '÷',
+  Multiply = '×',
+  Subtract = '−',
+  Add = '+',
+  Sign = '+/-',
+  Period = '.',
+  Equal = '=',
+}
+
 const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents([
-  makeButton('C', 'C', ButtonStyle.Danger),
-  makeButton('/', '/', ButtonStyle.Primary),
-  makeButton('*', '*', ButtonStyle.Primary),
-  makeButton('-', '-', ButtonStyle.Primary),
+  makeButton(Token.Clear, Token.Clear, ButtonStyle.Danger),
+  makeButton(Token.ParenthesisIcon, Token.ParenthesisIcon, ButtonStyle.Primary),
+  makeButton(Token.Exponential, Token.Exponential, ButtonStyle.Primary),
+  makeButton(Token.Divide, Token.Divide, ButtonStyle.Primary),
 ])
 
 const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents([
   makeButton('7'),
   makeButton('8'),
   makeButton('9'),
-  makeButton('+', '+:1', ButtonStyle.Primary),
+  makeButton(Token.Multiply, Token.Multiply, ButtonStyle.Primary),
 ])
 
 const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents([
   makeButton('4'),
   makeButton('5'),
   makeButton('6'),
-  makeButton('+', '+:2', ButtonStyle.Primary),
+  makeButton(Token.Subtract, Token.Subtract, ButtonStyle.Primary),
 ])
 
 const row4 = new ActionRowBuilder<ButtonBuilder>().addComponents([
   makeButton('1'),
   makeButton('2'),
   makeButton('3'),
-  makeButton('=', '=:1', ButtonStyle.Success),
+  makeButton(Token.Add, Token.Add, ButtonStyle.Primary),
 ])
 
 const row5 = new ActionRowBuilder<ButtonBuilder>().addComponents([
-  makeButton('0', '0:1'),
-  makeButton('0', '0:2'),
-  makeButton('.'),
-  makeButton('=', '=:2', ButtonStyle.Success),
+  makeButton(Token.Sign, Token.Sign, ButtonStyle.Primary),
+  makeButton('0'),
+  makeButton(Token.Period),
+  makeButton(Token.Equal, Token.Equal, ButtonStyle.Success),
 ])
 
 const buttons = [row1, row2, row3, row4, row5]
@@ -104,7 +119,7 @@ async function runCalculator(interaction: ChatInputCommandInteraction) {
     components.push(
       new TextDisplayBuilder({
         id: SINGLEPLAYER_ID,
-        content: `-# Only ${interaction.user.username} can use this`,
+        content: `-# Only ${interaction.user.username} can use this.`,
       }),
     )
   }
@@ -141,18 +156,22 @@ async function handleInteractionCreate(interaction: Interaction) {
     })
   }
 
-  const equation = textDisplays
+  const rawEquation = textDisplays
     .find((t) => t.id === DISPLAY_ID)
     ?.content.replace('# ', '')
 
-  if (!equation) {
+  if (!rawEquation) {
     return await interaction.reply({
       content: 'Something went wrong',
       flags: MessageFlags.Ephemeral,
     })
   }
 
+  const equation = rawEquation.startsWith('Error:') ? '0' : rawEquation
+
   await interaction.deferUpdate()
+
+  const singleplayerComponents = singleplayer ? [singleplayer] : []
 
   const lastWasNumber =
     equation[equation.length - 1].match(/\d/) ||
@@ -161,21 +180,23 @@ async function handleInteractionCreate(interaction: Interaction) {
   const lastWasOperator = isOperator(equation[equation.length - 1])
 
   switch (op) {
-    case 'C': {
+    case Token.Clear: {
       return await interaction.editReply({
-        components: [emptyDisplay, ...buttons],
+        components: [emptyDisplay, ...buttons, ...singleplayerComponents],
       })
     }
 
-    case '/':
-    case '*':
-    case '-':
-    case '+': {
+    case Token.Divide:
+    case Token.Multiply:
+    case Token.Subtract:
+    case Token.Add:
+    case Token.Exponential: {
       if (lastWasOperator) {
         return await interaction.editReply({
           components: [
             makeDisplay(`${equation.slice(0, -1)}${op}`),
             ...buttons,
+            ...singleplayerComponents,
           ],
         })
       }
@@ -184,11 +205,89 @@ async function handleInteractionCreate(interaction: Interaction) {
         components: [
           makeDisplay(`${equation}${lastWasNumber ? ` ${op}` : ''}`),
           ...buttons,
+          ...singleplayerComponents,
         ],
       })
     }
 
-    case '=': {
+    case Token.ParenthesisIcon: {
+      // If the last token was an operator, add an opening parenthesis
+      if (lastWasOperator) {
+        return await interaction.editReply({
+          components: [
+            makeDisplay(`${equation} (`),
+            ...buttons,
+            ...singleplayerComponents,
+          ],
+        })
+      }
+
+      // Otherwise it's a number, in which case:
+      //   - If there's an unmatched opening parenthesis, add a closing parenthesis
+      //   - Otherwise add a multiplication operator and an opening parenthesis
+
+      // Check for unmatched opening parentheses
+      const unmatchedOpening =
+        (equation.match(/\(/g) || []).length -
+        (equation.match(/\)/g) || []).length
+
+      if (unmatchedOpening > 0) {
+        return await interaction.editReply({
+          components: [
+            makeDisplay(`${equation}${lastWasNumber ? ')' : ''}`),
+            ...buttons,
+            ...singleplayerComponents,
+          ],
+        })
+      }
+
+      // Otherwise add a multiplication operator and an opening parenthesis
+      return await interaction.editReply({
+        components: [
+          makeDisplay(
+            `${equation}${lastWasNumber ? ` ${Token.Multiply} (` : ''}`,
+          ),
+          ...buttons,
+          ...singleplayerComponents,
+        ],
+      })
+    }
+
+    case Token.Sign: {
+      if (lastWasOperator) {
+        const endsWithNegativeSign = equation[equation.length - 1] === '-'
+
+        return await interaction.editReply({
+          components: [
+            makeDisplay(
+              endsWithNegativeSign
+                ? equation.slice(0, -1).trim()
+                : `${equation} -`,
+            ),
+            ...buttons,
+            ...singleplayerComponents,
+          ],
+        })
+      }
+
+      // Otherwise last was a number, invert the sign of that number
+      const lastSpace = equation.lastIndexOf(' ')
+      const firstPart = equation.substring(0, lastSpace)
+      const number = equation.substring(lastSpace + 1)
+      const hasNegativeSign = number.startsWith('-')
+
+      return await interaction.editReply({
+        components: [
+          makeDisplay(
+            `${firstPart}${hasNegativeSign ? number.substring(1) : `-${number}`}`,
+          ),
+          ...buttons,
+          ...singleplayerComponents,
+        ],
+      })
+    }
+
+    case Token.Equal: {
       let result: string
 
       try {
@@ -198,31 +297,45 @@ async function handleInteractionCreate(interaction: Interaction) {
       }
 
       return await interaction.editReply({
-        components: [makeDisplay(result), ...buttons],
+        components: [
+          makeDisplay(result),
+          ...buttons,
+          ...singleplayerComponents,
+        ],
       })
     }
 
-    case '.': {
+    case Token.Period: {
       const lastWasNonDecimalNumber = equation
         .split(' ')
         .slice(-1)[0]
-        .match(/^\d+$/)
+        .match(/^-?\d+$/)
 
       return await interaction.editReply({
         components: [
           makeDisplay(`${equation}${lastWasNonDecimalNumber ? '.' : ''}`),
           ...buttons,
+          ...singleplayerComponents,
         ],
       })
     }
 
     default: {
-      const space = lastWasNumber ? '' : ' '
+      const lastToken = equation.split(' ').pop()
+      const lastWasZero = lastToken === '0' || lastToken === '-0'
+      const lastCharacter = equation[equation.length - 1]
+      const space =
+        lastWasNumber || lastCharacter === '(' || lastCharacter === '-'
+          ? ''
+          : ' '
 
       return await interaction.editReply({
         components: [
-          makeDisplay(`${equation === '0' ? '' : equation}${space}${op}`),
+          makeDisplay(
+            `${equation === '0' ? '' : lastWasZero ? equation.slice(0, -1) : equation}${space}${op}`,
+          ),
           ...buttons,
+          ...singleplayerComponents,
         ],
       })
     }
@@ -249,21 +362,57 @@ function makeButton(label: string, id = label, style = ButtonStyle.Secondary) {
 }
 
 const precedence: Record<string, number> = {
-  '+': 1,
-  '-': 1,
-  '*': 2,
-  '/': 2,
+  [Token.Add]: 1,
+  [Token.Subtract]: 1,
+  [Token.Multiply]: 2,
+  [Token.Divide]: 2,
 }
 
-const isOperator = (token: string) => ['+', '-', '*', '/'].includes(token)
+const isOperator = (token: string) =>
+  [
+    Token.Add,
+    Token.Subtract,
+    Token.Multiply,
+    Token.Divide,
+    Token.Exponential,
+  ].includes(token as Token)
 const isNumber = (token: string) => !Number.isNaN(Number.parseFloat(token))
 
+function tokenize(equation: string): string[] {
+  const tokens: string[] = []
+  let currentToken = ''
+
+  for (const char of equation) {
+    if (/[-.\d]/.test(char)) {
+      currentToken += char
+    } else if (/\s/.test(char)) {
+      if (currentToken) {
+        tokens.push(currentToken)
+        currentToken = ''
+      }
+    } else {
+      if (currentToken) {
+        tokens.push(currentToken)
+        currentToken = ''
+      }
+      tokens.push(char)
+    }
+  }
+
+  if (currentToken) {
+    tokens.push(currentToken)
+  }
+
+  return tokens
+}
+
 function calculateResult(equation: string): number {
-  const tokens = equation.split(' ')
+  const tokens = tokenize(equation)
   const outputQueue: string[] = []
   const operatorStack: string[] = []
 
   // Shunting Yard Algorithm
+  // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
   for (const token of tokens) {
     if (isNumber(token)) {
       outputQueue.push(token)
@@ -276,6 +425,25 @@ function calculateResult(equation: string): number {
         outputQueue.push(operatorStack.pop()!)
       }
       operatorStack.push(token)
+    } else if (token === Token.OpenParenthesis) {
+      operatorStack.push(token)
+    } else if (token === Token.CloseParenthesis) {
+      while (
+        operatorStack[operatorStack.length - 1] !== Token.OpenParenthesis
+      ) {
+        if (operatorStack.length === 0) {
+          throw new Error('Mismatched parentheses')
+        }
+
+        // biome-ignore lint/style/noNonNullAssertion: we just checked the length
+        outputQueue.push(operatorStack.pop()!)
+      }
+
+      if (operatorStack[operatorStack.length - 1] !== Token.OpenParenthesis) {
+        throw new Error('Mismatched parentheses')
+      }
+
+      operatorStack.pop()
     }
   }
 
@@ -288,8 +456,10 @@ function calculateResult(equation: string): number {
   const stack: number[] = []
 
   for (const token of outputQueue) {
-    if (isNumber(token)) {
-      stack.push(Number.parseFloat(token))
+    const parsed = Number.parseFloat(token)
+
+    if (!Number.isNaN(parsed)) {
+      stack.push(parsed)
     } else if (isOperator(token)) {
       const b = stack.pop()
       const a = stack.pop()
@@ -298,22 +468,25 @@ function calculateResult(equation: string): number {
         throw new Error('Invalid expression')
       }
 
-      if (token === '/' && b === 0) {
+      if (token === Token.Divide && b === 0) {
         throw new Error('Division by zero')
       }
 
       switch (token) {
-        case '+':
+        case Token.Add:
           stack.push(a + b)
           break
-        case '-':
+        case Token.Subtract:
           stack.push(a - b)
           break
-        case '*':
+        case Token.Multiply:
           stack.push(a * b)
           break
-        case '/':
+        case Token.Divide:
           stack.push(a / b)
+          break
+        case Token.Exponential:
+          stack.push(a ** b)
           break
       }
     }
