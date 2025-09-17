@@ -14,6 +14,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+import stringWidth from 'string-width'
 import { unicodeName } from 'unicode-name'
 import { ansiFormat, TextColor } from '../helpers/ansiColors.js'
 
@@ -70,13 +71,7 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  const characters: string[] = []
-
-  for (const char of string) {
-    characters.push(...characterInfo(char, details))
-  }
-
-  const output = characters.join('\n')
+  const output = characterInformation(string, details)
 
   if (output.length > 1950) {
     await interaction.reply({
@@ -97,52 +92,58 @@ async function runCharInfo(interaction: ChatInputCommandInteraction) {
   }
 }
 
-function characterInfo(char: string, details = false): string[] {
-  let i = 0
-  const info: string[] = []
+function characterInformation(str: string, details = false): string {
+  const characters: string[] = []
+  let longestCodepoint = 4
+  let longestWidth = 0
 
-  while (true) {
-    const codePoint = char.codePointAt(i)
-    const charCode = char.charCodeAt(i)
+  for (const char of str) {
+    longestCodepoint = Math.max(
+      longestCodepoint,
+      char.codePointAt(0)?.toString(16).length ?? 0,
+    )
+    longestWidth = Math.max(longestWidth, stringWidth(char))
+  }
 
-    if (codePoint === undefined || Number.isNaN(charCode)) {
-      break
+  for (const char of str) {
+    const codePoint = char.codePointAt(0)
+
+    if (codePoint === undefined) {
+      continue
     }
 
-    const unicodePoint = `U+${codePoint
-      .toString(16)
-      .toUpperCase()
-      .padStart(4, '0')}`
-
+    const unicodePoint =
+      `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`.padEnd(
+        longestCodepoint + 2,
+      )
     const name = unicodeName(codePoint)
-    const categories = uniGetCategories.code(charCode)
-
+    const categories = uniGetCategories.code(codePoint)
     const isMark = categories.some((c) => c.name === UnicodeCategory.Mark)
 
     const basicInfo = `${ansiFormat(TextColor.Pink, unicodePoint)} ${ansiFormat(TextColor.Green, name)}`
+    const padLength = longestWidth - stringWidth(char) - (isMark ? 1 : 0)
 
-    const prelude =
-      i === 0 ? `│ ${isMark ? DOTTED_CIRCLE : ''}${char} │` : '│   ├─'
+    const prelude = `│ ${isMark ? DOTTED_CIRCLE : ''}${char}${' '.repeat(padLength)} │`
 
     let charDetails = ''
 
     if (details) {
-      const block = uniGetBlock.code(charCode)
-      const scripts = uniGetScripts.code(charCode)
+      // TODO: something that can handle Supplementary Multilingual Plane characters
+      const block = uniGetBlock.code(codePoint) ?? {
+        displayName: 'Astral Plane',
+        name: '?',
+      }
+      const scripts = uniGetScripts.code(codePoint) ?? []
 
-      charDetails = ` (${renderGroup(
-        block,
-      )}; ${renderGroupArray(scripts)}; ${renderGroupArray(categories)})`
+      charDetails = ` (${renderGroup(block)}; ${renderGroupArray(scripts)}; ${renderGroupArray(categories)})`
     }
 
-    info.push(
+    characters.push(
       `${ansiFormat(TextColor.Blue, prelude)} ${basicInfo}${charDetails}`,
     )
-
-    i++
   }
 
-  return info
+  return characters.join('\n')
 }
 
 // unfortunately internal, but we can just pull it out like this
