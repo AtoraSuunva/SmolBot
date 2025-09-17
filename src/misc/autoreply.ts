@@ -15,7 +15,7 @@ export const autoreply = makeAutoreplyModule({
   buttons,
 })
 
-const THANKS_REGEX = /thanks?\s*(u|you)?\s*(,\s*)?tol(bot)?/i
+const THANKS_REGEX = /(thanks?|thx|ty)\s*(u|you)?\s*(,\s*)?tol(bot)?/i
 
 export const thanksAutoreply = new SleetModule(
   {
