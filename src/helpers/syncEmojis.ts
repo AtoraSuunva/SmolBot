@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { murmur3_32_hex } from '@plus99/murmur-hash'
 import {
   type APIApplicationEmoji,
   type APIUser,
@@ -9,7 +10,6 @@ import {
 } from 'discord.js'
 import env from 'env-var'
 import filetype from 'magic-bytes.js'
-import murmur from 'murmurhash'
 import { baseLogger } from 'sleetcord-common'
 import { prisma } from './db.js'
 
@@ -266,5 +266,5 @@ function resolveBase64(
 async function hashAttachment(attachment: string | Buffer<ArrayBufferLike>) {
   const file =
     typeof attachment === 'string' ? await readFile(attachment) : attachment
-  return murmur(new Uint8Array(file))
+  return murmur3_32_hex(new Uint8Array(file))
 }

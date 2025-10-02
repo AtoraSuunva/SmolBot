@@ -12,9 +12,9 @@ model ApplicationEmoji {
    */
   module String
   /**
-   * The hash of the emoji (murmur3 hash)
+   * The hash of the emoji (murmur3 hash) stored as hex because node murmurhash implementations don't return signed ints :/
    */
-  hash   Int
+  hash   String
 
   @@index(module)
 }

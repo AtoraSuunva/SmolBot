@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream'
 import type { ReadableStream } from 'node:stream/web'
+import { murmur3_32_hex } from '@plus99/murmur-hash'
 import type { Message } from 'discord.js'
-import murmurhash from 'murmurhash'
 
 const hashCache = new WeakMap<Message, Promise<string[]>>()
 
@@ -76,8 +76,7 @@ function hashStream(stream: ReadableStream): Promise<string> {
       .on('error', reject)
       .on('end', () => {
         const buffer = Buffer.concat(chunks)
-        const hash = murmurhash.v3(buffer)
-        resolve(hash.toString(16))
+        resolve(murmur3_32_hex(buffer))
       })
   })
 }
