@@ -597,7 +597,28 @@ async function handleCreateTicketButton(
     files,
   })
 
-  await modThread.send(`User thread created: ${userThread}`)
+  const member = await guild.members.fetch(interaction.user.id)
+
+  const infoMessage = [
+    'User Info:',
+    `- User: ${formatUser(member)}`,
+    `- Created: ${time(member.user.createdAt, 'F')} (${time(
+      member.user.createdAt,
+      'R',
+    )})`,
+    `- Joined: ${time(member.joinedAt ?? new Date(), 'F')} (${time(
+      member.joinedAt ?? new Date(),
+      'R',
+    )})`,
+    `- Roles: ${member.roles.cache.map((r) => `<@&${r.id}>`).join(', ') ?? 'None'}`,
+    '',
+    `User thread created: ${userThread}`,
+  ].join('\n')
+
+  await modThread.send({
+    content: infoMessage,
+    allowedMentions: { parse: [] },
+  })
 
   await prisma.modMailTicket.create({
     data: {
