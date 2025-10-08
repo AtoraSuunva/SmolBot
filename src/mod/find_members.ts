@@ -96,7 +96,7 @@ export const find_members = new SleetSlashCommand(
       },
       {
         name: 'match_bot',
-        description: 'Match against bots (default: False)',
+        description: 'Match against bots (default: True)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -376,7 +376,7 @@ async function matchMembers(
   matcher: Matcher,
   {
     limit = MAX_MATCHES,
-    matchBot = false,
+    matchBot = true,
     matchUsername = true,
     matchGlobalName = true,
     matchNickname = true,
