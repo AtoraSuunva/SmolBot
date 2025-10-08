@@ -7,11 +7,10 @@ import {
   type ButtonInteraction,
   ButtonStyle,
   type ChatInputCommandInteraction,
-  type Collection,
+  Collection,
   ComponentType,
   cleanCodeBlockContent,
   codeBlock,
-  type Guild,
   type GuildMember,
   type Interaction,
   InteractionContextType,
@@ -29,6 +28,7 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import { getComponentsOfType } from '../helpers/components.js'
+import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { tableFormat } from '../helpers/format.js'
 import { workerMatch } from '../helpers/regexWorker.js'
 
@@ -51,7 +51,9 @@ const userAutocomplete: AutocompleteHandler<string> = async ({
   }
 
   const guild = await getGuild(interaction, true)
-  const members = await fetchMembers(guild)
+  const members = await fetchGuildMembers(guild).catch(
+    () => new Collection<Snowflake, GuildMember>(),
+  )
   const matcher = makePartialMatcher(value, false)
 
   return (await matchMembers(members, matcher)).map((m) => ({
@@ -194,7 +196,9 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
   })
 
   const guild = await getGuild(interaction, true)
-  const members = await fetchMembers(guild)
+  const members = await fetchGuildMembers(guild).catch(
+    () => new Collection<Snowflake, GuildMember>(),
+  )
 
   let matcher: Matcher
   if (regexPattern) {
@@ -331,14 +335,6 @@ function resultFormat(data: MemberMatch[]): string {
       }),
     ),
   )
-}
-
-async function fetchMembers(guild: Guild) {
-  if (guild.memberCount === guild.members.cache.size) {
-    return guild.members.cache
-  }
-
-  return guild.members.fetch()
 }
 
 // Limit the number of autocomplete options returned

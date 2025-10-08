@@ -1,11 +1,11 @@
-import { setTimeout } from 'node:timers/promises'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
   type ChatInputCommandInteraction,
-  type Collection,
+  Collection,
   type GuildMember,
   InteractionContextType,
+  type Snowflake,
 } from 'discord.js'
 import {
   escapeAllMarkdown,
@@ -14,6 +14,7 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { plural } from '../helpers/format.js'
 
 const checkChoices = makeChoices([
@@ -90,10 +91,9 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
 
   await interaction.deferReply()
 
-  const members = await Promise.race([
-    setTimeout(10 * SECOND),
-    guild.members.fetch(),
-  ])
+  const members = await fetchGuildMembers(guild, { time: 60 * SECOND }).catch(
+    () => new Collection<Snowflake, GuildMember>(),
+  )
 
   if (!members) {
     return interaction.editReply(

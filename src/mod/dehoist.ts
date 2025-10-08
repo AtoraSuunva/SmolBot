@@ -15,6 +15,7 @@ import {
 } from 'sleetcord'
 import type { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../helpers/db.js'
+import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { plural } from '../helpers/format.js'
 
 const DEFAULT_PREPEND = '\u{17B5}' // Khmer Vowel Inherent Aa "◌឵"
@@ -183,8 +184,7 @@ async function fetchMembers({
   guild,
   startingWith,
 }: FetchMemberOptions): Promise<GuildMember[]> {
-  return guild.members
-    .fetch()
+  return fetchGuildMembers(guild)
     .then((members) =>
       members
         .filter(
@@ -195,6 +195,7 @@ async function fetchMembers({
         )
         .toJSON(),
     )
+    .catch(() => [])
 }
 
 async function checkToDehoist(members: DehoistableMember[]) {

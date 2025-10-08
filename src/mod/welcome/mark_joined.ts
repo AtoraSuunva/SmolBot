@@ -3,11 +3,15 @@ import {
   ApplicationCommandOptionType,
   type AttachmentPayload,
   type ChatInputCommandInteraction,
+  Collection,
+  type GuildMember,
+  type Snowflake,
   type User,
 } from 'discord.js'
 import { getGuild, getRoles, getUsers, SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
+import { fetchGuildMembers } from '../../helpers/fetchGuildMembers.js'
 import { plural } from '../../helpers/format.js'
 
 export const mark_joined = new SleetSlashSubcommand(
@@ -65,7 +69,9 @@ async function runMarkJoined(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply()
 
   const toEdit = new Set<User>()
-  const members = await guild.members.fetch()
+  const members = await fetchGuildMembers(guild).catch(
+    () => new Collection<Snowflake, GuildMember>(),
+  )
 
   if (!users || !!roles || invert) {
     const userSet = new Set(users?.map((u) => u.id) ?? [])
