@@ -149,12 +149,12 @@ export async function* fetchChunkedGuildMembers(
     _: Guild,
     chunk: GuildMembersChunk,
   ) {
-    console.log(
-      'received',
-      isSender ? 'sender' : 'coalesced',
-      chunk.nonce === fetchCache.nonce ? 'nonce match' : 'nonce mismatch',
-      chunk,
-    )
+    // console.log(
+    //   'received',
+    //   isSender ? 'sender' : 'coalesced',
+    //   chunk.nonce === fetchCache.nonce ? 'nonce match' : 'nonce mismatch',
+    //   chunk,
+    // )
     if (chunk.nonce !== fetchCache.nonce) return
 
     i++
