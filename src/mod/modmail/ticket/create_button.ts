@@ -601,7 +601,7 @@ async function handleCreateTicketButton(
 
   const infoMessage = [
     'User Info:',
-    `- User: ${formatUser(member)}`,
+    `- ${formatUser(member, { mention: true })}`,
     `- Created: ${time(member.user.createdAt, 'F')} (${time(
       member.user.createdAt,
       'R',
@@ -610,7 +610,13 @@ async function handleCreateTicketButton(
       member.joinedAt ?? new Date(),
       'R',
     )})`,
-    `- Roles: ${member.roles.cache.map((r) => `<@&${r.id}>`).join(', ') ?? 'None'}`,
+    `- Roles: ${
+      member.roles.cache
+        .filter((r) => r.id !== guild.id)
+        .sort((a, b) => b.position - a.position)
+        .map((r) => `<@&${r.id}>`)
+        .join(', ') ?? 'None'
+    }`,
     '',
     `User thread created: ${userThread}`,
   ].join('\n')
