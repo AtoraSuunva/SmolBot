@@ -1,14 +1,16 @@
 import {
-  ActionRowBuilder,
   ApplicationIntegrationType,
+  cleanCodeBlockContent,
+  codeBlock,
   DiscordjsError,
   type EmbedFooterOptions,
   InteractionContextType,
+  LabelBuilder,
   type Message,
   type MessageContextMenuCommandInteraction,
   MessageFlags,
-  type ModalActionRowComponentBuilder,
   ModalBuilder,
+  TextDisplayBuilder,
   TextInputBuilder,
   TextInputStyle,
   time,
@@ -16,6 +18,7 @@ import {
 import { formatUser, getGuild, SleetMessageCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 import { quoteMessage } from '../../helpers/quoteMessage.js'
+import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'
 
@@ -58,58 +61,58 @@ async function runReportMessage(
 
   const customId = `report_message:${message.id}:${interaction.id}`
 
-  const messageSummary = `Author: ${formatUser(message.author, {
-    markdown: false,
-    escapeMarkdown: false,
-  })}; Channel: #${message.channel.name}\n${message.cleanContent || 'No content.'}`
+  const logMessage = await messageToLog(message)
+  const formattedMessage = [
+    logMessage.header,
+    logMessage.content,
+    logMessage.footer,
+  ]
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .join('\n')
+    .slice(0, 2000)
 
-  const formattedMessage = messageSummary.slice(0, 4000)
+  const authorPreviewTextDisplay = new TextDisplayBuilder({
+    content: `## You are reporting the following message by ${message.author} in ${message.channel}:`,
+  })
 
-  const messagePreview = new TextInputBuilder()
-    .setCustomId('messagePreview')
-    .setLabel('Message Preview')
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(false)
-    .setPlaceholder(formattedMessage.slice(0, 100))
-    .setValue(formattedMessage)
+  const messagePreviewTextDisplay = new TextDisplayBuilder({
+    content: codeBlock('ansi', cleanCodeBlockContent(formattedMessage)),
+  })
 
-  const previewRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      messagePreview,
-    )
+  const reasonInput = new LabelBuilder({
+    label: 'Reason (Optional)',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('reason')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(false)
+      .setMaxLength(1024)
+      .setPlaceholder('Any extra info you want to add to this report?'),
+  )
 
-  const reasonInput = new TextInputBuilder()
-    .setCustomId('reason')
-    .setLabel('Reason (Optional)')
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(false)
-    .setMaxLength(1024)
-    .setPlaceholder('Any extra info you want to add to this report?')
-
-  const reasonRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      reasonInput,
-    )
-
-  const isAnonInput = new TextInputBuilder()
-    .setCustomId('anon')
-    .setLabel('Send report anonymously? (Optional)')
-    .setRequired(false)
-    .setPlaceholder('"yes" or "no" (default "yes")')
-    .setMaxLength(3)
-    .setStyle(TextInputStyle.Short)
-
-  const isAnonRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      isAnonInput,
-    )
+  const isAnonInput = new LabelBuilder({
+    label: 'Report Anonymously? (Optional)',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('anon')
+      .setRequired(false)
+      .setPlaceholder('"yes" or "no" (default "yes")')
+      .setMaxLength(3)
+      .setStyle(TextInputStyle.Short),
+  )
 
   const modal = new ModalBuilder()
     .setCustomId(customId)
     .setTitle('Report Message')
-    .addComponents([previewRow, reasonRow, isAnonRow])
+    .addTextDisplayComponents([
+      authorPreviewTextDisplay,
+      messagePreviewTextDisplay,
+    ])
+    .addLabelComponents([reasonInput, isAnonInput])
 
   await interaction.showModal(modal)
+
   const modalInteraction = await interaction
     .awaitModalSubmit({
       filter: (i) => i.customId === customId,
