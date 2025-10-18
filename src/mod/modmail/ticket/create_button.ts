@@ -7,6 +7,7 @@ import {
   ButtonStyle,
   ChannelType,
   type ChatInputCommandInteraction,
+  ComponentType,
   EmbedBuilder,
   escapeInlineCode,
   type Interaction,
@@ -442,6 +443,9 @@ async function handleCreateTicketButton(
     })
     .addFields(
       int.fields.components.flatMap((v) => {
+        // TODO: update this when we use other types
+        if (v.type !== ComponentType.ActionRow) return []
+
         if (
           totalCharacters > MAX_EMBED_LENGTH ||
           v.components[0].value === ''
@@ -506,7 +510,10 @@ async function handleCreateTicketButton(
 
   if (totalCharacters > MAX_EMBED_LENGTH) {
     const fields = int.fields.fields
-      .map((v, k) => `## ${fieldIDMap.get(k)?.label ?? k}\n\n${v.value}`)
+      .map(
+        (v, k) =>
+          `## ${fieldIDMap.get(k)?.label ?? k}\n\n${'value' in v ? v.value : v.values.join(', ')}`,
+      )
       .join('\n\n')
 
     const string = `- Modmail ID: ${modmailId}\n- User: ${formattedUser}\n\n${fields}`

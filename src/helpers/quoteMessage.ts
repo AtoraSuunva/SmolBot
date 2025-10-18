@@ -432,7 +432,9 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
   const totalVotes = poll.answers.reduce((acc, v) => acc + v.voteCount, 0)
 
   embed
-    .setTitle(`${escapeAllMarkdown(poll.question.text).substring(0, 256)}`)
+    .setTitle(
+      `${escapeAllMarkdown(poll.question.text ?? 'Missing Question').substring(0, 256)}`,
+    )
     .addFields(
       poll.answers.map((v) => ({
         name: `${v.emoji ? `${v.emoji} ` : ''}${v.text}`,
@@ -441,7 +443,7 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
     )
     .addFields({
       name: '\u200b',
-      value: `${plural('Vote', totalVotes)} ∙ Ends ${time(poll.expiresAt, 'R')}`,
+      value: `${plural('Vote', totalVotes)} ∙ Ends ${poll.expiresAt ? time(poll.expiresAt, 'R') : 'unknown'}`,
     })
 }
 
