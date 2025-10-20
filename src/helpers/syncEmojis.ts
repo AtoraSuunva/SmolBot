@@ -163,7 +163,7 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
       )
 
       // Delete the emoji from Discord
-      await deleteEmoji(existingEmoji.id)
+      await deleteEmoji(discordEmoji.id)
 
       await prisma.applicationEmoji.delete({
         where: { id: existingEmoji.id },
