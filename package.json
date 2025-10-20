@@ -28,7 +28,7 @@
     "node": ">=24.0.0"
   },
   "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@10.18.3",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@hono/node-server": "^1.19.5",

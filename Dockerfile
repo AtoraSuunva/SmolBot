@@ -1,9 +1,12 @@
 # Step that pulls in everything needed to build the app and builds it
 # Pinned to avoid sudden new versions breaking builds :)
-FROM node:24.9-alpine AS dev-build
+FROM node:25-alpine AS dev-build
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
+RUN rm -rf /usr/local/bin/yarn*
+RUN npm uninstall -g yarn
+RUN npm install -g corepack
 RUN corepack enable
 COPY pnpm-lock.yaml ./
 COPY package.json ./
@@ -22,8 +25,11 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:24.9-alpine AS prod-build
+FROM node:25-alpine AS prod-build
 WORKDIR /home/node/app
+RUN rm -rf /usr/local/bin/yarn*
+RUN npm uninstall -g yarn
+RUN npm install -g corepack
 RUN corepack enable
 COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
 COPY --from=dev-build /home/node/app/node_modules ./node_modules/
@@ -38,10 +44,10 @@ COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
-FROM node:24.9-alpine AS prod-runtime
+FROM node:25-alpine AS prod-runtime
 # See https://github.com/prisma/prisma/issues/19729
 RUN apk upgrade --update-cache --available && \
-    apk add openssl && \
+    apk add --no-cache openssl && \
     rm -rf /var/cache/apk/*
 WORKDIR /home/node/app
 COPY --from=prod-build /home/node/app ./
