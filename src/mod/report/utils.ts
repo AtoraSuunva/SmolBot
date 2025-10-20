@@ -14,10 +14,12 @@ import {
   type EmbedFooterOptions,
   hyperlink,
   type Interaction,
+  LabelBuilder,
   type MessageActionRowComponent,
   MessageFlags,
   type ModalActionRowComponentBuilder,
   ModalBuilder,
+  TextDisplayBuilder,
   TextInputBuilder,
   TextInputStyle,
   type User,
@@ -156,38 +158,43 @@ async function replyToReport(
   const originalMessage = interaction.message
   const customId = `report:${report.reportID}:reply_prompt:${interaction.id}`
 
-  const messageInput = new TextInputBuilder()
-    .setCustomId('message')
-    .setLabel('Message')
-    .setRequired(true)
-    .setPlaceholder('Message to send to the user')
-    .setMaxLength(2048)
-    .setStyle(TextInputStyle.Paragraph)
+  const userReportPreview = new TextDisplayBuilder({
+    content: `## Original Report Message Preview:\n${originalMessage.embeds
+      .slice(0, -1)
+      .map((e) => e.description ?? '')
+      .join('\n\n')}`,
+  })
 
-  const messageRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      messageInput,
-    )
+  const messageInput = new LabelBuilder({
+    label: 'Message to Send',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('message')
+      .setRequired(true)
+      .setPlaceholder('Message to send to the user')
+      .setMaxLength(2048)
+      .setStyle(TextInputStyle.Paragraph),
+  )
 
-  const isAnonInput = new TextInputBuilder()
-    .setCustomId('anon')
-    .setLabel('Send report anonymously? (Optional)')
-    .setRequired(false)
-    .setPlaceholder('"yes" or "no" (default "yes")')
-    .setMaxLength(3)
-    .setStyle(TextInputStyle.Short)
-
-  const isAnonRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      isAnonInput,
-    )
+  const isAnonInput = new LabelBuilder({
+    label: 'Send Reply Anonymously? (Optional)',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('anon')
+      .setRequired(false)
+      .setPlaceholder('"yes" or "no" (default "yes")')
+      .setMaxLength(3)
+      .setStyle(TextInputStyle.Short),
+  )
 
   const modal = new ModalBuilder()
     .setCustomId(customId)
     .setTitle('Reply to Report')
-    .addComponents([messageRow, isAnonRow])
+    .addTextDisplayComponents([userReportPreview])
+    .addLabelComponents([messageInput, isAnonInput])
 
   await interaction.showModal(modal)
+
   const modalInteraction = await interaction
     .awaitModalSubmit({
       filter: (i) => i.customId === customId,

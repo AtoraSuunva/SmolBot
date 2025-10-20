@@ -11,6 +11,7 @@ import {
   EmbedBuilder,
   escapeInlineCode,
   type Interaction,
+  LabelBuilder,
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
@@ -370,23 +371,20 @@ async function handleCreateTicketButton(
     .setCustomId(`${MODMAIL}:${TICKET_MODAL}:${interaction.id}`)
     .setTitle('Create a Modmail Ticket')
 
-  modal.addComponents(
-    fields.map((field) => {
-      const textInput = new TextInputBuilder()
-        .setCustomId(field.customID)
-        .setLabel(field.label)
-        .setStyle(field.style)
-        .setRequired(field.required ?? false)
-        .setPlaceholder(field.placeholder ?? '')
-        .setMinLength(field.minLength ?? 0)
-        .setMaxLength(field.maxLength ?? 4000)
-
-      if (field.placeholder) {
-        textInput.setPlaceholder(field.placeholder)
-      }
-
-      return new ActionRowBuilder<TextInputBuilder>().addComponents(textInput)
-    }),
+  modal.addLabelComponents(
+    fields.map((field) =>
+      new LabelBuilder({
+        label: field.label,
+      }).setTextInputComponent(
+        new TextInputBuilder()
+          .setCustomId(field.customID)
+          .setStyle(field.style)
+          .setRequired(field.required ?? false)
+          .setPlaceholder(field.placeholder ?? '')
+          .setMinLength(field.minLength ?? 0)
+          .setMaxLength(field.maxLength ?? 4000),
+      ),
+    ),
   )
 
   await interaction.showModal(modal)

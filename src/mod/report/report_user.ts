@@ -1,14 +1,14 @@
 import {
-  ActionRowBuilder,
   ApplicationIntegrationType,
   Colors,
   DiscordjsError,
   EmbedBuilder,
   type EmbedFooterOptions,
   InteractionContextType,
+  LabelBuilder,
   MessageFlags,
-  type ModalActionRowComponentBuilder,
   ModalBuilder,
+  TextDisplayBuilder,
   TextInputBuilder,
   TextInputStyle,
   type User,
@@ -50,55 +50,43 @@ async function runReportUser(
   const customId = `report_user:${user.id}:${interaction.id}`
 
   const formattedUser = formatUser(user, {
-    markdown: false,
-    escapeMarkdown: false,
+    mention: true,
   })
 
-  const userPreview = new TextInputBuilder()
-    .setCustomId('user_preview')
-    .setLabel('User Preview')
-    .setStyle(TextInputStyle.Short)
-    .setRequired(false)
-    .setPlaceholder(formattedUser.slice(0, 100))
-    .setValue(formattedUser)
+  const reportedUserTextDisplay = new TextDisplayBuilder({
+    content: `## You are reporting the following user: ${formattedUser}`,
+  })
 
-  const previewRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      userPreview,
-    )
+  const reasonInput = new LabelBuilder({
+    label: 'Reason for report (Optional)',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('reason')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(false)
+      .setMaxLength(1024)
+      .setPlaceholder('Any extra info you want to add to this report?'),
+  )
 
-  const reasonInput = new TextInputBuilder()
-    .setCustomId('reason')
-    .setLabel('Reason (Optional)')
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(false)
-    .setMaxLength(1024)
-    .setPlaceholder('Any extra info you want to add to this report?')
-
-  const reasonRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      reasonInput,
-    )
-
-  const isAnonInput = new TextInputBuilder()
-    .setCustomId('anon')
-    .setLabel('Send report anonymously? (Optional)')
-    .setRequired(false)
-    .setPlaceholder('"yes" or "no" (default "yes")')
-    .setMaxLength(3)
-    .setStyle(TextInputStyle.Short)
-
-  const isAnonRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      isAnonInput,
-    )
+  const isAnonInput = new LabelBuilder({
+    label: 'Report Anonymously? (Optional)',
+  }).setTextInputComponent(
+    new TextInputBuilder()
+      .setCustomId('anon')
+      .setRequired(false)
+      .setPlaceholder('"yes" or "no" (default "yes")')
+      .setMaxLength(3)
+      .setStyle(TextInputStyle.Short),
+  )
 
   const modal = new ModalBuilder()
     .setCustomId(customId)
     .setTitle('Report User')
-    .addComponents([previewRow, reasonRow, isAnonRow])
+    .addTextDisplayComponents([reportedUserTextDisplay])
+    .addLabelComponents([reasonInput, isAnonInput])
 
   await interaction.showModal(modal)
+
   const modalInteraction = await interaction
     .awaitModalSubmit({
       filter: (i) => i.customId === customId,

@@ -81,7 +81,7 @@ async function runReportMessage(
   })
 
   const reasonInput = new LabelBuilder({
-    label: 'Reason (Optional)',
+    label: 'Reason for report (Optional)',
   }).setTextInputComponent(
     new TextInputBuilder()
       .setCustomId('reason')
