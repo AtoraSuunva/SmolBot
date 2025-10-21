@@ -1,5 +1,7 @@
+import type { InputJsonValue } from '@prisma/client/runtime/library'
 import { s } from '@sapphire/shapeshift'
 import type { Awaitable, GuildMember, Message } from 'discord.js'
+import type { Prisma } from '../../../generated/prisma/client.js'
 import {
   AutomodRule,
   type AutomodRuleData,
@@ -38,8 +40,10 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
     this.maxRepeats = maxRepeats
   }
 
-  override unpackParameters(params: string) {
-    return unpackValidator.parse(JSON.parse(params))
+  override unpackParameters(
+    params: Prisma.JsonNullValueInput | InputJsonValue,
+  ) {
+    return unpackValidator.parse(params)
   }
 
   override packParameters() {

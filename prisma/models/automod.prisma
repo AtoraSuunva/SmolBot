@@ -12,11 +12,11 @@ model AutomodRule {
   // Description shown to admins when viewing rules
   description String  @map("name")
   // Message shown to users when rule is triggered
-  message     String
+  message     String?
   // Action to apply
   action      String
   // Whether to delete the message(s) that triggered the rule
-  delete      Boolean
+  delete      Boolean @default(false)
   // Parameters the rule takes, as JSON
-  parameters  String
+  parameters  Json
 }

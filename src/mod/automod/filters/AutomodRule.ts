@@ -1,3 +1,4 @@
+import type { InputJsonValue } from '@prisma/client/runtime/library'
 import {
   type BaseValidator,
   type MappedObjectValidator,
@@ -97,19 +98,19 @@ export abstract class AutomodRule<P extends unknown[] = []> {
   constructor(body: SleetSlashSubcommandBody, data: AutomodRuleData) {
     this.body = body
     this.description = data.description
-    this.message = data.message
+    this.message = data.message ?? 'Your message was flagged by automod.'
     this.action = data.action
-    this.delete = data.delete
+    this.delete = data.delete ?? false
 
     this.parameterUnpacker = createParameterPackerFrom(this.body.options)
   }
 
-  unpackParameters(params: string): P {
+  unpackParameters(params: Prisma.JsonNullValueInput | InputJsonValue): P {
     if (this.parameterUnpacker === undefined) {
       return undefined as unknown as P
     }
 
-    return this.parameterUnpacker.parse(JSON.parse(params)) as unknown as P
+    return this.parameterUnpacker.parse(params) as unknown as P
   }
 
   packParameters(): P {
