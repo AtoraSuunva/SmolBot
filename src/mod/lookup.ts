@@ -2,7 +2,6 @@ import {
   ActionRowBuilder,
   type APIApplication,
   type APIApplicationEmoji,
-  type APIUser,
   ApplicationCommandOptionType,
   ApplicationFlags,
   ApplicationIntegrationType,
@@ -29,7 +28,6 @@ import {
   inlineCode,
   MediaGalleryBuilder,
   MessageFlags,
-  Routes,
   SectionBuilder,
   SeparatorBuilder,
   SnowflakeUtil,
@@ -39,6 +37,7 @@ import {
   type User,
   UserFlags,
   type UserFlagsBitField,
+  type UserPrimaryGuild,
   Widget,
 } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
@@ -259,7 +258,7 @@ async function lookupAndRespond(
   if (isLikelyID(data)) {
     // Probably an ID, check if it's a user or guild
     try {
-      const user = await fetchUser(client, data)
+      const user = await client.users.fetch(data)
       return sendUserLookup(interaction, user)
     } catch (e) {
       error = e
@@ -300,51 +299,14 @@ async function lookupAndRespond(
   await interaction.editReply(`Failed to do lookup, got:\n> ${String(error)}`)
 }
 
-// TODO: remove this hack once clans are supported in discord.js
-type APIUserWithClan = APIUser & { clan?: UserClan }
-
-interface UserDetails {
-  apiUser: APIUserWithClan
-  user: User
-}
-
-/**
- * Represents a user's clan information.
- */
-interface UserClan {
-  /**
-   * The ID of the user's primary clan.
-   */
-  identity_guild_id: string
-
-  /**
-   * Indicates whether the user is displaying their clan tag.
-   */
-  identity_enabled: boolean
-
-  /**
-   * The text of the user's clan tag. Limited to 4 characters.
-   */
-  tag: string
-
-  /**
-   * The clan badge hash.
-   */
-  badge: string
-}
-
-async function fetchUser(client: Client, id: string): Promise<UserDetails> {
-  const apiUser = (await client.rest.get(Routes.user(id))) as APIUserWithClan
-  // biome-ignore lint/complexity/useLiteralKeys: we're accessing a private function
-  const user = client.users['_add'](apiUser, true)
-
-  return { apiUser, user }
-}
-
-function clanBadgeUrl(clan: UserClan, size = 2048): string {
+function clanBadgeUrl(clan: UserPrimaryGuild, size = 2048): string | null {
   // https://cdn.discordapp.com/clan-badges/[guild_id]/[badge_hash].[ext]?size=2048
+  if (!clan.identityGuildId || !clan.badge) {
+    return null
+  }
+
   const ext = clan.badge.startsWith('a_') ? 'gif' : 'png'
-  return `https://cdn.discordapp.com/clan-badges/${clan.identity_guild_id}/${clan.badge}.${ext}?size=${size}`
+  return `https://cdn.discordapp.com/clan-badges/${clan.identityGuildId}/${clan.badge}.${ext}?size=${size}`
 }
 
 interface GuildExists {
@@ -504,9 +466,9 @@ function getRPCFlags(flags: ApplicationFlags | null): string[] {
  */
 async function sendUserLookup(
   interaction: LookupInteraction,
-  userDetails: UserDetails,
+  user: User,
 ): Promise<void> {
-  const container = await createUserLookupInfo(userDetails)
+  const container = await createUserLookupInfo(user)
 
   await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,
@@ -515,11 +477,9 @@ async function sendUserLookup(
 }
 
 async function createUserLookupInfo(
-  userDetails: UserDetails,
+  user: User,
   { minimal = false }: { minimal?: boolean } = {},
 ) {
-  const { user, apiUser } = userDetails
-
   const displayNameLine = `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`
   const tagLine = `### ${escapeAllMarkdown(user.tag)}`
 
@@ -626,32 +586,44 @@ async function createUserLookupInfo(
   if (!minimal) {
     const buttonRow = new ActionRowBuilder<ButtonBuilder>()
 
-    if (apiUser.clan?.badge) {
-      const { clan } = apiUser
-      const clanBadge = clanBadgeUrl(clan)
+    if (user.primaryGuild) {
+      // Every single property is defined as optional lol
+      const section = new SectionBuilder()
 
-      const section = new SectionBuilder({
-        accessory: {
+      const clanBadge = clanBadgeUrl(user.primaryGuild)
+
+      if (clanBadge) {
+        section.setThumbnailAccessory({
           type: ComponentType.Thumbnail,
           media: {
             url: clanBadge,
           },
-        },
-        components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: `**Tag:** ${inlineCode(clan.tag)}`,
-          },
-          {
-            type: ComponentType.TextDisplay,
-            content: `**Guild:** ${inlineCode(clan.identity_guild_id)}`,
-          },
-          {
-            type: ComponentType.TextDisplay,
+        })
+      }
+
+      if (user.primaryGuild.tag) {
+        section.addTextDisplayComponents(
+          new TextDisplayBuilder({
+            content: `**Tag:** ${inlineCode(user.primaryGuild.tag)}`,
+          }),
+        )
+      }
+
+      if (user.primaryGuild.identityGuildId) {
+        section.addTextDisplayComponents(
+          new TextDisplayBuilder({
+            content: `**Guild:** ${inlineCode(user.primaryGuild.identityGuildId)}`,
+          }),
+        )
+      }
+
+      if (clanBadge) {
+        section.addTextDisplayComponents(
+          new TextDisplayBuilder({
             content: `**Images:** ${hyperlink('Badge', clanBadge)}`,
-          },
-        ],
-      })
+          }),
+        )
+      }
 
       container.addSeparatorComponents(new SeparatorBuilder())
       container.addSectionComponents(section)
@@ -660,7 +632,7 @@ async function createUserLookupInfo(
           .setEmoji('🔎')
           .setLabel('Lookup Guild')
           .setStyle(ButtonStyle.Secondary)
-          .setCustomId(`${LOOKUP_ID}:${clan.identity_guild_id}`),
+          .setCustomId(`${LOOKUP_ID}:${user.primaryGuild.identityGuildId}`),
       )
     }
 
@@ -957,8 +929,8 @@ async function sendGuildInviteLookup(
   }
 
   if (invite.inviter) {
-    const userDetails = await fetchUser(interaction.client, invite.inviter.id)
-    const userContainer = await createUserLookupInfo(userDetails, {
+    const user = await interaction.client.users.fetch(invite.inviter.id)
+    const userContainer = await createUserLookupInfo(user, {
       minimal: true,
     })
 
@@ -1052,8 +1024,8 @@ async function sendGroupDMInviteLookup(
   }
 
   if (invite.inviter) {
-    const userDetails = await fetchUser(interaction.client, invite.inviter.id)
-    const userContainer = await createUserLookupInfo(userDetails, {
+    const user = await interaction.client.users.fetch(invite.inviter.id)
+    const userContainer = await createUserLookupInfo(user, {
       minimal: true,
     })
 
