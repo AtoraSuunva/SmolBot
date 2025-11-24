@@ -7,17 +7,19 @@ import {
   ButtonStyle,
   ChannelType,
   type ChatInputCommandInteraction,
-  ComponentType,
-  EmbedBuilder,
+  ContainerBuilder,
   escapeInlineCode,
   type Interaction,
   LabelBuilder,
   MessageFlags,
   ModalBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
   TextInputBuilder,
   TextInputStyle,
   ThreadAutoArchiveDuration,
   type ThreadChannel,
+  ThumbnailBuilder,
   time,
 } from 'discord.js'
 import {
@@ -27,10 +29,11 @@ import {
   inGuildGuard,
   SleetSlashSubcommand,
 } from 'sleetcord'
-import { MINUTE, notNullish, SECOND } from 'sleetcord-common'
+import { MINUTE, SECOND } from 'sleetcord-common'
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { modmailIdAutocomplete } from './../fields/utils.js'
+import { modmailLogger } from '../utils.js'
 
 type AutocompleteCreator = (
   channelOption: string,
@@ -294,7 +297,7 @@ interface CreateTicketData {
   forumTag: string
 }
 
-const MAX_EMBED_LENGTH = 6000 - 50 // headroom for the "Ticket Truncated" field
+const MAX_EMBED_LENGTH = 6000 - 65 // headroom for the "Ticket Truncated" field
 
 async function handleCreateTicketButton(
   interaction: ButtonInteraction,
@@ -423,86 +426,75 @@ async function handleCreateTicketButton(
     return
   }
 
-  const formattedUser = formatUser(interaction.user, {
+  const formattedUser = formatUser(interaction.user, { mention: true })
+  const formattedUserNoMarkdown = formatUser(interaction.user, {
     escapeMarkdown: false,
     markdown: false,
   })
 
+  let totalCharacters = 0
   let title = ''
-  let totalCharacters = formattedUser.length
   const fieldIDMap = new Map<string, (typeof fields)[number]>(
     fields.map((f) => [f.customID, f]),
   )
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      iconURL: interaction.user.displayAvatarURL(),
-      name: formattedUser,
-    })
-    .addFields(
-      int.fields.components.flatMap((v) => {
-        // TODO: update this when we use other types
-        if (v.type !== ComponentType.ActionRow) return []
+  const fieldsTextDisplay: TextDisplayBuilder[] = []
 
-        if (
-          totalCharacters > MAX_EMBED_LENGTH ||
-          v.components[0].value === ''
-        ) {
-          return []
-        }
+  for (const [, field] of int.fields.fields) {
+    let formatted = ''
 
-        const name =
-          fieldIDMap.get(v.components[0].customId)?.label ?? 'Unknown Field'
-        const value = v.components[0].value
-        const length = value.length + name.length
+    if ('value' in field) {
+      formatted = field.value
+    } else if ('values' in field) {
+      formatted = field.values.join(', ')
+    }
 
-        if (fieldIDMap.get(v.components[0].customId)?.useAsTitle) {
-          title = v.components[0].value
-        }
+    if (fieldIDMap.get(field.customId)?.useAsTitle) {
+      title = formatted
+    }
 
-        if (totalCharacters + length > MAX_EMBED_LENGTH) {
-          totalCharacters += length
-          return {
-            name: 'Ticket Truncated',
-            value: 'Ticket too long, see attachment',
-          }
-        }
+    const content = `### **${fieldIDMap.get(field.customId)?.label ?? field.customId}**\n${formatted}`
+    totalCharacters += content.length
 
-        if (value.length < 1024) {
-          totalCharacters += length
-          return {
-            name,
-            value,
-          }
-        }
+    if (totalCharacters > MAX_EMBED_LENGTH) {
+      fieldsTextDisplay.push(
+        new TextDisplayBuilder({
+          content: '### **Ticket is too long to display, see the attachment.**',
+        }),
+      )
+      break
+    }
 
-        return toChunksGenerator(value, 1024)
-          .map((chunk, i) => {
-            if (totalCharacters > MAX_EMBED_LENGTH) {
-              return null
-            }
-
-            const length = chunk.length + (i === 0 ? name : 'Continued').length
-
-            if (totalCharacters + length > MAX_EMBED_LENGTH) {
-              totalCharacters += length
-              return {
-                name: 'Ticket Truncated',
-                value: 'Ticket too long, see attachment',
-              }
-            }
-
-            totalCharacters += length
-
-            return {
-              name: i === 0 ? name : 'Continued',
-              value: chunk,
-            }
-          })
-          .filter(notNullish)
-          .toArray()
+    fieldsTextDisplay.push(
+      new TextDisplayBuilder({
+        content,
       }),
     )
+  }
+
+  const ticketThumbnail = new ThumbnailBuilder({
+    media: {
+      url: interaction.user.displayAvatarURL(),
+    },
+  })
+
+  // TODO: maybe discord will preview components v2 in forums someday (:
+  // const ticketPreview = new TextDisplayBuilder({
+  //   content: fieldsTextDisplay[0]?.data.content?.slice(0, 256) ?? 'No Preview',
+  // })
+
+  const ticketSection = new SectionBuilder()
+    .setThumbnailAccessory(ticketThumbnail)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder({
+        content: `**User:** ${formattedUser}\n**Modmail ID:** ${modmailId}`,
+      }),
+    )
+
+  const ticketContainer = new ContainerBuilder()
+    .addSectionComponents(ticketSection)
+    .addSeparatorComponents()
+    .addTextDisplayComponents(...fieldsTextDisplay)
 
   const files: AttachmentPayload[] = []
 
@@ -538,7 +530,7 @@ async function handleCreateTicketButton(
   )
 
   // Max name length is 100
-  const threadName = expandTo`${100}${modmailId} - ${formattedUser}${title ? `: ${title}` : ''}`
+  const threadName = expandTo`${100}${modmailId} - ${formattedUserNoMarkdown}${title ? `: ${title}` : ''}`
 
   try {
     modThread = await modChannel.threads.create({
@@ -547,10 +539,10 @@ async function handleCreateTicketButton(
       appliedTags,
       reason: `Ticket created by ${interaction.user.tag}`,
       message: {
-        content: embed.data.fields?.[0].value.slice(0, 256) ?? 'No Preview',
-        embeds: [embed],
+        components: [ticketContainer],
         files,
         allowedMentions: { parse: [] },
+        flags: MessageFlags.IsComponentsV2,
       },
     })
   } catch (e) {
@@ -558,6 +550,14 @@ async function handleCreateTicketButton(
     await int.editReply({
       content: `Failed to create user ticket, please try again later.\nError: \`${escapeInlineCode(msg)}\``,
     })
+
+    modmailLogger.error({
+      message: 'Failed to create modmail thread',
+      modChannel: modChannel.id,
+      guild: guild.id,
+      error: e,
+    })
+
     return
   }
 
@@ -591,15 +591,28 @@ async function handleCreateTicketButton(
     await int.editReply({
       content: `Failed to create mod ticket, please try again later.\nError: \`${escapeInlineCode(msg)}\``,
     })
+
+    modmailLogger.error({
+      message: 'Failed to create user modmail thread',
+      userChannel: userChannel.id,
+      guild: guild.id,
+      error: e,
+    })
+
     return
   }
 
-  await userThread.members.add(interaction.user.id)
-  await userThread.send({
+  const userThreadNote = new TextDisplayBuilder({
     content:
       'This is your thread to see replies from and reply to moderators for this ticket. Any message you send here will be forwarded to the moderators. A copy of your ticket is below:',
-    embeds: [embed],
+  })
+
+  await userThread.members.add(interaction.user.id)
+  await userThread.send({
+    components: [userThreadNote, ticketContainer],
     files,
+    flags: MessageFlags.IsComponentsV2,
+    allowedMentions: { parse: [] },
   })
 
   const member = await guild.members.fetch(interaction.user.id)
@@ -648,15 +661,6 @@ async function handleCreateTicketButton(
   await int.editReply({
     content: 'Ticket created successfully!',
   })
-}
-
-function* toChunksGenerator(
-  str: string,
-  size: number,
-): Generator<string, void, void> {
-  for (let i = 0; i < str.length; i += size) {
-    yield str.slice(i, i + size)
-  }
 }
 
 /**
