@@ -1,32 +1,27 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  type CommandInteractionOption,
   Constants,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
-import { type ModLogChannels, Prisma } from '../../generated/prisma/client.js'
+import type { ModLogChannels } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import { formatConfig, toSnakeCase } from '../../helpers/format.js'
-import { getValidatedConfigFor, type LoggedAction } from './utils.js'
-
-type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
-  ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
-  : S
-
-const actions = (
-  Object.keys(Prisma.ModLogChannelsScalarFieldEnum) as unknown as Array<
-    keyof typeof Prisma.ModLogChannelsScalarFieldEnum
-  >
-)
-  .filter((a) => a !== 'guildID' && a !== 'updatedAt')
-  .map((a) => toSnakeCase(a)) as CamelToSnakeCase<LoggedAction>[]
+import { formatConfig } from '../../helpers/format.js'
+import {
+  ACTION_KEYS,
+  ACTION_KEYS_CAMEL,
+  ACTION_KEYS_SNAKE,
+  getValidatedConfigFor,
+  type LoggedAction,
+} from './utils.js'
 
 export const modlog_channels = new SleetSlashSubcommand(
   {
     name: 'channels',
     description: 'Redirect certain modlog messages to specific channels',
-    options: actions.map((a) => ({
+    options: ACTION_KEYS_SNAKE.map((a) => ({
       name: a,
       description:
         'Redirect log messages to another channel, set to the same log channel as the main config to sync',
@@ -66,80 +61,13 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
     })
   }
 
+  const options = getConfigOptionsFromInteraction(interaction)
   const mainConfig = await getValidatedConfigFor(guild, '')
-
-  const { options } = interaction
-  const memberAdd = options.getChannel('member_add')
-  const memberWelcome = options.getChannel('member_welcome')
-  const memberRemove = options.getChannel('member_remove')
-  const memberBan = options.getChannel('member_ban')
-  const memberUnban = options.getChannel('member_unban')
-  const userUpdate = options.getChannel('user_update')
-  const messageDelete = options.getChannel('message_delete')
-  const channelUpdate = options.getChannel('channel_update')
-  const messageDeleteBulk = options.getChannel('message_delete_bulk')
-  const channelCreate = options.getChannel('channel_create')
-  const channelDelete = options.getChannel('channel_delete')
-  const automodAction = options.getChannel('automod_action')
-  const reactionRemove = options.getChannel('reaction_remove')
-
   const mainChannel = mainConfig?.channel ?? null
 
   const mergedConfig: Omit<ModLogChannels, 'updatedAt'> = {
     guildID: guild.id,
-    memberAdd: mergedChannel(memberAdd, oldConfig?.memberAdd, mainChannel),
-    memberWelcome: mergedChannel(
-      memberWelcome,
-      oldConfig?.memberWelcome,
-      mainChannel,
-    ),
-    memberRemove: mergedChannel(
-      memberRemove,
-      oldConfig?.memberRemove,
-      mainChannel,
-    ),
-    memberBan: mergedChannel(memberBan, oldConfig?.memberBan, mainChannel),
-    memberUnban: mergedChannel(
-      memberUnban,
-      oldConfig?.memberUnban,
-      mainChannel,
-    ),
-    userUpdate: mergedChannel(userUpdate, oldConfig?.userUpdate, mainChannel),
-    messageDelete: mergedChannel(
-      messageDelete,
-      oldConfig?.messageDelete,
-      mainChannel,
-    ),
-    messageDeleteBulk: mergedChannel(
-      messageDeleteBulk,
-      oldConfig?.messageDeleteBulk,
-      mainChannel,
-    ),
-    channelCreate: mergedChannel(
-      channelCreate,
-      oldConfig?.messageDeleteBulk,
-      mainChannel,
-    ),
-    channelDelete: mergedChannel(
-      channelDelete,
-      oldConfig?.channelDelete,
-      mainChannel,
-    ),
-    channelUpdate: mergedChannel(
-      channelUpdate,
-      oldConfig?.channelUpdate,
-      mainChannel,
-    ),
-    automodAction: mergedChannel(
-      automodAction,
-      oldConfig?.automodAction,
-      mainChannel,
-    ),
-    reactionRemove: mergedChannel(
-      reactionRemove,
-      oldConfig?.reactionRemove,
-      mainChannel,
-    ),
+    ...mergeOptions(options, oldConfig, mainChannel),
   }
 
   await prisma.modLogChannels.upsert({
@@ -158,6 +86,43 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
     })}`,
     allowedMentions: { parse: [] },
   })
+}
+
+type ModlogChannelOptions = Record<
+  LoggedAction,
+  CommandInteractionOption['channel']
+>
+
+function getConfigOptionsFromInteraction(
+  interaction: ChatInputCommandInteraction,
+): ModlogChannelOptions {
+  const options: Partial<ModlogChannelOptions> = {}
+
+  for (const { camel, snake } of ACTION_KEYS) {
+    options[camel] = interaction.options.getChannel(snake)
+  }
+
+  return options as ModlogChannelOptions
+}
+
+type MergeOptions = Record<LoggedAction, string | null>
+
+function mergeOptions(
+  newOptions: ModlogChannelOptions,
+  oldConfig: ModLogChannels | null,
+  mainChannel: CommandInteractionOption['channel'] | null = null,
+) {
+  const merged: Partial<MergeOptions> = {}
+
+  for (const action of ACTION_KEYS_CAMEL) {
+    merged[action] = mergedChannel(
+      newOptions[action] ?? null,
+      oldConfig?.[action] ?? null,
+      mainChannel,
+    )
+  }
+
+  return merged as MergeOptions
 }
 
 interface MaybeChannel {

@@ -143,16 +143,27 @@ export function formatConfig<Config extends Record<string, Value>>(
 }
 
 /**
+ * Converts a camelCase string to snake_case
+ * ```
+ * type output = CamelToSnakeCase<'camelCaseString'> // 'camel_case_string'
+ * ```
+ */
+export type CamelToSnakeCase<S extends string> =
+  S extends `${infer T}${infer U}`
+    ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
+    : S
+
+/**
  * Converts a string from camelCase to snake_case
  * @param str The string to make snake case
  * @returns The snake cased string
  */
-export function toSnakeCase(str: string): string {
+export function toSnakeCase<T extends string>(str: T): CamelToSnakeCase<T> {
   return str
     .replace(/([a-z])([A-Z])/g, '$1_$2')
     .replace(/\s+/g, '_')
     .toLowerCase()
-    .trim()
+    .trim() as CamelToSnakeCase<T>
 }
 
 interface PluralOptions {

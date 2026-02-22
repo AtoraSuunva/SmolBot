@@ -1,7 +1,8 @@
 import { type Guild, type GuildTextBasedChannel, time } from 'discord.js'
 import { TicketQueue } from 'ticket-queue'
-import type { ModLogConfig, Prisma } from '../../generated/prisma/client.js'
+import { type ModLogConfig, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
+import { type CamelToSnakeCase, toSnakeCase } from '../../helpers/format.js'
 
 export enum EVENT_COLORS {
   memberAdd = 0x77b255,
@@ -51,10 +52,52 @@ export interface ValidConfig {
   channel: GuildTextBasedChannel
 }
 
+/** CamelCase keys type for modlog config: memberAdd, memberTimeout, etc */
+export type ModlogConfigKey = Exclude<
+  keyof Prisma.ModLogConfigCreateInput,
+  'guildID' | 'updatedAt' | 'channelID'
+>
+
+/** CamelCase keys type for modlog config options: memberAdd, memberTimeout, etc */
+export const CONFIG_KEYS = (
+  Object.keys(Prisma.ModLogConfigScalarFieldEnum) as unknown as Array<
+    keyof typeof Prisma.ModLogConfigScalarFieldEnum
+  >
+)
+  .filter((a) => a !== 'guildID' && a !== 'updatedAt' && a !== 'channelID')
+  .map((a) => ({
+    camel: a,
+    snake: toSnakeCase(a),
+  })) as { camel: ModlogConfigKey; snake: CamelToSnakeCase<ModlogConfigKey> }[]
+
+/** camelCase keys for modlog config options: memberAdd, memberTimeout, etc */
+export const CONFIG_KEYS_CAMEL = CONFIG_KEYS.map((a) => a.camel)
+
+/** snake_case keys for modlog config options: member_ban, member_timeout, etc */
+export const CONFIG_KEYS_SNAKE = CONFIG_KEYS.map((a) => a.snake)
+
+/** CamelCase keys type for modlog actions: memberAdd, memberTimeout, etc */
 export type LoggedAction = Exclude<
   keyof Prisma.ModLogChannelsCreateInput,
   'guildID' | 'updatedAt'
 >
+
+export const ACTION_KEYS = (
+  Object.keys(Prisma.ModLogChannelsScalarFieldEnum) as unknown as Array<
+    keyof typeof Prisma.ModLogChannelsScalarFieldEnum
+  >
+)
+  .filter((a) => a !== 'guildID' && a !== 'updatedAt')
+  .map((a) => ({
+    camel: a,
+    snake: toSnakeCase(a),
+  })) as { camel: LoggedAction; snake: CamelToSnakeCase<LoggedAction> }[]
+
+/** camelCase keys for modlog actions: memberAdd, memberTimeout, etc */
+export const ACTION_KEYS_CAMEL = ACTION_KEYS.map((a) => a.camel)
+
+/** snake_case keys for modlog actions: member_ban, member_timeout, etc */
+export const ACTION_KEYS_SNAKE = ACTION_KEYS.map((a) => a.snake)
 
 export async function getValidatedConfigFor(
   guild: Guild,

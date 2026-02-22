@@ -12,6 +12,7 @@ import {
   channelDelete,
   logChannelModified,
 } from './channelModify.js'
+import { logMemberTimeout, type TimeoutAuditLog } from './guildMemberTimeout.js'
 import { type BanAuditLog, logMemberBanKick } from './memberBanKick.js'
 
 export const logAuditLog = new SleetModule(
@@ -39,6 +40,10 @@ async function guildAuditLogEntryCreate(
     case AuditLogEvent.MemberBanRemove:
     case AuditLogEvent.MemberKick:
       await logMemberBanKick(auditLogEntry as BanAuditLog, guild)
+      break
+
+    case AuditLogEvent.MemberUpdate:
+      await logMemberTimeout(auditLogEntry as TimeoutAuditLog, guild)
       break
   }
 }
