@@ -1,3 +1,4 @@
+import * as chrono from 'chrono-node'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -8,11 +9,9 @@ import {
   time,
 } from 'discord.js'
 import { DateTime } from 'luxon'
-import { createParseHumanRelativeTime } from 'parse-human-relative-time/luxon.js'
 import { SleetSlashCommand } from 'sleetcord'
 import { dateTimeFrom } from '../helpers/time.js'
 
-const parseHumanRelativeTime = createParseHumanRelativeTime(DateTime)
 const timezones = Intl.supportedValuesOf('timeZone')
 
 export const timestamp = new SleetSlashCommand(
@@ -65,11 +64,11 @@ export const timestamp = new SleetSlashCommand(
 
 const timestampStyles = [
   TimestampStyles.ShortTime,
-  TimestampStyles.LongTime,
+  TimestampStyles.MediumTime,
   TimestampStyles.ShortDate,
   TimestampStyles.LongDate,
-  TimestampStyles.ShortDateTime,
-  TimestampStyles.LongDateTime,
+  TimestampStyles.LongDateShortTime,
+  TimestampStyles.FullDateShortTime,
   TimestampStyles.RelativeTime,
 ]
 
@@ -92,7 +91,27 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  const result = relative ? parseHumanRelativeTime(relative, anchor) : anchor
+  let relativeResult: Date | null = null
+
+  if (relative) {
+    relativeResult = chrono.parseDate(relative, {
+      instant: anchor.toJSDate(),
+      timezone: anchor.zoneName ?? 'UTC',
+    })
+
+    if (!relativeResult) {
+      await interaction.reply({
+        content: `Could not parse relative time expression:\n> ${relative}`,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+      return
+    }
+  }
+
+  const result = relativeResult
+    ? DateTime.fromJSDate(relativeResult).setZone(timezone)
+    : anchor
   const unixInt = result.toUnixInteger()
 
   const header = `Timestamps for \`${result.toISO()}\` - \`${result.zoneName}\``

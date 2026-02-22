@@ -35,6 +35,9 @@ importers:
       char-info:
         specifier: ^0.3.6
         version: 0.3.6
+      chrono-node:
+        specifier: ^2.9.0
+        version: 2.9.0
       convert-units:
         specifier: ~2.3.4
         version: 2.3.4
@@ -77,9 +80,6 @@ importers:
       p-queue:
         specifier: ^9.1.0
         version: 9.1.0
-      parse-human-relative-time:
-        specifier: ^4.0.0
-        version: 4.0.0(date-fns@3.0.5)(luxon@3.7.2)
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -777,6 +777,10 @@ packages:
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
 
+  chrono-node@2.9.0:
+    resolution: {integrity: sha512-glI4YY2Jy6JII5l3d5FN6rcrIbKSQqKPhWsIRYPK2IK8Mm4Q1ZZFdYIaDqglUNf7gNwG+kWIzTn0omzzE0VkvQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   citty@0.1.6:
     resolution: {integrity: sha512-tskPPKEs8D2KPafUypv2gxwJP8h/OaJmC82QQGGDQcHvXX43xF2VDACcJVmZ0EuSxkpO9Kc4MlrA3q0+FG58AQ==}
 
@@ -1223,13 +1227,6 @@ packages:
   p-timeout@7.0.1:
     resolution: {integrity: sha512-AxTM2wDGORHGEkPCt8yqxOTMgpfbEHqF51f/5fJCmwFC3C/zNcGT63SymH2ttOAaiIws2zVg4+izQCjrakcwHg==}
     engines: {node: '>=20'}
-
-  parse-human-relative-time@4.0.0:
-    resolution: {integrity: sha512-q9TSws/icmDATupBKoCSn4FU39rdjDSwq1eJkk6CrqBMF5MtnRjGFGi4PEGS+umGUc0G03dXzSi03MS1DH3iAg==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      date-fns: ^4.1.0
-      luxon: ^3.0.0
 
   parse-ms@4.0.0:
     resolution: {integrity: sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==}
@@ -2406,6 +2403,8 @@ snapshots:
 
   chownr@1.1.4: {}
 
+  chrono-node@2.9.0: {}
+
   citty@0.1.6:
     dependencies:
       consola: 3.4.2
@@ -2810,11 +2809,6 @@ snapshots:
       p-timeout: 7.0.1
 
   p-timeout@7.0.1: {}
-
-  parse-human-relative-time@4.0.0(date-fns@3.0.5)(luxon@3.7.2):
-    dependencies:
-      date-fns: 3.0.5
-      luxon: 3.7.2
 
   parse-ms@4.0.0: {}
 
