@@ -1,4 +1,3 @@
-import type { InputJsonValue } from '@prisma/client/runtime/library'
 import { s } from '@sapphire/shapeshift'
 import type { Awaitable, GuildMember, Message } from 'discord.js'
 import type { Prisma } from '../../../generated/prisma/client.js'
@@ -41,7 +40,7 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
   }
 
   override unpackParameters(
-    params: Prisma.JsonNullValueInput | InputJsonValue,
+    params: Prisma.JsonNullValueInput | Prisma.InputJsonValue,
   ) {
     return unpackValidator.parse(params)
   }

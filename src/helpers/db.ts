@@ -1,4 +1,4 @@
-import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import env from 'env-var'
 import { HOUR } from 'sleetcord-common'
 import { PrismaClient } from '../generated/prisma/client.js'
@@ -16,7 +16,7 @@ if (!dbPath.startsWith('./prisma')) {
   dbPathParts.splice(1, 0, 'prisma')
 }
 
-const adapter = new PrismaBetterSQLite3({
+const adapter = new PrismaBetterSqlite3({
   url: `file:${dbPathParts.join('/')}`,
   timeout: 5000,
 })

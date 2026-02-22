@@ -1,4 +1,3 @@
-import type { InputJsonValue } from '@prisma/client/runtime/library'
 import {
   type BaseValidator,
   type MappedObjectValidator,
@@ -105,7 +104,9 @@ export abstract class AutomodRule<P extends unknown[] = []> {
     this.parameterUnpacker = createParameterPackerFrom(this.body.options)
   }
 
-  unpackParameters(params: Prisma.JsonNullValueInput | InputJsonValue): P {
+  unpackParameters(
+    params: Prisma.JsonNullValueInput | Prisma.InputJsonValue,
+  ): P {
     if (this.parameterUnpacker === undefined) {
       return undefined as unknown as P
     }

@@ -1,3 +1,4 @@
+import { withQueryTags } from '@prisma/sqlcommenter-query-tags'
 import {
   GatewayIntentBits,
   Options,
@@ -5,7 +6,11 @@ import {
   type RESTOptions,
 } from 'discord.js'
 import env from 'env-var'
-import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
+import {
+  type ModuleRunner,
+  SleetClient,
+  type SleetModuleEventHandlers,
+} from 'sleetcord'
 import {
   baseLogger,
   getModuleRunner,
@@ -18,6 +23,25 @@ import { modules } from './modules.js'
 import { startApiServer } from './utility/api/server.js'
 
 const initLogger = baseLogger.child({ module: 'init' })
+
+const runner = getModuleRunner()
+
+/**
+ * Sleet module runner that adds some prisma sql commenter tags to trace queries to events and modules
+ * @param module The Sleet module being run
+ * @param callback The Sleet callback to run
+ * @param event The Sleet/Discord.js event that triggered the module
+ * @returns The result of running the callback
+ */
+const moduleRunner: ModuleRunner = (module, callback, event) => {
+  return withQueryTags(
+    {
+      event: event.name,
+      module: module.name,
+    },
+    async () => runner(module, callback, event),
+  )
+}
 
 async function main() {
   const TOKEN = env.get('TOKEN').required().asString()
@@ -68,7 +92,7 @@ async function main() {
     sleet: {
       token: TOKEN,
       applicationId: APPLICATION_ID,
-      moduleRunner: getModuleRunner(),
+      moduleRunner,
     },
     client: {
       rest: {

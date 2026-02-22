@@ -5,7 +5,33 @@ import {
   Worker,
 } from 'node:worker_threads'
 
-import { isMatch } from 'super-regex'
+import functionTimeout, { isTimeoutError } from 'function-timeout'
+
+/**
+ * Perform a regex match with a timeout. If the match takes longer than the timeout, it will return false.
+ *
+ * Lifted from https://github.com/sindresorhus/super-regex because the web-worker dependency was giving a mysterious error:
+ * > TypeError: Cannot destructure property 'mod' of 'threads.workerData' as it is undefined.
+ *
+ * I wrote my own worker implementation anyway for more control and `isMatch` was the only function I used (which was a simple wrapper around `functionTimeout`) so I just lifted it out
+ *
+ * @param regex The regex to match with
+ * @param text The string to match against
+ * @param options The timeout before considering the match a failure
+ * @returns True if the string matches the regex, false if it does not or times out
+ */
+function isMatch(regex: RegExp, text: string, options: { timeout: number }) {
+  try {
+    return functionTimeout(() => structuredClone(regex).test(text), {
+      timeout: options.timeout,
+    })
+  } catch (e) {
+    if (isTimeoutError(e)) {
+      return false
+    }
+    throw e
+  }
+}
 
 interface WorkerData {
   port: MessagePort

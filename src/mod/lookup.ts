@@ -149,6 +149,8 @@ const Emotes = await syncApplicationEmojis('lookup', {
     './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
   guild_tags: './resources/emojis/lookup/guild_features/guild_tags.png',
   guests_enabled: './resources/emojis/lookup/guild_features/guests_enabled.png',
+  pin_permission_migration_done:
+    './resources/emojis/lookup/guild_features/pin_permission_migration_complete.png',
   // #endregion: Feature icons
   //------------------------------
 })
@@ -1402,4 +1404,5 @@ const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
   ENHANCED_ROLE_COLORS: Emotes.enhanced_role_colors,
   GUILD_TAGS: Emotes.guild_tags,
   GUESTS_ENABLED: Emotes.guests_enabled,
+  PIN_PERMISSION_MIGRATION_COMPLETE: Emotes.pin_permission_migration_done,
 }
