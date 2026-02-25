@@ -3,12 +3,17 @@ import {
   type ChatInputCommandInteraction,
   type CommandInteractionOption,
   Constants,
+  type GuildTextBasedChannel,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
 import type { ModLogChannels } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import { formatConfig } from '../../helpers/format.js'
+import {
+  channelFormatter,
+  formatConfig,
+  type GuildFormatter,
+} from '../../helpers/format.js'
 import {
   ACTION_KEYS,
   ACTION_KEYS_CAMEL,
@@ -34,6 +39,26 @@ export const modlog_channels = new SleetSlashSubcommand(
   },
 )
 
+const createFormatters = (
+  defaultChannel: GuildTextBasedChannel | null,
+): Record<LoggedAction, GuildFormatter<string | null>> => {
+  const formatters: Partial<
+    Record<LoggedAction, GuildFormatter<string | null>>
+  > = {}
+  for (const action of ACTION_KEYS_CAMEL) {
+    formatters[action] = (channelID, guild) => {
+      if (!channelID) {
+        return defaultChannel
+          ? `[default] ${channelFormatter(defaultChannel.id, guild)}`
+          : 'No channel set'
+      }
+      return channelFormatter(channelID, guild)
+    }
+  }
+
+  return formatters as Record<LoggedAction, GuildFormatter<string | null>>
+}
+
 async function runModlogChannels(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
@@ -42,6 +67,9 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
       guildID: guild.id,
     },
   })
+
+  const mainConfig = await getValidatedConfigFor(guild, '')
+  const mainChannel = mainConfig?.channel ?? null
 
   if (getOptionCount(interaction) === 0) {
     // No options specified, show the current config
@@ -56,14 +84,13 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
       content: `Current channel overrides:\n${formatConfig({
         config: oldConfig,
         guild,
+        formatters: createFormatters(mainChannel),
       })}`,
       allowedMentions: { parse: [] },
     })
   }
 
   const options = getConfigOptionsFromInteraction(interaction)
-  const mainConfig = await getValidatedConfigFor(guild, '')
-  const mainChannel = mainConfig?.channel ?? null
 
   const mergedConfig: Omit<ModLogChannels, 'updatedAt'> = {
     guildID: guild.id,
@@ -83,6 +110,7 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
       config: mergedConfig,
       oldConfig,
       guild,
+      formatters: createFormatters(mainChannel),
     })}`,
     allowedMentions: { parse: [] },
   })

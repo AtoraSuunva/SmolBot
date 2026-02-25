@@ -20,7 +20,7 @@ type Value =
   | null
   | undefined
   | { toString: () => string }
-type GuildFormatter<T> = (value: T, guild?: Guild) => string
+export type GuildFormatter<T> = (value: T, guild?: Guild) => string
 
 interface FormatConfigOptions<Config extends Record<string, Value>> {
   /** The configuration to format into text */
