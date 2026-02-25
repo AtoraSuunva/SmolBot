@@ -86,6 +86,10 @@ const modlogConfigOptions = {
     description: 'Log when a member is timed out or has their timeout removed',
     type: ApplicationCommandOptionType.Boolean,
   },
+  automod_timeout: {
+    description: 'Log when a member is timed out by automod',
+    type: ApplicationCommandOptionType.Boolean,
+  },
   user_update: {
     description: 'Log when a user is updated',
     type: ApplicationCommandOptionType.String,

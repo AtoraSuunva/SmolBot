@@ -1,5 +1,6 @@
 import {
   AuditLogEvent,
+  type AutoModerationActionExecution,
   type Client,
   type Guild,
   type GuildAuditLogsEntry,
@@ -12,7 +13,11 @@ import {
   channelDelete,
   logChannelModified,
 } from './channelModify.js'
-import { logMemberTimeout, type TimeoutAuditLog } from './guildMemberTimeout.js'
+import {
+  logAutoModerationActionExecution,
+  logMemberTimeout,
+  type TimeoutAuditLog,
+} from './guildMemberTimeout.js'
 import { type BanAuditLog, logMemberBanKick } from './memberBanKick.js'
 
 export const logAuditLog = new SleetModule(
@@ -22,6 +27,7 @@ export const logAuditLog = new SleetModule(
   {
     guildAuditLogEntryCreate,
     channelDelete,
+    autoModerationActionExecution,
   },
 )
 
@@ -46,6 +52,12 @@ async function guildAuditLogEntryCreate(
       await logMemberTimeout(auditLogEntry as TimeoutAuditLog, guild)
       break
   }
+}
+
+async function autoModerationActionExecution(
+  action: AutoModerationActionExecution,
+) {
+  logAutoModerationActionExecution(action)
 }
 
 export async function resolveUser(

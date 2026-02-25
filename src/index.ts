@@ -101,6 +101,7 @@ async function main() {
         makeRequest: fetch as unknown as RESTOptions['makeRequest'],
       },
       intents: [
+        GatewayIntentBits.AutoModerationExecution,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildMessages,
@@ -125,7 +126,6 @@ async function main() {
         PresenceManager: 0,
         StageInstanceManager: 0,
         ThreadMemberManager: 0,
-        AutoModerationRuleManager: 0,
       }),
       enforceNonce: true,
     },

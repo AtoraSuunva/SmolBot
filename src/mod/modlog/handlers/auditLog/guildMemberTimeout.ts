@@ -1,5 +1,7 @@
 import {
   type AuditLogEvent,
+  type AutoModerationActionExecution,
+  AutoModerationActionType,
   type Guild,
   type GuildAuditLogsEntry,
   time,
@@ -52,7 +54,9 @@ export async function logMemberTimeout(
     auditLogEntry.targetId,
     guild.client,
   )
-  const targetUser = target ? formatUser(target) : 'Unknown User'
+  const targetUser = target
+    ? formatUser(target)
+    : `Unknown User (${auditLogEntry.targetId})`
 
   const timeoutChange = auditLogEntry.changes.find(
     (change) => change.key === 'communication_disabled_until',
@@ -62,7 +66,8 @@ export async function logMemberTimeout(
     return
   }
 
-  let verb = 'timed out'
+  let emoji = '⏱️'
+  let verb = 'was timed out'
   let until: DateTime | null = null
   let interval: Interval | null = null
 
@@ -71,6 +76,7 @@ export async function logMemberTimeout(
     until = DateTime.fromISO(timeoutChange.new)
     interval = Interval.fromDateTimes(DateTime.now(), until)
   } else if (timeoutChange.old) {
+    emoji = '🗣️'
     verb = 'had their timeout removed'
   }
 
@@ -86,7 +92,52 @@ export async function logMemberTimeout(
   await ticket.waitUntilFirst()
 
   await conf.channel.send({
-    content: formatLog('🕑', 'Member Timeout', message, eventDate),
+    content: formatLog(emoji, 'Member Timeout', message, eventDate),
+    allowedMentions: { parse: [] },
+  })
+}
+
+export async function logAutoModerationActionExecution(
+  execution: AutoModerationActionExecution,
+) {
+  const { guild } = execution
+
+  const eventDate = new Date()
+  using ticket = getModlogTicketQueue(guild).acquireTicket()
+
+  const action: LoggedAction = 'automodTimeout'
+
+  const conf = await getValidatedConfigFor(
+    guild,
+    action,
+    (config) => !!config[action],
+  )
+  if (!conf) return
+  if (execution.action.type !== AutoModerationActionType.Timeout) return
+
+  const timeoutDuration = execution.action.metadata.durationSeconds
+
+  if (!timeoutDuration) return
+
+  const targetUser = execution.member
+    ? formatUser(execution.member.user)
+    : `Unknown User (${execution.userId})`
+
+  const { ruleId } = execution
+  const rule = await guild.autoModerationRules
+    .fetch(ruleId)
+    .then((r) => r.name)
+    .catch(() => `Unknown Rule (${ruleId})`)
+  const until = DateTime.now().plus({ seconds: timeoutDuration })
+  const untilMessage = ` until ${time(until.toJSDate(), 'f')}`
+  const intervalMessage = ` (${prettyMilliseconds(timeoutDuration * 1000, { verbose: true })})`
+
+  const message = `${targetUser} was automatically timed out by rule "${rule}"${untilMessage}${intervalMessage}`
+
+  await ticket.waitUntilFirst()
+
+  await conf.channel.send({
+    content: formatLog('⏱️', 'Member Timeout', message, eventDate),
     allowedMentions: { parse: [] },
   })
 }
