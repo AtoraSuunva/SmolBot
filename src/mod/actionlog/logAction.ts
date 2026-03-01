@@ -1,9 +1,11 @@
 import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import PQueue from 'p-queue'
 import { SleetModule } from 'sleetcord'
+import { SECOND } from 'sleetcord-common'
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { resolveUser } from '../modlog/handlers/auditLog/index.js'
+import { editAction } from './reason.js'
 import {
   type ActionLogEntry,
   fetchActionLogConfigFor,
@@ -92,6 +94,43 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
   }
 
   void logQueue.add(async () => {
+    if (config.mergeLogs && (type === 'ban' || type === 'unban')) {
+      // Pull the last action for this user in this guild, if it was the opposite action and was created within the last 30 seconds, merge it to a softban/reban
+      // ban -> unban = softban, unban -> ban = reban
+      const oppositeType = type === 'ban' ? 'unban' : 'ban'
+      const latestActionForUser = await prisma.actionLog.findFirst({
+        where: {
+          guildID: guild.id,
+          userID: entry.user?.id ?? null,
+          action: oppositeType,
+          createdAt: {
+            gte: new Date(Date.now() - 30 * SECOND),
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+
+      if (latestActionForUser) {
+        const newAction: ActionLogEntry['action'] =
+          type === 'ban' ? 'reban' : 'softban'
+
+        await editAction(
+          guild,
+          config,
+          latestActionForUser.actionID,
+          latestActionForUser.reason,
+          latestActionForUser.redactUser,
+          false,
+          reasonBy,
+          newAction,
+        )
+
+        return
+      }
+    }
+
     const nextActionID = await prisma.$transaction(async (tx) => {
       // So to create a new action, we need to:
       // 0. Figure out the next action ID to use in this guild

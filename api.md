@@ -63,7 +63,7 @@ Returns action log entries for a given guild.
 
 | name | type | description |
 |------|------|-------------|
-| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed` |
+| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban` |
 | `allVersions` | boolean | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
 | `limit` | number | Optional. The amount of results to return, minimum 1, maximum 100, default 100. |
 | `before` | number | Optional. Return results with an `actionID` smaller than this. |
@@ -118,7 +118,7 @@ Returns action log entries for a given user in a guild.
 
 | name | type | description |
 |------|------|-------------|
-| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed` |
+| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban` |
 | `allVersions` | boolean | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
 | `limit` | number | Optional. The amount of results to return, minimum 1, maximum 100, default 100. |
 | `before` | number | Optional. Return results with an `actionID` smaller than this. |

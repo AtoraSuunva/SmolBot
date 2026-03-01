@@ -295,14 +295,15 @@ interface EditActionLogFailure {
 
 type EditActionLog = EditActionLogSuccess | EditActionLogFailure
 
-async function editAction(
+export async function editAction(
   guild: Guild,
   config: ActionLogConfig,
   actionID: number,
   reason: string | null,
   redactUser: boolean | null,
   repost: boolean | null,
-  reasonBy: User,
+  reasonBy: User | null,
+  action: ActionLogEntry['action'] | null = null,
 ): Promise<EditActionLog> {
   const oldAction = await prisma.actionLog.findFirst({
     where: {
@@ -323,15 +324,15 @@ async function editAction(
   const mergedAction: ActionLog = repost
     ? oldAction
     : {
-        action: oldAction.action,
+        action: action ?? oldAction.action,
         guildID: guild.id,
         actionID: actionID,
         version: oldAction.version,
         userID: oldAction.userID,
         redactUser: redactUser ?? oldAction.redactUser,
         reason: reason ?? oldAction.reason,
-        reasonByID: reason ? reasonBy.id : oldAction.reasonByID,
-        moderatorID: oldAction.moderatorID ?? reasonBy.id,
+        reasonByID: reason ? (reasonBy?.id ?? null) : oldAction.reasonByID,
+        moderatorID: oldAction.moderatorID ?? reasonBy?.id ?? null,
         channelID: oldAction.channelID,
         messageID: oldAction.messageID,
         createdAt: oldAction.createdAt,

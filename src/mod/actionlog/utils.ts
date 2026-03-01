@@ -11,7 +11,14 @@ import { capitalize } from '../../helpers/format.js'
 export interface ActionLogEntry {
   id: number
   version?: number
-  action: 'ban' | 'unban' | 'kick' | 'timeout' | 'timeout removed'
+  action:
+    | 'ban'
+    | 'unban'
+    | 'kick'
+    | 'timeout'
+    | 'timeout removed'
+    | 'softban'
+    | 'reban'
   user: User | GuildMember | null
   redactUser: boolean
   reason: string | null

@@ -15,6 +15,8 @@ const actionChoices = makeChoices([
   'Kick',
   'Timeout',
   'Timeout Removed',
+  'Softban',
+  'Reban',
 ])
 
 type ActionTypes = Lowercase<(typeof actionChoices)[number]['value']>

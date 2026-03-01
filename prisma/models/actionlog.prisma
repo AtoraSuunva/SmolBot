@@ -5,6 +5,7 @@ model ActionLogConfig {
   logKicks           Boolean  @map("log_kicks")
   logTimeouts        Boolean  @map("log_timeouts")
   logTimeoutRemovals Boolean  @map("log_timeout_removals")
+  mergeLogs          Boolean  @default(true) @map("merge_logs")
   logChannelID       String?  @map("log_channel_id")
   archiveEnabled     Boolean  @default(false) @map("archive_enabled")
   archiveChannel     String?  @map("archive_channel")

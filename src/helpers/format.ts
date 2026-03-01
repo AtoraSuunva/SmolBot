@@ -45,25 +45,31 @@ export const guildFormatter: GuildFormatter<Value> = (
   value: Value,
   guild?: Guild,
 ) =>
-  `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(
-    value,
-  )})`
+  value === null
+    ? 'null'
+    : `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(
+        value,
+      )})`
 
 export const channelFormatter: GuildFormatter<Value> = (
   value: Value,
   guild?: Guild,
 ) =>
-  `#${
-    guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
-  } (${String(value)})`
+  value === null
+    ? 'null'
+    : `#${
+        guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
+      } (${String(value)})`
 
 export const roleFormatter: GuildFormatter<Value> = (
   value: Value,
   guild?: Guild,
 ) =>
-  `@${
-    guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
-  } (${String(value)})`
+  value === null
+    ? 'null'
+    : `@${
+        guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
+      } (${String(value)})`
 
 export const makeForumTagFormatter: (
   forum: ForumChannel,

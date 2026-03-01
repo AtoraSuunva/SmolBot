@@ -70,7 +70,15 @@ const paramGuildActionLogsSchema = s.object({
 
 const queryActionLogsSchema = s.object({
   action: s
-    .enum(['ban', 'unban', 'kick', 'timeout', 'timeout removed'])
+    .enum([
+      'ban',
+      'unban',
+      'kick',
+      'timeout',
+      'timeout removed',
+      'softban',
+      'reban',
+    ])
     .optional(),
   allVersions: s.string().optional().reshape(parseBoolean),
   limit: s

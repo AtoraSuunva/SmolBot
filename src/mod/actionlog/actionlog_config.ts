@@ -41,6 +41,12 @@ export const actionlog_config = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.Boolean,
       },
       {
+        name: 'merge_logs',
+        description:
+          'Merge bans/unbans on the same user within 30 seconds to softbans/rebans (default: true)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
         name: 'log_channel',
         description: 'The channel to log to (default: none)',
         type: ApplicationCommandOptionType.Channel,
@@ -102,6 +108,7 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
   const logUnbans = options.getBoolean('log_unbans')
   const logTimeouts = options.getBoolean('log_timeouts')
   const logTimeoutRemovals = options.getBoolean('log_timeout_removals')
+  const mergeLogs = options.getBoolean('merge_logs')
   const logChannel = options.getChannel('log_channel')
   const archiveEnabled = options.getBoolean('archive_enabled')
   const archiveChannel = options.getChannel('archive_channel')
@@ -114,6 +121,7 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
     logTimeouts: logTimeouts ?? oldConfig?.logTimeouts ?? false,
     logTimeoutRemovals:
       logTimeoutRemovals ?? oldConfig?.logTimeoutRemovals ?? false,
+    mergeLogs: mergeLogs ?? oldConfig?.mergeLogs ?? true,
     logChannelID: logChannel?.id ?? oldConfig?.logChannelID ?? null,
     archiveEnabled: archiveEnabled ?? oldConfig?.archiveEnabled ?? false,
     archiveChannel: archiveChannel?.id ?? oldConfig?.archiveChannel ?? null,
