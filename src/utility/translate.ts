@@ -119,7 +119,7 @@ export const translateSlash = new SleetSlashCommand(
   },
 )
 
-export const translateMessage = new SleetMessageCommand(
+export const translateMessagePublic = new SleetMessageCommand(
   {
     name: 'Translate',
     contexts: [
@@ -133,7 +133,25 @@ export const translateMessage = new SleetMessageCommand(
     ],
   },
   {
-    run: runTranslateMessage,
+    run: (i) => runTranslateMessage(i, false),
+  },
+)
+
+export const translateMessageEphemeral = new SleetMessageCommand(
+  {
+    name: 'Translate (Ephemeral)',
+    contexts: [
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel,
+    ],
+    integration_types: [
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ],
+  },
+  {
+    run: (i) => runTranslateMessage(i, true),
   },
 )
 
@@ -160,6 +178,7 @@ async function runTranslateSlash(interaction: ChatInputCommandInteraction) {
 
 async function runTranslateMessage(
   interaction: MessageContextMenuCommandInteraction,
+  ephemeral: boolean,
 ) {
   const text = getTranslateText(interaction.targetMessage)
 
@@ -178,12 +197,7 @@ async function runTranslateMessage(
     fromInput: 'auto',
     toInput: interaction.locale,
     autoCorrect: false,
-    // Ephemeral responses if the bot is being called via a user-installed app context
-    // i.e. you add the bot to your account and then translate a message on a random server
-    ephemeral: !(
-      ApplicationIntegrationType.GuildInstall in
-      interaction.authorizingIntegrationOwners
-    ),
+    ephemeral,
   })
 }
 
