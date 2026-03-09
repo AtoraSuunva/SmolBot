@@ -43,9 +43,7 @@ async function updateEvents(client: Client) {
 
     const events = await guild.scheduledEvents.fetch()
 
-    const deltaruneEvent = events.find(
-      (event) => event.name === 'Deltarune Tomorrow',
-    )
+    const deltaruneEvent = events.find((event) => event.name === 'Deltarune Tomorrow')
 
     if (!deltaruneEvent) {
       continue
@@ -54,9 +52,7 @@ async function updateEvents(client: Client) {
     const tomorrow = DateTime.now().plus({ days: 1 }).startOf('hour')
 
     if (tomorrow.toMillis() === deltaruneEvent.scheduledStartTimestamp) {
-      deltaruneLogger.debug(
-        `Event already scheduled for ${tomorrow.toISO()} in guild ${guildId}`,
-      )
+      deltaruneLogger.debug(`Event already scheduled for ${tomorrow.toISO()} in guild ${guildId}`)
       continue
     }
 

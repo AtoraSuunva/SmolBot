@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import type { ReadableStream } from 'node:stream/web'
+
 import { murmur3_32_hex } from '@plus99/murmur-hash'
 import type { Message } from 'discord.js'
 
@@ -27,11 +28,7 @@ export function hashEmbeds(message: Message): Promise<string[]> {
     // We cheat a little and just use the embed url as a "hash" instead of downloading the image/video ourself
     // Users *shouldn't* typically be sending embeds anyway without using URLs (unless they selfbot), which can be detected by other means
     const embedHashes: string[] = Array.from(
-      new Set(
-        embeds
-          .map((embed) => embed.url)
-          .filter((e): e is string => typeof e === 'string'),
-      ),
+      new Set(embeds.map((embed) => embed.url).filter((e): e is string => typeof e === 'string')),
     )
 
     Promise.all(
@@ -49,9 +46,7 @@ export function hashEmbeds(message: Message): Promise<string[]> {
         return hashStream(response.body)
       }),
     )
-      .then((attachmentHashes) => {
-        resolve([...embedHashes, ...attachmentHashes])
-      })
+      .then((attachmentHashes) => resolve([...embedHashes, ...attachmentHashes]))
       .catch(reject)
   })
 

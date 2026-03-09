@@ -11,6 +11,7 @@ import {
 } from 'discord.js'
 import { getGuild } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+
 import type { WarningConfig } from '../../generated/prisma/client.js'
 import { plural } from '../../helpers/format.js'
 import {
@@ -26,9 +27,7 @@ export type WarningFetcher = (
   currentPage: number,
 ) => Promise<PaginatedWarnings>
 
-export type FormatAuthor = (
-  result: PaginatedWarnings,
-) => EmbedAuthorOptions | null
+export type FormatAuthor = (result: PaginatedWarnings) => EmbedAuthorOptions | null
 export type FormatTitle = (result: PaginatedWarnings) => string | null
 export type FormatDescription = (result: PaginatedWarnings) => string | null
 
@@ -48,8 +47,7 @@ function defaultFormatAuthor(): EmbedAuthorOptions | null {
 function defaultFormatTitle(result: PaginatedWarnings): string | null {
   const { total: warnings, expired, voided } = result.counts
 
-  const expiredString =
-    expired > 0 ? `, **${expired.toLocaleString()}** expired` : ''
+  const expiredString = expired > 0 ? `, **${expired.toLocaleString()}** expired` : ''
 
   const voidedString = voided > 0 ? `, **${voided.toLocaleString()}** void` : ''
 
@@ -84,9 +82,7 @@ export async function respondWithPaginatedWarnings(
   const config = await fetchWarningConfigFor(guild.id, true)
   let currentPage = 1
 
-  async function searchPages(
-    page: number,
-  ): Promise<InteractionEditReplyOptions> {
+  async function searchPages(page: number): Promise<InteractionEditReplyOptions> {
     const res = await fetchWarnings(guild.id, config, currentPage)
     const totalPages = Math.ceil(res.counts.total / MAX_PER_PAGE)
 

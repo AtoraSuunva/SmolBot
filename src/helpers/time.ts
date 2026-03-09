@@ -8,10 +8,7 @@ const unixMsRegex = /^\d+$/
  * @param zone Timezone to interpret the input in if the input specifies none, defaults to UTC
  * @returns
  */
-export function dateTimeFrom(
-  input: string | number,
-  zone: string | Zone = 'UTC',
-): DateTime {
+export function dateTimeFrom(input: string | number, zone: string | Zone = 'UTC'): DateTime {
   if (typeof input === 'number') {
     return DateTime.fromMillis(input, { zone })
   }

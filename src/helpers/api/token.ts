@@ -13,25 +13,19 @@ export const Permission = {
 /**
  * Maps permission bits to their human-readable descriptions.
  */
-export const PermissionDescription: Record<
-  (typeof Permission)[keyof typeof Permission],
-  string
-> = {
+export const PermissionDescription: Record<(typeof Permission)[keyof typeof Permission], string> = {
   [Permission.CreateToken]: 'Create a new token (POST /api/token/create)',
-  [Permission.ReadActionLog]:
-    'Read action log (GET /api/action-log/:guildId/:userId)',
+  [Permission.ReadActionLog]: 'Read action log (GET /api/action-log/:guildId/:userId)',
 }
 
 /**
  * Maps permission keys to their command options to easily create slash commands.
  */
-export const PermissionCommandOptions = Object.entries(Permission).map(
-  ([key, value]) => ({
-    permissionKey: key as keyof typeof Permission,
-    name: toSnakeCase(key),
-    description: PermissionDescription[value],
-  }),
-)
+export const PermissionCommandOptions = Object.entries(Permission).map(([key, value]) => ({
+  permissionKey: key as keyof typeof Permission,
+  name: toSnakeCase(key),
+  description: PermissionDescription[value],
+}))
 
 /**
  * Maps permission bitfields to their human-readable names.

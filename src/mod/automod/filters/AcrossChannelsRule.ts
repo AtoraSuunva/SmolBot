@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { hashEmbeds } from '../hashEmbeds.js'
 import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
@@ -29,18 +30,13 @@ export class AcrossChannelsRule extends BaseRepeatRule<AcrossChannelsIdentifier>
       // Not the same channel
       lastIdentifier.channel !== newIdentifier.channel &&
       // Same content
-      ((lastIdentifier.content !== '' &&
-        lastIdentifier.content === newIdentifier.content) ||
+      ((lastIdentifier.content !== '' && lastIdentifier.content === newIdentifier.content) ||
         // Or same embeds
-        newIdentifier.embeds.some((hash) =>
-          lastIdentifier.embeds.includes(hash),
-        ))
+        newIdentifier.embeds.some((hash) => lastIdentifier.embeds.includes(hash)))
     )
   }
 
-  override async getIdentifier(
-    message: Message<true>,
-  ): Promise<AcrossChannelsIdentifier> {
+  override async getIdentifier(message: Message<true>): Promise<AcrossChannelsIdentifier> {
     return {
       channel: message.channel.id,
       content: message.content.toLowerCase(),

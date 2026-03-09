@@ -10,6 +10,7 @@ import {
 } from 'discord.js'
 import { DateTime } from 'luxon'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { dateTimeFrom } from '../helpers/time.js'
 
 const timezones = Intl.supportedValuesOf('timeZone')
@@ -36,8 +37,7 @@ export const timestamp = new SleetSlashCommand(
       },
       {
         name: 'relative',
-        description:
-          'An expression like "in 3 hours" or "next Thursday" to offset "date_time" by',
+        description: 'An expression like "in 3 hours" or "next Thursday" to offset "date_time" by',
         type: ApplicationCommandOptionType.String,
       },
       {
@@ -78,9 +78,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
   const timezone = interaction.options.getString('timezone') ?? 'UTC'
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  const anchor = dateTime
-    ? dateTimeFrom(dateTime, timezone)
-    : DateTime.now().setZone(timezone)
+  const anchor = dateTime ? dateTimeFrom(dateTime, timezone) : DateTime.now().setZone(timezone)
 
   if (!anchor.isValid) {
     await interaction.reply({
@@ -109,9 +107,7 @@ async function runTimestamp(interaction: ChatInputCommandInteraction) {
     }
   }
 
-  const result = relativeResult
-    ? DateTime.fromJSDate(relativeResult).setZone(timezone)
-    : anchor
+  const result = relativeResult ? DateTime.fromJSDate(relativeResult).setZone(timezone) : anchor
   const unixInt = result.toUnixInteger()
 
   const header = `Timestamps for \`${result.toISO()}\` - \`${result.zoneName}\``

@@ -8,6 +8,7 @@ import type {
   User,
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
+
 import { getValidatedConfigFor } from '../utils.js'
 
 export const modlogMessageReactionAdd = new SleetModule(
@@ -55,14 +56,10 @@ async function kickMember(
   }
 
   if (!member.kickable) {
-    return `Could not kick '${userId}' requested by ${formatUser(
-      executor,
-    )} (Missing permissions)`
+    return `Could not kick '${userId}' requested by ${formatUser(executor)} (Missing permissions)`
   }
 
-  await member.kick(
-    `Kicked by ${formatUser(executor, { markdown: false, escapeMarkdown: false })}`,
-  )
+  await member.kick(`Kicked by ${formatUser(executor, { markdown: false, escapeMarkdown: false })}`)
   return `Kicked '${userId}' requested by ${formatUser(executor)}`
 }
 
@@ -76,9 +73,7 @@ export const actions = {
         })}`,
       })
     } catch {
-      return `Could not ban '${userId}' requested by ${formatUser(
-        executor,
-      )} (Missing permissions?)`
+      return `Could not ban '${userId}' requested by ${formatUser(executor)} (Missing permissions?)`
     }
 
     return `Banned '${userId}' requested by ${formatUser(executor)}`
@@ -101,11 +96,7 @@ async function handleMessageReactionAdd(
     .catch(() => null)
   if (!guild) return
 
-  const conf = await getValidatedConfigFor(
-    guild,
-    '',
-    (config) => config.reactionActions,
-  )
+  const conf = await getValidatedConfigFor(guild, '', (config) => config.reactionActions)
   if (!conf) return
 
   const { channel } = conf

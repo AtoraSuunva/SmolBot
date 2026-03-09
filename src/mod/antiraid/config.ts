@@ -1,8 +1,6 @@
-import {
-  ApplicationCommandOptionType,
-  type ChatInputCommandInteraction,
-} from 'discord.js'
+import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { formatConfig } from '../../helpers/format.js'
@@ -15,8 +13,7 @@ export const antiraid_config = new SleetSlashSubcommand(
     options: [
       {
         name: 'enabled',
-        description:
-          'Whether the antiraid module should be enabled to automatically check joins',
+        description: 'Whether the antiraid module should be enabled to automatically check joins',
         type: ApplicationCommandOptionType.Boolean,
       },
       ...antiRaidOptions,
@@ -33,26 +30,11 @@ async function handleRunConfig(interaction: ChatInputCommandInteraction) {
   const enabled = interaction.options.getBoolean('enabled', false)
   const action = interaction.options.getString('action', false)
   const threshold = interaction.options.getNumber('threshold', false)
-  const timeoutDuration = interaction.options.getNumber(
-    'timeout_duration',
-    false,
-  )
-  const accountAgeLimitMin = interaction.options.getNumber(
-    'account_age_limit_min',
-    false,
-  )
-  const accountAgeLimitMax = interaction.options.getNumber(
-    'account_age_limit_max',
-    false,
-  )
-  const accountAgeWeight = interaction.options.getNumber(
-    'account_age_weight',
-    false,
-  )
-  const noProfilePictureWeight = interaction.options.getNumber(
-    'no_profile_picture_weight',
-    false,
-  )
+  const timeoutDuration = interaction.options.getNumber('timeout_duration', false)
+  const accountAgeLimitMin = interaction.options.getNumber('account_age_limit_min', false)
+  const accountAgeLimitMax = interaction.options.getNumber('account_age_limit_max', false)
+  const accountAgeWeight = interaction.options.getNumber('account_age_weight', false)
+  const noProfilePictureWeight = interaction.options.getNumber('no_profile_picture_weight', false)
   const reason = interaction.options.getString('reason', false)
   const logChannel = interaction.options.getChannel('log_channel', false)
   const reset = interaction.options.getBoolean('reset', false)
@@ -72,8 +54,7 @@ async function handleRunConfig(interaction: ChatInputCommandInteraction) {
     accountAgeLimitMin: accountAgeLimitMin ?? config.accountAgeLimitMin,
     accountAgeLimitMax: accountAgeLimitMax ?? config.accountAgeLimitMax,
     accountAgeWeight: accountAgeWeight ?? config.accountAgeWeight,
-    noProfilePictureWeight:
-      noProfilePictureWeight ?? config.noProfilePictureWeight,
+    noProfilePictureWeight: noProfilePictureWeight ?? config.noProfilePictureWeight,
   }
 
   const updatedConfig = await prisma.antiRaidConfig.upsert({

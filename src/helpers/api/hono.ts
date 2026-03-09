@@ -70,9 +70,7 @@ function formatError(
     | ExpectedValidationError<unknown>,
 ): JSONValue {
   if (err instanceof CombinedPropertyError) {
-    return Object.fromEntries(
-      err.errors.map(([key, error]) => [String(key), formatError(error)]),
-    )
+    return Object.fromEntries(err.errors.map(([key, error]) => [String(key), formatError(error)]))
   }
 
   if (err instanceof CombinedError) {
@@ -106,9 +104,7 @@ function formatError(
         if (latest.message === formatted.message) {
           for (const [k, v] of Object.entries(formatted)) {
             if (latest[k] !== v) {
-              latest[k] = Array.isArray(latest[k])
-                ? [...latest[k], v]
-                : [latest[k], v]
+              latest[k] = Array.isArray(latest[k]) ? [...latest[k], v] : [latest[k], v]
             }
           }
         } else {
@@ -122,9 +118,7 @@ function formatError(
       combined.push(latest)
     }
 
-    return combined.length === 1
-      ? (combined[0] as JSONValue)
-      : (combined as JSONValue)
+    return combined.length === 1 ? (combined[0] as JSONValue) : (combined as JSONValue)
   }
 
   if (err instanceof ValidationError) {

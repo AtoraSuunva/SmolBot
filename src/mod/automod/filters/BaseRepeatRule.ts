@@ -1,11 +1,8 @@
 import { s } from '@sapphire/shapeshift'
 import type { Awaitable, GuildMember, Message } from 'discord.js'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
-import {
-  AutomodRule,
-  type AutomodRuleData,
-  type RuleTriggerInfo,
-} from './AutomodRule.js'
+import { AutomodRule, type AutomodRuleData, type RuleTriggerInfo } from './AutomodRule.js'
 
 export interface RepeatInfractionInfo<Identifier> {
   /** The previous messages that "matched" some criteria to count as an infraction */
@@ -19,10 +16,7 @@ export interface RepeatInfractionInfo<Identifier> {
 const unpackValidator = s.tuple([s.number()])
 
 export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
-  private readonly infractionInfo = new Map<
-    GuildMember,
-    RepeatInfractionInfo<Identifier>
-  >()
+  private readonly infractionInfo = new Map<GuildMember, RepeatInfractionInfo<Identifier>>()
 
   private maxRepeats: number
 
@@ -39,9 +33,7 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
     this.maxRepeats = maxRepeats
   }
 
-  override unpackParameters(
-    params: Prisma.JsonNullValueInput | Prisma.InputJsonValue,
-  ) {
+  override unpackParameters(params: Prisma.JsonNullValueInput | Prisma.InputJsonValue) {
     return unpackValidator.parse(params)
   }
 
@@ -49,11 +41,7 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
     return [this.maxRepeats] as [number]
   }
 
-  async resetCounter(
-    member: GuildMember,
-    message: Message<true>,
-    data?: Identifier,
-  ) {
+  async resetCounter(member: GuildMember, message: Message<true>, data?: Identifier) {
     this.infractionInfo.set(member, {
       previousMessages: [message],
       lastIdentifier: data ?? (await this.getIdentifier(message)),
@@ -69,9 +57,7 @@ export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
 
   abstract getIdentifier(message: Message<true>): Awaitable<Identifier>
 
-  override async filterMessage(
-    message: Message<true>,
-  ): Promise<RuleTriggerInfo | null> {
+  override async filterMessage(message: Message<true>): Promise<RuleTriggerInfo | null> {
     const member = await message.guild.members.fetch(message.author.id)
     const info = this.infractionInfo.get(member)
 

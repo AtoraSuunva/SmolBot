@@ -17,6 +17,7 @@ import {
 } from 'discord.js'
 import { formatUser, getGuild, SleetMessageCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+
 import { quoteMessage } from '../../helpers/quoteMessage.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import { fetchConfig } from './manage/config.js'
@@ -47,8 +48,8 @@ async function runReportMessage(
     return
   }
 
-  const config = await fetchConfig(guild, interaction.user).catch(
-    (err: unknown) => (err instanceof Error ? err.message : String(err)),
+  const config = await fetchConfig(guild, interaction.user).catch((err: unknown) =>
+    err instanceof Error ? err.message : String(err),
   )
 
   if (typeof config === 'string') {
@@ -62,11 +63,7 @@ async function runReportMessage(
   const customId = `report_message:${message.id}:${interaction.id}`
 
   const logMessage = await messageToLog(message)
-  const formattedMessage = [
-    logMessage.header,
-    logMessage.content,
-    logMessage.footer,
-  ]
+  const formattedMessage = [logMessage.header, logMessage.content, logMessage.footer]
     .map((v) => v.trim())
     .filter((v) => v.length > 0)
     .join('\n')
@@ -105,10 +102,7 @@ async function runReportMessage(
   const modal = new ModalBuilder()
     .setCustomId(customId)
     .setTitle('Report Message')
-    .addTextDisplayComponents([
-      authorPreviewTextDisplay,
-      messagePreviewTextDisplay,
-    ])
+    .addTextDisplayComponents([authorPreviewTextDisplay, messagePreviewTextDisplay])
     .addLabelComponents([reasonInput, isAnonInput])
 
   await interaction.showModal(modal)
@@ -130,8 +124,7 @@ async function runReportMessage(
   }
 
   const reason = modalInteraction.fields.getTextInputValue('reason')
-  const isAnonString =
-    modalInteraction.fields.getTextInputValue('anon') || 'yes'
+  const isAnonString = modalInteraction.fields.getTextInputValue('anon') || 'yes'
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
   const footer: EmbedFooterOptions = {
@@ -176,8 +169,7 @@ async function runReportMessage(
     await sendReport(config, interaction.user, embeds)
 
     await modalInteraction.reply({
-      content:
-        "Your report has been sent to the moderators.\nHere's a copy of your report:",
+      content: "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
       flags: MessageFlags.Ephemeral,
     })

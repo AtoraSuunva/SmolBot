@@ -42,8 +42,7 @@ const autocompleteLanguage: AutocompleteHandler<string> = ({ value }) => {
     languageEntries
       .filter(
         ({ lowerCase }) =>
-          lowerCase.iso.includes(lowerValue) ||
-          lowerCase.name.includes(lowerValue),
+          lowerCase.iso.includes(lowerValue) || lowerCase.name.includes(lowerValue),
       )
       .map(({ original }) => ({
         name: `${original.name} (${original.iso})`,
@@ -68,8 +67,7 @@ const autocompleteLanguage: AutocompleteHandler<string> = ({ value }) => {
 export const translateSlash = new SleetSlashCommand(
   {
     name: 'translate',
-    description:
-      'Translate text into your Discord language or into a language of your choice',
+    description: 'Translate text into your Discord language or into a language of your choice',
     contexts: [
       InteractionContextType.Guild,
       InteractionContextType.BotDM,
@@ -96,8 +94,7 @@ export const translateSlash = new SleetSlashCommand(
       },
       {
         name: 'to',
-        description:
-          'Language to translate to (default: your locale, or English)',
+        description: 'Language to translate to (default: your locale, or English)',
         type: ApplicationCommandOptionType.String,
         autocomplete: autocompleteLanguage,
       },
@@ -108,8 +105,7 @@ export const translateSlash = new SleetSlashCommand(
       },
       {
         name: 'ephemeral',
-        description:
-          'Send the translation result as an ephemeral message (default: False)',
+        description: 'Send the translation result as an ephemeral message (default: False)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -184,8 +180,7 @@ async function runTranslateMessage(
 
   if (!text) {
     await interaction.reply({
-      content:
-        "The message you're trying to translate doesn't have any text content to translate.",
+      content: "The message you're trying to translate doesn't have any text content to translate.",
       flags: MessageFlags.Ephemeral,
     })
 

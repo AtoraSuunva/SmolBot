@@ -10,6 +10,7 @@ import {
   type ThreadChannel,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../helpers/db.js'
 import { formatConfig, makeForumTagFormatter } from '../helpers/format.js'
 import { createTagAutocomplete } from './modmail/ticket/create_button.js'
@@ -84,9 +85,7 @@ export const auto_tag = new SleetSlashCommand(
 )
 
 async function runEnable(interaction: ChatInputCommandInteraction) {
-  const forum = interaction.options.getChannel('forum', true, [
-    ChannelType.GuildForum,
-  ])
+  const forum = interaction.options.getChannel('forum', true, [ChannelType.GuildForum])
   const tag = interaction.options.getString('tag', true)
   const guild = await getGuild(interaction, true)
 
@@ -142,9 +141,7 @@ async function runEnable(interaction: ChatInputCommandInteraction) {
 }
 
 async function runDisable(interaction: ChatInputCommandInteraction) {
-  const forum = interaction.options.getChannel('forum', true, [
-    ChannelType.GuildForum,
-  ])
+  const forum = interaction.options.getChannel('forum', true, [ChannelType.GuildForum])
   const guild = await getGuild(interaction, true)
 
   const oldConfig = await prisma.autoTagConfig.findUnique({
@@ -196,16 +193,13 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
 
   const configList = await Promise.all(
     configs.map(async (config) => {
-      const channel =
-        (await guild.channels.fetch(config.channelID).catch(() => null)) ?? null
+      const channel = (await guild.channels.fetch(config.channelID).catch(() => null)) ?? null
 
       return formatConfig({
         config,
         guild,
         formatters: {
-          tagID: channel
-            ? makeForumTagFormatter(channel as ForumChannel)
-            : (t) => String(t),
+          tagID: channel ? makeForumTagFormatter(channel as ForumChannel) : (t) => String(t),
         },
       })
     }),
@@ -234,10 +228,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   })
 }
 
-async function handleThreadCreate(
-  thread: ThreadChannel,
-  newlyCreated: boolean,
-) {
+async function handleThreadCreate(thread: ThreadChannel, newlyCreated: boolean) {
   if (!thread.parent?.isThreadOnly() || !newlyCreated) return
 
   const config = await prisma.autoTagConfig.findUnique({

@@ -7,16 +7,9 @@ import {
   MessageFlags,
   type User,
 } from 'discord.js'
-import {
-  type AutocompleteHandler,
-  formatUser,
-  getGuild,
-  SleetSlashCommand,
-} from 'sleetcord'
-import type {
-  ActionLog,
-  ActionLogConfig,
-} from '../../generated/prisma/client.js'
+import { type AutocompleteHandler, formatUser, getGuild, SleetSlashCommand } from 'sleetcord'
+
+import type { ActionLog, ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { capitalize, plural } from '../../helpers/format.js'
 import { sleep } from '../../helpers/functions.js'
@@ -31,10 +24,7 @@ import {
 
 const MAX_IDS = 50
 
-const actionIDAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
+const actionIDAutocomplete: AutocompleteHandler<string> = async ({ interaction, value }) => {
   const { guild, client } = interaction
 
   if (!guild) {
@@ -111,11 +101,7 @@ export const actionReason = new SleetSlashCommand(
     description: 'Reason an action',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
-    default_member_permissions: [
-      'BanMembers',
-      'KickMembers',
-      'ModerateMembers',
-    ],
+    default_member_permissions: ['BanMembers', 'KickMembers', 'ModerateMembers'],
     options: [
       {
         name: 'action_id',
@@ -199,17 +185,7 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
   const results: EditActionLog[] = []
 
   for (const id of actionIDs) {
-    results.push(
-      await editAction(
-        guild,
-        config,
-        id,
-        reason,
-        redactUser,
-        repost,
-        interaction.user,
-      ),
-    )
+    results.push(await editAction(guild, config, id, reason, redactUser, repost, interaction.user))
     if (results.length !== actionIDs.length) {
       // Add a small delay before doing the next one to avoid ratelimiting as hard
       await sleep(250)
@@ -228,16 +204,12 @@ async function reasonRun(interaction: ChatInputCommandInteraction) {
 
   if (successes.length > 0) {
     const formattedAction =
-      successes.length === 1
-        ? `action #${successes[0].id}`
-        : plural('action', successes.length)
+      successes.length === 1 ? `action #${successes[0].id}` : plural('action', successes.length)
 
     if (repost) {
       log.push(`Reposted ${formattedAction}`)
     } else if (reason) {
-      log.push(
-        `Changed reason for ${formattedAction} to${formatReason(reason)}`,
-      )
+      log.push(`Changed reason for ${formattedAction} to${formatReason(reason)}`)
     } else {
       log.push(`Updated ${formattedAction}`)
     }
@@ -346,9 +318,7 @@ export async function editAction(
   const entry: ActionLogEntry = {
     id: oldAction.actionID,
     action: mergedAction.action as ActionLogEntry['action'],
-    user: mergedAction.userID
-      ? await guild.client.users.fetch(mergedAction.userID)
-      : null,
+    user: mergedAction.userID ? await guild.client.users.fetch(mergedAction.userID) : null,
     reason: mergedAction.reason,
     redactUser: mergedAction.redactUser,
     reasonBy: mergedAction.reasonByID
@@ -424,9 +394,7 @@ export async function editAction(
     return await sendMessage()
   }
 
-  const channel = await guild.channels
-    .fetch(oldAction.channelID)
-    .catch(() => null)
+  const channel = await guild.channels.fetch(oldAction.channelID).catch(() => null)
 
   if (!channel?.isTextBased()) {
     return {
@@ -437,15 +405,11 @@ export async function editAction(
     }
   }
 
-  if (
-    guild.members.me &&
-    !channel.permissionsFor(guild.members.me).has('SendMessages')
-  ) {
+  if (guild.members.me && !channel.permissionsFor(guild.members.me).has('SendMessages')) {
     return {
       id: actionID,
       success: false,
-      message:
-        'I do not have permission to send messages in the channel this action was logged to',
+      message: 'I do not have permission to send messages in the channel this action was logged to',
     }
   }
 
@@ -483,10 +447,7 @@ export async function editAction(
  * @param newAction The new action to create
  * @returns The newly created action entry
  */
-export async function updateActionLog(
-  guildID: string,
-  newAction: ActionLog,
-): Promise<ActionLog> {
+export async function updateActionLog(guildID: string, newAction: ActionLog): Promise<ActionLog> {
   // Transaction since we shouldn't be able to mark the old log as expired while erroring on the new log
   return await prisma.$transaction(async (tx) => {
     // Mark the old action as having expired just now

@@ -7,13 +7,10 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { ModLogChannels } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import {
-  channelFormatter,
-  formatConfig,
-  type GuildFormatter,
-} from '../../helpers/format.js'
+import { channelFormatter, formatConfig, type GuildFormatter } from '../../helpers/format.js'
 import {
   ACTION_KEYS,
   ACTION_KEYS_CAMEL,
@@ -42,9 +39,7 @@ export const modlog_channels = new SleetSlashSubcommand(
 const createFormatters = (
   defaultChannel: GuildTextBasedChannel | null,
 ): Record<LoggedAction, GuildFormatter<string | null>> => {
-  const formatters: Partial<
-    Record<LoggedAction, GuildFormatter<string | null>>
-  > = {}
+  const formatters: Partial<Record<LoggedAction, GuildFormatter<string | null>>> = {}
   for (const action of ACTION_KEYS_CAMEL) {
     formatters[action] = (channelID, guild) => {
       if (!channelID) {
@@ -116,10 +111,7 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
   })
 }
 
-type ModlogChannelOptions = Record<
-  LoggedAction,
-  CommandInteractionOption['channel']
->
+type ModlogChannelOptions = Record<LoggedAction, CommandInteractionOption['channel']>
 
 function getConfigOptionsFromInteraction(
   interaction: ChatInputCommandInteraction,

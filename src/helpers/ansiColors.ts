@@ -9,11 +9,7 @@ export enum Format {
 }
 
 function isFormat(value: unknown): value is Format {
-  return (
-    value === Format.Normal ||
-    value === Format.Bold ||
-    value === Format.Underline
-  )
+  return value === Format.Normal || value === Format.Bold || value === Format.Underline
 }
 
 export enum TextColor {
@@ -42,17 +38,9 @@ export enum BackgroundColor {
   White = 47,
 }
 
-export type Markup =
-  | [Format, TextColor | BackgroundColor]
-  | Format
-  | TextColor
-  | BackgroundColor
+export type Markup = [Format, TextColor | BackgroundColor] | Format | TextColor | BackgroundColor
 
-export function ansiFormat(
-  markup: Markup | Markup[],
-  text: string | number,
-  reset = true,
-): string {
+export function ansiFormat(markup: Markup | Markup[], text: string | number, reset = true): string {
   const inMarkup = Array.isArray(markup) ? markup : [markup]
 
   const arrayMarkup = inMarkup.map((m) => {

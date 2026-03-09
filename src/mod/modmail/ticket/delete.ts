@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js'
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../../helpers/db.js'
 import { FIELD_MODMAIL_ID } from '../fields/utils.js'
 
@@ -36,7 +37,5 @@ async function runDeleteModmailID(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  await interaction.reply(
-    `Deleted all fields and config for modmail ID \`${modmailID}\``,
-  )
+  await interaction.reply(`Deleted all fields and config for modmail ID \`${modmailID}\``)
 }

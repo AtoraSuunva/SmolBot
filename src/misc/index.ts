@@ -1,4 +1,5 @@
 import { activity, info, ping, stats } from 'sleetcord-common'
+
 import { autoreply, thanksAutoreply } from './autoreply.js'
 import { choose } from './choose.js'
 import { deltarune } from './deltarune.js'

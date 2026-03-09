@@ -38,6 +38,6 @@
     /* Completeness */
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
-    "inlineSources": true,
+    "inlineSources": true
   }
 }

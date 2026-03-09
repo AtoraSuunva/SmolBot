@@ -50,9 +50,7 @@ function runMinesweeper(interaction: ChatInputCommandInteraction) {
   const height = interaction.options.getInteger('height') ?? 7
 
   if (mines > width * height) {
-    throw new PreRunError(
-      "There are too many mines, they can't all fit in the grid!!",
-    )
+    throw new PreRunError("There are too many mines, they can't all fit in the grid!!")
   }
 
   const { grid, minecount, safe } = createMinesweeper(height, width, mines)
@@ -60,9 +58,7 @@ function runMinesweeper(interaction: ChatInputCommandInteraction) {
   const message = `*Mines: ${minecount}*\n${grid
     .map((row, y) =>
       row
-        .map((v, x) =>
-          safe[0] === y && safe[1] === x ? charMap(v) : `||${charMap(v)}||`,
-        )
+        .map((v, x) => (safe[0] === y && safe[1] === x ? charMap(v) : `||${charMap(v)}||`))
         .join(''),
     )
     .join('\n')}`
@@ -92,8 +88,7 @@ const nMap = {
 }
 
 /** Map a character to the "display emoji", either a bomb 💣 or a number 1️⃣ */
-const charMap = (c: string | number) =>
-  c === MINE ? ':bomb:' : nMap[c as keyof typeof nMap]
+const charMap = (c: string | number) => (c === MINE ? ':bomb:' : nMap[c as keyof typeof nMap])
 
 /** Char to use for the mine */
 const MINE = 'X'
@@ -120,10 +115,7 @@ interface MinesweeperGame {
 function createMinesweeper(height = 7, width = 7, mines = 0): MinesweeperGame {
   const minesToPlace = mines || Math.floor((height * width) / 4) || 1
   let minecount = 0
-  let safe: [number, number] = [
-    Number.POSITIVE_INFINITY,
-    Number.POSITIVE_INFINITY,
-  ]
+  let safe: [number, number] = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY]
   const grid = genGrid(height, width)
 
   for (let i = 0; i < minesToPlace; i++) {
@@ -142,8 +134,7 @@ function createMinesweeper(height = 7, width = 7, mines = 0): MinesweeperGame {
       }
 
       // 50% chance to swap safe spot
-      if (safe[0] === Number.POSITIVE_INFINITY || Math.floor(Math.random() * 2))
-        safe = [y, x]
+      if (safe[0] === Number.POSITIVE_INFINITY || Math.floor(Math.random() * 2)) safe = [y, x]
       grid[y][x] = countMines(x, y, grid)
     }
   }

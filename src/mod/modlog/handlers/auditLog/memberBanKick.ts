@@ -1,5 +1,6 @@
 import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
+
 import {
   formatLog,
   getModlogTicketQueue,
@@ -9,9 +10,7 @@ import {
 import { resolveUser } from './index.js'
 
 export type BanAuditLog = GuildAuditLogsEntry<
-  | AuditLogEvent.MemberBanAdd
-  | AuditLogEvent.MemberBanRemove
-  | AuditLogEvent.MemberKick,
+  AuditLogEvent.MemberBanAdd | AuditLogEvent.MemberBanRemove | AuditLogEvent.MemberKick,
   'Create' | 'Delete',
   'User'
 >
@@ -19,10 +18,7 @@ export type BanAuditLog = GuildAuditLogsEntry<
 /**
  * Log when a member is removed forcefully by a mod from a guild (or let back in). Ban, unban, and kick.
  */
-export async function logMemberBanKick(
-  auditLogEntry: BanAuditLog,
-  guild: Guild,
-) {
+export async function logMemberBanKick(auditLogEntry: BanAuditLog, guild: Guild) {
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(guild).acquireTicket()
 
@@ -42,25 +38,13 @@ export async function logMemberBanKick(
       break
   }
 
-  const conf = await getValidatedConfigFor(
-    guild,
-    action,
-    (config) => !!config[action],
-  )
+  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
   if (!conf) return
 
-  const executor = await resolveUser(
-    auditLogEntry.executor,
-    auditLogEntry.executorId,
-    guild.client,
-  )
+  const executor = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)
   const execUser = executor ? formatUser(executor) : 'Unknown User'
 
-  const target = await resolveUser(
-    auditLogEntry.target,
-    auditLogEntry.targetId,
-    guild.client,
-  )
+  const target = await resolveUser(auditLogEntry.target, auditLogEntry.targetId, guild.client)
   const targetUser = target ? formatUser(target) : 'Unknown User'
 
   const reason = auditLogEntry.reason ? ` for "${auditLogEntry.reason}"` : ''

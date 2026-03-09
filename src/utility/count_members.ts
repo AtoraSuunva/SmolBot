@@ -7,13 +7,9 @@ import {
   InteractionContextType,
   type Snowflake,
 } from 'discord.js'
-import {
-  escapeAllMarkdown,
-  getGuild,
-  makeChoices,
-  SleetSlashCommand,
-} from 'sleetcord'
+import { escapeAllMarkdown, getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+
 import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { plural } from '../helpers/format.js'
 
@@ -50,15 +46,13 @@ export const count_members = new SleetSlashCommand(
       },
       {
         name: 'only_check',
-        description:
-          "Only check this part of a user's name (default: any name)",
+        description: "Only check this part of a user's name (default: any name)",
         type: ApplicationCommandOptionType.String,
         choices: checkChoices,
       },
       {
         name: 'case_sensitive',
-        description:
-          'Whether to check the name case sensitively (default: false)',
+        description: 'Whether to check the name case sensitively (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -73,10 +67,8 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
   const nameContains = interaction.options.getString('name_contains')
   const nameEquals = interaction.options.getString('name_equals')
   const onlyCheck: CheckChoice =
-    (interaction.options.getString('only_check') as CheckChoice | null) ??
-    'any name'
-  const caseSensitive =
-    interaction.options.getBoolean('case_sensitive') ?? false
+    (interaction.options.getString('only_check') as CheckChoice | null) ?? 'any name'
+  const caseSensitive = interaction.options.getBoolean('case_sensitive') ?? false
 
   // No filtering required
   if (!nameContains && !nameEquals) {
@@ -96,9 +88,7 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
   )
 
   if (!members) {
-    return interaction.editReply(
-      'Timed out while trying to fetch members, try again later.',
-    )
+    return interaction.editReply('Timed out while trying to fetch members, try again later.')
   }
 
   let count = 0
@@ -109,29 +99,14 @@ async function runCountMembers(interaction: ChatInputCommandInteraction) {
 
   if (nameContains) {
     const toCheck = caseSensitive ? nameContains : nameContains.toLowerCase()
-    count += countMembersMatching(members, getName, caseSensitive, (name) =>
-      name.includes(toCheck),
-    )
-    checks.push(
-      `**"${escapeAllMarkdown(
-        nameContains,
-      )}"**${sensitivity} in their ${choiceDisplay}`,
-    )
+    count += countMembersMatching(members, getName, caseSensitive, (name) => name.includes(toCheck))
+    checks.push(`**"${escapeAllMarkdown(nameContains)}"**${sensitivity} in their ${choiceDisplay}`)
   }
 
   if (nameEquals) {
     const toCheck = caseSensitive ? nameEquals : nameEquals.toLowerCase()
-    count += countMembersMatching(
-      members,
-      getName,
-      caseSensitive,
-      (name) => name === toCheck,
-    )
-    checks.push(
-      `**"${escapeAllMarkdown(
-        nameEquals,
-      )}"**${sensitivity} as their ${choiceDisplay}`,
-    )
+    count += countMembersMatching(members, getName, caseSensitive, (name) => name === toCheck)
+    checks.push(`**"${escapeAllMarkdown(nameEquals)}"**${sensitivity} as their ${choiceDisplay}`)
   }
 
   return interaction.editReply({
@@ -152,9 +127,7 @@ function countMembersMatching(
   filter: MemberNameFilter,
 ): number {
   return members.filter((m) =>
-    getName(m).some((name) =>
-      filter(caseSensitive ? name : name.toLowerCase()),
-    ),
+    getName(m).some((name) => filter(caseSensitive ? name : name.toLowerCase())),
   ).size
 }
 
@@ -170,8 +143,7 @@ function getMemberNameForCheckChoice(choice: CheckChoice): MemberNameGetter {
       return (member) => [member.user.displayName]
 
     case 'global name':
-      return (member) =>
-        member.user.globalName ? [member.user.globalName] : []
+      return (member) => (member.user.globalName ? [member.user.globalName] : [])
 
     case 'any name':
       return (member) => [

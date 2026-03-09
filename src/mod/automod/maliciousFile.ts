@@ -13,14 +13,14 @@ export const maliciousFile = new SleetModule(
 
 const DAY = 24 * HOUR
 
-const inGuilds: string[] = []
+const inGuilds = new Set([''])
 
 async function runMessageCreate(message: Message) {
   if (
     message.guildId === null ||
     message.guild === null ||
     message.attachments.size === 0 ||
-    !inGuilds.includes(message.guildId) ||
+    !inGuilds.has(message.guildId) ||
     message.author.createdTimestamp < Date.now() - 3 * DAY
   ) {
     return
@@ -30,18 +30,11 @@ async function runMessageCreate(message: Message) {
 
   if (malicious.size > 0) {
     try {
-      await Promise.all([
-        message.delete(),
-        message.member?.timeout(7 * DAY, 'Malicious file'),
-      ])
+      await Promise.all([message.delete(), message.member?.timeout(7 * DAY, 'Malicious file')])
 
-      const logChannel = await message.guild.channels
-        .fetch('797336365284065300')
-        .catch(() => null)
+      const logChannel = await message.guild.channels.fetch('797336365284065300').catch(() => null)
 
-      const loggedMalicious = malicious
-        .map((a) => escapeAllMarkdown(a.name))
-        .join(', ')
+      const loggedMalicious = malicious.map((a) => escapeAllMarkdown(a.name)).join(', ')
 
       if (logChannel?.isTextBased()) {
         await logChannel.send({

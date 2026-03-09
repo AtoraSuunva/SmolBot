@@ -2,6 +2,7 @@ import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import PQueue from 'p-queue'
 import { SleetModule } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { resolveUser } from '../modlog/handlers/auditLog/index.js'
@@ -29,10 +30,7 @@ type ActionAuditLog = GuildAuditLogsEntry<
   | AuditLogEvent.MemberUpdate
 >
 
-async function guildAuditLogEntryCreate(
-  auditLogEntry: GuildAuditLogsEntry,
-  guild: Guild,
-) {
+async function guildAuditLogEntryCreate(auditLogEntry: GuildAuditLogsEntry, guild: Guild) {
   switch (auditLogEntry.action) {
     case AuditLogEvent.MemberBanAdd:
     case AuditLogEvent.MemberBanRemove:
@@ -64,23 +62,13 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
   if (!config) return
 
   const { logChannelID } = config
-  const logChannel = logChannelID
-    ? await guild.channels.fetch(logChannelID)
-    : null
+  const logChannel = logChannelID ? await guild.channels.fetch(logChannelID) : null
 
   const type = getLogAction(auditLogEntry, config)
   if (!type) return
 
-  const user = await resolveUser(
-    auditLogEntry.target,
-    auditLogEntry.targetId,
-    guild.client,
-  )
-  const reasonBy = await resolveUser(
-    auditLogEntry.executor,
-    auditLogEntry.executorId,
-    guild.client,
-  )
+  const user = await resolveUser(auditLogEntry.target, auditLogEntry.targetId, guild.client)
+  const reasonBy = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)
 
   const entry: ActionLogEntry = {
     id: 0,
@@ -113,8 +101,7 @@ async function logMemberAction(auditLogEntry: ActionAuditLog, guild: Guild) {
       })
 
       if (latestActionForUser) {
-        const newAction: ActionLogEntry['action'] =
-          type === 'ban' ? 'reban' : 'softban'
+        const newAction: ActionLogEntry['action'] = type === 'ban' ? 'reban' : 'softban'
 
         await editAction(
           guild,
@@ -213,10 +200,7 @@ function getLogAction(
     return 'ban'
   }
 
-  if (
-    config.logUnbans &&
-    auditLogEntry.action === AuditLogEvent.MemberBanRemove
-  ) {
+  if (config.logUnbans && auditLogEntry.action === AuditLogEvent.MemberBanRemove) {
     return 'unban'
   }
 
@@ -238,14 +222,12 @@ function getLogAction(
 
 function isTimeout(auditLogEntry: ActionAuditLog): boolean {
   return auditLogEntry.changes.some(
-    (change) =>
-      change.key === 'communication_disabled_until' && change.new !== undefined,
+    (change) => change.key === 'communication_disabled_until' && change.new !== undefined,
   )
 }
 
 function isTimeoutRemoval(auditLogEntry: ActionAuditLog): boolean {
   return auditLogEntry.changes.some(
-    (change) =>
-      change.key === 'communication_disabled_until' && change.new === undefined,
+    (change) => change.key === 'communication_disabled_until' && change.new === undefined,
   )
 }

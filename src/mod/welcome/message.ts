@@ -19,14 +19,8 @@ export const message = new SleetSlashSubcommand(
 
 const supported = [
   ['{@user}', 'Mentions the welcomed user'],
-  [
-    '{#origin-channel}',
-    'Mentions the channel where the user posted their first message',
-  ],
-  [
-    '{#welcome-channel}',
-    'Mentions the channel where the welcome message is posted',
-  ],
+  ['{#origin-channel}', 'Mentions the channel where the user posted their first message'],
+  ['{#welcome-channel}', 'Mentions the channel where the welcome message is posted'],
   ['{message-link}', "Replaced with the link to the user's first message"],
   ['{server-name}', 'Replaced with the server name'],
 ]

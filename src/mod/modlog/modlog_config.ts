@@ -7,6 +7,7 @@ import {
 } from 'discord.js'
 import { getGuild, makeChoices, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { ModLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { type CamelToSnakeCase, formatConfig } from '../../helpers/format.js'
@@ -35,9 +36,8 @@ const userUpdateChoices = makeChoices([
 // If you add a new config option, you'll get a type error here until you add it to the command options as well
 type ConfigKeys = (typeof CONFIG_KEYS_SNAKE)[number]
 
-type UnnamedAPIApplicationCommandBasicOption<
-  U = APIApplicationCommandBasicOption,
-> = U extends unknown ? Omit<U, 'name'> : never
+type UnnamedAPIApplicationCommandBasicOption<U = APIApplicationCommandBasicOption> =
+  U extends unknown ? Omit<U, 'name'> : never
 
 type ModlogConfigOptions = {
   [K in ConfigKeys]: UnnamedAPIApplicationCommandBasicOption
@@ -53,8 +53,7 @@ const modlogConfigOptions = {
     type: ApplicationCommandOptionType.Boolean,
   },
   member_add_new: {
-    description:
-      'The time in hours for an account to be marked as "new" (0 to disable)',
+    description: 'The time in hours for an account to be marked as "new" (0 to disable)',
     type: ApplicationCommandOptionType.Integer,
     min_value: 0,
   },
@@ -128,8 +127,7 @@ const modlogConfigOptions = {
     type: ApplicationCommandOptionType.Boolean,
   },
   reaction_time: {
-    description:
-      'Only log if a reaction was removed in under this many seconds (0 for no limit)',
+    description: 'Only log if a reaction was removed in under this many seconds (0 for no limit)',
     type: ApplicationCommandOptionType.Integer,
     min_value: 0,
   },
@@ -146,10 +144,11 @@ export const modlog_config = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.Channel,
         channel_types: Constants.GuildTextBasedChannelTypes,
       },
-      ...Object.entries(modlogConfigOptions).map(([name, option]) => ({
-        name,
-        ...option,
-      })),
+      ...Object.entries(modlogConfigOptions).map(([name, option]) =>
+        Object.assign(option, {
+          name,
+        }),
+      ),
     ],
   },
   {
@@ -256,24 +255,17 @@ function getConfigOptionsFromInteraction(
   return options as ModlogConfigValueOptions
 }
 
-function mergeOptions(
-  newOptions: ModlogConfigValueOptions,
-  oldConfig: ModLogConfig | null,
-) {
+function mergeOptions(newOptions: ModlogConfigValueOptions, oldConfig: ModLogConfig | null) {
   const merged: Partial<ModlogConfigValueOptions> = {}
 
   for (const { camel, snake } of CONFIG_KEYS) {
-    merged[camel] = (newOptions[camel] ??
-      oldConfig?.[camel] ??
-      getDefaultOption(snake)) as never
+    merged[camel] = (newOptions[camel] ?? oldConfig?.[camel] ?? getDefaultOption(snake)) as never
   }
 
   return merged as ModlogConfigValueOptions
 }
 
-function getDefaultOption(
-  key: (typeof CONFIG_KEYS_SNAKE)[number],
-): string | number | boolean {
+function getDefaultOption(key: (typeof CONFIG_KEYS_SNAKE)[number]): string | number | boolean {
   const option = modlogConfigOptions[key].type
 
   switch (option) {

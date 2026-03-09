@@ -1,7 +1,9 @@
 import { hash, randomBytes } from 'node:crypto'
 import { promisify } from 'node:util'
+
 import { createMiddleware } from 'hono/factory'
 import { baseLogger } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../db.js'
 import { permissionBitfieldToStrings } from './token.js'
@@ -112,9 +114,7 @@ export type VerifyTokenResult = Prisma.TokenGetPayload<true>
  * @param token The token to verify
  * @returns The token info from the database
  */
-export const verifyToken = async (
-  token: string,
-): Promise<VerifyTokenResult> => {
+export const verifyToken = async (token: string): Promise<VerifyTokenResult> => {
   const hash = hashToken(token)
 
   const dbToken = await prisma.token.findUnique({
@@ -150,9 +150,7 @@ export function authMiddleware<RequireAuth extends boolean = true>({
 }: AuthMiddlewareParams<RequireAuth> = {}) {
   return createMiddleware<{
     Variables: {
-      token: RequireAuth extends true
-        ? VerifyTokenResult
-        : VerifyTokenResult | undefined
+      token: RequireAuth extends true ? VerifyTokenResult : VerifyTokenResult | undefined
     }
   }>(async (c, next) => {
     let token: VerifyTokenResult | undefined = c.get('token')
@@ -197,12 +195,7 @@ export function authMiddleware<RequireAuth extends boolean = true>({
         }
       }
 
-      c.set(
-        'token',
-        token as unknown as RequireAuth extends true
-          ? VerifyTokenResult
-          : undefined,
-      )
+      c.set('token', token as unknown as RequireAuth extends true ? VerifyTokenResult : undefined)
     }
 
     if (requirePermissions) {

@@ -14,6 +14,7 @@ import {
   inGuildGuard,
   SleetSlashSubcommand,
 } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 
 export const revoke_invites = new SleetSlashSubcommand(
@@ -35,9 +36,7 @@ export const revoke_invites = new SleetSlashSubcommand(
   },
 )
 
-async function runRevoke(
-  interaction: ChatInputCommandInteraction,
-): Promise<unknown> {
+async function runRevoke(interaction: ChatInputCommandInteraction): Promise<unknown> {
   inGuildGuard(interaction)
   await botHasPermissionsGuard(interaction, ['ManageGuild'])
 
@@ -53,11 +52,7 @@ async function runRevoke(
 }
 
 async function runBanRevoke(ban: GuildBan): Promise<void> {
-  if (
-    await ban.guild.members
-      .fetchMe()
-      .then((me) => !me.permissions.has('ManageGuild'))
-  ) {
+  if (await ban.guild.members.fetchMe().then((me) => !me.permissions.has('ManageGuild'))) {
     return
   }
 
@@ -116,9 +111,7 @@ async function revokeInvitesFor(guild: Guild, user: User): Promise<Invite[]> {
  * @returns String that can be sent detailing the revoked invites
  */
 function formatInviteList(user: User, invites: Invite[]): string {
-  const inviteList: string[] = [
-    `Revoked Invites for ${formatUser(user, { mention: true })}:`,
-  ]
+  const inviteList: string[] = [`Revoked Invites for ${formatUser(user, { mention: true })}:`]
 
   if (invites.length > 0) {
     for (const i of invites) {
@@ -130,9 +123,7 @@ function formatInviteList(user: User, invites: Invite[]): string {
             ? `\n> -# Uses: **${i.uses}**/${i.maxUses === 0 ? '\u{221E}' : i.maxUses}, `
             : '',
           i.createdAt ? `Created: ${time(i.createdAt, 'f')},` : '',
-          i.expiresAt
-            ? `Expires: ${time(i.expiresAt, 'f')}`
-            : 'Expires: *Never*',
+          i.expiresAt ? `Expires: ${time(i.expiresAt, 'f')}` : 'Expires: *Never*',
         ].join(' '),
       )
     }

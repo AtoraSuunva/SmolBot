@@ -5,13 +5,10 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Warning } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import {
-  fetchWarningConfigFor,
-  formatWarningToField,
-  markWarningArchiveDirty,
-} from './utils.js'
+import { fetchWarningConfigFor, formatWarningToField, markWarningArchiveDirty } from './utils.js'
 
 export const warningsEdit = new SleetSlashSubcommand(
   {
@@ -31,8 +28,7 @@ export const warningsEdit = new SleetSlashSubcommand(
       },
       {
         name: 'mod_note',
-        description:
-          'A note for moderators, will not be shown to the user if they lookup warnings',
+        description: 'A note for moderators, will not be shown to the user if they lookup warnings',
         type: ApplicationCommandOptionType.String,
       },
       {
@@ -118,10 +114,7 @@ async function warningsEditRun(interaction: ChatInputCommandInteraction) {
  * @param newWarning The new warning to create
  * @returns The newly created warning entry
  */
-export async function updateWarning(
-  guildID: string,
-  newWarning: Warning,
-): Promise<Warning> {
+export async function updateWarning(guildID: string, newWarning: Warning): Promise<Warning> {
   // Transaction since we shouldn't be able to mark the old warning as expired while erroring on the new warning
   return await prisma.$transaction(async (tx) => {
     // Mark the old warning as having expired just now

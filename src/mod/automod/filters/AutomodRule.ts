@@ -1,14 +1,7 @@
-import {
-  type BaseValidator,
-  type MappedObjectValidator,
-  s,
-} from '@sapphire/shapeshift'
-import {
-  ApplicationCommandOptionType,
-  type Awaitable,
-  type Message,
-} from 'discord.js'
+import { type BaseValidator, type MappedObjectValidator, s } from '@sapphire/shapeshift'
+import { ApplicationCommandOptionType, type Awaitable, type Message } from 'discord.js'
 import type { SleetSlashSubcommandBody } from 'sleetcord'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
 
 export interface RuleTriggerInfo {
@@ -16,10 +9,7 @@ export interface RuleTriggerInfo {
   readonly reason: string
 }
 
-export type AutomodRuleData = Omit<
-  Prisma.AutomodRuleCreateInput,
-  'guildID' | 'ruleID'
->
+export type AutomodRuleData = Omit<Prisma.AutomodRuleCreateInput, 'guildID' | 'ruleID'>
 
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
   T extends ApplicationCommandOptionType.String
@@ -38,20 +28,16 @@ type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
                 ? string
                 : never
 
-function createParameterPackerFrom(
-  options: SleetSlashSubcommandBody['options'],
-) {
+function createParameterPackerFrom(options: SleetSlashSubcommandBody['options']) {
   if (options === undefined) {
     return undefined
   }
 
   return s.object(
     options.reduce<MappedObjectValidator<unknown>>((acc, option) => {
-      return {
-        // biome-ignore lint/performance/noAccumulatingSpread: TODO: this is still WIP
-        ...acc,
+      return Object.assign(acc, {
         [option.name]: validatorFromType(option.type),
-      }
+      })
     }, {}),
   )
 }
@@ -104,9 +90,7 @@ export abstract class AutomodRule<P extends unknown[] = []> {
     this.parameterUnpacker = createParameterPackerFrom(this.body.options)
   }
 
-  unpackParameters(
-    params: Prisma.JsonNullValueInput | Prisma.InputJsonValue,
-  ): P {
+  unpackParameters(params: Prisma.JsonNullValueInput | Prisma.InputJsonValue): P {
     if (this.parameterUnpacker === undefined) {
       return undefined as unknown as P
     }

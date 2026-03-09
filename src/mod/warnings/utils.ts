@@ -1,5 +1,6 @@
 import { type APIEmbedField, time } from 'discord.js'
 import { DAY, MINUTE } from 'sleetcord-common'
+
 import type {
   Prisma,
   Warning,
@@ -164,10 +165,7 @@ export async function fetchWarningHistoryCount(
   })
 }
 
-export async function fetchWarningConfigFor(
-  guildID: string,
-  required: true,
-): Promise<WarningConfig>
+export async function fetchWarningConfigFor(guildID: string, required: true): Promise<WarningConfig>
 export async function fetchWarningConfigFor(
   guildID: string,
   required?: false,
@@ -202,10 +200,7 @@ export async function fetchWarningConfigFor(
   return config
 }
 
-export const DEFAULT_WARNING_CONFIG: Omit<
-  WarningConfig,
-  'guildID' | 'updatedAt'
-> = {
+export const DEFAULT_WARNING_CONFIG: Omit<WarningConfig, 'guildID' | 'updatedAt'> = {
   expiresAfter: 0,
   archiveEnabled: false,
   archiveChannel: null,
@@ -237,13 +232,10 @@ export function formatWarningToField(
   const permaText = w.permanent ? ' (Permanent)' : ''
   const warningUser = showUserOnWarning ? ` — ${w.user} (${w.userID})` : ''
   const timestamp = time(w.createdAt, 'R')
-  const expiredText = warningIsExpired(w, config, expireDate)
-    ? ' (Expired)'
-    : ''
+  const expiredText = warningIsExpired(w, config, expireDate) ? ' (Expired)' : ''
   const voidOrExpired = w.void ? ' (Void)' : expiredText
   const modNote = showModNote && w.modNote ? `\n**Note:** ${w.modNote}` : ''
-  const responsibleMod =
-    showResponsibleMod && w.moderatorID ? `\n**By:** <@${w.moderatorID}>` : ''
+  const responsibleMod = showResponsibleMod && w.moderatorID ? `\n**By:** <@${w.moderatorID}>` : ''
 
   return {
     name: `#${w.warningID}${version}${warningUser}${permaText}${voidOrExpired}`,
@@ -251,21 +243,11 @@ export function formatWarningToField(
   }
 }
 
-function warningIsExpired(
-  warning: Warning,
-  config: WarningConfig,
-  expireDate: Date,
-): boolean {
-  return (
-    config.expiresAfter > 0 &&
-    !warning.permanent &&
-    warning.createdAt <= expireDate
-  )
+function warningIsExpired(warning: Warning, config: WarningConfig, expireDate: Date): boolean {
+  return config.expiresAfter > 0 && !warning.permanent && warning.createdAt <= expireDate
 }
 
-export function getExpirationWhereFilter(
-  days: number,
-): Prisma.WarningWhereInput {
+export function getExpirationWhereFilter(days: number): Prisma.WarningWhereInput {
   return {
     void: false,
     permanent: false,
@@ -290,11 +272,7 @@ const DIRTY_WAIT_FOR = 10 * MINUTE
  * @param isDirty Whether the guild is dirty or not (default: false)
  * @returns The new dirty date if updated, null if not
  */
-export async function markWarningArchiveDirty(
-  guildID: string,
-  force = false,
-  isDirty = true,
-) {
+export async function markWarningArchiveDirty(guildID: string, force = false, isDirty = true) {
   const newDirty: WarningDirtyTracker = {
     guildID,
     lastSetDirty: new Date(),

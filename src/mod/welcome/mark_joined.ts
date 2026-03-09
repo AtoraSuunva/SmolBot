@@ -9,6 +9,7 @@ import {
   type User,
 } from 'discord.js'
 import { getGuild, getRoles, getUsers, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { fetchGuildMembers } from '../../helpers/fetchGuildMembers.js'
@@ -17,13 +18,11 @@ import { plural } from '../../helpers/format.js'
 export const mark_joined = new SleetSlashSubcommand(
   {
     name: 'mark_joined',
-    description:
-      'Mark users as having joined the server. Filter options act as AND.',
+    description: 'Mark users as having joined the server. Filter options act as AND.',
     options: [
       {
         name: 'users',
-        description:
-          'The users to mark as having joined, @mention them. (Default: all users)',
+        description: 'The users to mark as having joined, @mention them. (Default: all users)',
         type: ApplicationCommandOptionType.String,
       },
       {
@@ -34,8 +33,7 @@ export const mark_joined = new SleetSlashSubcommand(
       },
       {
         name: 'invert',
-        description:
-          "Invert the selection, instead mark users who DON'T match. (Default: False)",
+        description: "Invert the selection, instead mark users who DON'T match. (Default: False)",
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -45,8 +43,7 @@ export const mark_joined = new SleetSlashSubcommand(
       },
       {
         name: 'dry-run',
-        description:
-          "Don't actually mark users, just show who would be marked. (Default: False)",
+        description: "Don't actually mark users, just show who would be marked. (Default: False)",
         type: ApplicationCommandOptionType.Boolean,
       },
     ],

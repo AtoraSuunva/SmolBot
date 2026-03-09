@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../../helpers/db.js'
 import { FIELD_CUSTOM_ID, FIELD_MODMAIL_ID } from './utils.js'
 

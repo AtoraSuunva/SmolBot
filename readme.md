@@ -15,13 +15,13 @@ Technically "Yet Another Mod Bot Nobody Asked For," but all the utils here were 
 
 ## RobotOtter?
 
-**tl;dr: This repo *IS* RobotOtter's source code!**
+**tl;dr: This repo _IS_ RobotOtter's source code!**
 
 RobotOtter used to be an ancient mod-like bot with misc commands that I maintained. I had partially given up on maintaining it, instead investing my work into Smol Bot, which then ended up superseding RobotOtter in literally every feature. In the end I decided might as well just run RobotOtter off Smol Bot's codebase (which supported all the exact same mod features) and only have to maintain 3 bots instead of 4. Current-day RobotOtter uses the identical codebase to Smol Bot and both bots are actively maintained.
 
 ## Setup
 
-While open-source, Smol Bot isn't really designed to be easy for everyone to run. If you're familiar with Node.js or Docker, you can get it running yourself, but documentation isn't a big priority. Everything below is *mainly* written for my own reference. You will be on your own for selfhosted instances.
+While open-source, Smol Bot isn't really designed to be easy for everyone to run. If you're familiar with Node.js or Docker, you can get it running yourself, but documentation isn't a big priority. Everything below is _mainly_ written for my own reference. You will be on your own for selfhosted instances.
 
 ### .env requirements
 
@@ -56,11 +56,15 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:${WEB_API_PORT}"
+      - '8080:${WEB_API_PORT}'
     volumes:
       - db-data:/home/node/app/prisma/db
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:$$HEALTHCHECK_PORT/healthcheck || exit 1" ]
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-verbose --tries=1 -O- http://bot:$$HEALTHCHECK_PORT/healthcheck || exit 1',
+        ]
       interval: 10s
       timeout: 30s
       retries: 5

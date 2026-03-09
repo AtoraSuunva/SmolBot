@@ -12,6 +12,7 @@ import {
   time,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
+
 import { plural } from './format.js'
 
 /** Number of lines before quote content becomes cut */
@@ -55,13 +56,9 @@ export async function quoteMessage(
       : ''
 
   const channelLine =
-    includeChannel && message.channel && 'name' in message.channel
-      ? `#${message.channel.name}`
-      : ''
+    includeChannel && message.channel && 'name' in message.channel ? `#${message.channel.name}` : ''
 
-  const embed = new EmbedBuilder()
-    .setURL(message.url)
-    .setDescription(quoteContent)
+  const embed = new EmbedBuilder().setURL(message.url).setDescription(quoteContent)
 
   embeds.push(embed)
 
@@ -90,8 +87,7 @@ export async function quoteMessage(
     const { interaction } = message
 
     const commandName =
-      (interaction.type === InteractionType.ApplicationCommand ? '/' : '') +
-      interaction.commandName
+      (interaction.type === InteractionType.ApplicationCommand ? '/' : '') + interaction.commandName
 
     embed.setTitle(
       `${formatUser(interaction.user, {
@@ -106,10 +102,7 @@ export async function quoteMessage(
     embed.setColor(message.member.displayColor)
   }
 
-  if (
-    message.reference?.type === MessageReferenceType.Forward &&
-    message.messageSnapshots
-  ) {
+  if (message.reference?.type === MessageReferenceType.Forward && message.messageSnapshots) {
     const snapshot = message.messageSnapshots.first()
     if (snapshot) {
       embeds.push(...(await quoteMessage(snapshot, { isSnapshot: true })))
@@ -140,9 +133,7 @@ export async function quoteMessage(
         if (!embed.data.image) {
           embed.setImage(attachment.url)
         } else {
-          embeds.push(
-            new EmbedBuilder().setURL(message.url).setImage(attachment.url),
-          )
+          embeds.push(new EmbedBuilder().setURL(message.url).setImage(attachment.url))
         }
       } else {
         // For non-image attachments (or additional images after 4), we can just add them as fields
@@ -155,9 +146,7 @@ export async function quoteMessage(
         {
           name: `+${plural('Attachment', listedAttachments.length)}`,
           value: listedAttachments
-            .map((a) =>
-              hyperlink(inlineCode(escapeInlineCode(a.name)), a.proxyURL),
-            )
+            .map((a) => hyperlink(inlineCode(escapeInlineCode(a.name)), a.proxyURL))
             .join(', '),
         },
       ])
@@ -171,9 +160,7 @@ export async function quoteMessage(
         if (!embed.data.image) {
           embed.setImage(sticker.url)
         } else {
-          embeds.push(
-            new EmbedBuilder().setURL(message.url).setImage(sticker.url),
-          )
+          embeds.push(new EmbedBuilder().setURL(message.url).setImage(sticker.url))
         }
       }
     }
@@ -261,9 +248,7 @@ function isImageAttachment(attachment: Attachment): boolean {
 
 type PathPart<T extends string | undefined> = T extends string ? `/${T}` : ''
 
-function optionalPathPart<T extends string | undefined>(
-  pathPart: T,
-): PathPart<T> {
+function optionalPathPart<T extends string | undefined>(pathPart: T): PathPart<T> {
   return (typeof pathPart === 'string' ? `/${pathPart}` : '') as PathPart<T>
 }
 
@@ -280,9 +265,7 @@ function quoteChannelPinnedMessage(message: Message, embed: EmbedBuilder) {
     )
   }
 
-  embed.setDescription(
-    `${message.author} pinned ${messageLink} to this channel.`,
-  )
+  embed.setDescription(`${message.author} pinned ${messageLink} to this channel.`)
 }
 
 function quoteUserJoin(message: Message, embed: EmbedBuilder) {
@@ -293,11 +276,7 @@ function quoteGuildBoost(message: Message, embed: EmbedBuilder) {
   embed.setDescription(`${message.author} just boosted the server!`)
 }
 
-function quoteGuildBoostTier(
-  message: Message,
-  embed: EmbedBuilder,
-  tier: number,
-) {
+function quoteGuildBoostTier(message: Message, embed: EmbedBuilder, tier: number) {
   embed.setDescription(
     `${message.author} just boosted the server! ${escapeAllMarkdown(
       message.guild?.name ?? '<Unknown Server>',
@@ -312,9 +291,7 @@ function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
     const { guildId, channelId } = message.reference
     followLink = hyperlink(
       message.content,
-      `https://discordapp.com/channels${optionalPathPart(
-        guildId,
-      )}/${channelId}`,
+      `https://discordapp.com/channels${optionalPathPart(guildId)}/${channelId}`,
     )
   }
 
@@ -323,37 +300,25 @@ function quoteChannelFollowAdd(message: Message, embed: EmbedBuilder) {
   )
 }
 
-function quoteGuildDiscoveryDisqualified(
-  _message: Message,
-  embed: EmbedBuilder,
-) {
+function quoteGuildDiscoveryDisqualified(_message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     'This server has been removed from Server Discovery because it no longer passes all the requirements. Check Server Settings on desktop for more details.',
   )
 }
 
-function quoteGuildDiscoveryRequalified(
-  _message: Message,
-  embed: EmbedBuilder,
-) {
+function quoteGuildDiscoveryRequalified(_message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     'This server is eligible for Server Discovery again and has been automatically relisted!',
   )
 }
 
-function quoteGuildDiscoveryGracePeriodInitialWarning(
-  _message: Message,
-  embed: EmbedBuilder,
-) {
+function quoteGuildDiscoveryGracePeriodInitialWarning(_message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     'This server has failed Discovery activity requirements for 1 week. If this server fails for 4 weeks in a row, it will be automatically removed from Discovery.',
   )
 }
 
-function quoteGuildDiscoveryGracePeriodFinalWarning(
-  _message: Message,
-  embed: EmbedBuilder,
-) {
+function quoteGuildDiscoveryGracePeriodFinalWarning(_message: Message, embed: EmbedBuilder) {
   embed.setDescription(
     'This server has failed Discovery activity requirements for 3 weeks in a row. If this server fails for 1 more week, it will be removed from Discovery.',
   )
@@ -387,9 +352,7 @@ async function quoteReply(message: Message, embed: EmbedBuilder) {
   const content = reference.content.split('\n').join(' ')
 
   const shortContent =
-    content.length > MAX_REPLY_LENGTH
-      ? `${content.substring(0, MAX_REPLY_LENGTH)}...`
-      : content
+    content.length > MAX_REPLY_LENGTH ? `${content.substring(0, MAX_REPLY_LENGTH)}...` : content
 
   embed.addFields([
     {
@@ -410,9 +373,7 @@ function quoteThreadCreateMessage(message: Message, embed: EmbedBuilder) {
     const { guildId, channelId } = message.reference
     threadLink = hyperlink(
       threadLink,
-      `https://discordapp.com/channels${optionalPathPart(
-        guildId,
-      )}/${channelId}`,
+      `https://discordapp.com/channels${optionalPathPart(guildId)}/${channelId}`,
     )
   }
 
@@ -420,9 +381,7 @@ function quoteThreadCreateMessage(message: Message, embed: EmbedBuilder) {
 }
 
 function quoteAutoModerationAction(message: Message, embed: EmbedBuilder) {
-  embed.setDescription(
-    `${message.author} triggered AutoMod. Details follow below:`,
-  )
+  embed.setDescription(`${message.author} triggered AutoMod. Details follow below:`)
 }
 
 function quotePoll(message: Message, embed: EmbedBuilder) {
@@ -432,9 +391,7 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
   const totalVotes = poll.answers.reduce((acc, v) => acc + v.voteCount, 0)
 
   embed
-    .setTitle(
-      `${escapeAllMarkdown(poll.question.text ?? 'Missing Question').substring(0, 256)}`,
-    )
+    .setTitle(`${escapeAllMarkdown(poll.question.text ?? 'Missing Question').substring(0, 256)}`)
     .addFields(
       poll.answers.map((v) => ({
         name: `${v.emoji ? `${v.emoji} ` : ''}${v.text}`,
@@ -450,19 +407,11 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
 function quotePollResult(message: Message, embed: EmbedBuilder) {
   const pollEmbed = message.embeds[0]
 
-  const pollQuestionText = pollEmbed.fields.find(
-    (f) => f.name === 'poll_question_text',
-  )?.value
-  const totalVotes = pollEmbed.fields.find(
-    (f) => f.name === 'total_votes',
-  )?.value
-  const victorAnswerVotes = pollEmbed.fields.find(
-    (f) => f.name === 'victor_answer_votes',
-  )?.value
+  const pollQuestionText = pollEmbed.fields.find((f) => f.name === 'poll_question_text')?.value
+  const totalVotes = pollEmbed.fields.find((f) => f.name === 'total_votes')?.value
+  const victorAnswerVotes = pollEmbed.fields.find((f) => f.name === 'victor_answer_votes')?.value
   // const victorAnswerId = pollEmbed.fields.find(f => f.name === 'victor_answer_id')?.value
-  const victorAnswerText = pollEmbed.fields.find(
-    (f) => f.name === 'victor_answer_text',
-  )?.value
+  const victorAnswerText = pollEmbed.fields.find((f) => f.name === 'victor_answer_text')?.value
   const victorAnswerEmojiName = pollEmbed.fields.find(
     (f) => f.name === 'victor_answer_emoji_name',
   )?.value
@@ -472,14 +421,10 @@ function quotePollResult(message: Message, embed: EmbedBuilder) {
       ? ` (${((Number.parseInt(victorAnswerVotes, 10) / Number.parseInt(totalVotes, 10)) * 100).toFixed(2)}%)`
       : ''
 
-  embed
-    .setTitle(
-      `Poll Result: ${escapeAllMarkdown(pollQuestionText ?? 'Unknown')}`,
-    )
-    .addFields({
-      name: `${victorAnswerEmojiName ? `${victorAnswerEmojiName} ` : ''}**${victorAnswerText}**`,
-      value: `${victorAnswerVotes} / ${totalVotes} votes (${ratio})`,
-    })
+  embed.setTitle(`Poll Result: ${escapeAllMarkdown(pollQuestionText ?? 'Unknown')}`).addFields({
+    name: `${victorAnswerEmojiName ? `${victorAnswerEmojiName} ` : ''}**${victorAnswerText}**`,
+    value: `${victorAnswerVotes} / ${totalVotes} votes (${ratio})`,
+  })
 }
 
 function formatQuoteContent(content: string): string | null {

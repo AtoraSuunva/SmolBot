@@ -16,6 +16,7 @@ import {
   SleetSlashCommand,
   SleetSlashSubcommand,
 } from 'sleetcord'
+
 import { prisma } from '../helpers/db.js'
 
 const config = new SleetSlashSubcommand(
@@ -115,10 +116,7 @@ async function runDisableVClog(interaction: ChatInputCommandInteraction) {
   })
 }
 
-async function handleVoiceStateUpdate(
-  oldState: VoiceState,
-  newState: VoiceState,
-) {
+async function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
   const vcConfig = await prisma.voiceLogConfig.findUnique({
     where: {
       guildID: oldState.guild.id,
@@ -128,9 +126,7 @@ async function handleVoiceStateUpdate(
   if (!vcConfig) return
   if (!oldState.member) return
 
-  const channel = await oldState.guild.channels
-    .fetch(vcConfig.channelID)
-    .catch(() => null)
+  const channel = await oldState.guild.channels.fetch(vcConfig.channelID).catch(() => null)
   if (!channel?.isTextBased()) return
 
   if (!oldState.channelId && newState.channelId) {
@@ -167,9 +163,7 @@ async function handleVoiceStateUpdate(
       channel,
       '🔴',
       'Live',
-      `${formatUser(oldState.member)} started streaming in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} started streaming in ${String(oldState.channel)}`,
     )
   }
 
@@ -178,9 +172,7 @@ async function handleVoiceStateUpdate(
       channel,
       '⏹️',
       'Dead',
-      `${formatUser(oldState.member)} stopped streaming in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} stopped streaming in ${String(oldState.channel)}`,
     )
   }
 
@@ -189,9 +181,7 @@ async function handleVoiceStateUpdate(
       channel,
       '📱',
       'YCam',
-      `${formatUser(oldState.member)} started their camera in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} started their camera in ${String(oldState.channel)}`,
     )
   }
 
@@ -200,9 +190,7 @@ async function handleVoiceStateUpdate(
       channel,
       '📵',
       'XCam',
-      `${formatUser(oldState.member)} stopped their camera in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} stopped their camera in ${String(oldState.channel)}`,
     )
   }
 
@@ -211,9 +199,7 @@ async function handleVoiceStateUpdate(
       channel,
       '🙉',
       'Deaf',
-      `${formatUser(oldState.member)} was server deafened in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} was server deafened in ${String(oldState.channel)}`,
     )
   }
 
@@ -222,9 +208,7 @@ async function handleVoiceStateUpdate(
       channel,
       '🔊',
       'Hear',
-      `${formatUser(oldState.member)} stopped being server deafened in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} stopped being server deafened in ${String(oldState.channel)}`,
     )
   }
 
@@ -233,9 +217,7 @@ async function handleVoiceStateUpdate(
       channel,
       '🙊',
       'Mute',
-      `${formatUser(oldState.member)} was server muted in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} was server muted in ${String(oldState.channel)}`,
     )
   }
 
@@ -244,9 +226,7 @@ async function handleVoiceStateUpdate(
       channel,
       '🎙️',
       'Talk',
-      `${formatUser(oldState.member)} stopped being server muted in ${String(
-        oldState.channel,
-      )}`,
+      `${formatUser(oldState.member)} stopped being server muted in ${String(oldState.channel)}`,
     )
   }
 

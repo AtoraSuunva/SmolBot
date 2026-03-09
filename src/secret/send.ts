@@ -22,8 +22,7 @@ export const send = new SleetSlashCommand(
       },
       {
         name: 'channel',
-        description:
-          'The channel to send the message to (default: same channel)',
+        description: 'The channel to send the message to (default: same channel)',
         type: ApplicationCommandOptionType.Channel,
       },
     ],
@@ -38,8 +37,7 @@ async function runSend(interaction: ChatInputCommandInteraction) {
   inGuildGuard(interaction)
 
   const message = interaction.options.getString('message', true)
-  const channel =
-    (await getTextBasedChannel(interaction, 'channel')) ?? interaction.channel
+  const channel = (await getTextBasedChannel(interaction, 'channel')) ?? interaction.channel
 
   if (channel === null) {
     return interaction.reply({

@@ -10,6 +10,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+
 import { prisma } from '../../helpers/db.js'
 import { welcomeCache } from './cache.js'
 
@@ -23,9 +24,7 @@ export const deleteCommand = new SleetSlashSubcommand(
   },
 )
 
-async function runDelete(
-  interaction: ChatInputCommandInteraction,
-): Promise<void> {
+async function runDelete(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply()
 
   const guild = await getGuild(interaction, true)
@@ -93,10 +92,7 @@ async function runDelete(
   })
 }
 
-async function deleteWelcomeSettingsFrom(
-  guild: Guild,
-  interaction: ButtonInteraction,
-) {
+async function deleteWelcomeSettingsFrom(guild: Guild, interaction: ButtonInteraction) {
   const defer = interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   })
@@ -107,7 +103,7 @@ async function deleteWelcomeSettingsFrom(
         guildID: guild.id,
       },
     })
-    .catch()
+    .catch(() => null)
 
   await prisma.welcomeJoins.deleteMany({
     where: {

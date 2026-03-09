@@ -68,11 +68,7 @@ export const purge_threads = new SleetSlashCommand(
 async function runPurgePosts(interaction: ChatInputCommandInteraction) {
   await botHasPermissionsGuard(interaction, ['ManageThreads'])
 
-  const channel = interaction.options.getChannel(
-    'forum',
-    true,
-    THREADABLE_CHANNEL_TYPES,
-  )
+  const channel = interaction.options.getChannel('forum', true, THREADABLE_CHANNEL_TYPES)
   const count = interaction.options.getInteger('count') ?? 100
   const dryRun = interaction.options.getBoolean('dry_run') ?? false
   const titleContains = interaction.options.getString('title_contains')

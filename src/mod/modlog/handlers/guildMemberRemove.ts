@@ -1,16 +1,8 @@
-import {
-  EmbedBuilder,
-  type GuildMember,
-  type PartialGuildMember,
-} from 'discord.js'
+import { EmbedBuilder, type GuildMember, type PartialGuildMember } from 'discord.js'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
-import {
-  EVENT_COLORS,
-  formatLog,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../utils.js'
+
+import { EVENT_COLORS, formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logGuildMemberRemove = new SleetModule(
   {
@@ -21,9 +13,7 @@ export const logGuildMemberRemove = new SleetModule(
   },
 )
 
-async function handleGuildMemberRemove(
-  member: GuildMember | PartialGuildMember,
-) {
+async function handleGuildMemberRemove(member: GuildMember | PartialGuildMember) {
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(member.guild).acquireTicket()
 

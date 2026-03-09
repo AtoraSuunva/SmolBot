@@ -12,14 +12,7 @@ import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 import stringWidth from 'string-width'
 
-type Value =
-  | string
-  | number
-  | boolean
-  | Date
-  | null
-  | undefined
-  | { toString: () => string }
+type Value = string | number | boolean | Date | null | undefined | { toString: () => string }
 export type GuildFormatter<T> = (value: T, guild?: Guild) => string
 
 interface FormatConfigOptions<Config extends Record<string, Value>> {
@@ -41,47 +34,31 @@ interface FormatConfigOptions<Config extends Record<string, Value>> {
   snakeCase?: boolean
 }
 
-export const guildFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
+export const guildFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
   value === null
     ? 'null'
-    : `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(
-        value,
-      )})`
+    : `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(value)})`
 
-export const channelFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
+export const channelFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
   value === null
     ? 'null'
-    : `#${
-        guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
-      } (${String(value)})`
+    : `#${guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'} (${String(value)})`
 
-export const roleFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
+export const roleFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
   value === null
     ? 'null'
-    : `@${
-        guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
-      } (${String(value)})`
+    : `@${guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'} (${String(value)})`
 
-export const makeForumTagFormatter: (
-  forum: ForumChannel,
-) => GuildFormatter<Value> = (forum: ForumChannel) => (value: Value) => {
-  const tag = forum.availableTags.find((t) => t.id === value)
+export const makeForumTagFormatter: (forum: ForumChannel) => GuildFormatter<Value> =
+  (forum: ForumChannel) => (value: Value) => {
+    const tag = forum.availableTags.find((t) => t.id === value)
 
-  if (!tag) {
-    return `unknown-tag (${String(value)})`
+    if (!tag) {
+      return `unknown-tag (${String(value)})`
+    }
+
+    return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
   }
-
-  return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
-}
 
 const defaultFormatters: Record<string, GuildFormatter<Value>> = {
   guild_id: guildFormatter,
@@ -123,22 +100,18 @@ export function formatConfig<Config extends Record<string, Value>>(
 
       if (displayKey.length > longest) longest = displayKey.length
 
-      value =
-        formatters[key as keyof Config]?.(
-          value as Config[keyof Config],
-          guild,
-        ) ?? value
+      let fValue = formatters[key as keyof Config]?.(value as Config[keyof Config], guild) ?? value
 
-      if (useDefaultFormatters && notNullish(value)) {
+      if (useDefaultFormatters && notNullish(fValue)) {
         for (const [key, formatter] of formatterEntries) {
           if (displayKey.toLowerCase().endsWith(key)) {
-            value = formatter(value, guild)
+            fValue = formatter(fValue, guild)
             break
           }
         }
       }
 
-      return [displayKey, value]
+      return [displayKey, fValue]
     })
     .map(([key, value]) => {
       return `${key.padEnd(longest, ' ')} = ${String(value)}`
@@ -154,10 +127,9 @@ export function formatConfig<Config extends Record<string, Value>>(
  * type output = CamelToSnakeCase<'camelCaseString'> // 'camel_case_string'
  * ```
  */
-export type CamelToSnakeCase<S extends string> =
-  S extends `${infer T}${infer U}`
-    ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
-    : S
+export type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
+  ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
+  : S
 
 /**
  * Converts a string from camelCase to snake_case
@@ -189,16 +161,11 @@ export function plural(
   count: number,
   { includeCount = true, boldNumber = true }: PluralOptions = {},
 ): string {
-  let numberFormat = (n: number) => n.toLocaleString()
+  const numberFormat = boldNumber
+    ? (num: number) => `**${num.toLocaleString()}**`
+    : (n: number) => n.toLocaleString()
 
-  if (boldNumber) {
-    numberFormat = (num) => `**${num.toLocaleString()}**`
-  }
-
-  return `${includeCount ? `${numberFormat(count)} ` : ''}${pluralize(
-    str,
-    count,
-  )}`
+  return `${includeCount ? `${numberFormat(count)} ` : ''}${pluralize(str, count)}`
 }
 
 /**
@@ -241,9 +208,7 @@ export function tableFormat<T extends Record<string, Value>>(
 ): string {
   const {
     keys = Object.keys(data[0]),
-    columnNames: columnsNames = {} as NonNullable<
-      TableFormatOptions<T>['columnNames']
-    >,
+    columnNames: columnsNames = {} as NonNullable<TableFormatOptions<T>['columnNames']>,
     showNullish = true,
     characterLimit = Number.POSITIVE_INFINITY,
     formatters = {} as NonNullable<TableFormatOptions<T>['formatters']>,
@@ -294,9 +259,10 @@ export function tableFormat<T extends Record<string, Value>>(
    * you would need `rollingLongestRow['key'][1] === 3` characters for the "key" column. If you wanted to print
    * 3 rows you would need `rollingLongestRow['key'][3] === 4` characters for the "key" column.
    */
-  const rollingLongestRow = Object.fromEntries(
-    keys.map((key) => [key, [] as number[]]),
-  ) as Record<keyof T, number[]>
+  const rollingLongestRow = Object.fromEntries(keys.map((key) => [key, [] as number[]])) as Record<
+    keyof T,
+    number[]
+  >
 
   /**
    * Measures the total length required to print a row, including the separators. Index 0 are the headers,

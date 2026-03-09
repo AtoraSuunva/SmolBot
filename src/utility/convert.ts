@@ -37,10 +37,7 @@ const autocompleteFrom: AutocompleteHandler<string> = ({ value }) => {
   return autocompleteForUnits(value, units)
 }
 
-const autocompleteTo: AutocompleteHandler<string> = ({
-  interaction,
-  value,
-}) => {
+const autocompleteTo: AutocompleteHandler<string> = ({ interaction, value }) => {
   const from = interaction.options.getString('from', true)
   const fromUnit = units.find((unit) => unit.abbr === from)
 
@@ -48,14 +45,16 @@ const autocompleteTo: AutocompleteHandler<string> = ({
     return []
   }
 
-  const possibilities = converter()
-    .from(fromUnit.abbr)
-    .possibilities()
-    .filter((unit) => unit !== fromUnit.abbr)
+  const possibilities = new Set(
+    converter()
+      .from(fromUnit.abbr)
+      .possibilities()
+      .filter((unit) => unit !== fromUnit.abbr),
+  )
 
   return autocompleteForUnits(
     value,
-    units.filter((unit) => possibilities.includes(unit.abbr)),
+    units.filter((unit) => possibilities.has(unit.abbr)),
   )
 }
 
@@ -125,9 +124,7 @@ async function runConvert(interaction: ChatInputCommandInteraction) {
 
   if (to && !toUnit) {
     await interaction.reply({
-      content: `Invalid \`to\` unit "${to}"\nPossible units: ${possibleUnits.join(
-        ', ',
-      )}`,
+      content: `Invalid \`to\` unit "${to}"\nPossible units: ${possibleUnits.join(', ')}`,
       allowedMentions: { parse: [] },
     })
     return

@@ -9,28 +9,24 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount, SECOND } from 'sleetcord-common'
+
 import type { DeletePoliceConfig } from '../generated/prisma/client.js'
 import { prisma } from '../helpers/db.js'
 import { formatConfig } from '../helpers/format.js'
 import { quoteMessage } from '../helpers/quoteMessage.js'
-import {
-  deleteEvents,
-  type MessageDeleteAuditLog,
-} from './messageDeleteAuditLog.js'
+import { deleteEvents, type MessageDeleteAuditLog } from './messageDeleteAuditLog.js'
 
 export const delete_police_config = new SleetSlashCommand(
   {
     name: 'delete_police_config',
-    description:
-      'Automatically repost messages that have been deleted too quickly',
+    description: 'Automatically repost messages that have been deleted too quickly',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
     options: [
       {
         name: 'enabled',
-        description:
-          'Whether to enable or disable quick delete (default: false)',
+        description: 'Whether to enable or disable quick delete (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -49,8 +45,7 @@ export const delete_police_config = new SleetSlashCommand(
       },
       {
         name: 'footer_message',
-        description:
-          'The message to put in the footer of reposted messages (default: none)',
+        description: 'The message to put in the footer of reposted messages (default: none)',
         type: ApplicationCommandOptionType.String,
         max_length: 2000,
       },
@@ -67,8 +62,7 @@ export const delete_police_config = new SleetSlashCommand(
       },
       {
         name: 'ignore_stickers',
-        description:
-          'Whether to ignore messages with stickers (default: false)',
+        description: 'Whether to ignore messages with stickers (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -208,10 +202,7 @@ async function handleMessageDelete(
     return
   }
 
-  if (
-    ignoreMods &&
-    message.member?.permissionsIn(message.channel).has('ManageMessages')
-  ) {
+  if (ignoreMods && message.member?.permissionsIn(message.channel).has('ManageMessages')) {
     return
   }
 
@@ -238,8 +229,7 @@ async function handleMessageDelete(
     return
   }
 
-  const limit =
-    (threshold + Math.floor(Math.random() * (fuzziness + 1))) * SECOND
+  const limit = (threshold + Math.floor(Math.random() * (fuzziness + 1))) * SECOND
 
   if (limit < msTimeSinceMessage) {
     return

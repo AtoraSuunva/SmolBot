@@ -1,5 +1,6 @@
 import { type Guild, type GuildTextBasedChannel, time } from 'discord.js'
 import { TicketQueue } from 'ticket-queue'
+
 import { type ModLogConfig, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { type CamelToSnakeCase, toSnakeCase } from '../../helpers/format.js'
@@ -77,10 +78,7 @@ export const CONFIG_KEYS_CAMEL = CONFIG_KEYS.map((a) => a.camel)
 export const CONFIG_KEYS_SNAKE = CONFIG_KEYS.map((a) => a.snake)
 
 /** CamelCase keys type for modlog actions: memberAdd, memberTimeout, etc */
-export type LoggedAction = Exclude<
-  keyof Prisma.ModLogChannelsCreateInput,
-  'guildID' | 'updatedAt'
->
+export type LoggedAction = Exclude<keyof Prisma.ModLogChannelsCreateInput, 'guildID' | 'updatedAt'>
 
 export const ACTION_KEYS = (
   Object.keys(Prisma.ModLogChannelsScalarFieldEnum) as unknown as Array<
@@ -166,12 +164,7 @@ export function clearCacheFor(guild: Guild) {
   configCache.delete(guild)
 }
 
-export function formatLog(
-  emoji: string,
-  type: string,
-  message: string,
-  timestamp: Date,
-): string {
+export function formatLog(emoji: string, type: string, message: string, timestamp: Date): string {
   return `${emoji} ${time(timestamp, 'T')} \`[${type}]\`: ${message}`
 }
 
@@ -181,17 +174,10 @@ export function formatTime(timestamp: Date | null = new Date()): string {
 }
 
 /** Pads the expressions in tagged template literals */
-function padExpressions(
-  strings: TemplateStringsArray,
-  ...expressions: unknown[]
-) {
+function padExpressions(strings: TemplateStringsArray, ...expressions: unknown[]) {
   return strings
     .map(
-      (v, i) =>
-        v +
-        (expressions[i] !== undefined
-          ? String(expressions[i]).padStart(2, '0')
-          : ''),
+      (v, i) => v + (expressions[i] !== undefined ? String(expressions[i]).padStart(2, '0') : ''),
     )
     .join('')
 }

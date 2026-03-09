@@ -1,9 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js'
-import {
-  SleetSlashCommand,
-  SleetSlashCommandGroup,
-  SleetSlashSubcommand,
-} from 'sleetcord'
+import { SleetSlashCommand, SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 
 // TODO for automod:
 //  - Add a way to view the automod rules

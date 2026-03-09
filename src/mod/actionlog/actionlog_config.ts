@@ -5,6 +5,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { ActionLogConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { channelFormatter, formatConfig } from '../../helpers/format.js'
@@ -119,8 +120,7 @@ async function runActionlogConfig(interaction: ChatInputCommandInteraction) {
     logKicks: logKicks ?? oldConfig?.logKicks ?? false,
     logUnbans: logUnbans ?? oldConfig?.logUnbans ?? false,
     logTimeouts: logTimeouts ?? oldConfig?.logTimeouts ?? false,
-    logTimeoutRemovals:
-      logTimeoutRemovals ?? oldConfig?.logTimeoutRemovals ?? false,
+    logTimeoutRemovals: logTimeoutRemovals ?? oldConfig?.logTimeoutRemovals ?? false,
     mergeLogs: mergeLogs ?? oldConfig?.mergeLogs ?? true,
     logChannelID: logChannel?.id ?? oldConfig?.logChannelID ?? null,
     archiveEnabled: archiveEnabled ?? oldConfig?.archiveEnabled ?? false,

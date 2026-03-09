@@ -6,6 +6,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { plural } from '../helpers/format.js'
 
 export const flip = new SleetSlashCommand(

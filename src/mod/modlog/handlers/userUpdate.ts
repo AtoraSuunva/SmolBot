@@ -1,5 +1,6 @@
 import type { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
+
 import { UserUpdate } from '../modlog_config.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 
@@ -67,9 +68,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
 
     if (!member) continue
 
-    const message = `${formatUser(oldUser)}${
-      logMessage[config.userUpdate as UserUpdate]
-    }`
+    const message = `${formatUser(oldUser)}${logMessage[config.userUpdate as UserUpdate]}`
 
     await channel.send({
       content: formatLog('👥', 'User Update', message, eventDate),
@@ -78,10 +77,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
   }
 }
 
-async function fetchUserInGuild(
-  guild: Guild,
-  user: User,
-): Promise<GuildMember | null> {
+async function fetchUserInGuild(guild: Guild, user: User): Promise<GuildMember | null> {
   try {
     // TODO: optimize this, since it would fetch the member in EVERY guild the bot is in
     return await guild.members.fetch(user)

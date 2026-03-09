@@ -1,5 +1,6 @@
 import { type InferType, Result, s } from '@sapphire/shapeshift'
 import { Hono } from 'hono'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { authMiddleware } from '../../helpers/api/auth.js'
 import { shapeShiftValidator } from '../../helpers/api/hono.js'
@@ -19,11 +20,9 @@ function parseInteger(
   min?: number | undefined,
   max?: number | undefined,
 ): Result<number> {
-  if (value === null || value === undefined)
-    return Result.err(new Error('Invalid integer string'))
+  if (value === null || value === undefined) return Result.err(new Error('Invalid integer string'))
   const parsed = Number.parseInt(value, 10)
-  if (Number.isNaN(parsed))
-    return Result.err(new Error('Invalid integer string'))
+  if (Number.isNaN(parsed)) return Result.err(new Error('Invalid integer string'))
 
   if (min !== undefined && parsed < min) {
     return Result.err(new Error(`Integer must be at least ${min}`))
@@ -70,15 +69,7 @@ const paramGuildActionLogsSchema = s.object({
 
 const queryActionLogsSchema = s.object({
   action: s
-    .enum([
-      'ban',
-      'unban',
-      'kick',
-      'timeout',
-      'timeout removed',
-      'softban',
-      'reban',
-    ])
+    .enum(['ban', 'unban', 'kick', 'timeout', 'timeout removed', 'softban', 'reban'])
     .optional(),
   allVersions: s.string().optional().reshape(parseBoolean),
   limit: s
@@ -116,11 +107,7 @@ app.get(
       )
     }
 
-    const entries = await findActionLogs(
-      guildId,
-      undefined,
-      c.req.valid('query'),
-    )
+    const entries = await findActionLogs(guildId, undefined, c.req.valid('query'))
 
     return c.json(entries)
   },

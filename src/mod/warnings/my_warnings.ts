@@ -4,11 +4,9 @@ import {
   InteractionContextType,
 } from 'discord.js'
 import { formatUser, SleetSlashCommand } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
-import {
-  respondWithPaginatedWarnings,
-  type WarningFetcher,
-} from './pagination.js'
+import { respondWithPaginatedWarnings, type WarningFetcher } from './pagination.js'
 import { fetchPaginatedWarnings } from './utils.js'
 
 export const myWarnings = new SleetSlashCommand(

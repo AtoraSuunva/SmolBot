@@ -30,14 +30,13 @@ import {
   SleetSlashSubcommand,
 } from 'sleetcord'
 import { MINUTE, SECOND } from 'sleetcord-common'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
-import { modmailIdAutocomplete } from './../fields/utils.js'
 import { modmailLogger } from '../utils.js'
+import { modmailIdAutocomplete } from './../fields/utils.js'
 
-type AutocompleteCreator = (
-  channelOption: string,
-) => AutocompleteHandler<string>
+type AutocompleteCreator = (channelOption: string) => AutocompleteHandler<string>
 
 /**
  * Creates an autocomplete handler that returns a list of suggested tags using another option as the forum channel.
@@ -100,8 +99,7 @@ export const modmail_ticket_create_button = new SleetSlashSubcommand(
     options: [
       {
         name: 'modmail_id',
-        description:
-          'Id used to identify this button for configuration (ex: "appeal")',
+        description: 'Id used to identify this button for configuration (ex: "appeal")',
         type: ApplicationCommandOptionType.String,
         autocomplete: modmailIdAutocomplete,
         required: true,
@@ -146,8 +144,7 @@ export const modmail_ticket_create_button = new SleetSlashSubcommand(
       },
       {
         name: 'forum_tag',
-        description:
-          'The tag to apply to the forum post on creation (default: none)',
+        description: 'The tag to apply to the forum post on creation (default: none)',
         type: ApplicationCommandOptionType.String,
         autocomplete: createTagAutocomplete('modmail_forum'),
         max_length: 20,
@@ -160,27 +157,23 @@ export const modmail_ticket_create_button = new SleetSlashSubcommand(
   },
 )
 
-const THREADABLE_CHANNEL_TYPES = [
+const THREADABLE_CHANNEL_TYPES = new Set([
   ChannelType.GuildText,
   ChannelType.GuildAnnouncement,
   ChannelType.GuildForum,
   ChannelType.GuildMedia,
-]
+])
 const MODMAIL = 'modmail'
 const CREATE_TICKET = 'create_ticket'
 const TICKET_MODAL = 'ticket_modal'
 
-async function runCreateModMailButton(
-  interaction: ChatInputCommandInteraction,
-) {
+async function runCreateModMailButton(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   inGuildGuard(interaction)
 
-  const channel = await guild.channels
-    .fetch(interaction.channelId)
-    .catch(() => null)
+  const channel = await guild.channels.fetch(interaction.channelId).catch(() => null)
 
-  if (!channel || !THREADABLE_CHANNEL_TYPES.includes(channel.type)) {
+  if (!channel || !THREADABLE_CHANNEL_TYPES.has(channel.type)) {
     interaction.reply({
       content:
         'You cannot create threads in this channel type. Try a text channel, announcement channel, or forum channel.',
@@ -193,8 +186,7 @@ async function runCreateModMailButton(
 
   const buttonLabel = interaction.options.getString('button_label', true)
   const buttonEmoji = interaction.options.getString('button_emoji')
-  const buttonStyle =
-    interaction.options.getInteger('button_style') ?? ButtonStyle.Primary
+  const buttonStyle = interaction.options.getInteger('button_style') ?? ButtonStyle.Primary
 
   const modmailForum = interaction.options.getChannel('modmail_forum', true)
   const modmailId = interaction.options.getString('modmail_id', true)
@@ -207,9 +199,7 @@ async function runCreateModMailButton(
   const button = new ButtonBuilder()
     .setLabel(buttonLabel)
     .setStyle(buttonStyle)
-    .setCustomId(
-      `${MODMAIL}:${CREATE_TICKET}:${modmailId}:${modmailForum.id}:${forumTag}`,
-    )
+    .setCustomId(`${MODMAIL}:${CREATE_TICKET}:${modmailId}:${modmailForum.id}:${forumTag}`)
 
   if (buttonEmoji) {
     button.setEmoji(buttonEmoji)
@@ -219,8 +209,7 @@ async function runCreateModMailButton(
 
   // Send the message with the button
   try {
-    const channel =
-      interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
+    const channel = interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
 
     if (!channel) {
       throw new Error('Failed to find channel to send button to')
@@ -252,8 +241,7 @@ async function handleModMailButtonInteraction(interaction: Interaction) {
   if (!interaction.isButton()) return
 
   // `${MODMAIL}:${CREATE_TICKET}:${modmailId}:${modmailForum.id}:${forumTag}`
-  const [id, action, modmailId, forumId, forumTag] =
-    interaction.customId.split(':')
+  const [id, action, modmailId, forumId, forumTag] = interaction.customId.split(':')
 
   if (id !== MODMAIL) return
 
@@ -392,14 +380,11 @@ async function handleCreateTicketButton(
 
   await interaction.showModal(modal)
 
-  const filter = (i: Interaction) =>
-    i.isModalSubmit() && i.customId === modal.data.custom_id
+  const filter = (i: Interaction) => i.isModalSubmit() && i.customId === modal.data.custom_id
 
-  const int = await interaction
-    .awaitModalSubmit({ time: 10 * MINUTE, filter })
-    .catch(() => {
-      /* ignore */
-    })
+  const int = await interaction.awaitModalSubmit({ time: 10 * MINUTE, filter }).catch(() => {
+    /* ignore */
+  })
 
   if (!int) return
 
@@ -410,8 +395,7 @@ async function handleCreateTicketButton(
 
   if (!modChannel) {
     await int.editReply({
-      content:
-        'Could not find the modmail channel, contact the mod team to fix this.',
+      content: 'Could not find the modmail channel, contact the mod team to fix this.',
       components: [],
     })
     return
@@ -419,8 +403,7 @@ async function handleCreateTicketButton(
 
   if (!modChannel.isThreadOnly()) {
     await int.editReply({
-      content:
-        'The modmail channel must be a forum channel, contact the mod team to fix this.',
+      content: 'The modmail channel must be a forum channel, contact the mod team to fix this.',
       components: [],
     })
     return
@@ -434,9 +417,7 @@ async function handleCreateTicketButton(
 
   let totalCharacters = 0
   let title = ''
-  const fieldIDMap = new Map<string, (typeof fields)[number]>(
-    fields.map((f) => [f.customID, f]),
-  )
+  const fieldIDMap = new Map<string, (typeof fields)[number]>(fields.map((f) => [f.customID, f]))
 
   const fieldsTextDisplay: TextDisplayBuilder[] = []
 
@@ -525,9 +506,7 @@ async function handleCreateTicketButton(
   })
 
   let modThread: ThreadChannel | undefined
-  const appliedTags = [forumTag, forumConfig?.openTag].filter(
-    (t): t is string => !!t,
-  )
+  const appliedTags = [forumTag, forumConfig?.openTag].filter((t): t is string => !!t)
 
   // Max name length is 100
   const threadName = expandTo`${100}${modmailId} - ${formattedUserNoMarkdown}${title ? `: ${title}` : ''}`
@@ -561,8 +540,7 @@ async function handleCreateTicketButton(
     return
   }
 
-  const userChannel =
-    interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
+  const userChannel = interaction.channel ?? (await guild.channels.fetch(interaction.channelId))
 
   if (!userChannel) {
     throw new Error('Failed to find user channel for ticket threads')
@@ -620,10 +598,7 @@ async function handleCreateTicketButton(
   const infoMessage = [
     'User Info:',
     `- ${formatUser(member, { mention: true })}`,
-    `- Created: ${time(member.user.createdAt, 'F')} (${time(
-      member.user.createdAt,
-      'R',
-    )})`,
+    `- Created: ${time(member.user.createdAt, 'F')} (${time(member.user.createdAt, 'R')})`,
     `- Joined: ${time(member.joinedAt ?? new Date(), 'F')} (${time(
       member.joinedAt ?? new Date(),
       'R',
@@ -678,11 +653,7 @@ async function handleCreateTicketButton(
  * @param expressions - Additional expressions to be included in the resulting string.
  * @returns A string that is the result of expanding the template string with the provided expressions, ensuring the total length does not exceed the given limit.
  */
-function expandTo(
-  strings: TemplateStringsArray,
-  limit: number,
-  ...expressions: unknown[]
-): string {
+function expandTo(strings: TemplateStringsArray, limit: number, ...expressions: unknown[]): string {
   // Calculate the length of the provided strings first
   const stringsLength = strings.reduce((acc, s) => acc + s.length, 0)
 

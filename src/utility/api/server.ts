@@ -1,11 +1,12 @@
 import { serve } from '@hono/node-server'
 import env from 'env-var'
 import { Hono } from 'hono'
+import { rateLimiter } from 'hono-rate-limiter'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { rateLimiter } from 'hono-rate-limiter'
 import { baseLogger, MINUTE } from 'sleetcord-common'
+
 import actionlogApp from '../../mod/actionlog/api.js'
 import tokenApp from '../../utility/api/tokenApi.js'
 

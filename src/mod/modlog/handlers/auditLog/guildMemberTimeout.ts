@@ -9,6 +9,7 @@ import {
 import { DateTime, Interval } from 'luxon'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser } from 'sleetcord'
+
 import {
   formatLog,
   getModlogTicketQueue,
@@ -26,37 +27,20 @@ export type TimeoutAuditLog = GuildAuditLogsEntry<
 /**
  * Log when a member is timed out
  */
-export async function logMemberTimeout(
-  auditLogEntry: TimeoutAuditLog,
-  guild: Guild,
-) {
+export async function logMemberTimeout(auditLogEntry: TimeoutAuditLog, guild: Guild) {
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(guild).acquireTicket()
 
   const action: LoggedAction = 'memberTimeout'
 
-  const conf = await getValidatedConfigFor(
-    guild,
-    action,
-    (config) => !!config[action],
-  )
+  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
   if (!conf) return
 
-  const executor = await resolveUser(
-    auditLogEntry.executor,
-    auditLogEntry.executorId,
-    guild.client,
-  )
+  const executor = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)
   const execUser = executor ? formatUser(executor) : 'Unknown User'
 
-  const target = await resolveUser(
-    auditLogEntry.target,
-    auditLogEntry.targetId,
-    guild.client,
-  )
-  const targetUser = target
-    ? formatUser(target)
-    : `Unknown User (${auditLogEntry.targetId})`
+  const target = await resolveUser(auditLogEntry.target, auditLogEntry.targetId, guild.client)
+  const targetUser = target ? formatUser(target) : `Unknown User (${auditLogEntry.targetId})`
 
   const timeoutChange = auditLogEntry.changes.find(
     (change) => change.key === 'communication_disabled_until',
@@ -97,9 +81,7 @@ export async function logMemberTimeout(
   })
 }
 
-export async function logAutoModerationActionExecution(
-  execution: AutoModerationActionExecution,
-) {
+export async function logAutoModerationActionExecution(execution: AutoModerationActionExecution) {
   const { guild } = execution
 
   const eventDate = new Date()
@@ -107,11 +89,7 @@ export async function logAutoModerationActionExecution(
 
   const action: LoggedAction = 'automodTimeout'
 
-  const conf = await getValidatedConfigFor(
-    guild,
-    action,
-    (config) => !!config[action],
-  )
+  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
   if (!conf) return
   if (execution.action.type !== AutoModerationActionType.Timeout) return
 

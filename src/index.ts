@@ -1,23 +1,9 @@
 import { withQueryTags } from '@prisma/sqlcommenter-query-tags'
-import {
-  GatewayIntentBits,
-  Options,
-  Partials,
-  type RESTOptions,
-} from 'discord.js'
+import { GatewayIntentBits, Options, Partials, type RESTOptions } from 'discord.js'
 import env from 'env-var'
-import {
-  type ModuleRunner,
-  SleetClient,
-  type SleetModuleEventHandlers,
-} from 'sleetcord'
-import {
-  baseLogger,
-  getModuleRunner,
-  initDBLogging,
-  initSentry,
-  Sentry,
-} from 'sleetcord-common'
+import { type ModuleRunner, SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
+import { baseLogger, getModuleRunner, initDBLogging, initSentry, Sentry } from 'sleetcord-common'
+
 import { prisma } from './helpers/db.js'
 import { modules } from './modules.js'
 import { startApiServer } from './utility/api/server.js'
@@ -56,10 +42,7 @@ async function main() {
 
       if (name.includes(':')) {
         // Transaction names are `${module.name}:${event.name}`
-        const [moduleName, eventName] = name.split(':') as [
-          string,
-          keyof SleetModuleEventHandlers,
-        ]
+        const [moduleName, eventName] = name.split(':') as [string, keyof SleetModuleEventHandlers]
 
         switch (eventName) {
           case 'raw':

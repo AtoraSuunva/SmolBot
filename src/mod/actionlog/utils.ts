@@ -1,24 +1,15 @@
 import { Guild, type GuildMember, time, type User } from 'discord.js'
 import { formatUser, PreRunError } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
-import type {
-  ActionLogConfig,
-  ActionLogDirtyTracker,
-} from '../../generated/prisma/client.js'
+
+import type { ActionLogConfig, ActionLogDirtyTracker } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { capitalize } from '../../helpers/format.js'
 
 export interface ActionLogEntry {
   id: number
   version?: number
-  action:
-    | 'ban'
-    | 'unban'
-    | 'kick'
-    | 'timeout'
-    | 'timeout removed'
-    | 'softban'
-    | 'reban'
+  action: 'ban' | 'unban' | 'kick' | 'timeout' | 'timeout removed' | 'softban' | 'reban'
   user: User | GuildMember | null
   redactUser: boolean
   reason: string | null
@@ -64,24 +55,17 @@ export async function formatToLog(
         `> **User:** \`[Username Redacted by Moderators]\` (\`${entry.user?.id ?? 'unknown user'}\`)`,
       )
     } else {
-      log.push(
-        `> **User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`,
-      )
+      log.push(`> **User:** ${entry.user ? await userLog(entry.user) : 'unknown user'}`)
     }
   }
 
   if (options.reason) {
-    const reason =
-      entry.reason?.replaceAll(/\n/g, '\n> ') ?? '*No reason provided.*'
+    const reason = entry.reason?.replaceAll(/\n/g, '\n> ') ?? '*No reason provided.*'
 
     log.push(`> **Reason:** ${reason}`)
   }
 
-  if (
-    options.reasonBy &&
-    entry.reasonBy &&
-    entry.reasonBy.id !== entry.responsibleModerator?.id
-  ) {
+  if (options.reasonBy && entry.reasonBy && entry.reasonBy.id !== entry.responsibleModerator?.id) {
     log.push(`> -# **Reason by:** ${await userLog(entry.reasonBy)}`)
   }
 
@@ -136,11 +120,7 @@ const DIRTY_WAIT_FOR = 10 * MINUTE
  * @param isDirty Whether the guild is dirty or not (default: false)
  * @returns The new dirty date if updated, null if not
  */
-export async function markActionlogArchiveDirty(
-  guildID: string,
-  force = false,
-  isDirty = true,
-) {
+export async function markActionlogArchiveDirty(guildID: string, force = false, isDirty = true) {
   const newDirty: ActionLogDirtyTracker = {
     guildID,
     lastSetDirty: new Date(),
@@ -193,11 +173,7 @@ export async function fetchActionlogPendingArchive() {
  * @param maxSize The maximum size of the range, defaults to Infinity. Ranges are cut off at this size
  * @returns An array of integers from start to end, inclusive
  */
-export function range(
-  start: number,
-  end: number,
-  maxSize = Number.POSITIVE_INFINITY,
-): number[] {
+export function range(start: number, end: number, maxSize = Number.POSITIVE_INFINITY): number[] {
   if (start > end) {
     return range(end, start, maxSize)
   }
@@ -314,10 +290,7 @@ export async function resolveIDs(
       throw new Error('Invalid offset, you need a number ie. l~1')
     }
 
-    const start = await resolveIDs(
-      resolvedGuildOrLatestActionId,
-      startResolvable,
-    )
+    const start = await resolveIDs(resolvedGuildOrLatestActionId, startResolvable)
 
     if (start.length !== 1) {
       throw new Error('Invalid offset, is the initial id not a number?')
@@ -326,16 +299,11 @@ export async function resolveIDs(
     return [Math.max(start[0] - end, 1)]
   }
 
-  if (
-    ['l', 'latest'].includes(resolvedId) &&
-    typeof resolvedGuildOrLatestActionId === 'number'
-  ) {
+  if (['l', 'latest'].includes(resolvedId) && typeof resolvedGuildOrLatestActionId === 'number') {
     return [resolvedGuildOrLatestActionId]
   }
 
-  throw new Error(
-    'Failed to resolve an ID, use a number or try `l` or `latest`',
-  )
+  throw new Error('Failed to resolve an ID, use a number or try `l` or `latest`')
 }
 
 /**
@@ -373,7 +341,5 @@ export function collapseSequence(numbers: number[]): string {
 
   ranges.push([start, end])
 
-  return ranges
-    .map(([start, end]) => (start === end ? `${start}` : `${start}..${end}`))
-    .join(', ')
+  return ranges.map(([start, end]) => (start === end ? `${start}` : `${start}..${end}`)).join(', ')
 }

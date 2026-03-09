@@ -6,6 +6,7 @@ import {
 import pluralize from 'pluralize'
 import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { baseLogger, MINUTE, notNullish } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import {
   AntiRaidActions,
@@ -24,8 +25,7 @@ export const antiraid_check = new SleetSlashSubcommand(
     options: [
       {
         name: 'apply_actions',
-        description:
-          "Apply the actions instead of just displaying what would've happened",
+        description: "Apply the actions instead of just displaying what would've happened",
         type: ApplicationCommandOptionType.Boolean,
         required: true,
       },
@@ -44,26 +44,11 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
   const shouldApply = interaction.options.getBoolean('apply_actions', true)
   const action = interaction.options.getString('action', false)
   const threshold = interaction.options.getNumber('threshold', false)
-  const timeoutDuration = interaction.options.getNumber(
-    'timeout_duration',
-    false,
-  )
-  const accountAgeLimitMin = interaction.options.getNumber(
-    'account_age_limit_min',
-    false,
-  )
-  const accountAgeLimitMax = interaction.options.getNumber(
-    'account_age_limit_max',
-    false,
-  )
-  const accountAgeWeight = interaction.options.getNumber(
-    'account_age_weight',
-    false,
-  )
-  const noProfilePictureWeight = interaction.options.getNumber(
-    'no_profile_picture_weight',
-    false,
-  )
+  const timeoutDuration = interaction.options.getNumber('timeout_duration', false)
+  const accountAgeLimitMin = interaction.options.getNumber('account_age_limit_min', false)
+  const accountAgeLimitMax = interaction.options.getNumber('account_age_limit_max', false)
+  const accountAgeWeight = interaction.options.getNumber('account_age_weight', false)
+  const noProfilePictureWeight = interaction.options.getNumber('no_profile_picture_weight', false)
   const reason = interaction.options.getString('reason', false)
   const logChannel = interaction.options.getChannel('log_channel', false)
   const reset = interaction.options.getBoolean('reset', false)
@@ -83,8 +68,7 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
     accountAgeLimitMin: accountAgeLimitMin ?? config.accountAgeLimitMin,
     accountAgeLimitMax: accountAgeLimitMax ?? config.accountAgeLimitMax,
     accountAgeWeight: accountAgeWeight ?? config.accountAgeWeight,
-    noProfilePictureWeight:
-      noProfilePictureWeight ?? config.noProfilePictureWeight,
+    noProfilePictureWeight: noProfilePictureWeight ?? config.noProfilePictureWeight,
   }
 
   const results = checkMembers([...guild.members.cache.values()], mergedConfig)
@@ -126,9 +110,7 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
         antiraidLogger.error(e, 'Error applying actions')
 
         await interaction.editReply({
-          content: `An error occurred while applying the actions:\n\`\`\`${String(
-            e,
-          )}\`\`\``,
+          content: `An error occurred while applying the actions:\n\`\`\`${String(e)}\`\`\``,
         })
       },
     )
@@ -137,9 +119,7 @@ async function handleRun(interaction: ChatInputCommandInteraction) {
       content: 'Applied actions',
     })
 
-    const logChannel = config.logChannelID
-      ? await guild.channels.fetch(config.logChannelID)
-      : null
+    const logChannel = config.logChannelID ? await guild.channels.fetch(config.logChannelID) : null
 
     if (logChannel?.isTextBased()) {
       await logChannel.send({
@@ -185,10 +165,7 @@ async function handleGuildMemberAdd(member: GuildMember) {
 
 const DEFAULT_REASON = 'Anti-raid triggered'
 
-async function applyAction(
-  result: MemberCheckResult,
-  config: Prisma.AntiRaidConfigCreateInput,
-) {
+async function applyAction(result: MemberCheckResult, config: Prisma.AntiRaidConfigCreateInput) {
   switch (result.action) {
     case AntiRaidActions.None:
       break
@@ -197,10 +174,7 @@ async function applyAction(
     case AntiRaidActions.Ban:
       return result.member.ban({ reason: config.reason ?? DEFAULT_REASON })
     case AntiRaidActions.Timeout:
-      return result.member.timeout(
-        config.timeoutDuration,
-        config.reason ?? DEFAULT_REASON,
-      )
+      return result.member.timeout(config.timeoutDuration, config.reason ?? DEFAULT_REASON)
   }
 
   return null

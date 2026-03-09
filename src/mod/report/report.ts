@@ -9,6 +9,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { formatUser, getGuild, SleetSlashCommand } from 'sleetcord'
+
 import { fetchConfig } from './manage/config.js'
 import { report_manage } from './manage/index.js'
 import { report_message } from './report_message.js'
@@ -51,8 +52,8 @@ export const report = new SleetSlashCommand(
 async function runReport(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
 
-  const config = await fetchConfig(guild, interaction.user).catch(
-    (err: unknown) => (err instanceof Error ? err.message : String(err)),
+  const config = await fetchConfig(guild, interaction.user).catch((err: unknown) =>
+    err instanceof Error ? err.message : String(err),
   )
 
   if (typeof config === 'string') {
@@ -107,8 +108,7 @@ async function runReport(interaction: ChatInputCommandInteraction) {
     await sendReport(config, interaction.user, embeds)
 
     await interaction.reply({
-      content:
-        "Your report has been sent to the moderators.\nHere's a copy of your report:",
+      content: "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
       flags: MessageFlags.Ephemeral,
     })

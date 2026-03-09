@@ -11,6 +11,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+
 import { plural } from '../helpers/format.js'
 
 export const timeout_button = new SleetSlashCommand(
@@ -29,8 +30,7 @@ export const timeout_button = new SleetSlashCommand(
       },
       {
         name: 'time',
-        description:
-          'The time to timeout the user for, in seconds (default: 60s)',
+        description: 'The time to timeout the user for, in seconds (default: 60s)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 1,
         max_value: 24 * 60 * 60, // 1 Day

@@ -11,11 +11,7 @@ import { role_buttons } from './role_buttons.js'
 import { snowflake } from './snowflake.js'
 import { time_since } from './time_since.js'
 import { timestamp } from './timestamp.js'
-import {
-  translateMessageEphemeral,
-  translateMessagePublic,
-  translateSlash,
-} from './translate.js'
+import { translateMessageEphemeral, translateMessagePublic, translateSlash } from './translate.js'
 
 export const utilityModules = [
   api,

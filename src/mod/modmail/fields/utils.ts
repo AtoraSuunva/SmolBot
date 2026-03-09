@@ -3,11 +3,8 @@ import {
   ApplicationCommandOptionType,
   TextInputStyle,
 } from 'discord.js'
-import {
-  type AutocompleteHandler,
-  getGuild,
-  type SleetSlashSubcommandBody,
-} from 'sleetcord'
+import { type AutocompleteHandler, getGuild, type SleetSlashSubcommandBody } from 'sleetcord'
+
 import { prisma } from '../../../helpers/db.js'
 
 export const TEXT_INPUT_STYLES: APIApplicationCommandOptionChoice<number>[] = [
@@ -60,9 +57,7 @@ export const modmailIdAutocomplete: AutocompleteHandler<string> = async ({
     }),
   ])
 
-  const possibleMatches = Array.from(
-    new Set(results.flat().map((m) => m.modmailID)),
-  )
+  const possibleMatches = Array.from(new Set(results.flat().map((m) => m.modmailID)))
 
   if (possibleMatches.length === 0 && value.length === 0) {
     return []
@@ -95,10 +90,7 @@ export const FIELD_MODMAIL_ID: SleetCommandOption = {
   max_length: MAX_MODMAIL_ID_LENGTH,
 }
 
-export const customIdAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
+export const customIdAutocomplete: AutocompleteHandler<string> = async ({ interaction, value }) => {
   if (!interaction.inGuild()) {
     return []
   }
@@ -202,8 +194,7 @@ export const FIELD_OPTIONS: SleetCommandOption[] = [
   },
   {
     name: 'use_as_title',
-    description:
-      "Use the user's input for the post title (only 1 field per modmail ID)",
+    description: "Use the user's input for the post title (only 1 field per modmail ID)",
     type: ApplicationCommandOptionType.Boolean,
   },
 ]

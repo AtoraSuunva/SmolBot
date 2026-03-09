@@ -13,6 +13,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+
 import type { ActionLog } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { updateActionLog } from './reason.js'
@@ -49,14 +50,8 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
 
   let currentPage = 1
 
-  const renderPage = async (
-    page: number,
-  ): Promise<InteractionEditReplyOptions> => {
-    const currentPageData = await fetchPaginatedActionHistory(
-      guild.id,
-      actionID,
-      page,
-    )
+  const renderPage = async (page: number): Promise<InteractionEditReplyOptions> => {
+    const currentPageData = await fetchPaginatedActionHistory(guild.id, actionID, page)
 
     if (currentPageData.actions.length === 0) {
       return {
@@ -88,18 +83,17 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
         .setDisabled(page >= totalPages),
     ])
 
-    const selectRow =
-      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents([
-        new StringSelectMenuBuilder()
-          .setCustomId(SELECT_REVERT)
-          .setPlaceholder('Revert to version')
-          .addOptions(
-            actions.map((al) => ({
-              label: `Revert to version #${al.version}`,
-              value: `${al.version}`,
-            })),
-          ),
-      ])
+    const selectRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents([
+      new StringSelectMenuBuilder()
+        .setCustomId(SELECT_REVERT)
+        .setPlaceholder('Revert to version')
+        .addOptions(
+          actions.map((al) => ({
+            label: `Revert to version #${al.version}`,
+            value: `${al.version}`,
+          })),
+        ),
+    ])
 
     return {
       embeds: [currentEmbed],
@@ -169,9 +163,7 @@ async function actionlogHistoryRun(interaction: ChatInputCommandInteraction) {
                 id: action.actionID,
                 version: action.version,
                 action: action.action as ActionLogEntry['action'],
-                user: action.userID
-                  ? await guild.client.users.fetch(action.userID)
-                  : null,
+                user: action.userID ? await guild.client.users.fetch(action.userID) : null,
                 redactUser: action.redactUser,
                 reason: action.reason,
                 reasonBy: action.reasonByID
@@ -247,10 +239,7 @@ async function fetchPaginatedActionHistory(
   }
 }
 
-async function formatPageToFields(
-  guild: Guild,
-  actionLogs: ActionLog[],
-): Promise<APIEmbedField[]> {
+async function formatPageToFields(guild: Guild, actionLogs: ActionLog[]): Promise<APIEmbedField[]> {
   // TODO: some way to detect when the output would be too long and split it
   // but how? and how to do it without breaking pagination?
   return Promise.all(
@@ -264,9 +253,7 @@ async function formatPageToFields(
             user: al.userID ? await guild.client.users.fetch(al.userID) : null,
             redactUser: al.redactUser,
             reason: al.reason,
-            reasonBy: al.reasonByID
-              ? await guild.client.users.fetch(al.reasonByID)
-              : null,
+            reasonBy: al.reasonByID ? await guild.client.users.fetch(al.reasonByID) : null,
             responsibleModerator: al.moderatorID
               ? await guild.client.users.fetch(al.moderatorID)
               : null,

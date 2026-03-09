@@ -8,11 +8,7 @@ import {
   MessageFlags,
   SnowflakeUtil,
 } from 'discord.js'
-import {
-  type ClientEventHandlers,
-  getGuild,
-  SleetSlashCommand,
-} from 'sleetcord'
+import { type ClientEventHandlers, getGuild, SleetSlashCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 
 export const export_users = new SleetSlashCommand(
@@ -62,11 +58,7 @@ async function runExportUsers(interaction: ChatInputCommandInteraction) {
   })
 
   let i = 0
-  const handler: ClientEventHandlers['guildMembersChunk'] = (
-    members,
-    _,
-    chunk,
-  ) => {
+  const handler: ClientEventHandlers['guildMembersChunk'] = (members, _, chunk) => {
     if (chunk.nonce !== nonce) return
 
     i++
@@ -107,7 +99,6 @@ async function runExportUsers(interaction: ChatInputCommandInteraction) {
 
   stringifier.on('readable', () => {
     let row: unknown
-    // biome-ignore lint/suspicious/noAssignInExpressions: this is evil
     while ((row = stringifier.read()) !== null) {
       data.push(row as Buffer)
     }
@@ -119,9 +110,7 @@ async function runExportUsers(interaction: ChatInputCommandInteraction) {
     interaction
       .editReply({
         content: 'Exported users successfully.',
-        files: [
-          new AttachmentBuilder(Buffer.concat(data), { name: 'members.csv' }),
-        ],
+        files: [new AttachmentBuilder(Buffer.concat(data), { name: 'members.csv' })],
       })
       .catch((err) => {
         console.error('Failed to send export reply:', err)

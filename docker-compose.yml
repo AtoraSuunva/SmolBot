@@ -8,11 +8,15 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:${WEB_API_PORT}"
+      - '8080:${WEB_API_PORT}'
     volumes:
       - db-data:/home/node/app/prisma/db
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1" ]
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1',
+        ]
       interval: 10s
       timeout: 30s
       retries: 5

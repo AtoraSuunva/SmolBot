@@ -18,14 +18,13 @@ import {
   type WebhookType,
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { quoteMessage } from '../../helpers/quoteMessage.js'
 
 const SettableMessageFlags =
-  MessageFlags.SuppressEmbeds |
-  MessageFlags.SuppressNotifications |
-  MessageFlags.IsComponentsV2
+  MessageFlags.SuppressEmbeds | MessageFlags.SuppressNotifications | MessageFlags.IsComponentsV2
 
 export const handle_ticket_message = new SleetModule(
   {
@@ -37,10 +36,7 @@ export const handle_ticket_message = new SleetModule(
   },
 )
 
-async function handleMessageUpdate(
-  _oldMessage: Message | PartialMessage,
-  newMessage: Message,
-) {
+async function handleMessageUpdate(_oldMessage: Message | PartialMessage, newMessage: Message) {
   await syncMessage(newMessage, true)
 }
 
@@ -90,13 +86,9 @@ async function syncMessage(message: Message, isEdit = false) {
 
   const { client } = message
   const isUserMessage = ticket.userThreadID === message.channel.id
-  const forwardChannelID = isUserMessage
-    ? ticket.modChannelID
-    : ticket.userChannelID
+  const forwardChannelID = isUserMessage ? ticket.modChannelID : ticket.userChannelID
 
-  const replyType = isUserMessage
-    ? ReplyType.User
-    : getReplyType(message, config)
+  const replyType = isUserMessage ? ReplyType.User : getReplyType(message, config)
 
   if (replyType === ReplyType.None) {
     return
@@ -113,9 +105,7 @@ async function syncMessage(message: Message, isEdit = false) {
         },
       })
 
-  const forwardChannel = await client.channels
-    .fetch(forwardChannelID)
-    .catch(() => null)
+  const forwardChannel = await client.channels.fetch(forwardChannelID).catch(() => null)
 
   if (!forwardChannel || !('threads' in forwardChannel)) {
     // Channel was deleted, so we can't forward the message
@@ -139,12 +129,8 @@ async function syncMessage(message: Message, isEdit = false) {
     return
   }
 
-  const forwardThreadID = isUserMessage
-    ? ticket.modThreadID
-    : ticket.userThreadID
-  const forwardThread = await forwardChannel.threads
-    .fetch(forwardThreadID)
-    .catch(() => null)
+  const forwardThreadID = isUserMessage ? ticket.modThreadID : ticket.userThreadID
+  const forwardThread = await forwardChannel.threads.fetch(forwardThreadID).catch(() => null)
 
   if (!forwardThread) {
     // Thread was deleted, so we can't forward the message
@@ -180,9 +166,7 @@ async function syncMessage(message: Message, isEdit = false) {
 
     await message.channel
       .send(
-        `Failed to get webhook for the ${
-          isUserMessage ? 'mod' : 'user'
-        } thread.\nError: ${msg}`,
+        `Failed to get webhook for the ${isUserMessage ? 'mod' : 'user'} thread.\nError: ${msg}`,
       )
       .catch(() => {
         /* ignore */
@@ -212,11 +196,7 @@ async function syncMessage(message: Message, isEdit = false) {
     includeTimestamp: false,
   })
 
-  if (
-    quote[0].data.fields?.length ||
-    quote[0].data.image ||
-    quote[0].data.title
-  ) {
+  if (quote[0].data.fields?.length || quote[0].data.image || quote[0].data.title) {
     quote[0].setDescription(null)
     embeds.unshift(quote[0])
   }
@@ -245,10 +225,9 @@ async function syncMessage(message: Message, isEdit = false) {
         return
       }
 
-      const webhookMessage = await webhook.fetchMessage(
-        existingWebhookMessage?.webhookMessageID,
-        { threadId: forwardThread.id },
-      )
+      const webhookMessage = await webhook.fetchMessage(existingWebhookMessage?.webhookMessageID, {
+        threadId: forwardThread.id,
+      })
 
       await webhook.editMessage(webhookMessage, mainOptions)
     } else {
@@ -258,7 +237,6 @@ async function syncMessage(message: Message, isEdit = false) {
         options.username = config.modTeamName
 
         if (message.guild.icon) {
-          // biome-ignore lint/style/noNonNullAssertion: we just tested for an icon url
           options.avatarURL = message.guild.iconURL()!
         }
       } else {
@@ -307,10 +285,7 @@ const formatWebhookUser = (user: User): string => {
   return formatted.length > 32 ? user.tag : formatted
 }
 
-const webhookCache = new LimitedCollection<
-  string,
-  Webhook<WebhookType.Incoming>
->({
+const webhookCache = new LimitedCollection<string, Webhook<WebhookType.Incoming>>({
   maxSize: 50,
 })
 
@@ -354,10 +329,7 @@ enum ReplyType {
   Anonymous = 3,
 }
 
-function getReplyType(
-  message: Message,
-  config: Prisma.ModMailConfigGetPayload<true>,
-): ReplyType {
+function getReplyType(message: Message, config: Prisma.ModMailConfigGetPayload<true>): ReplyType {
   const { modReplyPrefix, modAnonReplyPrefix } = config
 
   let replyType = ReplyType.None
@@ -368,10 +340,7 @@ function getReplyType(
 
   if (message.content.startsWith(modAnonReplyPrefix)) {
     // Longer prefix wins
-    if (
-      replyType === ReplyType.None ||
-      modAnonReplyPrefix.length > modReplyPrefix.length
-    ) {
+    if (replyType === ReplyType.None || modAnonReplyPrefix.length > modReplyPrefix.length) {
       replyType = ReplyType.Anonymous
     }
   }

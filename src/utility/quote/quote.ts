@@ -11,6 +11,7 @@ import {
 } from 'discord.js'
 import { formatUser, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+
 import { prisma } from '../../helpers/db.js'
 import { quoteMessage } from '../../helpers/quoteMessage.js'
 
@@ -42,9 +43,7 @@ async function handleMessageCreate(message: Message) {
     message.author.bot ||
     !message.inGuild() ||
     !message.guild.members.me ||
-    !message.channel
-      .permissionsFor(message.guild.members.me)
-      .has(['SendMessages', 'EmbedLinks']) ||
+    !message.channel.permissionsFor(message.guild.members.me).has(['SendMessages', 'EmbedLinks']) ||
     !message.content.includes('.com/channels/')
   ) {
     return
@@ -194,10 +193,7 @@ async function getMessageFromLink(
   return message
 }
 
-async function makeQuoteFrom(
-  message: Message<true>,
-  quotedBy: User,
-): Promise<EmbedBuilder[]> {
+async function makeQuoteFrom(message: Message<true>, quotedBy: User): Promise<EmbedBuilder[]> {
   const [quote, ...extraEmbeds] = await quoteMessage(message)
 
   quote.setFooter({

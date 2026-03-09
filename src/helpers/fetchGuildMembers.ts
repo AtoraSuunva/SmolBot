@@ -61,6 +61,7 @@ const FETCH_CHUNKS_CACHE = new Collection<Snowflake, FetchChunksCacheEntry>()
  * @param guild The guild to fetch members from.
  * @param options Options for fetching members.
  * @returns An async generator yielding chunks of guild members.
+ * @yields ReadonlyCollection of guild members for each chunk received.
  */
 export async function* fetchChunkedGuildMembers(
   guild: Guild,
@@ -68,8 +69,7 @@ export async function* fetchChunkedGuildMembers(
 ) {
   const { client } = guild
   const initialCacheCheck = FETCH_CHUNKS_CACHE.get(guild.id)
-  const initialNonce =
-    initialCacheCheck?.nonce ?? SnowflakeUtil.generate().toString()
+  const initialNonce = initialCacheCheck?.nonce ?? SnowflakeUtil.generate().toString()
   const { time = 30 * SECOND } = options
 
   if (initialNonce.length > 32) {
@@ -81,8 +81,7 @@ export async function* fetchChunkedGuildMembers(
   let isSender = false
   let fetchCache: FetchChunksCacheEntry
   const sendRequestOpCode =
-    !initialCacheCheck ||
-    Date.now() - initialCacheCheck.timestamp > CACHE_FRESH_TIME
+    !initialCacheCheck || Date.now() - initialCacheCheck.timestamp > CACHE_FRESH_TIME
 
   // We're the first OR it's been long enough we can refetch, we need to send off the request
   // TODO: It would be better to detect the RATE_LIMITED event from the gateway https://discord.com/developers/docs/change-log/2025-08-14-introducing-guild-members-rate-limit
@@ -162,9 +161,7 @@ export async function* fetchChunkedGuildMembers(
 
     if (isSender) {
       fetcherLogger.trace(
-        `Received chunk ${i}/${
-          chunk.count ?? '?'
-        } for guild ${guild.id} (cached chunks: ${
+        `Received chunk ${i}/${chunk.count ?? '?'} for guild ${guild.id} (cached chunks: ${
           fetchCache.chunks.length + 1
         })`,
       )
@@ -199,6 +196,7 @@ export async function* fetchChunkedGuildMembers(
     throw new Error('Timeout waiting for guild members chunk')
   }, time).unref()
 
+  // oxlint-disable-next-line no-unmodified-loop-condition done is modified in the handler
   while (!done) {
     await promise
     yield* results

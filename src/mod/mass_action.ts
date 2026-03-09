@@ -22,6 +22,7 @@ import {
   SleetSlashCommand,
 } from 'sleetcord'
 import { DAY, SECOND } from 'sleetcord-common'
+
 import { capitalize, plural } from '../helpers/format.js'
 
 const commonOptions: APIApplicationCommandOption[] = [
@@ -70,8 +71,7 @@ export const mass_ban = new SleetSlashCommand(
       },
       {
         name: 'force_ban',
-        description:
-          'Force ban users even if they are not in the guild (default: True)',
+        description: 'Force ban users even if they are not in the guild (default: True)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -229,17 +229,13 @@ async function runMassBan(interaction: ChatInputCommandInteraction) {
 
   const deleteMessageSeconds = (deleteDays * DAY) / 1000
 
-  await chatInputMassAction(
-    interaction,
-    createMassBanOptions(deleteMessageSeconds, forceBan),
-  )
+  await chatInputMassAction(interaction, createMassBanOptions(deleteMessageSeconds, forceBan))
 }
 
 export const massKickOptions: ChatInputMassActionOptions = {
   action: 'kick',
   actioned: 'kicked',
-  actionUser: (g, u, reason) =>
-    g.members.kick(typeof u === 'string' ? u : u.id, reason),
+  actionUser: (g, u, reason) => g.members.kick(typeof u === 'string' ? u : u.id, reason),
   checkMember: (m) => m.kickable,
   actionUserType: UserType.MembersOnly,
 }
@@ -304,10 +300,7 @@ async function runMassSoftban(interaction: ChatInputCommandInteraction) {
   const deleteDays = interaction.options.getInteger('delete_days') ?? 1
   const deleteMessageSeconds = (deleteDays * DAY) / 1000
 
-  await chatInputMassAction(
-    interaction,
-    createMassSoftbanOptions(deleteMessageSeconds),
-  )
+  await chatInputMassAction(interaction, createMassSoftbanOptions(deleteMessageSeconds))
 }
 
 interface RunMassActionOptions {
@@ -422,14 +415,12 @@ export async function runMassAction({
   if (!users && !usersFile) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({
-        content:
-          'You must provide either a list of users or a file of user IDs',
+        content: 'You must provide either a list of users or a file of user IDs',
       })
     } else {
       await interaction.reply({
         flags: ephemeral ? MessageFlags.Ephemeral : '0',
-        content:
-          'You must provide either a list of users or a file of user IDs',
+        content: 'You must provide either a list of users or a file of user IDs',
       })
     }
     return
@@ -507,16 +498,14 @@ export async function runMassAction({
 
   let lastProgressUpdate = Date.now()
   const updateProgress = async (immediate = false) => {
-    if (
-      !immediate &&
-      Date.now() - lastProgressUpdate < TIME_BETWEEN_PROGRESS_UPDATES
-    ) {
+    if (!immediate && Date.now() - lastProgressUpdate < TIME_BETWEEN_PROGRESS_UPDATES) {
       return
     }
 
     await interaction.editReply(
       `Checking user ${progress.toLocaleString()}/${total.toLocaleString()} (${(
-        (progress / total) * 100
+        (progress / total) *
+        100
       ).toFixed(
         2,
       )}%)\n${capitalize(actioned)} ${plural('user', success.length)} so far...${bulkActionBatch.length > 0 ? ` (${bulkActionBatch.length} queued)` : ''}`,
@@ -530,10 +519,7 @@ export async function runMassAction({
   for await (const batch of partitionArray(uniqueUsers, MAX_MEMBER_FETCH)) {
     const members = await guild.members.fetch({ user: batch })
 
-    if (
-      actionUserType === UserType.Everyone ||
-      actionUserType === UserType.MembersOnly
-    ) {
+    if (actionUserType === UserType.Everyone || actionUserType === UserType.MembersOnly) {
       for (const [, member] of members) {
         progress++
         await updateProgress()
@@ -575,10 +561,7 @@ export async function runMassAction({
       }
     }
 
-    if (
-      actionUserType === UserType.Everyone ||
-      actionUserType === UserType.NonMembersOnly
-    ) {
+    if (actionUserType === UserType.Everyone || actionUserType === UserType.NonMembersOnly) {
       // Check which users are left in the list that aren't members
       const remaining = batch.filter((id) => !members.has(id))
 
@@ -614,8 +597,11 @@ export async function runMassAction({
     ) {
       const toActionBatch = bulkActionBatch.splice(0, bulkActionBatchSize)
 
-      const { success: bulkSuccess, failure: bulkFailure } =
-        await bulkActionUsers(guild, toActionBatch, reason)
+      const { success: bulkSuccess, failure: bulkFailure } = await bulkActionUsers(
+        guild,
+        toActionBatch,
+        reason,
+      )
 
       success.push(...bulkSuccess)
       failure.push(...bulkFailure)
@@ -629,8 +615,11 @@ export async function runMassAction({
     while (bulkActionBatch.length > 0) {
       const toActionBatch = bulkActionBatch.splice(0, bulkActionBatchSize)
 
-      const { success: bulkSuccess, failure: bulkFailure } =
-        await bulkActionUsers(guild, toActionBatch, reason)
+      const { success: bulkSuccess, failure: bulkFailure } = await bulkActionUsers(
+        guild,
+        toActionBatch,
+        reason,
+      )
 
       success.push(...bulkSuccess)
       failure.push(...bulkFailure)
@@ -647,10 +636,7 @@ export async function runMassAction({
     .join('\n')
 
   const formattedFailure = failure
-    .map(
-      (fail) =>
-        `${formatUserOrId(idOnly, fail.user, shouldEscapeFailures)}: ${fail.reason}`,
-    )
+    .map((fail) => `${formatUserOrId(idOnly, fail.user, shouldEscapeFailures)}: ${fail.reason}`)
     .join('\n')
 
   const content: string[] = []
@@ -693,11 +679,7 @@ export async function runMassAction({
   })
 }
 
-function formatUserOrId(
-  idOnly: boolean,
-  user: UserOrId,
-  escapeMarkdown = false,
-): string {
+function formatUserOrId(idOnly: boolean, user: UserOrId, escapeMarkdown = false): string {
   return typeof user === 'string'
     ? user
     : idOnly
@@ -708,9 +690,5 @@ function formatUserOrId(
 function actionResultToUserOrId(
   result: Awaited<ReturnType<ActionUser>>,
 ): UserOrId | undefined | null {
-  return result instanceof GuildMember
-    ? result.user
-    : result instanceof User
-      ? result
-      : result
+  return result instanceof GuildMember ? result.user : result instanceof User ? result : result
 }

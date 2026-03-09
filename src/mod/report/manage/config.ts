@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { Prisma, ReportConfig } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { formatConfig } from '../../../helpers/format.js'
@@ -97,9 +98,7 @@ async function runReportManage(interaction: ChatInputCommandInteraction) {
   }
 
   if (!newConfig.channelID) {
-    warnings.push(
-      'The report channel has not been set. You will not receive any reports.',
-    )
+    warnings.push('The report channel has not been set. You will not receive any reports.')
   }
 
   const warningsMessage = warnings.length > 0 ? `\n${warnings.join('\n')}` : ''
@@ -119,10 +118,7 @@ export interface ReportConfigResolved {
   reportChannel: GuildTextBasedChannel
 }
 
-export async function fetchConfig(
-  guild: Guild,
-  user: User,
-): Promise<ReportConfigResolved> {
+export async function fetchConfig(guild: Guild, user: User): Promise<ReportConfigResolved> {
   const config = await prisma.reportConfig.findUnique({
     where: {
       guildID: guild.id,
@@ -138,9 +134,7 @@ export async function fetchConfig(
   }
 
   if (!config.channelID) {
-    throw new Error(
-      'The report channel has not been set. You should let the staff team know.',
-    )
+    throw new Error('The report channel has not been set. You should let the staff team know.')
   }
 
   const reportChannel = await guild.channels.fetch(config.channelID)
@@ -152,9 +146,7 @@ export async function fetchConfig(
   }
 
   if (!reportChannel.isTextBased()) {
-    throw new Error(
-      'The report channel is not a text channel. You should let the staff team know.',
-    )
+    throw new Error('The report channel is not a text channel. You should let the staff team know.')
   }
 
   const reportBlock = await prisma.reportBan.findUnique({
@@ -167,9 +159,7 @@ export async function fetchConfig(
   })
 
   if (reportBlock) {
-    throw new Error(
-      'You have been blocked from using the report system in this guild.',
-    )
+    throw new Error('You have been blocked from using the report system in this guild.')
   }
 
   return {

@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { modmail_fields } from './fields/index.js'
 import { modmail_forum } from './forum/index.js'
 import { handle_thread_update } from './handle_thread_update.js'

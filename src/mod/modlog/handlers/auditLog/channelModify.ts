@@ -16,6 +16,7 @@ import {
   type TextBasedChannel,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
+
 import {
   formatLog,
   getModlogTicketQueue,
@@ -26,9 +27,7 @@ import { messageDeleteBulkWithAuditLog } from '../messageDeleteBulk.js'
 import { resolveUser } from './index.js'
 
 export type ChannelAuditLog = GuildAuditLogsEntry<
-  | AuditLogEvent.ChannelCreate
-  | AuditLogEvent.ChannelDelete
-  | AuditLogEvent.ChannelUpdate,
+  AuditLogEvent.ChannelCreate | AuditLogEvent.ChannelDelete | AuditLogEvent.ChannelUpdate,
   'Create' | 'Delete' | 'Update',
   'Channel'
 >
@@ -40,9 +39,7 @@ const tempStoredChannels = new LimitedCollection<
   maxSize: 10,
 })
 
-export async function channelDelete(
-  channel: DMChannel | NonThreadGuildBasedChannel,
-) {
+export async function channelDelete(channel: DMChannel | NonThreadGuildBasedChannel) {
   if (channel.isDMBased()) return
   const conf = await getValidatedConfigFor(
     channel.guild,
@@ -62,21 +59,14 @@ const actionMap: Partial<Record<AuditLogEvent, LoggedAction>> = {
   [AuditLogEvent.ChannelUpdate]: 'channelUpdate',
 }
 
-export async function logChannelModified(
-  auditLogEntry: ChannelAuditLog,
-  guild: Guild,
-) {
+export async function logChannelModified(auditLogEntry: ChannelAuditLog, guild: Guild) {
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(guild).acquireTicket()
 
   const action: LoggedAction | undefined = actionMap[auditLogEntry.action]
   if (!action) return
 
-  const conf = await getValidatedConfigFor(
-    guild,
-    action,
-    (config) => !!config[action],
-  )
+  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
   if (!conf) return
 
   const modifiedChannel =
@@ -92,11 +82,7 @@ export async function logChannelModified(
         : // Give up and use just the ID
           auditLogEntry.targetId
 
-  const executor = await resolveUser(
-    auditLogEntry.executor,
-    auditLogEntry.executorId,
-    guild.client,
-  )
+  const executor = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)
   const channelText = formatChannel(modifiedChannel)
   const execUser = executor ? formatUser(executor) : '<unknown user>'
   const changelog = auditLogEntry.changes
@@ -120,9 +106,7 @@ export async function logChannelModified(
   let files: AttachmentPayload[] = []
 
   if (changelog.length <= 1800) {
-    message = `${headline}${
-      changelog ? `\n${codeBlock('diff', changelog)}` : ''
-    }`
+    message = `${headline}${changelog ? `\n${codeBlock('diff', changelog)}` : ''}`
   } else {
     message = `${headline}\nChangelog is too long to display here, see attached file for details.`
 
@@ -161,10 +145,7 @@ export async function logChannelModified(
     )
   }
 
-  if (
-    auditLogEntry.targetId &&
-    tempStoredChannels.has(auditLogEntry.targetId)
-  ) {
+  if (auditLogEntry.targetId && tempStoredChannels.has(auditLogEntry.targetId)) {
     tempStoredChannels.delete(auditLogEntry.targetId)
   }
 }
@@ -207,17 +188,12 @@ const ChannelTypeNames: Record<ChannelType, string> = {
   [ChannelType.GuildMedia]: 'Media',
 }
 
-function formatChannel(
-  channel: GuildBasedChannel | TargetChannel | string | null,
-): string {
+function formatChannel(channel: GuildBasedChannel | TargetChannel | string | null): string {
   if (!channel) return 'Unknown Channel'
 
   if (typeof channel === 'string') return `<#${channel}>`
 
-  const parent =
-    'parent' in channel && channel.parent
-      ? ` in ${formatChannel(channel.parent)}`
-      : ''
+  const parent = 'parent' in channel && channel.parent ? ` in ${formatChannel(channel.parent)}` : ''
 
   return `**${escapeAllMarkdown(channel.name)}** (${channel.id}) [\`${
     ChannelTypeNames[channel.type]

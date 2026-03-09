@@ -1,20 +1,22 @@
 import { type ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { FIELD_OPTIONS } from './utils.js'
 import { formatField } from './view.js'
 
-const REQUIRED_FIELDS = ['custom_id']
+const REQUIRED_FIELDS = new Set(['custom_id'])
 
 export const modmail_fields_edit = new SleetSlashSubcommand(
   {
     name: 'edit',
     description: 'Edit a field in the modmail ticket modal',
-    options: FIELD_OPTIONS.map((option) => ({
-      ...option,
-      required: option.required ?? REQUIRED_FIELDS.includes(option.name),
-    })),
+    options: FIELD_OPTIONS.map((option) =>
+      Object.assign(option, {
+        required: option.required ?? REQUIRED_FIELDS.has(option.name),
+      }),
+    ),
   },
   {
     run: runAdd,

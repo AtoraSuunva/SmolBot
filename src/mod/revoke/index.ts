@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { revoke_config } from './config.js'
 import { revoke_invites } from './invites.js'
 

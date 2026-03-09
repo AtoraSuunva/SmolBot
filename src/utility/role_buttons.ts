@@ -15,13 +15,13 @@ import {
   type Role,
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
+
 import { getComponentsOfType } from '../helpers/components.js'
 
 export const role_buttons = new SleetSlashCommand(
   {
     name: 'role_buttons',
-    description:
-      'Create a set of buttons for users to add/remove roles from themselves',
+    description: 'Create a set of buttons for users to add/remove roles from themselves',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
@@ -40,14 +40,12 @@ export const role_buttons = new SleetSlashCommand(
       },
       {
         name: 'embed',
-        description:
-          'Show an embed with a description and list of roles (default: true)',
+        description: 'Show an embed with a description and list of roles (default: true)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
         name: 'only_one',
-        description:
-          'Only allow one role to be selected at a time (default: false)',
+        description: 'Only allow one role to be selected at a time (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -103,9 +101,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
   const rows: ActionRowBuilder<ButtonBuilder>[] = []
   const fields: string[] = []
 
-  const desc =
-    description +
-    (onlyOne ? '\n\nYou can only have **one** role at a time.' : '')
+  const desc = description + (onlyOne ? '\n\nYou can only have **one** role at a time.' : '')
 
   if (desc) {
     embed.setDescription(desc)
@@ -117,9 +113,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
     const roleObj = await guild.roles.fetch(role.roleId).catch(() => null)
 
     if (!roleObj) {
-      fails.push(
-        `Failed to find the role ${role.roleId} in the guild, does it exist?`,
-      )
+      fails.push(`Failed to find the role ${role.roleId} in the guild, does it exist?`)
     } else if (roleObj.position >= userHighestRolePosition) {
       fails.push(
         `You cannot add ${roleObj.name} as an assignable role as it is higher than or equal to your highest role.`,
@@ -149,9 +143,7 @@ async function runRoleButtons(interaction: ChatInputCommandInteraction) {
         button.setEmoji(buttonEmoji)
       }
 
-      const displayEmoji = role.emote
-        ? `<${role.animated ? 'a' : ''}:_:${role.emote}>`
-        : role.emoji
+      const displayEmoji = role.emote ? `<${role.animated ? 'a' : ''}:_:${role.emote}>` : role.emoji
 
       fields.push(
         `${displayEmoji ? `${displayEmoji} ` : ''}${roleObj}${
@@ -227,19 +219,14 @@ async function handleInteractionCreate(interaction: Interaction) {
   if (onlyOne) {
     const otherRoles: Role[] = []
 
-    const buttons = getComponentsOfType(
-      interaction.message.components,
-      ComponentType.Button,
-    )
+    const buttons = getComponentsOfType(interaction.message.components, ComponentType.Button)
 
     for (const button of buttons) {
       if (button.customId === interaction.customId || !button.customId) {
         continue
       }
 
-      const otherRole = await guild.roles
-        .fetch(button.customId.split(':')[1])
-        .catch(() => null)
+      const otherRole = await guild.roles.fetch(button.customId.split(':')[1]).catch(() => null)
 
       if (otherRole) {
         otherRoles.push(otherRole)
@@ -247,14 +234,11 @@ async function handleInteractionCreate(interaction: Interaction) {
     }
 
     if (otherRoles.length > 0) {
-      removeRoles.push(
-        ...otherRoles.filter((r) => member.roles.cache.has(r.id)),
-      )
+      removeRoles.push(...otherRoles.filter((r) => member.roles.cache.has(r.id)))
     }
   }
 
-  const addendum =
-    removeRoles.length > 0 ? ` and lost ${removeRoles.join(', ')}` : ''
+  const addendum = removeRoles.length > 0 ? ` and lost ${removeRoles.join(', ')}` : ''
 
   const memberRoles = member.roles.cache
     .toJSON()

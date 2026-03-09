@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand, SleetSlashCommandGroup } from 'sleetcord'
+
 import { check, create, deleteToken, list } from './token.js'
 
 const token = new SleetSlashCommandGroup({

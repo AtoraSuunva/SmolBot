@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { formatConfig } from '../../../helpers/format.js'
@@ -15,24 +16,21 @@ export const modmail_server_config = new SleetSlashSubcommand(
     options: [
       {
         name: 'mod_reply_prefix',
-        description:
-          'Prefix for mods to send replies as themselves (default: "!r")',
+        description: 'Prefix for mods to send replies as themselves (default: "!r")',
         type: ApplicationCommandOptionType.String,
         min_length: 1,
         max_length: 100,
       },
       {
         name: 'mod_anon_reply_prefix',
-        description:
-          'Prefix for mods to send replies anonymously as staff (default: "!a")',
+        description: 'Prefix for mods to send replies anonymously as staff (default: "!a")',
         type: ApplicationCommandOptionType.String,
         min_length: 1,
         max_length: 100,
       },
       {
         name: 'mod_team_name',
-        description:
-          'Name to use for anonymous staff replies (default: "Mod Team")',
+        description: 'Name to use for anonymous staff replies (default: "Mod Team")',
         type: ApplicationCommandOptionType.String,
         min_length: 2,
         max_length: 32,
@@ -46,9 +44,7 @@ export const modmail_server_config = new SleetSlashSubcommand(
 
 async function runConfigServer(interaction: ChatInputCommandInteraction) {
   const modReplyPrefix = interaction.options.getString('mod_reply_prefix')
-  const modAnonReplyPrefix = interaction.options.getString(
-    'mod_anon_reply_prefix',
-  )
+  const modAnonReplyPrefix = interaction.options.getString('mod_anon_reply_prefix')
   const modTeamName = interaction.options.getString('mod_team_name')
 
   if (modTeamName && !isValidUsername(modTeamName)) {

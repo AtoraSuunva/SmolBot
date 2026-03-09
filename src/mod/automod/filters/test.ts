@@ -40,8 +40,7 @@ const getOutput = <
   input: Readonly<[...Input]>,
 ) =>
   input.reduce<Reducer<Input>>(
-    // biome-ignore lint/performance/noAccumulatingSpread: TODO: this is still WIP
-    (output, record) => ({ ...output, [record.name]: record.type }),
+    (output, record) => Object.assign(output, { [record.name]: record.type }),
     {} as Reducer<Input>,
   )
 

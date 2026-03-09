@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../../helpers/db.js'
 
 export const report_manage_unblock = new SleetSlashSubcommand(
@@ -41,9 +42,7 @@ async function runReportUnblock(interaction: ChatInputCommandInteraction) {
 
   if (!reportBlock) {
     await interaction.reply({
-      content: `${formatUser(
-        user,
-      )} is not blocked from using the report command.`,
+      content: `${formatUser(user)} is not blocked from using the report command.`,
       flags: MessageFlags.Ephemeral,
     })
     return

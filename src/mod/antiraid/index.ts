@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { antiraid_check } from './check.js'
 import { antiraid_config } from './config.js'
 

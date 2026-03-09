@@ -1,8 +1,6 @@
-import {
-  ApplicationCommandOptionType,
-  type ChatInputCommandInteraction,
-} from 'discord.js'
+import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { formatConfig } from '../../../helpers/format.js'
@@ -16,16 +14,14 @@ export const modmail_ticket_config = new SleetSlashSubcommand(
       FIELD_MODMAIL_ID,
       {
         name: 'max_open_tickets',
-        description:
-          'The maximum amount of tickets a user can have open at a time (default: 100)',
+        description: 'The maximum amount of tickets a user can have open at a time (default: 100)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
         max_value: 100,
       },
       {
         name: 'ratelimit',
-        description:
-          'Time (in seconds) a user must wait between creating tickets (default: 0)',
+        description: 'Time (in seconds) a user must wait between creating tickets (default: 0)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
       },
@@ -52,11 +48,10 @@ async function runConfigTicket(interaction: ChatInputCommandInteraction) {
 
   const guild = await getGuild(interaction, true)
 
-  const mergedConfig: Omit<Prisma.ModMailTicketConfigCreateInput, 'updatedAt'> =
-    {
-      guildID: guild.id,
-      modmailID,
-    }
+  const mergedConfig: Omit<Prisma.ModMailTicketConfigCreateInput, 'updatedAt'> = {
+    guildID: guild.id,
+    modmailID,
+  }
 
   if (maxOpenTickets !== null) {
     mergedConfig.maxOpenTickets = maxOpenTickets

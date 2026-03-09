@@ -1,10 +1,6 @@
 import { stripVTControlCharacters } from 'node:util'
-import {
-  UnicodeCategory,
-  uniGetBlock,
-  uniGetCategories,
-  uniGetScripts,
-} from 'char-info'
+
+import { UnicodeCategory, uniGetBlock, uniGetCategories, uniGetScripts } from 'char-info'
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -16,6 +12,7 @@ import {
 import { SleetSlashCommand } from 'sleetcord'
 import stringWidth from 'string-width'
 import { unicodeName } from 'unicode-name'
+
 import { ansiFormat, TextColor } from '../helpers/ansiColors.js'
 
 const DOTTED_CIRCLE = '◌'
@@ -43,8 +40,7 @@ export const char_info = new SleetSlashCommand(
       {
         name: 'details',
         type: ApplicationCommandOptionType.Boolean,
-        description:
-          'Include block, script, and category info (default: False)',
+        description: 'Include block, script, and category info (default: False)',
       },
       {
         name: 'ephemeral',
@@ -98,10 +94,7 @@ function characterInformation(str: string, details = false): string {
   let longestWidth = 0
 
   for (const char of str) {
-    longestCodepoint = Math.max(
-      longestCodepoint,
-      char.codePointAt(0)?.toString(16).length ?? 0,
-    )
+    longestCodepoint = Math.max(longestCodepoint, char.codePointAt(0)?.toString(16).length ?? 0)
     longestWidth = Math.max(longestWidth, stringWidth(char))
   }
 
@@ -112,10 +105,9 @@ function characterInformation(str: string, details = false): string {
       continue
     }
 
-    const unicodePoint =
-      `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`.padEnd(
-        longestCodepoint + 2,
-      )
+    const unicodePoint = `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`.padEnd(
+      longestCodepoint + 2,
+    )
     const name = unicodeName(codePoint)
     const categories = uniGetCategories.code(codePoint)
     const isMark = categories.some((c) => c.name === UnicodeCategory.Mark)
@@ -138,9 +130,7 @@ function characterInformation(str: string, details = false): string {
       charDetails = ` (${renderGroup(block)}; ${renderGroupArray(scripts)}; ${renderGroupArray(categories)})`
     }
 
-    characters.push(
-      `${ansiFormat(TextColor.Blue, prelude)} ${basicInfo}${charDetails}`,
-    )
+    characters.push(`${ansiFormat(TextColor.Blue, prelude)} ${basicInfo}${charDetails}`)
   }
 
   return characters.join('\n')

@@ -4,6 +4,7 @@ import {
   type ChatInputCommandInteraction,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { formatConfig, makeForumTagFormatter } from '../../../helpers/format.js'
@@ -43,9 +44,7 @@ export const modmail_forum_config = new SleetSlashSubcommand(
 )
 
 async function runConfigForum(interaction: ChatInputCommandInteraction) {
-  const forum = interaction.options.getChannel('forum', true, [
-    ChannelType.GuildForum,
-  ])
+  const forum = interaction.options.getChannel('forum', true, [ChannelType.GuildForum])
   const openTag = interaction.options.getString('open_tag')
   const closedTag = interaction.options.getString('closed_tag')
 
@@ -53,11 +52,10 @@ async function runConfigForum(interaction: ChatInputCommandInteraction) {
 
   const guild = await getGuild(interaction, true)
 
-  const mergedConfig: Omit<Prisma.ModMailForumConfigCreateInput, 'updatedAt'> =
-    {
-      guildID: guild.id,
-      channelID: forum.id,
-    }
+  const mergedConfig: Omit<Prisma.ModMailForumConfigCreateInput, 'updatedAt'> = {
+    guildID: guild.id,
+    channelID: forum.id,
+  }
 
   if (openTag) {
     mergedConfig.openTag = openTag

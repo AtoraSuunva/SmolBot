@@ -27,6 +27,7 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
+
 import { getComponentsOfType } from '../helpers/components.js'
 import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { tableFormat } from '../helpers/format.js'
@@ -42,10 +43,7 @@ type MemberMatch = {
   member: GuildMember | APIGuildMember
 }
 
-const userAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
+const userAutocomplete: AutocompleteHandler<string> = async ({ interaction, value }) => {
   if (!interaction.inGuild()) {
     return []
   }
@@ -67,15 +65,13 @@ const REGEX_TIMEOUT = 100
 export const find_members = new SleetSlashCommand(
   {
     name: 'find_members',
-    description:
-      'Find members in the server by username, global name, or nickname',
+    description: 'Find members in the server by username, global name, or nickname',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
       {
         name: 'name',
-        description:
-          'Find members with this name (default is case-insensitive partial match)',
+        description: 'Find members with this name (default is case-insensitive partial match)',
         type: ApplicationCommandOptionType.String,
         autocomplete: userAutocomplete,
       },
@@ -162,14 +158,11 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
   const regex = interaction.options.getString('regex')
 
   if ((!name && !regex) || (name && regex)) {
-    throw new PreRunError(
-      'You must provide either a name or a regex (but not both).',
-    )
+    throw new PreRunError('You must provide either a name or a regex (but not both).')
   }
 
   const exactMatch = interaction.options.getBoolean('exact_match') ?? false
-  const caseSensitive =
-    interaction.options.getBoolean('case_sensitive') ?? false
+  const caseSensitive = interaction.options.getBoolean('case_sensitive') ?? false
 
   let regexPattern: RegExp | null = null
   if (regex) {
@@ -185,8 +178,7 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
 
   const matchBot = interaction.options.getBoolean('match_bot') ?? true
   const matchUsername = interaction.options.getBoolean('match_username') ?? true
-  const matchGlobalName =
-    interaction.options.getBoolean('match_global_name') ?? true
+  const matchGlobalName = interaction.options.getBoolean('match_global_name') ?? true
   const matchNickname = interaction.options.getBoolean('match_nickname') ?? true
 
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
@@ -250,10 +242,7 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
 }
 
 function handleInteractionCreate(interaction: Interaction) {
-  if (
-    interaction.isUserSelectMenu() &&
-    interaction.customId === USER_SELECT_ID
-  ) {
+  if (interaction.isUserSelectMenu() && interaction.customId === USER_SELECT_ID) {
     handleUserSelectInteraction(interaction)
   } else if (interaction.isButton()) {
     switch (interaction.customId) {
@@ -267,9 +256,7 @@ function handleInteractionCreate(interaction: Interaction) {
   }
 }
 
-async function handleUserSelectInteraction(
-  interaction: UserSelectMenuInteraction,
-) {
+async function handleUserSelectInteraction(interaction: UserSelectMenuInteraction) {
   const members = interaction.members.map(formatSuggestion)
 
   const selectRow = createUserSelect(
@@ -304,10 +291,7 @@ async function handleIDButton(interaction: ButtonInteraction) {
 }
 
 async function getInteractionMembers(interaction: ButtonInteraction) {
-  const userSelects = getComponentsOfType(
-    interaction.message.components,
-    ComponentType.UserSelect,
-  )
+  const userSelects = getComponentsOfType(interaction.message.components, ComponentType.UserSelect)
 
   for (const component of userSelects) {
     if (component.customId === USER_SELECT_ID) {
@@ -384,7 +368,7 @@ async function matchMembers(
 ): Promise<MemberMatch[]> {
   const matches: GuildMember[] = []
 
-  limit = Math.min(limit, MAX_MATCHES)
+  let appliedLimit = Math.min(limit, MAX_MATCHES)
 
   for (const m of members.values()) {
     if (!matchBot && m.user.bot) continue
@@ -399,13 +383,11 @@ async function matchMembers(
       (matchNickname && nickname && (await matcher(nickname)))
     ) {
       matches.push(m)
-      if (matches.length >= limit) break
+      if (matches.length >= appliedLimit) break
     }
   }
 
-  return matches
-    .map(formatSuggestion)
-    .sort((a, b) => a.username.localeCompare(b.username))
+  return matches.map(formatSuggestion).sort((a, b) => a.username.localeCompare(b.username))
 }
 
 function formatSuggestion(m: GuildMember | APIGuildMember): MemberMatch {
@@ -437,8 +419,7 @@ function formatAPISuggestion(m: APIGuildMember): MemberMatch {
     escapeMarkdown: false,
   })
 
-  const tag =
-    m.user.username + (m.user.discriminator ? `#${m.user.discriminator}` : '')
+  const tag = m.user.username + (m.user.discriminator ? `#${m.user.discriminator}` : '')
 
   return {
     name: `${formattedUser}${m.nick ? ` (Nickname: ${m.nick})` : ''}`,

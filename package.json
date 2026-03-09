@@ -2,6 +2,16 @@
   "name": "smolbot",
   "version": "2.0.0",
   "description": "Custom mod/misc/util bot",
+  "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
+  "bugs": {
+    "url": "https://github.com/AtoraSuunva/smolbot/issues"
+  },
+  "license": "MIT",
+  "author": "AtoraSuunva",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AtoraSuunva/smolbot.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -10,25 +20,11 @@
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
     "generate": "prisma generate",
     "build": "tsc --build",
-    "lint": "biome check && tsc --noEmit",
-    "lint:fix": "biome check --write && prisma format && tsc --noEmit",
+    "lint": "oxlint -c .oxlintrc.json src && oxfmt --config .oxfmtrc.json --check 'src/**/*.{ts,js}' && tsc --noEmit",
+    "lint:fix": "oxfmt --config .oxfmtrc.json --write 'src/**/*.{ts,js}' && oxlint -c .oxlintrc.json src --fix && prisma format && tsc --noEmit",
     "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
     "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AtoraSuunva/smolbot.git"
-  },
-  "author": "AtoraSuunva",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/AtoraSuunva/smolbot/issues"
-  },
-  "engines": {
-    "node": ">=24.0.0"
-  },
-  "homepage": "https://github.com/AtoraSuunva/smolbot#readme",
-  "packageManager": "pnpm@10.30.1",
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@hono/node-server": "^1.19.9",
@@ -67,13 +63,18 @@
     "unicode-name": "^1.1.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.4",
     "@sentry/cli": "^3.2.2",
     "@types/convert-units": "^2.3.12",
     "@types/luxon": "^3.7.1",
     "@types/node": "~25.3.3",
     "@types/pluralize": "^0.0.33",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
     "prisma": "^7.4.2",
     "typescript": "~5.9.3"
-  }
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@10.30.1"
 }

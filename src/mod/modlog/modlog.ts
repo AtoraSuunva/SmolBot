@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetModule, SleetSlashCommand } from 'sleetcord'
+
 import { logAuditLog } from './handlers/auditLog/index.js'
 import { logGuildMemberAdd } from './handlers/guildMemberAdd.js'
 import { logGuildMemberRemove } from './handlers/guildMemberRemove.js'

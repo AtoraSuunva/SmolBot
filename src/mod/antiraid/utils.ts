@@ -6,6 +6,7 @@ import {
   type Guild,
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 
 export enum AntiRaidActions {
@@ -22,8 +23,9 @@ export const AntiRaidActionVerb = {
   [AntiRaidActions.Timeout]: 'timed out',
 }
 
-export const antiRaidChoices: APIApplicationCommandOptionChoice<string>[] =
-  makeChoices(Object.values(AntiRaidActions))
+export const antiRaidChoices: APIApplicationCommandOptionChoice<string>[] = makeChoices(
+  Object.values(AntiRaidActions),
+)
 
 export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   {
@@ -41,16 +43,14 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   },
   {
     name: 'timeout_duration',
-    description:
-      'The duration for timeouts applied by antiraid, in minutes (1 min - 7 days)',
+    description: 'The duration for timeouts applied by antiraid, in minutes (1 min - 7 days)',
     type: ApplicationCommandOptionType.Integer,
     min_value: 1,
     max_value: 7 * 24 * 60, // 7 days max
   },
   {
     name: 'account_age_limit_min',
-    description:
-      'Accounts <= this age (in minutes) will incur max account age weight',
+    description: 'Accounts <= this age (in minutes) will incur max account age weight',
     type: ApplicationCommandOptionType.Number,
     min_value: 0,
     max_value: 7 * 24 * 60, // 7 days max
@@ -65,8 +65,7 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   },
   {
     name: 'account_age_weight',
-    description:
-      'The weight applied to users whose accounts are younger than the limit',
+    description: 'The weight applied to users whose accounts are younger than the limit',
     type: ApplicationCommandOptionType.Number,
   },
   {
@@ -76,8 +75,7 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   },
   {
     name: 'reason',
-    description:
-      'The reason for the action, add `[no-log]` to not log the action in the actionlog',
+    description: 'The reason for the action, add `[no-log]` to not log the action in the actionlog',
     type: ApplicationCommandOptionType.String,
   },
   {
@@ -88,16 +86,12 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   },
   {
     name: 'reset',
-    description:
-      'Reset the antiraid config to default, applying any specified configs after',
+    description: 'Reset the antiraid config to default, applying any specified configs after',
     type: ApplicationCommandOptionType.Boolean,
   },
 ]
 
-export async function getAntiRaidConfigOrDefault(
-  guild: Guild,
-  forceDefault = false,
-) {
+export async function getAntiRaidConfigOrDefault(guild: Guild, forceDefault = false) {
   if (!forceDefault) {
     const config = await prisma.antiRaidConfig.findUnique({
       where: {

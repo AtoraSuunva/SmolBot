@@ -1,24 +1,22 @@
-import {
-  type ChatInputCommandInteraction,
-  MessageFlags,
-  TextInputStyle,
-} from 'discord.js'
+import { type ChatInputCommandInteraction, MessageFlags, TextInputStyle } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { FIELD_OPTIONS } from './utils.js'
 import { formatField } from './view.js'
 
-const REQUIRED_FIELDS = ['custom_id', 'label']
+const REQUIRED_FIELDS = new Set(['custom_id', 'label'])
 
 export const modmail_fields_add = new SleetSlashSubcommand(
   {
     name: 'add',
     description: 'Add a field to the modmail ticket modal',
-    options: FIELD_OPTIONS.map((option) => ({
-      ...option,
-      required: option.required ?? REQUIRED_FIELDS.includes(option.name),
-    })),
+    options: FIELD_OPTIONS.map((option) =>
+      Object.assign(option, {
+        required: option.required ?? REQUIRED_FIELDS.has(option.name),
+      }),
+    ),
   },
   {
     run: runAdd,
@@ -52,9 +50,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const titleField = use_as_title
-    ? existingFields.find((f) => f.useAsTitle)
-    : undefined
+  const titleField = use_as_title ? existingFields.find((f) => f.useAsTitle) : undefined
 
   if (titleField) {
     await interaction.reply({
@@ -87,8 +83,7 @@ async function runAdd(interaction: ChatInputCommandInteraction) {
     modmailID: modmail_id,
     guildID: guild.id,
     customID: custom_id,
-    order:
-      order ?? previousField?.order ?? (lastField ? lastField.order + 1 : 0),
+    order: order ?? previousField?.order ?? (lastField ? lastField.order + 1 : 0),
     label: label ?? previousField?.label,
     style: style ?? previousField?.style ?? TextInputStyle.Short,
     placeholder: placeholder ?? previousField?.placeholder ?? null,

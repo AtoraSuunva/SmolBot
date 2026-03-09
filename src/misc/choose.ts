@@ -6,6 +6,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { plural } from '../helpers/format.js'
 
 const MAX_OPTIONS = 200
@@ -121,10 +122,7 @@ async function runChoose(interaction: ChatInputCommandInteraction) {
   const pickedOptions: string[] = []
   const pickedIndexes = new Set<number>()
 
-  while (
-    pickedOptions.length < pickCount &&
-    pickedOptions.length < options.length
-  ) {
+  while (pickedOptions.length < pickCount && pickedOptions.length < options.length) {
     const i = Math.floor(Math.random() * options.length)
     if (pickedIndexes.has(i)) continue
     pickedIndexes.add(i)

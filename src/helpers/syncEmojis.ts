@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import { murmur3_32_hex } from '@plus99/murmur-hash'
 import {
   type APIApplicationEmoji,
@@ -11,6 +12,7 @@ import {
 import env from 'env-var'
 import filetype from 'magic-bytes.js'
 import { baseLogger } from 'sleetcord-common'
+
 import { prisma } from './db.js'
 
 /** Map of { emojiName: './path/to/image.png' | Buffer } */
@@ -158,9 +160,7 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
       }
 
       // Emoji is outdated, delete it from Discord and the database, update it at discord, then update the database
-      syncLogger.info(
-        `Updating emoji "${name}" for module "${module}" due to hash mismatch.`,
-      )
+      syncLogger.info(`Updating emoji "${name}" for module "${module}" due to hash mismatch.`)
 
       // Delete the emoji from Discord
       await deleteEmoji(discordEmoji.id)
@@ -198,22 +198,15 @@ function fetchEmojis() {
 }
 
 function deleteEmoji(emojiId: string) {
-  return rest.delete(
-    Routes.applicationEmoji(APPLICATION_ID, emojiId),
-  ) as Promise<void>
+  return rest.delete(Routes.applicationEmoji(APPLICATION_ID, emojiId)) as Promise<void>
 }
 
-async function createEmoji(
-  module: string,
-  options: ApplicationEmojiCreateOptions,
-) {
+async function createEmoji(module: string, options: ApplicationEmojiCreateOptions) {
   const file = await resolveFile(options.attachment)
   const mime = filetype.filetypemime(file).pop()
 
   if (!mime || !mime.startsWith('image/')) {
-    throw new Error(
-      `Attachment "${options.attachment}" is not a valid image file.`,
-    )
+    throw new Error(`Attachment "${options.attachment}" is not a valid image file.`)
   }
 
   const newEmoji = (await rest.post(Routes.applicationEmojis(APPLICATION_ID), {
@@ -235,9 +228,7 @@ async function createEmoji(
   return newEmoji
 }
 
-async function resolveFile(
-  attachment: string | Buffer<ArrayBufferLike>,
-): Promise<Buffer> {
+async function resolveFile(attachment: string | Buffer<ArrayBufferLike>): Promise<Buffer> {
   if (Buffer.isBuffer(attachment)) {
     return attachment
   }
@@ -264,7 +255,6 @@ function resolveBase64(
 }
 
 async function hashAttachment(attachment: string | Buffer<ArrayBufferLike>) {
-  const file =
-    typeof attachment === 'string' ? await readFile(attachment) : attachment
+  const file = typeof attachment === 'string' ? await readFile(attachment) : attachment
   return murmur3_32_hex(new Uint8Array(file))
 }

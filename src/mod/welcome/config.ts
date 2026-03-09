@@ -5,13 +5,9 @@ import {
   Constants,
   EmbedBuilder,
 } from 'discord.js'
-import {
-  getGuild,
-  getRoles,
-  getTextBasedChannel,
-  SleetSlashSubcommand,
-} from 'sleetcord'
+import { getGuild, getRoles, getTextBasedChannel, SleetSlashSubcommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { Prisma, WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { welcomeCache } from './cache.js'
@@ -25,21 +21,18 @@ export const config = new SleetSlashSubcommand(
     options: [
       {
         name: 'message',
-        description:
-          'The welcome message, see `/welcome message`. (default: "Welcome {@user}!")',
+        description: 'The welcome message, see `/welcome message`. (default: "Welcome {@user}!")',
         type: ApplicationCommandOptionType.String,
       },
       {
         name: 'channel',
-        description:
-          'A specific channel to send the message in, if any. (default: "none")',
+        description: 'A specific channel to send the message in, if any. (default: "none")',
         type: ApplicationCommandOptionType.Channel,
         channel_types: Constants.GuildTextBasedChannelTypes,
       },
       {
         name: 'unset_channel',
-        description:
-          'Reset to sending welcome messages to the same channel as the first message',
+        description: 'Reset to sending welcome messages to the same channel as the first message',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -61,8 +54,7 @@ export const config = new SleetSlashSubcommand(
       },
       {
         name: 'react_with',
-        description:
-          'React to the user\'s first message with this emoji (default: "none")',
+        description: 'React to the user\'s first message with this emoji (default: "none")',
         type: ApplicationCommandOptionType.String,
       },
     ],
@@ -140,8 +132,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
   const instant = interaction.options.getBoolean('instant')
   // Can be empty
   const ignoreRolesOption = await getRoles(interaction, 'ignore_roles')
-  const ignoreRoles =
-    ignoreRolesOption?.map((role) => role.id).join(',') ?? null
+  const ignoreRoles = ignoreRolesOption?.map((role) => role.id).join(',') ?? null
   // Can be unset
   const reactWith = getEmoji(interaction, 'react_with')
   const reactWithOption = interaction.options.get('react_with')
@@ -245,10 +236,7 @@ const displayFormatters = {
   react_with: (r: string | null) => r ?? 'None',
 }
 
-function createWelcomeEmbed(
-  welcome: WelcomeSettings | null,
-  changes: string[] = [],
-): EmbedBuilder {
+function createWelcomeEmbed(welcome: WelcomeSettings | null, changes: string[] = []): EmbedBuilder {
   if (welcome === null) {
     return new EmbedBuilder()
       .setTitle('No welcome config.')
@@ -274,10 +262,11 @@ function createWelcomeEmbed(
       value: displayFormatters.react_with(welcome.reactWith),
       inline: true,
     },
-  ].map((field) => ({
-    ...field,
-    name: changes.includes(field.name) ? `🟡 ${field.name}` : field.name,
-  }))
+  ].map((field) =>
+    Object.assign(field, {
+      name: changes.includes(field.name) ? `🟡 ${field.name}` : field.name,
+    }),
+  )
 
   return new EmbedBuilder().addFields(fields)
 }

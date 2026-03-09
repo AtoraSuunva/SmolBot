@@ -11,11 +11,11 @@ Smol Bot and RobotOtter are bots running the same codebase, but with Smol Bot as
 The Bot stores the following data, for the following reasons:
 
 - Configuration data for the Welcome, Report, Voice Channel Logging, Mod Log, Warning, and Automod features as provided by guild admins
-- User IDs (*not* usernames) are stored for the following features:
+- User IDs (_not_ usernames) are stored for the following features:
   - Which users had ever joined a guild for the "avoid welcoming rejoins" feature, IF:
     - the feature was enabled by guild admins, and the user joined the guild; or
     - guild admins added the user manually to the list.
-  - A mapping of users to report ID & guild ID, though *no other report information is stored*. Report content is never persisted.
+  - A mapping of users to report ID & guild ID, though _no other report information is stored_. Report content is never persisted.
   - Which users have been banned from reporting from which guilds, by which moderator for which reasons.
   - Which user was warned and which moderator was responsible for the warning.
 - Usernames are stored for warnings.

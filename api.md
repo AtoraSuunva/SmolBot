@@ -37,37 +37,37 @@ The bot provides the following Discord subcommands under `/api token` to manage 
 
 Token permissions are stored as a numerical bitfield.
 
-| Name | Bit value | Description |
-|------|-----------:|-------------|
-| CreateToken | `1 << 0` | Create a new token (`POST /api/token/create`) |
-| ReadActionLog | `1 << 1` | Read action log (`GET /api/action-log/:guildId/:userId`) |
+| Name          | Bit value | Description                                              |
+| ------------- | --------: | -------------------------------------------------------- |
+| CreateToken   |  `1 << 0` | Create a new token (`POST /api/token/create`)            |
+| ReadActionLog |  `1 << 1` | Read action log (`GET /api/action-log/:guildId/:userId`) |
 
 ---
 
 ## `GET /api/action-log/:guildId`
 
-|   |   |
-|---|---|
-| **Authentication** | Required |
-| **Permissions** | `ReadActionLog` |
+|                    |                 |
+| ------------------ | --------------- |
+| **Authentication** | Required        |
+| **Permissions**    | `ReadActionLog` |
 
 Returns action log entries for a given guild.
 
 ### Path parameters (guild action logs)
 
-| name | type | description |
-|------|------|-------------|
+| name      | type   | description                                                                                |
+| --------- | ------ | ------------------------------------------------------------------------------------------ |
 | `guildId` | string | Snowflake ID of the guild. This is checked against the guild ID associated with the token. |
 
 ### Query parameters (guild action logs)
 
-| name | type | description |
-|------|------|-------------|
-| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban` |
-| `allVersions` | boolean | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
-| `limit` | number | Optional. The amount of results to return, minimum 1, maximum 100, default 100. |
-| `before` | number | Optional. Return results with an `actionID` smaller than this. |
-| `after` | number | Optional. Return results with an `actionID` greater than this. |
+| name          | type          | description                                                                                                                                             |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `action`      | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban`                                    |
+| `allVersions` | boolean       | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
+| `limit`       | number        | Optional. The amount of results to return, minimum 1, maximum 100, default 100.                                                                         |
+| `before`      | number        | Optional. Return results with an `actionID` smaller than this.                                                                                          |
+| `after`       | number        | Optional. Return results with an `actionID` greater than this.                                                                                          |
 
 ### Example request (guild action logs)
 
@@ -100,29 +100,29 @@ Authorization: Bearer <token>
 
 ## `GET /api/action-log/:guildId/:userId`
 
-|   |   |
-|---|---|
-| **Authentication** | Required |
-| **Permissions** | `ReadActionLog` |
+|                    |                 |
+| ------------------ | --------------- |
+| **Authentication** | Required        |
+| **Permissions**    | `ReadActionLog` |
 
 Returns action log entries for a given user in a guild.
 
 ### Path parameters (user action logs)
 
-| name | type | description |
-|------|------|-------------|
+| name      | type   | description                                                                                |
+| --------- | ------ | ------------------------------------------------------------------------------------------ |
 | `guildId` | string | Snowflake ID of the guild. This is checked against the guild ID associated with the token. |
-| `userId` | string | Snowflake ID of the user |
+| `userId`  | string | Snowflake ID of the user                                                                   |
 
 ### Query parameters (user action logs)
 
-| name | type | description |
-|------|------|-------------|
-| `action` | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban` |
-| `allVersions` | boolean | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
-| `limit` | number | Optional. The amount of results to return, minimum 1, maximum 100, default 100. |
-| `before` | number | Optional. Return results with an `actionID` smaller than this. |
-| `after` | number | Optional. Return results with an `actionID` greater than this. |
+| name          | type          | description                                                                                                                                             |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `action`      | string (enum) | Optional. Filter by action. Allowed values: `ban`, `unban`, `kick`, `timeout`, `timeout removed`, `softban`, `reban`                                    |
+| `allVersions` | boolean       | Optional. If `true` return all versions of action log entries; if omitted or `false`, only return entries where `validUntil` is null (current version). |
+| `limit`       | number        | Optional. The amount of results to return, minimum 1, maximum 100, default 100.                                                                         |
+| `before`      | number        | Optional. Return results with an `actionID` smaller than this.                                                                                          |
+| `after`       | number        | Optional. Return results with an `actionID` greater than this.                                                                                          |
 
 ### Example request (user action logs)
 
@@ -157,10 +157,10 @@ Authorization: Bearer <token>
 
 ## `GET /api/token/info`
 
-|   |   |
-|---|---|
+|                    |          |
+| ------------------ | -------- |
 | **Authentication** | Required |
-| **Permissions** | - |
+| **Permissions**    | -        |
 
 Returns metadata about the token used for the request. Requires an Authorization header.
 
@@ -190,10 +190,10 @@ Authorization: Bearer <token>
 
 ## `POST /api/token/create`
 
-|   |   |
-|---|---|
-| **Authentication** | Required |
-| **Permissions** | `CreateToken` |
+|                    |               |
+| ------------------ | ------------- |
+| **Authentication** | Required      |
+| **Permissions**    | `CreateToken` |
 
 Create a new API token. The new token's permissions must be a subset of the requesting token's permissions.
 
@@ -203,11 +203,11 @@ The token will only be shown once in the creation response. It will not be shown
 
 `Content-Type: application/json`
 
-| name | type | description |
-|------|------|-------------|
-| `name` | string | Name for the new token (max length 25) |
-| `permissions` | number | Optional. Numeric permission bitfield for the new token. Defaults to 0 (no permissions). |
-| `expiresAt` | string (ISO 8601) or number (unix milliseconds) or null | Optional. Expiration date/time for the new token. Omit or use `null` for no expiry. |
+| name          | type                                                    | description                                                                              |
+| ------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `name`        | string                                                  | Name for the new token (max length 25)                                                   |
+| `permissions` | number                                                  | Optional. Numeric permission bitfield for the new token. Defaults to 0 (no permissions). |
+| `expiresAt`   | string (ISO 8601) or number (unix milliseconds) or null | Optional. Expiration date/time for the new token. Omit or use `null` for no expiry.      |
 
 ### Example request (token create)
 
@@ -245,10 +245,10 @@ Content-Type: application/json
 
 ## `DELETE /api/token/delete`
 
-|   |   |
-|---|---|
+|                    |          |
+| ------------------ | -------- |
 | **Authentication** | Required |
-| **Permissions** | - |
+| **Permissions**    | -        |
 
 Delete the token used for the request. Child tokens (if any) are also deleted. This route returns the amount of deleted tokens.
 

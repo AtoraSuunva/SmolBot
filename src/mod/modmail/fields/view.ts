@@ -1,9 +1,6 @@
-import {
-  type ChatInputCommandInteraction,
-  MessageFlags,
-  TextInputStyle,
-} from 'discord.js'
+import { type ChatInputCommandInteraction, MessageFlags, TextInputStyle } from 'discord.js'
 import { escapeAllMarkdown, getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { ModMailTicketModalField } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { FIELD_MODMAIL_ID } from './utils.js'
@@ -53,8 +50,6 @@ export function formatField(field: ModMailTicketModalField): string {
   return `\`${escapeAllMarkdown(field.customID)}\`: "${escapeAllMarkdown(field.label)}"${
     field.required ? ' (required)' : ''
   }${field.useAsTitle ? ' (title)' : ''}, ${TextInputStyle[field.style]} (${field.minLength ?? 0}-${field.maxLength ?? 4000} characters)${
-    field.placeholder
-      ? `, Placeholder: "${escapeAllMarkdown(field.placeholder)}"`
-      : ''
+    field.placeholder ? `, Placeholder: "${escapeAllMarkdown(field.placeholder)}"` : ''
   }`
 }

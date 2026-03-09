@@ -7,6 +7,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { makeChoices, SleetSlashCommand } from 'sleetcord'
+
 import { formatToLog } from './utils.js'
 
 const actionChoices = makeChoices([
@@ -24,8 +25,7 @@ type ActionTypes = Lowercase<(typeof actionChoices)[number]['value']>
 export const manual_log = new SleetSlashCommand(
   {
     name: 'manual_log',
-    description:
-      'Create a manual log for some action, which you can copy/paste',
+    description: 'Create a manual log for some action, which you can copy/paste',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     options: [
@@ -65,8 +65,7 @@ async function runManualLog(interaction: ChatInputCommandInteraction) {
   const action = (
     interaction.options.getString('action', false) ?? 'ban'
   ).toLowerCase() as ActionTypes
-  const responsibleModerator =
-    interaction.options.getUser('responsible', false) ?? interaction.user
+  const responsibleModerator = interaction.options.getUser('responsible', false) ?? interaction.user
 
   const log = await formatToLog({
     id: -1,

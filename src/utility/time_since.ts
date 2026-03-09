@@ -59,10 +59,7 @@ function runTimeSince(interaction: ChatInputCommandInteraction) {
   const duration = prettyMilliseconds(durationMs, { verbose: true })
 
   return interaction.reply({
-    content: `The time since ${time(dateSeconds, 'F')} (${time(
-      dateSeconds,
-      'R',
-    )}) is ${duration}`,
+    content: `The time since ${time(dateSeconds, 'F')} (${time(dateSeconds, 'R')}) is ${duration}`,
     flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 }

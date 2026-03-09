@@ -5,6 +5,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { formatConfig } from '../../helpers/format.js'
 
@@ -15,8 +16,7 @@ export const lock_thread_config_delete = new SleetSlashSubcommand(
     options: [
       {
         name: 'source_channel',
-        description:
-          'Channel to delete the config in, where threads are being locked',
+        description: 'Channel to delete the config in, where threads are being locked',
         type: ApplicationCommandOptionType.Channel,
         channel_types: [
           ChannelType.GuildForum,

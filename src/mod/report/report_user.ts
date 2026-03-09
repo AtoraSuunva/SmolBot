@@ -16,6 +16,7 @@ import {
 } from 'discord.js'
 import { formatUser, getGuild, SleetUserCommand } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
+
 import { fetchConfig } from './manage/config.js'
 import { sendReport } from './utils.js'
 
@@ -30,13 +31,10 @@ export const report_user = new SleetUserCommand(
   },
 )
 
-async function runReportUser(
-  interaction: UserContextMenuCommandInteraction,
-  user: User,
-) {
+async function runReportUser(interaction: UserContextMenuCommandInteraction, user: User) {
   const guild = await getGuild(interaction, true)
-  const config = await fetchConfig(guild, interaction.user).catch(
-    (err: unknown) => (err instanceof Error ? err.message : String(err)),
+  const config = await fetchConfig(guild, interaction.user).catch((err: unknown) =>
+    err instanceof Error ? err.message : String(err),
   )
 
   if (typeof config === 'string') {
@@ -104,8 +102,7 @@ async function runReportUser(
   }
 
   const reason = modalInteraction.fields.getTextInputValue('reason')
-  const isAnonString =
-    modalInteraction.fields.getTextInputValue('anon') || 'yes'
+  const isAnonString = modalInteraction.fields.getTextInputValue('anon') || 'yes'
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
   const member = await guild.members.fetch(user.id).catch(() => null)
@@ -147,8 +144,7 @@ async function runReportUser(
     await sendReport(config, interaction.user, embeds)
 
     await modalInteraction.reply({
-      content:
-        "Your report has been sent to the moderators.\nHere's a copy of your report:",
+      content: "Your report has been sent to the moderators.\nHere's a copy of your report:",
       embeds,
       flags: MessageFlags.Ephemeral,
     })

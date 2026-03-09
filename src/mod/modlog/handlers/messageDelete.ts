@@ -1,4 +1,6 @@
 import { stripVTControlCharacters } from 'node:util'
+
+import type { APIMessageInteractionMetadata } from 'discord-api-types/v10'
 import {
   ApplicationCommandType,
   type AttachmentPayload,
@@ -18,28 +20,15 @@ import {
   type PartialMessage,
   time,
 } from 'discord.js'
-import type { APIMessageInteractionMetadata } from 'discord-api-types/v10'
 import { formatUser, SleetModule } from 'sleetcord'
-import {
-  ansiFormat,
-  BackgroundColor,
-  type Markup,
-  TextColor,
-} from '../../../helpers/ansiColors.js'
+
+import { ansiFormat, BackgroundColor, type Markup, TextColor } from '../../../helpers/ansiColors.js'
 import type { AnyComponent } from '../../../helpers/components.js'
 import { plural } from '../../../helpers/format.js'
 import { addToEmbed } from '../../../helpers/quoteMessage.js'
-import {
-  deleteEvents,
-  type MessageDeleteAuditLog,
-} from '../../messageDeleteAuditLog.js'
+import { deleteEvents, type MessageDeleteAuditLog } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
-import {
-  formatLog,
-  formatTime,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../utils.js'
+import { formatLog, formatTime, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 import type { MessageWithRaw } from './messageDeleteBulk.js'
 
 export const logMessageDelete = new SleetModule(
@@ -104,9 +93,7 @@ export async function messageDeleteWithAuditLog(
 
   const edits = editStore.get(message.id)?.edits ?? []
 
-  const attachProxy = message.attachments.map((a) =>
-    formatEscapedLink(a.name, a.proxyURL),
-  )
+  const attachProxy = message.attachments.map((a) => formatEscapedLink(a.name, a.proxyURL))
 
   const forwardedAttach = message.messageSnapshots
     .values()
@@ -115,21 +102,14 @@ export async function messageDeleteWithAuditLog(
 
   const stickers = message.stickers.map((s) => formatEscapedLink(s.name, s.url))
 
-  const messageContent = await messageArrayToLog([
-    ...edits.slice(0, -1),
-    message,
-  ])
+  const messageContent = await messageArrayToLog([...edits.slice(0, -1), message])
 
   const { executor, reason } = auditLog ?? {}
 
   let msg = `(${message.id}) in ${message.channel ?? '#deleted-channel'}${message.channel ? ` around ${message.url}` : ''} sent ${time(message.createdAt, 'f')}${executor ? ` by ${formatUser(executor)}` : ''}${reason ? ` for "${reason}"` : ''}${edits.length > 1 ? `, ${plural('revision', edits.length)}` : ''} (uid: \`${message.author.id}\`)\n${
-    attachProxy.length > 0
-      ? `Attachment Proxies: ${attachProxy.join(', ')}\n`
-      : ''
+    attachProxy.length > 0 ? `Attachment Proxies: ${attachProxy.join(', ')}\n` : ''
   }${
-    forwardedAttach.length > 0
-      ? `Forwarded Attachments: ${forwardedAttach.join(', ')}\n`
-      : ''
+    forwardedAttach.length > 0 ? `Forwarded Attachments: ${forwardedAttach.join(', ')}\n` : ''
   }${stickers.length > 0 ? `Stickers: ${stickers.join(', ')}\n` : ''}`
 
   const formatted = codeBlock('ansi', cleanCodeBlockContent(messageContent))
@@ -138,10 +118,7 @@ export async function messageDeleteWithAuditLog(
   if (formatted.length + msg.length > 1850) {
     files.push({
       name: `deleted-message-by-${message.author.tag}-${message.author.id}.txt`,
-      attachment: Buffer.from(
-        stripVTControlCharacters(messageContent),
-        'utf-8',
-      ),
+      attachment: Buffer.from(stripVTControlCharacters(messageContent), 'utf-8'),
       description: `Deleted Message by ${formatUser(message.author, {
         markdown: false,
         escapeMarkdown: false,
@@ -309,8 +286,7 @@ export async function messageToLog(
     const { interactionMetadata } = message
     // witness the beauty of working with undocumented properties, thank you discord
     const raw = (message as unknown as MessageWithRaw).rawData
-    const rawIM =
-      raw?.interaction_metadata as unknown as APIUndocumentedInteractionMetadata
+    const rawIM = raw?.interaction_metadata as unknown as APIUndocumentedInteractionMetadata
 
     messageCommand = rawIM.command_type === ApplicationCommandType.Message
     isFollowUp = !!rawIM.original_response_message_id
@@ -345,9 +321,8 @@ export async function messageToLog(
         }
 
         const preview =
-          cleanCodeBlockContent(
-            ref.content.replaceAll(/\n/g, ' ').slice(0, 50),
-          ) + (ref.content.length > 50 ? '…' : '')
+          cleanCodeBlockContent(ref.content.replaceAll(/\n/g, ' ').slice(0, 50)) +
+          (ref.content.length > 50 ? '…' : '')
 
         lines.push(
           `${hasUpper ? '├' : '╭'}╼ ${messageCommand ? 'On message' : 'Reply to'} ${formatLogUser(ref.author)}: ${ansiFormat(BackgroundColor.FireflyDarkBlue, preview)}`,
@@ -361,9 +336,7 @@ export async function messageToLog(
         const snapshot = message.messageSnapshots?.first()
 
         if (!snapshot) {
-          earlyContent.push(
-            ansiFormat(TextColor.Red, 'Forward was missing message snapshot'),
-          )
+          earlyContent.push(ansiFormat(TextColor.Red, 'Forward was missing message snapshot'))
           break
         }
 
@@ -412,9 +385,7 @@ export async function messageToLog(
   lines.splice(0, lines.length)
 
   const IsComponentsV2 = message.flags.has(MessageFlags.IsComponentsV2)
-  const componentsV2Render = IsComponentsV2
-    ? message.components.map(componentToLog)
-    : []
+  const componentsV2Render = IsComponentsV2 ? message.components.map(componentToLog) : []
 
   if (
     ![
@@ -428,42 +399,30 @@ export async function messageToLog(
     const embed = new EmbedBuilder()
     await addToEmbed(message, embed)
     if (embed.data.description) {
-      lines.push(
-        `╞ ${cleanCodeBlockContent(embed.data.description).split('\n').join('\n╞ ')}`,
-      )
+      lines.push(`╞ ${cleanCodeBlockContent(embed.data.description).split('\n').join('\n╞ ')}`)
     }
-  } else if (
-    message.content ||
-    earlyContent.length > 0 ||
-    componentsV2Render.length > 0
-  ) {
+  } else if (message.content || earlyContent.length > 0 || componentsV2Render.length > 0) {
     const toRender = [
       ...(message.content ? message.content.split('\n') : []),
       ...earlyContent.flatMap((l) => l.split('\n')),
       ...componentsV2Render.flatMap((l) => l.split('\n')),
     ]
 
-    lines.push(
-      `${leftLine} ${cleanCodeBlockContent(toRender.join(`\n${leftLine} `))}`,
-    )
+    lines.push(`${leftLine} ${cleanCodeBlockContent(toRender.join(`\n${leftLine} `))}`)
   }
 
   const content = lines.join('\n').trim()
   lines.splice(0, lines.length)
 
   if (includeAttachments && message.attachments.size > 0) {
-    lines.push(
-      `╰╼ Attachments: ${message.attachments.map((a) => a.name).join(', ')}`,
-    )
+    lines.push(`╰╼ Attachments: ${message.attachments.map((a) => a.name).join(', ')}`)
   }
 
   if (includeEmbeds && message.embeds.length > 0) {
     lines.push(embedToLog(message.embeds[0], { minimal: true }))
 
     if (message.embeds.length > 1) {
-      lines.push(
-        `╰╼ +${plural('embed', message.embeds.length - 1, { boldNumber: false })} omitted`,
-      )
+      lines.push(`╰╼ +${plural('embed', message.embeds.length - 1, { boldNumber: false })} omitted`)
     }
   }
 
@@ -498,9 +457,7 @@ export async function messageToLog(
   }
 
   if (message.editedAt) {
-    lines.push(
-      `╰╼ Edited [${ansiFormat(TextColor.Blue, formatTime(message.editedAt))}]`,
-    )
+    lines.push(`╰╼ Edited [${ansiFormat(TextColor.Blue, formatTime(message.editedAt))}]`)
   }
 
   const hasMultipleFooter = lines.filter((l) => l.startsWith('╰')).length > 1
@@ -524,10 +481,7 @@ interface ToEmbedOptions {
   minimal?: boolean
 }
 
-function embedToLog(
-  embed: Embed,
-  { minimal = false }: ToEmbedOptions = {},
-): string {
+function embedToLog(embed: Embed, { minimal = false }: ToEmbedOptions = {}): string {
   let lines: string[] = []
 
   if (embed.author) {
@@ -555,9 +509,7 @@ function embedToLog(
   }
 
   if (embed.timestamp) {
-    lines.push(
-      `${ansiFormat(TextColor.Green, 'Timestamp:')} ${embed.timestamp}`,
-    )
+    lines.push(`${ansiFormat(TextColor.Green, 'Timestamp:')} ${embed.timestamp}`)
   }
 
   if (embed.image) {
@@ -565,9 +517,7 @@ function embedToLog(
   }
 
   if (embed.thumbnail) {
-    lines.push(
-      `${ansiFormat(TextColor.Green, 'Thumbnail:')} ${embed.thumbnail.url}`,
-    )
+    lines.push(`${ansiFormat(TextColor.Green, 'Thumbnail:')} ${embed.thumbnail.url}`)
   }
 
   lines = lines.flatMap((l) => l.split('\n'))

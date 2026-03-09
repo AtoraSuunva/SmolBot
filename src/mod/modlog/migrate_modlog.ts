@@ -1,12 +1,8 @@
-import {
-  ChannelType,
-  type Client,
-  GatewayIntentBits,
-  Partials,
-} from 'discord.js'
+import { ChannelType, type Client, GatewayIntentBits, Partials } from 'discord.js'
 import env from 'env-var'
 import { SleetClient, SleetModule } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import '../../helpers/dbLogging.js'
@@ -150,12 +146,9 @@ async function runMigrateModlog(client: Client) {
 
     for (const oauthGuild of oauthGuilds.values()) {
       doneGuilds++
-      logger.info(
-        `(${doneGuilds}/${guildCount}) Checking ${oauthGuild.name} (${oauthGuild.id})`,
-      )
+      logger.info(`(${doneGuilds}/${guildCount}) Checking ${oauthGuild.name} (${oauthGuild.id})`)
 
-      const guild =
-        client.guilds.cache.get(oauthGuild.id) ?? (await oauthGuild.fetch())
+      const guild = client.guilds.cache.get(oauthGuild.id) ?? (await oauthGuild.fetch())
       const channels = await guild.channels.fetch()
 
       for (const channel of channels.values()) {
@@ -219,10 +212,7 @@ async function runMigrateModlog(client: Client) {
 }
 
 type ModlogParse = Required<
-  Omit<
-    Prisma.ModLogConfigCreateInput,
-    'guildID' | 'channelID' | 'updatedAt' | 'enabled'
-  >
+  Omit<Prisma.ModLogConfigCreateInput, 'guildID' | 'channelID' | 'updatedAt' | 'enabled'>
 >
 
 function parseFromTopic(topic: string[]): ModlogParse {

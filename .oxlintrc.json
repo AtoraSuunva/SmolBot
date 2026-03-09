@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    // Enable when ts 7.0 is out
+    "typeAware": false,
+    "typeCheck": false
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "jsdoc", "promise"],
+  "rules": {
+    "no-param-reassign": "error",
+    "default-param-last": "error",
+    "prefer-enum-initializers": "error",
+    "no-inferrable-types": "error",
+    // most shadowing is fine
+    "no-shadow": "allow",
+    // most sorting is done on temp objects anyway
+    "no-array-sort": "allow",
+    // message ordering is often important and we have to work with ratelimits. This keeps a single module from queueing too many messages and instantly ratelimiting everything else
+    "no-await-in-loop": "allow"
+  },
+  "ignorePatterns": ["src/generated/**/*"]
+}

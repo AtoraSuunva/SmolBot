@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { lock_thread_config_delete } from './lock_thread_config_delete.js'
 import { lock_thread_config_set } from './lock_thread_config_set.js'
 

@@ -24,6 +24,7 @@ import {
   PreRunError,
   SleetSlashCommand,
 } from 'sleetcord'
+
 import { plural } from '../helpers/format.js'
 import { workerMatch } from '../helpers/regexWorker.js'
 
@@ -59,14 +60,12 @@ export const purge = new SleetSlashCommand(
       {
         name: 'from',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages from these users/roles (default: everyone)',
+        description: 'Purge only messages from these users/roles (default: everyone)',
       },
       {
         name: 'mentions',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages that mention a user/role (default: none)',
+        description: 'Purge only messages that mention a user/role (default: none)',
       },
       {
         name: 'bots',
@@ -76,21 +75,18 @@ export const purge = new SleetSlashCommand(
       {
         name: 'emoji',
         type: ApplicationCommandOptionType.Integer,
-        description:
-          'Purge only messages with this many or more emoji (default: 0)',
+        description: 'Purge only messages with this many or more emoji (default: 0)',
         min_value: 0,
       },
       {
         name: 'only_emoji',
         type: ApplicationCommandOptionType.Boolean,
-        description:
-          'Purge only messages that only contain emoji (default: false)',
+        description: 'Purge only messages that only contain emoji (default: false)',
       },
       {
         name: 'embeds',
         type: ApplicationCommandOptionType.Integer,
-        description:
-          'Purge only messages with this many or more embeds (default: 0)',
+        description: 'Purge only messages with this many or more embeds (default: 0)',
         min_value: 0,
       },
       {
@@ -112,20 +108,17 @@ export const purge = new SleetSlashCommand(
       {
         name: 'before',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages before this message ID, exclusive (default: none)',
+        description: 'Purge only messages before this message ID, exclusive (default: none)',
       },
       {
         name: 'after',
         type: ApplicationCommandOptionType.String,
-        description:
-          'Purge only messages after this message ID, exclusive (default: none)',
+        description: 'Purge only messages after this message ID, exclusive (default: none)',
       },
       {
         name: 'channel',
         type: ApplicationCommandOptionType.Channel,
-        description:
-          'The channel to purge messages from (default: current channel)',
+        description: 'The channel to purge messages from (default: current channel)',
       },
       {
         name: 'ephemeral',
@@ -145,15 +138,10 @@ export const purge = new SleetSlashCommand(
  */
 async function runPurge(interaction: ChatInputCommandInteraction) {
   inGuildGuard(interaction)
-  await botHasPermissionsGuard(interaction, [
-    'ViewChannel',
-    'ManageMessages',
-    'ReadMessageHistory',
-  ])
+  await botHasPermissionsGuard(interaction, ['ViewChannel', 'ManageMessages', 'ReadMessageHistory'])
 
   const count = interaction.options.getInteger('count') ?? MAX_FETCH_MESSAGES
-  const content =
-    interaction.options.getString('content')?.toLowerCase() ?? null
+  const content = interaction.options.getString('content')?.toLowerCase() ?? null
   const regexString = interaction.options.getString('regex')
   const from = await getMentionables(interaction, 'from')
   const mentions = await getMentionables(interaction, 'mentions')
@@ -261,24 +249,16 @@ async function runPurge(interaction: ChatInputCommandInteraction) {
       continue
     }
 
-    const toPurge = filteredMessages
-      .sort(youngestFirst)
-      .first(count - deletedCount)
+    const toPurge = filteredMessages.sort(youngestFirst).first(count - deletedCount)
 
-    const { size } = await (reacts
-      ? bulkDeleteReacts(toPurge)
-      : bulkDelete(channel, toPurge))
+    const { size } = await (reacts ? bulkDeleteReacts(toPurge) : bulkDelete(channel, toPurge))
 
     deletedCount += size
 
     // When searching backwards:
     // We reached some point after the specified "after", stop
     // Next fetch would just be after that point and be pointless
-    if (
-      before &&
-      after &&
-      filteredMessages.some((message) => !isAfter(message, after))
-    ) {
+    if (before && after && filteredMessages.some((message) => !isAfter(message, after))) {
       break
     }
 
@@ -327,10 +307,7 @@ async function bulkDelete(
  * @param before The message ID to purge before
  * @returns An object that can be passed as query options to fetch messages
  */
-function getFetchOptions(
-  after: string | null,
-  before: string | null,
-): FetchMessagesOptions {
+function getFetchOptions(after: string | null, before: string | null): FetchMessagesOptions {
   const fetchOptions: FetchMessagesOptions = {
     limit: MAX_FETCH_MESSAGES,
   }
@@ -493,10 +470,8 @@ function hasCountEmoji(message: Message, maxEmoji: number): boolean {
 
 function hasOnlyEmoji(message: Message): boolean {
   return (
-    message.content
-      .replaceAll(unicodeEmojiRegex, '')
-      .replaceAll(discordEmojiRegex, '')
-      .trim() === ''
+    message.content.replaceAll(unicodeEmojiRegex, '').replaceAll(discordEmojiRegex, '').trim() ===
+    ''
   )
 }
 
@@ -513,9 +488,7 @@ interface BulkDeleteResult {
   size: number
 }
 
-async function bulkDeleteReacts(
-  messages: Message[],
-): Promise<BulkDeleteResult> {
+async function bulkDeleteReacts(messages: Message[]): Promise<BulkDeleteResult> {
   for (const message of messages) {
     await message.reactions.removeAll()
   }

@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { actionlog_config } from './actionlog_config.js'
 import { actionlog_history } from './actionlog_history.js'
 import { logAction } from './logAction.js'

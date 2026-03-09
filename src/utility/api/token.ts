@@ -7,6 +7,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { formatUser, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
+
 import { createToken, verifyToken } from '../../helpers/api/auth.js'
 import {
   Permission,
@@ -141,8 +142,7 @@ async function runList(interaction: ChatInputCommandInteraction) {
       expiresAt: 'Expires At',
     },
     formatters: {
-      permissions: (p) =>
-        p === 0 ? 'None' : permissionBitfieldToStrings(p).join(', '),
+      permissions: (p) => (p === 0 ? 'None' : permissionBitfieldToStrings(p).join(', ')),
       // createdAt: (d) => d.toISOString(),
       expiresAt: (d) => (d ? d.toISOString() : 'Never'),
     },
@@ -156,8 +156,7 @@ async function runList(interaction: ChatInputCommandInteraction) {
 export const check = new SleetSlashSubcommand(
   {
     name: 'check',
-    description:
-      'Verifies if a token is still valid and shows information for it',
+    description: 'Verifies if a token is still valid and shows information for it',
     options: [
       {
         name: 'token',

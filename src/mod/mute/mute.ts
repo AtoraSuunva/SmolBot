@@ -36,26 +36,16 @@ import {
   SleetUserCommand,
 } from 'sleetcord'
 import { baseLogger, notNullish, SECOND } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { plural, responseMessageLink } from '../../helpers/format.js'
 
-const mutedRoles = [
-  'muted',
-  'mute',
-  'foreboden',
-  'roleban',
-  'rolebanned',
-  'jail',
-  'jailed',
-]
+const mutedRoles = ['muted', 'mute', 'foreboden', 'roleban', 'rolebanned', 'jail', 'jailed']
 
 const muteLogger = baseLogger.child({ module: 'mute' })
 
-type NonThreadGuildTextBasedChannel = Exclude<
-  GuildTextBasedChannel,
-  AnyThreadChannel
->
+type NonThreadGuildTextBasedChannel = Exclude<GuildTextBasedChannel, AnyThreadChannel>
 
 const DELETE_TIME = 3
 
@@ -111,14 +101,9 @@ export const mute = new SleetSlashCommand(
           return
         }
 
-        const channel = await i.guild?.channels
-          .fetch(i.channelId)
-          .catch(() => null)
+        const channel = await i.guild?.channels.fetch(i.channelId).catch(() => null)
 
-        if (
-          i.user.id !== userId &&
-          !channel?.permissionsFor(i.user)?.has('ManageChannels')
-        ) {
+        if (i.user.id !== userId && !channel?.permissionsFor(i.user)?.has('ManageChannels')) {
           await i.reply({
             content: "You don't have permission to do that.",
             flags: MessageFlags.Ephemeral,
@@ -128,22 +113,15 @@ export const mute = new SleetSlashCommand(
 
         if (!channel?.isTextBased()) {
           await i.reply({
-            content:
-              "That isn't a text channel, or the channel doesn't exist anymore.",
+            content: "That isn't a text channel, or the channel doesn't exist anymore.",
             flags: MessageFlags.Ephemeral,
           })
           return
         }
 
-        const inTime = time(
-          DateTime.now().plus({ seconds: DELETE_TIME }).toUnixInteger(),
-          'R',
-        )
+        const inTime = time(DateTime.now().plus({ seconds: DELETE_TIME }).toUnixInteger(), 'R')
         await i.reply(`Deleting channel '${channel.name}' ${inTime}`)
-        setTimeout(
-          () => channel.delete('Muted channel cleanup'),
-          DELETE_TIME * SECOND,
-        )
+        setTimeout(() => channel.delete('Muted channel cleanup'), DELETE_TIME * SECOND)
       }
     },
   },
@@ -224,19 +202,13 @@ interface ActionResult {
   components?: ActionRowBuilder<ButtonBuilder>[]
 }
 
-async function handleChatInput(
-  interaction: ChatInputCommandInteraction,
-  action: MuteAction,
-) {
+async function handleChatInput(interaction: ChatInputCommandInteraction, action: MuteAction) {
   inGuildGuard(interaction)
   const members = await getMembers(interaction, 'members', true)
   const reason = interaction.options.getString('reason')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
-  const channel = interaction.options.getChannel(
-    'channel',
-  ) as NonThreadGuildTextBasedChannel | null
-  const separateChannels =
-    interaction.options.getBoolean('separate_channels') ?? false
+  const channel = interaction.options.getChannel('channel') as NonThreadGuildTextBasedChannel | null
+  const separateChannels = interaction.options.getBoolean('separate_channels') ?? false
 
   return runMute({
     interaction,
@@ -374,10 +346,7 @@ async function runMute({
       earlyFailed.push({ member, reason: 'This is me.' })
     } else if (member.id === interaction.user.id) {
       earlyFailed.push({ member, reason: `You cannot ${action} yourself.` })
-    } else if (
-      !isOwner &&
-      member.roles.highest.position >= userHighestRole.position
-    ) {
+    } else if (!isOwner && member.roles.highest.position >= userHighestRole.position) {
       earlyFailed.push({
         member,
         reason: `You cannot ${action} someone with a higher or equal role to you.`,
@@ -431,19 +400,14 @@ async function runMute({
       }))
 
   const totalFails = [...earlyFailed, ...failed]
-  const succ =
-    succeeded.length > 0
-      ? `\n${formatSuccesses(succeeded, action)}`
-      : ' Nobody!'
-  const fail =
-    totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
+  const succ = succeeded.length > 0 ? `\n${formatSuccesses(succeeded, action)}` : ' Nobody!'
+  const fail = totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
 
   const content = `**${capitalAction}:**${succ}${fail}`
   const url = responseMessageLink(interaction, response)
   const byLine = `By ${formatUser(interactionMember)} in ${url}${ephemeral ? ' (ephemeral)' : ''}`
 
-  const formattedAddendum =
-    addendum && addendum.length > 0 ? `\n${addendum}` : ''
+  const formattedAddendum = addendum && addendum.length > 0 ? `\n${addendum}` : ''
 
   const formattedContentSuccess = `${content}\n${byLine}${formattedAddendum}`
 
@@ -511,10 +475,7 @@ async function handleGuildMemberUpdate(
 
   if (!isMuted(newMember)) return
 
-  const entry = await findUserResponsibleForRemovingMute(
-    newMember,
-    mutedRole.id,
-  )
+  const entry = await findUserResponsibleForRemovingMute(newMember, mutedRole.id)
 
   const { restoredRoles } = await restoreRoles(
     newMember,
@@ -524,10 +485,7 @@ async function handleGuildMemberUpdate(
 
   if (restoredRoles.length === 0) return
 
-  const content = formatSuccesses(
-    [{ member: newMember, roles: restoredRoles }],
-    'unmute',
-  )
+  const content = formatSuccesses([{ member: newMember, roles: restoredRoles }], 'unmute')
   const byLine = entry
     ? `By ${entry.executor ? formatUser(entry.executor) : '<unknown user>'}${entry.reason ? ` for "${entry.reason}"` : ''}`
     : 'By <unknown user>'
@@ -581,17 +539,13 @@ async function handleGuildMemberAdd(member: GuildMember) {
   }
 }
 
-async function handleGuildMemberRemove(
-  member: GuildMember | PartialGuildMember,
-) {
+async function handleGuildMemberRemove(member: GuildMember | PartialGuildMember) {
   const muteInfo = await fetchMuteInfo(member)
 
   if (!muteInfo) return
 
   if (muteInfo.muteChannel) {
-    const channel = await member.guild.channels
-      .fetch(muteInfo.muteChannel)
-      .catch(() => null)
+    const channel = await member.guild.channels.fetch(muteInfo.muteChannel).catch(() => null)
 
     if (channel?.isTextBased()) {
       await channel.send({
@@ -644,8 +598,7 @@ async function findUserResponsibleForRemovingMute(
       // Removed the muted role
       entry.changes.some(
         (change) =>
-          change.key === '$remove' &&
-          (change.new as APIRole[])?.some((r) => r.id === mutedRoleId),
+          change.key === '$remove' && (change.new as APIRole[])?.some((r) => r.id === mutedRoleId),
       )
     )
   })
@@ -755,12 +708,8 @@ async function muteAction({
 
   // Create channels
   const guild = members[0].guild
-  const category = await guild.channels
-    .fetch(config.categoryID)
-    .catch(() => null)
-  const formattedExecutor = formatUser(
-    executor ?? (await guild.members.fetchMe()),
-  )
+  const category = await guild.channels.fetch(config.categoryID).catch(() => null)
+  const formattedExecutor = formatUser(executor ?? (await guild.members.fetchMe()))
   let addendum = ''
 
   if (!category || category.type !== ChannelType.GuildCategory) {
@@ -792,10 +741,9 @@ async function muteAction({
         }
 
         // Get the parent category perms instead of adding an extra API call to sync
-        const parentPermissions =
-          category.permissionOverwrites.cache.map<OverwriteData>(
-            (o) => o.toJSON() as OverwriteData,
-          )
+        const parentPermissions = category.permissionOverwrites.cache.map<OverwriteData>(
+          (o) => o.toJSON() as OverwriteData,
+        )
 
         mutedChannel = await guild.channels.create({
           name: channelName,
@@ -842,9 +790,7 @@ async function muteAction({
 
       // Add in the user overrides so they can see the channel
       const cached = mutedChannel.permissionOverwrites.cache
-      const newOverwrites = cached.map<OverwriteData>(
-        (o) => o.toJSON() as OverwriteData,
-      )
+      const newOverwrites = cached.map<OverwriteData>((o) => o.toJSON() as OverwriteData)
 
       newOverwrites.push(
         ...succeeded.map<OverwriteData>((s) => ({
@@ -922,11 +868,7 @@ async function unmuteAction({
 
   for (const member of members) {
     try {
-      const { restoredRoles, muteChannel } = await restoreRoles(
-        member,
-        mutedRole,
-        reason,
-      )
+      const { restoredRoles, muteChannel } = await restoreRoles(member, mutedRole, reason)
       succeeded.push({ member, roles: restoredRoles })
 
       if (muteChannel) {
@@ -946,9 +888,7 @@ async function unmuteAction({
   }
 
   const guild = members[0].guild
-  const formattedExecutor = formatUser(
-    executor ?? (await guild.members.fetchMe()),
-  )
+  const formattedExecutor = formatUser(executor ?? (await guild.members.fetchMe()))
   let addendum = ''
   const components: ActionRowBuilder<ButtonBuilder>[] = []
 
@@ -961,9 +901,7 @@ async function unmuteAction({
       },
     })
 
-    const channel = await guild.channels
-      .fetch(existingChannel)
-      .catch(() => null)
+    const channel = await guild.channels.fetch(existingChannel).catch(() => null)
 
     if (!channel || !channel.isTextBased() || channel.isThread()) {
       continue
@@ -1029,15 +967,9 @@ async function storeRoles(
   const { previousRoles } = (await fetchMuteInfo(member)) ?? {
     previousRoles: [],
   }
-  const roles = member.roles.cache.filter(
-    (r) => !ignoreRoles.includes(r) && validRole(r, guild),
-  )
+  const roles = member.roles.cache.filter((r) => !ignoreRoles.includes(r) && validRole(r, guild))
 
-  await setStoredRoles(
-    member,
-    [...(previousRoles ?? []), ...roles.map((r) => r.id)],
-    executor,
-  )
+  await setStoredRoles(member, [...(previousRoles ?? []), ...roles.map((r) => r.id)], executor)
 
   return roles.toJSON()
 }
@@ -1084,9 +1016,7 @@ async function restoreRoles(
 
     // Resolve all the roles in case one of them has since been deleted or something
     const resolvedStoredRoles = await Promise.all(
-      previousRoles.map(async (r) =>
-        member.guild.roles.fetch(r).catch(() => null),
-      ),
+      previousRoles.map(async (r) => member.guild.roles.fetch(r).catch(() => null)),
     )
 
     const applyRoles = resolvedStoredRoles
@@ -1094,12 +1024,7 @@ async function restoreRoles(
       .filter((r) => validRole(r, guild) && r.id !== mutedRole.id)
 
     await member.roles.remove(mutedRole, reason)
-    muteLogger.info(
-      'Restoring roles for %s; %o; %o',
-      member.id,
-      previousRoles,
-      applyRoles,
-    )
+    muteLogger.info('Restoring roles for %s; %o; %o', member.id, previousRoles, applyRoles)
     await member.roles.add(applyRoles, reason)
     await deleteMuteInfo(member)
     return {
@@ -1142,10 +1067,7 @@ function formatSuccesses(succeeded: MuteSuccess[], action: MuteAction): string {
 
 function formatFails(failed: MuteFail[]): string {
   return failed
-    .map(
-      (fail) =>
-        `> ${formatUser(fail.member, { mention: true })}\n> -# ${fail.reason}`,
-    )
+    .map((fail) => `> ${formatUser(fail.member, { mention: true })}\n> -# ${fail.reason}`)
     .join('\n')
 }
 
@@ -1153,7 +1075,7 @@ function formatRoles(roles: Role[]): string {
   if (roles.length === 0) return 'None'
 
   return roles
-    .sort((a, b) => b.position - a.position)
+    .toSorted((a, b) => b.position - a.position)
     .map((r) => r.toString())
     .join(', ')
 }
@@ -1166,9 +1088,7 @@ interface MuteInfo {
   executor: string | null
 }
 
-async function fetchMuteInfo(
-  member: GuildMember | PartialGuildMember,
-): Promise<MuteInfo | null> {
+async function fetchMuteInfo(member: GuildMember | PartialGuildMember): Promise<MuteInfo | null> {
   const info = await prisma.memberMutes.findUnique({
     select: {
       previousRoles: true,
@@ -1186,9 +1106,7 @@ async function fetchMuteInfo(
   return !info
     ? null
     : {
-        previousRoles: info.previousRoles
-          .split(ROLE_SEPARATOR)
-          .filter((v) => v.trim() !== ''),
+        previousRoles: info.previousRoles.split(ROLE_SEPARATOR).filter((v) => v.trim() !== ''),
         muteChannel: info.muteChannel,
         executor: info.executor,
       }
@@ -1205,11 +1123,7 @@ function isMuted(member: GuildMember): Promise<boolean> {
     .then((count) => count > 0)
 }
 
-function setStoredRoles(
-  member: GuildMember,
-  roles: string[],
-  executor: GuildMember | null = null,
-) {
+function setStoredRoles(member: GuildMember, roles: string[], executor: GuildMember | null = null) {
   const previousRoles = roles.join(ROLE_SEPARATOR)
 
   return prisma.memberMutes.upsert({

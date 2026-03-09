@@ -1,12 +1,10 @@
 import { setInterval, setTimeout } from 'node:timers/promises'
+
 import { stringify } from 'csv-stringify'
-import {
-  AttachmentBuilder,
-  type ChatInputCommandInteraction,
-  type Client,
-} from 'discord.js'
+import { AttachmentBuilder, type ChatInputCommandInteraction, type Client } from 'discord.js'
 import { getGuild, type SleetContext, SleetSlashSubcommand } from 'sleetcord'
 import { MINUTE, SECOND } from 'sleetcord-common'
+
 import { prisma } from '../../helpers/db.js'
 import {
   fetchGuildsPendingArchive,
@@ -41,7 +39,7 @@ async function warningsExportRun(interaction: ChatInputCommandInteraction) {
 const WAIT_BETWEEN_EXPORTS = 10 * SECOND // Wait 10 seconds between each guild export, to avoid being ratelimited
 const WAIT_BETWEEN_CHECKS = 10 * MINUTE // Wait 10 minutes between each check for dirty guilds to export
 
-export async function warningsExportReady(this: SleetContext) {
+async function warningsExportReady(this: SleetContext) {
   await archiveAllDirtyGuilds(this.client)
 
   for await (const _ of setInterval(WAIT_BETWEEN_CHECKS)) {

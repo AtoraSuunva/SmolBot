@@ -9,13 +9,9 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
+
 import { prisma } from '../../../helpers/db.js'
-import {
-  EVENT_COLORS,
-  formatLog,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../utils.js'
+import { EVENT_COLORS, formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logGuildMemberAdd = new SleetModule(
   {
@@ -58,29 +54,18 @@ async function guildMemberAdd(member: GuildMember) {
   using ticket = getModlogTicketQueue(member.guild).acquireTicket()
 
   const { guild } = member
-  const conf = await getValidatedConfigFor(
-    guild,
-    'memberAdd',
-    (config) => config.memberAdd,
-  )
+  const conf = await getValidatedConfigFor(guild, 'memberAdd', (config) => config.memberAdd)
   if (!conf) return
 
   const { config, channel } = conf
   const msg = formatUser(member.user, { mention: true })
   const userCreatedAt = Date.now() - member.user.createdTimestamp
 
-  const newAccount =
-    config.memberAddNew * HOUR > userCreatedAt
-      ? ' | :warning: New Account!'
-      : ''
+  const newAccount = config.memberAddNew * HOUR > userCreatedAt ? ' | :warning: New Account!' : ''
 
-  const inviters = config.memberAddInvite
-    ? await getPossibleInvites(member)
-    : null
+  const inviters = config.memberAddInvite ? await getPossibleInvites(member) : null
 
-  const inviteMessage = inviters?.size
-    ? `| :mailbox_with_mail: ${formatInviters(inviters)}`
-    : ''
+  const inviteMessage = inviters?.size ? `| :mailbox_with_mail: ${formatInviters(inviters)}` : ''
 
   const embed = new EmbedBuilder()
     .setDescription(
@@ -101,9 +86,7 @@ async function guildMemberAdd(member: GuildMember) {
   })
 }
 
-async function getPossibleInvites(
-  member: GuildMember,
-): Promise<InviteCollection | null> {
+async function getPossibleInvites(member: GuildMember): Promise<InviteCollection | null> {
   if (!member.guild.members.me?.permissions.has('ManageGuild')) return null
 
   const { guild } = member

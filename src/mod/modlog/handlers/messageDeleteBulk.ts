@@ -16,16 +16,10 @@ import {
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+
 import { plural } from '../../../helpers/format.js'
-import {
-  deleteEvents,
-  type MessageBulkDeleteAuditLog,
-} from '../../messageDeleteAuditLog.js'
-import {
-  formatLog,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../utils.js'
+import { deleteEvents, type MessageBulkDeleteAuditLog } from '../../messageDeleteAuditLog.js'
+import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 import type { ChannelAuditLog } from './auditLog/channelModify.js'
 import { messageDeleteWithAuditLog } from './messageDelete.js'
 
@@ -35,17 +29,11 @@ export const logMessageDeleteBulk = new SleetModule(
   },
   {
     load: () => {
-      deleteEvents.on(
-        'messageBulkDeleteWithAuditLog',
-        messageDeleteBulkWithAuditLog,
-      )
+      deleteEvents.on('messageBulkDeleteWithAuditLog', messageDeleteBulkWithAuditLog)
       deleteEvents.registerBulk(needsAuditLog)
     },
     unload: () => {
-      deleteEvents.off(
-        'messageBulkDeleteWithAuditLog',
-        messageDeleteBulkWithAuditLog,
-      )
+      deleteEvents.off('messageBulkDeleteWithAuditLog', messageDeleteBulkWithAuditLog)
       deleteEvents.unregisterBulk(needsAuditLog)
     },
   },
@@ -81,7 +69,6 @@ export async function messageDeleteBulkWithAuditLog(
   if (messages.size === 0) return
 
   if (messages.size === 1) {
-    // biome-ignore lint/style/noNonNullAssertion: there is 1 and only 1 message in the collection
     return messageDeleteWithAuditLog(messages.first()!)
   }
 
@@ -110,9 +97,9 @@ export async function messageDeleteBulkWithAuditLog(
     data: {
       messages: sortedMessages
         .map((m) => {
-          const data = structuredClone(
-            (m as unknown as MessageWithRaw).rawData,
-          ) as APIMessage | undefined
+          const data = structuredClone((m as unknown as MessageWithRaw).rawData) as
+            | APIMessage
+            | undefined
           if (!data) return null
 
           if ('mentions' in data) {
@@ -254,14 +241,9 @@ export async function messageDeleteBulkWithAuditLog(
   }
 
   if (body.data.messages.length === 0) {
-    logMessage.push(
-      '. Every message was uncached or partial, no log available.',
-    )
+    logMessage.push('. Every message was uncached or partial, no log available.')
     if (messages.size > 0) {
-      logMessage.push(
-        ' Message IDs:\n',
-        codeBlock(messages.map((m) => m.id).join(' ')),
-      )
+      logMessage.push(' Message IDs:\n', codeBlock(messages.map((m) => m.id).join(' ')))
     } else {
       logMessage.push(' No message IDs available.')
     }
@@ -284,12 +266,7 @@ export async function messageDeleteBulkWithAuditLog(
   if (formatted.length < 1950) {
     content = formatLog('🔥', 'Channel Purged', formatted, eventDate)
   } else {
-    content = formatLog(
-      '🔥',
-      'Channel Purged',
-      logMessage.shift()?.slice(0, 1950) ?? '',
-      eventDate,
-    )
+    content = formatLog('🔥', 'Channel Purged', logMessage.shift()?.slice(0, 1950) ?? '', eventDate)
 
     files.unshift({
       name: 'details.txt',
@@ -313,10 +290,7 @@ export async function messageDeleteBulkWithAuditLog(
       const [channelId, attachmentId] = attachmentUrl.split('/').slice(-3)
 
       await sentMessage.edit({
-        content: `${sentMessage.content}\n<${archiveLink(
-          channelId,
-          attachmentId,
-        )}>`,
+        content: `${sentMessage.content}\n<${archiveLink(channelId, attachmentId)}>`,
       })
     }
   }
@@ -331,10 +305,7 @@ export type MinimalRole = Pick<
   APIRole,
   'id' | 'name' | 'color' | 'icon' | 'unicode_emoji' | 'position'
 >
-type MinimalUser = Pick<
-  APIUser,
-  'id' | 'avatar' | 'discriminator' | 'global_name' | 'username'
->
+type MinimalUser = Pick<APIUser, 'id' | 'avatar' | 'discriminator' | 'global_name' | 'username'>
 type MinimalGuildMember = Pick<APIGuildMember, 'roles'>
 
 interface AttachmentBodyV1 {
@@ -355,14 +326,14 @@ interface AttachmentBodyV1 {
 // If d.js disposes of the message for some reason (hitting cache limits...) then we're storing extra data that won't be in message delete bulk events
 // If we just attach it to the message... then we know it'll be there on every message and when we see message delete bulk events :)
 // The alternative is either storing data and listening to raw events ourselves (effort) or converting messages to APIMessages (effort)
+// TODO: replace this with a WeakMap? honestly not sure why i didn't just do that in the first place
 export interface MessageWithRaw {
   rawData: APIMessage
 }
 
-// biome-ignore lint/complexity/useLiteralKeys: bypassing Typescript's visibility checks
+// Since _patch is a private method, we need to get around TS by using bracket notation
 const oldPatch = Message.prototype['_patch']
 
-// biome-ignore lint/complexity/useLiteralKeys: bypassing Typescript's visibility checks
 Message.prototype['_patch'] = function (data: APIMessage) {
   oldPatch.call(this, data)
   ;(this as unknown as MessageWithRaw).rawData = {

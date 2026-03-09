@@ -15,6 +15,7 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { getComponentsOfType } from '../helpers/components.js'
 
 export const calculator = new SleetSlashCommand(
@@ -110,10 +111,7 @@ async function runCalculator(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? true
   const multiplayer = interaction.options.getBoolean('multiplayer') ?? false
 
-  const components: JSONEncodable<APIMessageTopLevelComponent>[] = [
-    emptyDisplay,
-    ...buttons,
-  ]
+  const components: JSONEncodable<APIMessageTopLevelComponent>[] = [emptyDisplay, ...buttons]
 
   if (!multiplayer) {
     components.push(
@@ -125,8 +123,7 @@ async function runCalculator(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.reply({
-    flags:
-      MessageFlags.IsComponentsV2 | (ephemeral ? MessageFlags.Ephemeral : 0),
+    flags: MessageFlags.IsComponentsV2 | (ephemeral ? MessageFlags.Ephemeral : 0),
     components,
   })
 }
@@ -146,19 +143,14 @@ async function handleInteractionCreate(interaction: Interaction) {
 
   const singleplayer = textDisplays.find((t) => t.id === SINGLEPLAYER_ID)
 
-  if (
-    singleplayer &&
-    interaction.message.interactionMetadata?.user.id !== interaction.user.id
-  ) {
+  if (singleplayer && interaction.message.interactionMetadata?.user.id !== interaction.user.id) {
     return await interaction.reply({
       content: "You can't use this.",
       flags: MessageFlags.Ephemeral,
     })
   }
 
-  const rawEquation = textDisplays
-    .find((t) => t.id === DISPLAY_ID)
-    ?.content.replace('# ', '')
+  const rawEquation = textDisplays.find((t) => t.id === DISPLAY_ID)?.content.replace('# ', '')
 
   if (!rawEquation) {
     return await interaction.reply({
@@ -174,8 +166,7 @@ async function handleInteractionCreate(interaction: Interaction) {
   const singleplayerComponents = singleplayer ? [singleplayer] : []
 
   const lastWasNumber =
-    equation[equation.length - 1].match(/\d/) ||
-    equation[equation.length - 1] === '.'
+    equation[equation.length - 1].match(/\d/) || equation[equation.length - 1] === '.'
 
   const lastWasOperator = isOperator(equation[equation.length - 1])
 
@@ -214,11 +205,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       // If the last token was an operator, add an opening parenthesis
       if (lastWasOperator) {
         return await interaction.editReply({
-          components: [
-            makeDisplay(`${equation} (`),
-            ...buttons,
-            ...singleplayerComponents,
-          ],
+          components: [makeDisplay(`${equation} (`), ...buttons, ...singleplayerComponents],
         })
       }
 
@@ -228,8 +215,7 @@ async function handleInteractionCreate(interaction: Interaction) {
 
       // Check for unmatched opening parentheses
       const unmatchedOpening =
-        (equation.match(/\(/g) || []).length -
-        (equation.match(/\)/g) || []).length
+        (equation.match(/\(/g) || []).length - (equation.match(/\)/g) || []).length
 
       if (unmatchedOpening > 0) {
         return await interaction.editReply({
@@ -244,9 +230,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       // Otherwise add a multiplication operator and an opening parenthesis
       return await interaction.editReply({
         components: [
-          makeDisplay(
-            `${equation}${lastWasNumber ? ` ${Token.Multiply} (` : ''}`,
-          ),
+          makeDisplay(`${equation}${lastWasNumber ? ` ${Token.Multiply} (` : ''}`),
           ...buttons,
           ...singleplayerComponents,
         ],
@@ -259,11 +243,7 @@ async function handleInteractionCreate(interaction: Interaction) {
 
         return await interaction.editReply({
           components: [
-            makeDisplay(
-              endsWithNegativeSign
-                ? equation.slice(0, -1).trim()
-                : `${equation} -`,
-            ),
+            makeDisplay(endsWithNegativeSign ? equation.slice(0, -1).trim() : `${equation} -`),
             ...buttons,
             ...singleplayerComponents,
           ],
@@ -278,9 +258,7 @@ async function handleInteractionCreate(interaction: Interaction) {
 
       return await interaction.editReply({
         components: [
-          makeDisplay(
-            `${firstPart}${hasNegativeSign ? number.substring(1) : `-${number}`}`,
-          ),
+          makeDisplay(`${firstPart}${hasNegativeSign ? number.substring(1) : `-${number}`}`),
           ...buttons,
           ...singleplayerComponents,
         ],
@@ -297,11 +275,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       }
 
       return await interaction.editReply({
-        components: [
-          makeDisplay(result),
-          ...buttons,
-          ...singleplayerComponents,
-        ],
+        components: [makeDisplay(result), ...buttons, ...singleplayerComponents],
       })
     }
 
@@ -324,10 +298,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       const lastToken = equation.split(' ').pop()
       const lastWasZero = lastToken === '0' || lastToken === '-0'
       const lastCharacter = equation[equation.length - 1]
-      const space =
-        lastWasNumber || lastCharacter === '(' || lastCharacter === '-'
-          ? ''
-          : ' '
+      const space = lastWasNumber || lastCharacter === '(' || lastCharacter === '-' ? '' : ' '
 
       return await interaction.editReply({
         components: [
@@ -355,10 +326,7 @@ function makeDisplay(value: string) {
 }
 
 function makeButton(label: string, id = label, style = ButtonStyle.Secondary) {
-  return new ButtonBuilder()
-    .setCustomId(`calc:${id}`)
-    .setLabel(label)
-    .setStyle(style)
+  return new ButtonBuilder().setCustomId(`calc:${id}`).setLabel(label).setStyle(style)
 }
 
 const precedence: Record<string, number> = {
@@ -369,13 +337,9 @@ const precedence: Record<string, number> = {
 }
 
 const isOperator = (token: string) =>
-  [
-    Token.Add,
-    Token.Subtract,
-    Token.Multiply,
-    Token.Divide,
-    Token.Exponential,
-  ].includes(token as Token)
+  [Token.Add, Token.Subtract, Token.Multiply, Token.Divide, Token.Exponential].includes(
+    token as Token,
+  )
 const isNumber = (token: string) => !Number.isNaN(Number.parseFloat(token))
 
 function tokenize(equation: string): string[] {
@@ -421,21 +385,17 @@ function calculateResult(equation: string): number {
         operatorStack.length > 0 &&
         precedence[operatorStack[operatorStack.length - 1]] >= precedence[token]
       ) {
-        // biome-ignore lint/style/noNonNullAssertion: we just checked the length
         outputQueue.push(operatorStack.pop()!)
       }
       operatorStack.push(token)
     } else if (token === Token.OpenParenthesis) {
       operatorStack.push(token)
     } else if (token === Token.CloseParenthesis) {
-      while (
-        operatorStack[operatorStack.length - 1] !== Token.OpenParenthesis
-      ) {
+      while (operatorStack[operatorStack.length - 1] !== Token.OpenParenthesis) {
         if (operatorStack.length === 0) {
           throw new Error('Mismatched parentheses')
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: we just checked the length
         outputQueue.push(operatorStack.pop()!)
       }
 
@@ -448,7 +408,6 @@ function calculateResult(equation: string): number {
   }
 
   while (operatorStack.length > 0) {
-    // biome-ignore lint/style/noNonNullAssertion: we just checked the length
     outputQueue.push(operatorStack.pop()!)
   }
 

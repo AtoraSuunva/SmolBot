@@ -1,10 +1,7 @@
 import { Result, s } from '@sapphire/shapeshift'
 import { Hono } from 'hono'
-import {
-  authMiddleware,
-  createToken,
-  deleteToken,
-} from '../../helpers/api/auth.js'
+
+import { authMiddleware, createToken, deleteToken } from '../../helpers/api/auth.js'
 import { shapeShiftValidator } from '../../helpers/api/hono.js'
 import { Permission } from '../../helpers/api/token.js'
 import { dateTimeFrom } from '../../helpers/time.js'
@@ -26,9 +23,7 @@ app.get('/info', authMiddleware(), async (c) => {
   })
 })
 
-function parseDate(
-  dateString: number | string | undefined | null,
-): Result<Date> {
+function parseDate(dateString: number | string | undefined | null): Result<Date> {
   if (!dateString) return Result.err(new Error('Date is undefined or null'))
   const date = dateTimeFrom(dateString)
 
@@ -40,11 +35,7 @@ function parseDate(
 const createTokenJson = s.object({
   name: s.string().lengthLessThanOrEqual(25),
   permissions: s.number().optional(),
-  expiresAt: s
-    .union([s.string(), s.number()])
-    .optional()
-    .nullable()
-    .reshape(parseDate),
+  expiresAt: s.union([s.string(), s.number()]).optional().nullable().reshape(parseDate),
 })
 
 app.post(
@@ -58,8 +49,7 @@ app.post(
     if ((token.permissions | permissions) !== token.permissions) {
       return c.json(
         {
-          error:
-            'New auth token permissions must be a subset of the parent token permissions',
+          error: 'New auth token permissions must be a subset of the parent token permissions',
           parentPermissions: token.permissions,
           newPermissions: permissions,
         },

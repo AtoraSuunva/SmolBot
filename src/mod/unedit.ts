@@ -1,4 +1,5 @@
 import { stripVTControlCharacters } from 'node:util'
+
 import {
   ApplicationCommandOptionType,
   ApplicationIntegrationType,
@@ -16,6 +17,7 @@ import {
 } from 'discord.js'
 import { isLikelyID, SleetMessageCommand, SleetSlashCommand } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
+
 import { messageArrayToLog } from './modlog/handlers/messageDelete.js'
 
 export const unedit = new SleetSlashCommand(
@@ -62,13 +64,9 @@ export const editStore = new Collection<string, EditStoreEntry>()
 /** 3 hours in ms */
 const SWEEP_LIFETIME = 3 * HOUR
 
-const editSweeper = (value: EditStoreEntry) =>
-  Date.now() - value.lastEditTimestamp > SWEEP_LIFETIME
+const editSweeper = (value: EditStoreEntry) => Date.now() - value.lastEditTimestamp > SWEEP_LIFETIME
 
-function handleMessageUpdate(
-  oldMessage: Message | PartialMessage,
-  newMessage: Message,
-) {
+function handleMessageUpdate(oldMessage: Message | PartialMessage, newMessage: Message) {
   const previousEdits = editStore.get(newMessage.id) ?? {
     lastEditTimestamp: 0,
     edits: [],
@@ -81,8 +79,7 @@ function handleMessageUpdate(
   }
 
   previousEdits.edits.push(newMessage)
-  previousEdits.lastEditTimestamp =
-    newMessage.editedTimestamp ?? newMessage.createdTimestamp
+  previousEdits.lastEditTimestamp = newMessage.editedTimestamp ?? newMessage.createdTimestamp
 
   editStore.set(newMessage.id, previousEdits)
 
@@ -111,11 +108,7 @@ async function runUneditContextMenu(
   await runUnedit(interaction, message.id, true)
 }
 
-async function runUnedit(
-  interaction: CommandInteraction,
-  messageID: string,
-  ephemeral: boolean,
-) {
+async function runUnedit(interaction: CommandInteraction, messageID: string, ephemeral: boolean) {
   const edits = editStore.get(messageID)?.edits ?? []
 
   if (edits.length === 0) {
@@ -133,10 +126,7 @@ async function runUnedit(
   if (codeContent.length > 2000) {
     files.push({
       name: 'message-edits.txt',
-      attachment: Buffer.from(
-        stripVTControlCharacters(messageContent),
-        'utf-8',
-      ),
+      attachment: Buffer.from(stripVTControlCharacters(messageContent), 'utf-8'),
     })
   } else {
     content = codeContent

@@ -1,5 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { warningsAdd } from './add.js'
 import { warningsEdit } from './edit.js'
 import { warningsExport } from './export.js'

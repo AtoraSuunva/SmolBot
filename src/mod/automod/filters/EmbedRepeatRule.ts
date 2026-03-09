@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { hashEmbeds } from '../hashEmbeds.js'
 import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
@@ -17,12 +18,8 @@ export class EmbedRepeatRule extends BaseRepeatRule<string[]> {
   ): boolean {
     const { lastIdentifier } = info
 
-    return (
-      // Has at least 1 embed
-      newIdentifier.length > 0 &&
-      // Has at least 1 identical embed
-      newIdentifier.some((hash) => lastIdentifier.includes(hash))
-    )
+    // Has at least 1 identical embed
+    return newIdentifier.some((hash) => lastIdentifier.includes(hash))
   }
 
   override getIdentifier(message: Message<true>): Promise<string[]> {

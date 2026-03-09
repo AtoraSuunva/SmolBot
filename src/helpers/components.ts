@@ -4,6 +4,7 @@ import type {
   ThumbnailComponent,
   TopLevelComponent,
 } from 'discord.js'
+
 import type { Writeable } from './types.js'
 
 export function getComponentsOfType<T extends ComponentType>(
@@ -35,9 +36,7 @@ export function* iterateAllComponents(
   }
 }
 
-export type MessageComponents = Writeable<
-  Exclude<BaseMessageOptions['components'], undefined>
->
+export type MessageComponents = Writeable<Exclude<BaseMessageOptions['components'], undefined>>
 
 type TopLevelOrChildrenMessageComponents = StripArray<
   TopLevelComponentChildren<MessageComponents[number]> | TopLevelComponent
@@ -53,14 +52,14 @@ type TopLevelOrChildrenMessageComponents = StripArray<
  */
 export function mapComponents(
   components: TopLevelOrChildComponent[],
-  fn: (
-    component: TopLevelOrChildComponent,
-  ) => TopLevelOrChildrenMessageComponents,
+  fn: (component: TopLevelOrChildComponent) => TopLevelOrChildrenMessageComponents,
 ): MessageComponents {
   return components.map((component) => {
     if ('components' in component && component.components) {
-      ;(component as unknown as { components: MessageComponents }).components =
-        mapComponents(component.components, fn)
+      ;(component as unknown as { components: MessageComponents }).components = mapComponents(
+        component.components,
+        fn,
+      )
 
       return component
     }
@@ -68,9 +67,7 @@ export function mapComponents(
   }) as unknown as MessageComponents
 }
 
-export type TopLevelOrChildComponent = StripArray<
-  TopLevelComponent[] | TopLevelComponentChildren
->
+export type TopLevelOrChildComponent = StripArray<TopLevelComponent[] | TopLevelComponentChildren>
 
 export type AnyComponent = TopLevelOrChildComponent | ThumbnailComponent
 
@@ -90,8 +87,4 @@ export type TopLevelComponentChildren<T = TopLevelComponent> = T extends {
   ? U
   : never
 
-export type StripArray<T> = T extends (infer U)[]
-  ? U
-  : T extends ReadonlyArray<infer U>
-    ? U
-    : T
+export type StripArray<T> = T extends (infer U)[] ? U : T extends ReadonlyArray<infer U> ? U : T

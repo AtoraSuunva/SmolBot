@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { getGuild, makeChoices, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { formatConfig } from '../../helpers/format.js'
@@ -65,8 +66,7 @@ export const mute_manage = new SleetSlashCommand(
       },
       {
         name: 'starter_message',
-        description:
-          'The message to send on muted channel creation, supports {mention}/{executor}',
+        description: 'The message to send on muted channel creation, supports {mention}/{executor}',
         type: ApplicationCommandOptionType.String,
         max_length: 2000,
       },
@@ -124,9 +124,7 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
     guildID: guild.id,
     roleID: unset === 'role' ? null : (role?.id ?? oldConfig?.roleID ?? null),
     logChannelID:
-      unset === 'log_channel'
-        ? null
-        : (logChannel?.id ?? oldConfig?.logChannelID ?? null),
+      unset === 'log_channel' ? null : (logChannel?.id ?? oldConfig?.logChannelID ?? null),
     separateUsers: separateUsers ?? oldConfig?.separateUsers ?? false,
     categoryID: category?.id ?? oldConfig?.categoryID ?? null,
     nameTemplate: nameTemplate ?? oldConfig?.nameTemplate ?? 'muted-{user}',

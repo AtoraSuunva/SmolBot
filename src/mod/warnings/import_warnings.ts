@@ -1,4 +1,5 @@
 import { Readable } from 'node:stream'
+
 import {
   BaseError,
   type BaseErrorJsonified,
@@ -18,6 +19,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+
 import type { Prisma, Warning } from '../../generated/prisma/client.js'
 import type { PrismaPromise } from '../../generated/prisma/internal/prismaNamespace.js'
 import { prisma } from '../../helpers/db.js'
@@ -29,8 +31,7 @@ const importWarningsLogger = baseLogger.child({ module: 'import_warnings' })
 export const importWarnings = new SleetSlashCommand(
   {
     name: 'import_warnings',
-    description:
-      'Import warnings from a CSV file. Can only create NEW warnings',
+    description: 'Import warnings from a CSV file. Can only create NEW warnings',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageGuild'],
@@ -98,11 +99,7 @@ async function warningsImportRun(interaction: ChatInputCommandInteraction) {
     const validated = warningCreateValidator.run(record)
 
     if (validated.isErr()) {
-      importWarningsLogger.error(
-        validated.error,
-        'Invalid warning record %o',
-        record,
-      )
+      importWarningsLogger.error(validated.error, 'Invalid warning record %o', record)
       await defer
       await interaction.editReply(
         `You have an invalid row in your csv:\n${codeBlock(
@@ -203,10 +200,7 @@ interface NestedPropertyError {
 }
 
 function formatBaseError(error: BaseError): FormattedBaseError {
-  if (
-    error instanceof CombinedError ||
-    error instanceof CombinedPropertyError
-  ) {
+  if (error instanceof CombinedError || error instanceof CombinedPropertyError) {
     return {
       errors: error.errors.map((v) => {
         if (v instanceof BaseError) {

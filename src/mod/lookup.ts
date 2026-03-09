@@ -43,6 +43,7 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { escapeAllMarkdown, isLikelyID, SleetSlashCommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+
 import { mapComponents } from '../helpers/components.js'
 import { plural } from '../helpers/format.js'
 import { syncApplicationEmojis } from '../helpers/syncEmojis.js'
@@ -55,28 +56,19 @@ const Emotes = await syncApplicationEmojis('lookup', {
   staff: './resources/emojis/lookup/user_badges/staff.png',
   partner: './resources/emojis/lookup/user_badges/partner.png',
   hypesquad: './resources/emojis/lookup/user_badges/hypesquad.png',
-  bug_hunter_level_1:
-    './resources/emojis/lookup/user_badges/bug_hunter_level_1.png',
-  hypesquad_bravery:
-    './resources/emojis/lookup/user_badges/hypesquad_bravery.png',
-  hypesquad_brilliance:
-    './resources/emojis/lookup/user_badges/hypesquad_brilliance.png',
-  hypesquad_balance:
-    './resources/emojis/lookup/user_badges/hypesquad_balance.png',
+  bug_hunter_level_1: './resources/emojis/lookup/user_badges/bug_hunter_level_1.png',
+  hypesquad_bravery: './resources/emojis/lookup/user_badges/hypesquad_bravery.png',
+  hypesquad_brilliance: './resources/emojis/lookup/user_badges/hypesquad_brilliance.png',
+  hypesquad_balance: './resources/emojis/lookup/user_badges/hypesquad_balance.png',
   early_supporter: './resources/emojis/lookup/user_badges/early_supporter.png',
-  team_pseudo_user:
-    './resources/emojis/lookup/user_badges/team_pseudo_user.png',
-  bug_hunter_level_2:
-    './resources/emojis/lookup/user_badges/bug_hunter_level_2.png',
+  team_pseudo_user: './resources/emojis/lookup/user_badges/team_pseudo_user.png',
+  bug_hunter_level_2: './resources/emojis/lookup/user_badges/bug_hunter_level_2.png',
   verified_bot: './resources/emojis/lookup/user_badges/verified_bot.png',
   early_verified_bot_developer:
     './resources/emojis/lookup/user_badges/early_verified_bot_developer.png',
-  moderator_programs_alumni:
-    './resources/emojis/lookup/user_badges/moderator_programs_alumni.png',
-  bot_http_interactions:
-    './resources/emojis/lookup/user_badges/bot_http_interactions.png',
-  active_developer:
-    './resources/emojis/lookup/user_badges/active_developer.png',
+  moderator_programs_alumni: './resources/emojis/lookup/user_badges/moderator_programs_alumni.png',
+  bot_http_interactions: './resources/emojis/lookup/user_badges/bot_http_interactions.png',
+  active_developer: './resources/emojis/lookup/user_badges/active_developer.png',
 
   // Not officially documented, but "known"
   spammer: './resources/emojis/lookup/user_badges/spammer.png',
@@ -86,67 +78,51 @@ const Emotes = await syncApplicationEmojis('lookup', {
   has_unread_urgent_messages:
     './resources/emojis/lookup/user_badges/has_unread_urgent_messages.png',
   mfa_sms: './resources/emojis/lookup/user_badges/mfa_sms.png',
-  premium_promo_dismissed:
-    './resources/emojis/lookup/user_badges/premium_promo_dismissed.png',
-  restricted_collaborator:
-    './resources/emojis/lookup/user_badges/restricted_collaborator.png',
+  premium_promo_dismissed: './resources/emojis/lookup/user_badges/premium_promo_dismissed.png',
+  restricted_collaborator: './resources/emojis/lookup/user_badges/restricted_collaborator.png',
   // #endregion: Badges
   // #region: Feature icons
-  animated_banner:
-    './resources/emojis/lookup/guild_features/animated_banner.png',
+  animated_banner: './resources/emojis/lookup/guild_features/animated_banner.png',
   animated_icon: './resources/emojis/lookup/guild_features/animated_icon.png',
   app_command_permissions_v2:
     './resources/emojis/lookup/guild_features/application_command_permissions_v2.png',
-  auto_moderation:
-    './resources/emojis/lookup/guild_features/auto_moderation.png',
+  auto_moderation: './resources/emojis/lookup/guild_features/auto_moderation.png',
   banner: './resources/emojis/lookup/guild_features/banner.png',
   community: './resources/emojis/lookup/guild_features/community.png',
   creator_monetizable_provisional:
     './resources/emojis/lookup/guild_features/creator_monetizable_provisional.png',
-  creator_store_page:
-    './resources/emojis/lookup/guild_features/creator_store_page.png',
-  developer_support_server:
-    './resources/emojis/lookup/guild_features/developer_support_server.png',
+  creator_store_page: './resources/emojis/lookup/guild_features/creator_store_page.png',
+  developer_support_server: './resources/emojis/lookup/guild_features/developer_support_server.png',
   discoverable: './resources/emojis/lookup/guild_features/discoverable.png',
   featureable: './resources/emojis/lookup/guild_features/featureable.png',
-  has_directory_entry:
-    './resources/emojis/lookup/guild_features/has_directory_entry.png',
+  has_directory_entry: './resources/emojis/lookup/guild_features/has_directory_entry.png',
   hub: './resources/emojis/lookup/guild_features/hub.png',
   invite_splash: './resources/emojis/lookup/guild_features/invite_splash.png',
-  invites_disabled:
-    './resources/emojis/lookup/guild_features/invites_disabled.png',
+  invites_disabled: './resources/emojis/lookup/guild_features/invites_disabled.png',
   linked_to_hub: './resources/emojis/lookup/guild_features/linked_to_hub.png',
   member_verification_gate_enabled:
     './resources/emojis/lookup/guild_features/member_verification_gate_enabled.png',
-  monetization_enabled:
-    './resources/emojis/lookup/guild_features/monetization_enabled.png', // duplicate of creator_monetizable_provisional
+  monetization_enabled: './resources/emojis/lookup/guild_features/monetization_enabled.png', // duplicate of creator_monetizable_provisional
   more_stickers: './resources/emojis/lookup/guild_features/more_stickers.png',
   news: './resources/emojis/lookup/guild_features/news.png',
   partnered: './resources/emojis/lookup/guild_features/partnered.png',
-  preview_enabled:
-    './resources/emojis/lookup/guild_features/preview_enabled.png',
-  private_threads:
-    './resources/emojis/lookup/guild_features/private_threads.png',
+  preview_enabled: './resources/emojis/lookup/guild_features/preview_enabled.png',
+  private_threads: './resources/emojis/lookup/guild_features/private_threads.png',
   relay_enabled: './resources/emojis/lookup/guild_features/relay_enabled.png',
   role_icons: './resources/emojis/lookup/guild_features/role_icons.png',
   role_subscriptions_purchaseable:
     './resources/emojis/lookup/guild_features/role_subscriptions_available_for_purchase.png', // duplicate of creator_monetizable_provisional
   role_subscriptions_enabled:
     './resources/emojis/lookup/guild_features/role_subscriptions_enabled.png', // duplicate of creator_monetizable_provisional
-  ticketed_events_enabled:
-    './resources/emojis/lookup/guild_features/ticketed_events_enabled.png',
+  ticketed_events_enabled: './resources/emojis/lookup/guild_features/ticketed_events_enabled.png',
   vanity_url: './resources/emojis/lookup/guild_features/vanity_url.png',
   verified: './resources/emojis/lookup/guild_features/verified.png',
   vip_regions: './resources/emojis/lookup/guild_features/vip_regions.png',
-  welcome_screen_enabled:
-    './resources/emojis/lookup/guild_features/welcome_screen_enabled.png',
-  more_soundboard:
-    './resources/emojis/lookup/guild_features/more_soundboard.png',
-  raid_alerts_disabled:
-    './resources/emojis/lookup/guild_features/raid_alerts_disabled.png',
+  welcome_screen_enabled: './resources/emojis/lookup/guild_features/welcome_screen_enabled.png',
+  more_soundboard: './resources/emojis/lookup/guild_features/more_soundboard.png',
+  raid_alerts_disabled: './resources/emojis/lookup/guild_features/raid_alerts_disabled.png',
   soundboard: './resources/emojis/lookup/guild_features/soundboard.png',
-  enhanced_role_colors:
-    './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
+  enhanced_role_colors: './resources/emojis/lookup/guild_features/enhanced_role_colors.png',
   guild_tags: './resources/emojis/lookup/guild_features/guild_tags.png',
   guests_enabled: './resources/emojis/lookup/guild_features/guests_enabled.png',
   pin_permission_migration_done:
@@ -191,10 +167,7 @@ export const lookup = new SleetSlashCommand(
 const LOOKUP_ID = 'lookup'
 
 async function interactionCreate(interaction: Interaction) {
-  if (
-    interaction.isButton() &&
-    interaction.customId.startsWith(`${LOOKUP_ID}:`)
-  ) {
+  if (interaction.isButton() && interaction.customId.startsWith(`${LOOKUP_ID}:`)) {
     const ephemeral = interaction.message.flags.has('Ephemeral')
 
     const [, data] = interaction.customId.split(':')
@@ -209,13 +182,8 @@ async function interactionCreate(interaction: Interaction) {
     const { components } = interaction.message
 
     const newComponents = mapComponents(components, (component) => {
-      if (
-        component.type === ComponentType.Button &&
-        component.customId === interaction.customId
-      ) {
-        return new ButtonBuilder(component.data)
-          .setDisabled(true)
-          .setStyle(ButtonStyle.Secondary)
+      if (component.type === ComponentType.Button && component.customId === interaction.customId) {
+        return new ButtonBuilder(component.data).setDisabled(true).setStyle(ButtonStyle.Secondary)
       }
 
       return component
@@ -244,11 +212,7 @@ async function runLookup(interaction: ChatInputCommandInteraction) {
 
 type LookupInteraction = ChatInputCommandInteraction | ButtonInteraction
 
-async function lookupAndRespond(
-  interaction: LookupInteraction,
-  data: string,
-  ephemeral: boolean,
-) {
+async function lookupAndRespond(interaction: LookupInteraction, data: string, ephemeral: boolean) {
   const { client } = interaction
 
   await interaction.deferReply({
@@ -275,10 +239,7 @@ async function lookupAndRespond(
 
       if (guild instanceof Widget) {
         if (guild.instantInvite) {
-          return sendInviteLookup(
-            interaction,
-            await client.fetchInvite(guild.instantInvite),
-          )
+          return sendInviteLookup(interaction, await client.fetchInvite(guild.instantInvite))
         }
 
         return sendGuildWidgetLookup(interaction, guild)
@@ -356,14 +317,10 @@ async function fetchGuild(client: Client, guildId: string): Promise<GuildData> {
   throw new Error('Failed to fetch guild preview and widget.')
 }
 
-const rpcUrl = (app: string) =>
-  `https://discord.com/api/applications/${app}/rpc`
-const oAuthUrl = (app: string) =>
-  `https://discord.com/oauth2/authorize?client_id=${app}`
+const rpcUrl = (app: string) => `https://discord.com/api/applications/${app}/rpc`
+const oAuthUrl = (app: string) => `https://discord.com/oauth2/authorize?client_id=${app}`
 const oAuthUrlScoped = (app: string, permissions: string, scopes: string[]) =>
-  `${oAuthUrl(app)}&permissions=${permissions}&scope=${encodeURIComponent(
-    scopes.join(' '),
-  )}`
+  `${oAuthUrl(app)}&permissions=${permissions}&scope=${encodeURIComponent(scopes.join(' '))}`
 
 /**
  * Try to get some details about a bot using the RPC API info
@@ -390,9 +347,7 @@ async function fetchRPCDetails(app: string): Promise<APIApplication> {
  * @param flags The flags to get details for
  * @returns An array of badge emojis/text that can be displayed
  */
-function getUserBadgeEmojis(
-  flags: UserFlagsBitField | null,
-): (APIApplicationEmoji | string)[] {
+function getUserBadgeEmojis(flags: UserFlagsBitField | null): (APIApplicationEmoji | string)[] {
   if (!flags) return []
 
   const badges: (APIApplicationEmoji | string)[] = []
@@ -466,10 +421,7 @@ function getRPCFlags(flags: ApplicationFlags | null): string[] {
  * @param interaction The interaction to edit
  * @param user The user ID to lookup
  */
-async function sendUserLookup(
-  interaction: LookupInteraction,
-  user: User,
-): Promise<void> {
+async function sendUserLookup(interaction: LookupInteraction, user: User): Promise<void> {
   const container = await createUserLookupInfo(user)
 
   await interaction.editReply({
@@ -478,10 +430,7 @@ async function sendUserLookup(
   })
 }
 
-async function createUserLookupInfo(
-  user: User,
-  { minimal = false }: { minimal?: boolean } = {},
-) {
+async function createUserLookupInfo(user: User, { minimal = false }: { minimal?: boolean } = {}) {
   const displayNameLine = `## ${escapeAllMarkdown(user.displayName)}${user.bot ? ' [APP]' : ''}`
   const tagLine = `### ${escapeAllMarkdown(user.tag)}`
 
@@ -521,9 +470,7 @@ async function createUserLookupInfo(
   const links = [
     avatarURL ? `${hyperlink('Avatar', avatarURL)}` : '',
     fullSizeBannerURL ? `${hyperlink('Banner', fullSizeBannerURL)}` : '',
-    avatarDecorationURL
-      ? `${hyperlink('Avatar Decoration', avatarDecorationURL)}`
-      : '',
+    avatarDecorationURL ? `${hyperlink('Avatar Decoration', avatarDecorationURL)}` : '',
   ]
     .filter((t) => !!t)
     .join(' | ')
@@ -652,10 +599,7 @@ async function createUserLookupInfo(
 
         const inviteUrl = oAuthUrl(rpc.id)
         buttonRow.addComponents(
-          new ButtonBuilder()
-            .setStyle(ButtonStyle.Link)
-            .setLabel('Invite')
-            .setURL(inviteUrl),
+          new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Invite').setURL(inviteUrl),
         )
 
         const inviteUrlScoped = oAuthUrlScoped(
@@ -698,9 +642,7 @@ async function createUserLookupInfo(
         }
 
         if (rpc.tags) {
-          details.push(
-            `**Tags:** ${rpc.tags.filter(notNullish).map(inlineCode).join(', ')}`,
-          )
+          details.push(`**Tags:** ${rpc.tags.filter(notNullish).map(inlineCode).join(', ')}`)
         }
 
         const flags = getRPCFlags(rpc.flags)
@@ -716,9 +658,7 @@ async function createUserLookupInfo(
             .setURL(rpcUrl(rpc.id)),
         ])
       } else {
-        details.push(
-          'No RPC information available. This bot is likely too old.',
-        )
+        details.push('No RPC information available. This bot is likely too old.')
       }
 
       container.addSeparatorComponents(
@@ -747,10 +687,7 @@ async function createUserLookupInfo(
  * @param interaction The interaction to edit
  * @param invite The invite to use
  */
-async function sendInviteLookup(
-  interaction: LookupInteraction,
-  invite: Invite,
-): Promise<void> {
+async function sendInviteLookup(interaction: LookupInteraction, invite: Invite): Promise<void> {
   if (invite.guild) {
     // Guild Invite
     return sendGuildInviteLookup(interaction, invite)
@@ -777,10 +714,8 @@ async function sendGuildInviteLookup(
     })
   }
 
-  const preview = await interaction.client
-    .fetchGuildPreview(guild.id)
-    .catch(() => null)
-  const ratio = ((presenceCount ?? 0 / (memberCount ?? 1)) * 100).toFixed(0)
+  const preview = await interaction.client.fetchGuildPreview(guild.id).catch(() => null)
+  const ratio = (((presenceCount ?? 0) / (memberCount ?? 1)) * 100).toFixed(0)
   const guildIcons = [
     guild.partnered ? Emotes.partnered : '',
     guild.verified ? Emotes.verified : '',
@@ -804,7 +739,6 @@ async function sendGuildInviteLookup(
       items: [
         {
           media: {
-            // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
             url: guild.splashURL({ size: 256 })!,
           },
         },
@@ -834,27 +768,21 @@ async function sendGuildInviteLookup(
 
   if (preview) {
     if (preview.emojis.size > 0) {
-      guildInfo.push(
-        `**Emojis:** (${preview.emojis.size}) ${formatPreviewEmojis(preview.emojis)}`,
-      )
+      guildInfo.push(`**Emojis:** (${preview.emojis.size}) ${formatPreviewEmojis(preview.emojis)}`)
     }
 
     if (preview.stickers.size > 0) {
-      guildInfo.push(
-        `**Stickers:** (${preview.stickers.size}) ${formatStickers(preview.stickers)}`,
-      )
+      guildInfo.push(`**Stickers:** (${preview.stickers.size}) ${formatStickers(preview.stickers)}`)
     }
   }
 
   const images: string[] = []
 
   if (guild.splash) {
-    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     images.push(`[Splash](${guild.splashURL({ size: 4096 })!})`)
   }
 
   if (guild.banner) {
-    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     images.push(`[Banner](${guild.bannerURL({ size: 4096 })!})`)
   }
 
@@ -862,15 +790,11 @@ async function sendGuildInviteLookup(
     guildInfo.push(`**Images:** ${images.join(' — ')}`)
   }
 
-  guildInfo.push(
-    `**Verification Level:** ${VerificationLevelMap[guild.verificationLevel]}`,
-  )
+  guildInfo.push(`**Verification Level:** ${VerificationLevelMap[guild.verificationLevel]}`)
   guildInfo.push(`**NSFW Level:** ${NSFWLevelMap[guild.nsfwLevel]}`)
 
   if (guild.premiumSubscriptionCount !== null) {
-    guildInfo.push(
-      `**Boosts:** ${guild.premiumSubscriptionCount.toLocaleString()}`,
-    )
+    guildInfo.push(`**Boosts:** ${guild.premiumSubscriptionCount.toLocaleString()}`)
   }
 
   if (guild.vanityURLCode) {
@@ -913,7 +837,6 @@ async function sendGuildInviteLookup(
         items: [
           {
             media: {
-              // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
               url: guild.bannerURL({ size: 256 })!,
             },
           },
@@ -938,20 +861,14 @@ async function sendGuildInviteLookup(
 
     container
       .addSeparatorComponents(new SeparatorBuilder())
-      .spliceComponents(
-        container.components.length,
-        0,
-        userContainer.components,
-      )
+      .spliceComponents(container.components.length, 0, userContainer.components)
   }
 
-  container
-    .addSeparatorComponents(new SeparatorBuilder())
-    .addTextDisplayComponents(
-      new TextDisplayBuilder({
-        content: `-# Source: Invite${preview ? ' & Guild Preview' : ''}`,
-      }),
-    )
+  container.addSeparatorComponents(new SeparatorBuilder()).addTextDisplayComponents(
+    new TextDisplayBuilder({
+      content: `-# Source: Invite${preview ? ' & Guild Preview' : ''}`,
+    }),
+  )
 
   await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,
@@ -995,9 +912,7 @@ async function sendGroupDMInviteLookup(
     `${Emotes.offline} ${plural('Member', invite.memberCount ?? 0)}`,
     `**Icon:** ${iconURL ? hyperlink('Icon', iconURL) : 'None'}`,
     `**Created At:** ${formatDate(createdAt)}`,
-    `**Expires At:** ${
-      invite.expiresAt ? formatDate(invite.expiresAt) : 'Never'
-    }`,
+    `**Expires At:** ${invite.expiresAt ? formatDate(invite.expiresAt) : 'Never'}`,
   ]
 
   if (iconURL) {
@@ -1033,20 +948,14 @@ async function sendGroupDMInviteLookup(
 
     container
       .addSeparatorComponents(new SeparatorBuilder())
-      .spliceComponents(
-        container.components.length,
-        0,
-        userContainer.components,
-      )
+      .spliceComponents(container.components.length, 0, userContainer.components)
   }
 
-  container
-    .addSeparatorComponents(new SeparatorBuilder())
-    .addTextDisplayComponents(
-      new TextDisplayBuilder({
-        content: '-# Source: Group DM Invite',
-      }),
-    )
+  container.addSeparatorComponents(new SeparatorBuilder()).addTextDisplayComponents(
+    new TextDisplayBuilder({
+      content: '-# Source: Group DM Invite',
+    }),
+  )
 
   await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,
@@ -1059,10 +968,7 @@ async function sendGroupDMInviteLookup(
  * @param interaction The interaction to reply to
  * @param widget The widget to pull information from
  */
-async function sendGuildWidgetLookup(
-  interaction: LookupInteraction,
-  widget: Widget,
-) {
+async function sendGuildWidgetLookup(interaction: LookupInteraction, widget: Widget) {
   const container = new ContainerBuilder()
 
   const widgetInfo = [
@@ -1080,26 +986,24 @@ async function sendGuildWidgetLookup(
   )
 
   if (widget.instantInvite) {
-    container
-      .addSeparatorComponents(new SeparatorBuilder())
-      .addSectionComponents(
-        new SectionBuilder()
-          .setButtonAccessory(
-            new ButtonBuilder()
-              .setCustomId(`${LOOKUP_ID}:${widget.instantInvite}`)
-              .setStyle(ButtonStyle.Secondary)
-              .setEmoji('🔎')
-              .setLabel('Lookup Invite'),
-          )
-          .addTextDisplayComponents(
-            new TextDisplayBuilder({
-              content: `**Invite:** ${hyperlink(
-                widget.instantInvite,
-                `https://discord.gg/${widget.instantInvite}`,
-              )}`,
-            }),
-          ),
-      )
+    container.addSeparatorComponents(new SeparatorBuilder()).addSectionComponents(
+      new SectionBuilder()
+        .setButtonAccessory(
+          new ButtonBuilder()
+            .setCustomId(`${LOOKUP_ID}:${widget.instantInvite}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔎')
+            .setLabel('Lookup Invite'),
+        )
+        .addTextDisplayComponents(
+          new TextDisplayBuilder({
+            content: `**Invite:** ${hyperlink(
+              widget.instantInvite,
+              `https://discord.gg/${widget.instantInvite}`,
+            )}`,
+          }),
+        ),
+    )
   }
 
   container
@@ -1132,14 +1036,8 @@ async function sendGuildWidgetLookup(
  * @param interaction The interaction to reply to
  * @param preview The guild preview to display info for
  */
-async function sendGuildPreviewLookup(
-  interaction: LookupInteraction,
-  preview: GuildPreview,
-) {
-  const {
-    approximateMemberCount: memberCount,
-    approximatePresenceCount: presenceCount,
-  } = preview
+async function sendGuildPreviewLookup(interaction: LookupInteraction, preview: GuildPreview) {
+  const { approximateMemberCount: memberCount, approximatePresenceCount: presenceCount } = preview
   const ratio = ((presenceCount / memberCount) * 100).toFixed(0)
 
   const container = new ContainerBuilder()
@@ -1159,36 +1057,27 @@ async function sendGuildPreviewLookup(
   }
 
   if (preview.emojis.size > 0) {
-    previewInfo.push(
-      `**Emojis:** (${preview.emojis.size}) ${formatPreviewEmojis(preview.emojis)}`,
-    )
+    previewInfo.push(`**Emojis:** (${preview.emojis.size}) ${formatPreviewEmojis(preview.emojis)}`)
   }
 
   if (preview.stickers.size > 0) {
-    previewInfo.push(
-      `**Stickers:** (${preview.stickers.size}) ${formatStickers(preview.stickers)}`,
-    )
+    previewInfo.push(`**Stickers:** (${preview.stickers.size}) ${formatStickers(preview.stickers)}`)
   }
 
   const images: string[] = []
 
   if (preview.splash) {
-    // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
     images.push(`[Splash](${preview.splashURL({ size: 4096 })!})`)
   }
 
   if (preview.discoverySplash) {
-    images.push(
-      // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
-      `[Discovery Splash](${preview.discoverySplashURL({ size: 4096 })!})`,
-    )
+    images.push(`[Discovery Splash](${preview.discoverySplashURL({ size: 4096 })!})`)
 
     container.addMediaGalleryComponents(
       new MediaGalleryBuilder({
         items: [
           {
             media: {
-              // biome-ignore lint/style/noNonNullAssertion: we just checked the url exists
               url: preview.discoverySplashURL({ size: 256 })!,
             },
           },
@@ -1232,13 +1121,11 @@ async function sendGuildPreviewLookup(
     container.addTextDisplayComponents(previewDisplay)
   }
 
-  container
-    .addSeparatorComponents(new SeparatorBuilder())
-    .addTextDisplayComponents(
-      new TextDisplayBuilder({
-        content: '-# Source: Guild Preview',
-      }),
-    )
+  container.addSeparatorComponents(new SeparatorBuilder()).addTextDisplayComponents(
+    new TextDisplayBuilder({
+      content: '-# Source: Guild Preview',
+    }),
+  )
 
   await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,
@@ -1251,9 +1138,7 @@ async function sendGuildPreviewLookup(
  * @param emojis GuildPreview emojis as a Collection
  * @returns A string representation of the emojis
  */
-function formatPreviewEmojis(
-  emojis: Collection<string, GuildPreviewEmoji>,
-): string {
+function formatPreviewEmojis(emojis: Collection<string, GuildPreviewEmoji>): string {
   let formattedEmojis = emojis
     .first(10)
     .map((e) => `[${e.name}](${e.imageURL()})`)
@@ -1325,10 +1210,7 @@ function formatDate(date: Date): string {
     relativeString = 'ago'
   }
 
-  return `${prettyMilliseconds(msTime)} ${relativeString} (${time(
-    date,
-    'R',
-  )})\n${time(date, 'F')}`
+  return `${prettyMilliseconds(msTime)} ${relativeString} (${time(date, 'R')})\n${time(date, 'F')}`
 }
 
 /** A map of GuildVerificationLevel to displayable strings */
@@ -1354,7 +1236,7 @@ function formatGuildFeatures(features: `${GuildFeature}`[]): string {
   }
 
   const feats = features
-    .sort()
+    .toSorted()
     .map((f) => GuildFeaturesMap[f])
     .filter(notNullish)
   const formattedFeats = feats.join(' ')
@@ -1390,8 +1272,7 @@ const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
   PRIVATE_THREADS: Emotes.private_threads,
   RELAY_ENABLED: Emotes.relay_enabled,
   ROLE_ICONS: Emotes.role_icons,
-  ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE:
-    Emotes.role_subscriptions_purchaseable,
+  ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE: Emotes.role_subscriptions_purchaseable,
   ROLE_SUBSCRIPTIONS_ENABLED: Emotes.role_subscriptions_enabled,
   TICKETED_EVENTS_ENABLED: Emotes.ticketed_events_enabled,
   VANITY_URL: Emotes.vanity_url,

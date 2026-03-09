@@ -5,14 +5,11 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import type { Warning } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { updateWarning } from './edit.js'
-import {
-  fetchWarningConfigFor,
-  formatWarningToField,
-  markWarningArchiveDirty,
-} from './utils.js'
+import { fetchWarningConfigFor, formatWarningToField, markWarningArchiveDirty } from './utils.js'
 
 export const warningsRevert = new SleetSlashSubcommand(
   {
@@ -64,9 +61,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  const newestVersion = warningHistory.reduce((a, b) =>
-    a.version > b.version ? a : b,
-  )
+  const newestVersion = warningHistory.reduce((a, b) => (a.version > b.version ? a : b))
 
   const mergedWarning: Warning = {
     ...revertTo,
@@ -81,9 +76,7 @@ async function warningsRevertRun(interaction: ChatInputCommandInteraction) {
 
   const embed = new EmbedBuilder()
     .setTitle('Reverted Warning')
-    .setDescription(
-      `Reverted warning #**${warningID}** to version **${version}**`,
-    )
+    .setDescription(`Reverted warning #**${warningID}** to version **${version}**`)
     .addFields([
       formatWarningToField(newWarning, config, {
         showModNote: true,

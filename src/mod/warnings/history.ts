@@ -4,11 +4,9 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { formatUser, getGuild, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
-import {
-  respondWithPaginatedWarnings,
-  type WarningFetcher,
-} from './pagination.js'
+import { respondWithPaginatedWarnings, type WarningFetcher } from './pagination.js'
 import { fetchPaginatedWarningHistory } from './utils.js'
 
 export const warningsHistory = new SleetSlashSubcommand(

@@ -1,5 +1,6 @@
 import type { AnyThreadChannel, Client, ForumThreadChannel } from 'discord.js'
 import { SleetModule } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { getWebhookFor } from './handle_ticket_message.js'
 
@@ -58,10 +59,7 @@ const intlList = new Intl.ListFormat('en', {
 
 const updatingThreads = new Set<string>()
 
-async function handleThreadUpdate(
-  oldThread: AnyThreadChannel,
-  newThread: AnyThreadChannel,
-) {
+async function handleThreadUpdate(oldThread: AnyThreadChannel, newThread: AnyThreadChannel) {
   if (updatingThreads.has(newThread.id)) {
     return
   }
@@ -75,17 +73,13 @@ async function handleThreadUpdate(
   }
 
   const { client } = newThread
-  const userChannel = await client.channels
-    .fetch(ticket.userChannelID)
-    .catch(() => null)
+  const userChannel = await client.channels.fetch(ticket.userChannelID).catch(() => null)
 
   if (!userChannel || !('threads' in userChannel)) {
     return
   }
 
-  const userThread = await userChannel.threads
-    .fetch(ticket.userThreadID)
-    .catch(() => null)
+  const userThread = await userChannel.threads.fetch(ticket.userThreadID).catch(() => null)
 
   if (!userThread) {
     return
@@ -97,10 +91,7 @@ async function handleThreadUpdate(
     locked: null,
   }
 
-  if (
-    newThread.archived !== null &&
-    oldThread.archived !== newThread.archived
-  ) {
+  if (newThread.archived !== null && oldThread.archived !== newThread.archived) {
     newState = true
     threadChange.archived = newThread.archived
   }
@@ -130,17 +121,12 @@ async function handleThreadUpdate(
 
   const addendum = Object.entries(threadChange)
     .filter((e): e is [keyof typeof CHANGE_ADDENDUM, boolean] => e[1] !== null)
-    .map(
-      ([key, value]) => CHANGE_ADDENDUM[key][String(value) as 'true' | 'false'],
-    )
+    .map(([key, value]) => CHANGE_ADDENDUM[key][String(value) as 'true' | 'false'])
     .filter((v) => v)
 
   const addendumMod = Object.entries(threadChange)
     .filter((e): e is [keyof typeof CHANGE_ADDENDUM, boolean] => e[1] !== null)
-    .map(
-      ([key, value]) =>
-        CHANGE_ADDENDUM_MOD[key][String(value) as 'true' | 'false'],
-    )
+    .map(([key, value]) => CHANGE_ADDENDUM_MOD[key][String(value) as 'true' | 'false'])
     .filter((v) => v)
 
   // If the ticket was locked and still is locked, don't send any update
@@ -183,7 +169,6 @@ async function handleThreadUpdate(
       //   )
       // }
 
-      // biome-ignore lint/style/noNonNullAssertion: we just checked at least one state wasn't null
       await userThread.setLocked((threadChange.locked ?? newThread.locked)!)
     }
 
@@ -210,8 +195,7 @@ async function handleThreadUpdate(
 
       if (!isTicketOpen || newThread.archived || newThread.locked) {
         await newThread.edit({
-          archived:
-            threadChange.archived ?? (newThread.archived || !isTicketOpen),
+          archived: threadChange.archived ?? (newThread.archived || !isTicketOpen),
           locked: threadChange.locked ?? newThread.locked ?? false,
         })
       }
@@ -262,11 +246,7 @@ async function handleThreadDelete(thread: AnyThreadChannel) {
 
   if (isUserThread) {
     // Tag the mod thread as closed
-    const modThread = await fetchThread(
-      thread.client,
-      ticket.modChannelID,
-      ticket.modThreadID,
-    )
+    const modThread = await fetchThread(thread.client, ticket.modChannelID, ticket.modThreadID)
 
     if (modThread) {
       const config = await findForumConfig(ticket.modChannelID)

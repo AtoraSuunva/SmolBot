@@ -1,4 +1,5 @@
 import { SleetSlashCommandGroup } from 'sleetcord'
+
 import { modmail_server_config } from './config.js'
 
 export const modmail_server = new SleetSlashCommandGroup({

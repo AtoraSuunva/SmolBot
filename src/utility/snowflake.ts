@@ -10,6 +10,7 @@ import {
 import { DateTime } from 'luxon'
 import { SleetSlashCommand, SleetSlashSubcommand } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
+
 import { formatConfig } from '../helpers/format.js'
 import { dateTimeFrom } from '../helpers/time.js'
 
@@ -48,8 +49,7 @@ const snowflakeGenerate = new SleetSlashSubcommand(
       },
       {
         name: 'process_id',
-        description:
-          'The process ID to use, will be truncated to 5 bits (0-31) (default: 1)',
+        description: 'The process ID to use, will be truncated to 5 bits (0-31) (default: 1)',
         type: ApplicationCommandOptionType.Integer,
       },
       {
@@ -60,8 +60,7 @@ const snowflakeGenerate = new SleetSlashSubcommand(
       },
       {
         name: 'worker_id',
-        description:
-          'The worker ID to use, will be truncated to 5 bits (0-31) (default: 0)',
+        description: 'The worker ID to use, will be truncated to 5 bits (0-31) (default: 0)',
         type: ApplicationCommandOptionType.Integer,
       },
       {
@@ -114,9 +113,7 @@ async function runSnowflakeGenerate(interaction: ChatInputCommandInteraction) {
   const workerId = interaction.options.getInteger('workerId') ?? 0
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  const parsedTimestamp = timestamp
-    ? dateTimeFrom(timestamp)
-    : DateTime.now().setZone('UTC')
+  const parsedTimestamp = timestamp ? dateTimeFrom(timestamp) : DateTime.now().setZone('UTC')
 
   if (!parsedTimestamp.isValid) {
     await interaction.reply({

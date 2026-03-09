@@ -1,4 +1,5 @@
 import { stripVTControlCharacters } from 'node:util'
+
 import {
   ApplicationIntegrationType,
   type AttachmentPayload,
@@ -11,14 +12,11 @@ import {
   type PartialGuildMember,
 } from 'discord.js'
 import { formatUser, SleetSlashCommand, tryFetchMember } from 'sleetcord'
+
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
-import {
-  formatLog,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../modlog/utils.js'
+import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
 import { deleteCommand } from './delete.js'
@@ -64,8 +62,7 @@ async function handleGuildMemberUpdate(
 async function handleMessageCreate(message: Message) {
   if (message.author.bot || !message.inGuild() || message.system) return
 
-  const member =
-    message.member ?? (await tryFetchMember(message.guild, message.author.id))
+  const member = message.member ?? (await tryFetchMember(message.guild, message.author.id))
 
   if (member === null) {
     return // Failed to fetch member
@@ -84,11 +81,7 @@ async function handleMessageCreate(message: Message) {
   return handleJoin(member, message.channel, message)
 }
 
-async function handleJoin(
-  member: GuildMember,
-  channel?: GuildTextBasedChannel,
-  message?: Message,
-) {
+async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, message?: Message) {
   if (member.user.bot) return
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(member.guild).acquireTicket()
@@ -145,9 +138,8 @@ async function handleJoin(
   }
 
   const sendChannel =
-    (welcomeChannel
-      ? await member.guild.channels.fetch(welcomeChannel).catch(() => null)
-      : null) ?? channel
+    (welcomeChannel ? await member.guild.channels.fetch(welcomeChannel).catch(() => null) : null) ??
+    channel
 
   let sentMessage: Message | null = null
 
@@ -196,10 +188,7 @@ async function handleJoin(
       } else {
         files.push({
           name: 'first_message.txt',
-          attachment: Buffer.from(
-            stripVTControlCharacters(formattedPreview),
-            'utf-8',
-          ),
+          attachment: Buffer.from(stripVTControlCharacters(formattedPreview), 'utf-8'),
         })
       }
     }
@@ -247,10 +236,7 @@ async function addJoin(guildID: string, userID: string) {
   })
 }
 
-async function hasJoinedBefore(
-  guildID: string,
-  userID: string,
-): Promise<boolean> {
+async function hasJoinedBefore(guildID: string, userID: string): Promise<boolean> {
   return await prisma.welcomeJoins
     .findFirst({
       where: {
@@ -262,9 +248,7 @@ async function hasJoinedBefore(
     .then((row) => row !== null)
 }
 
-async function getSettingsFor(
-  guildID: string,
-): Promise<WelcomeSettings | null> {
+async function getSettingsFor(guildID: string): Promise<WelcomeSettings | null> {
   const settings = welcomeCache.get(guildID)
 
   // null means they don't exist

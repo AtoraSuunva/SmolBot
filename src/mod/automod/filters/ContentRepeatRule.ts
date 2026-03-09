@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { BaseRepeatRule, type RepeatInfractionInfo } from './BaseRepeatRule.js'
 
 /**

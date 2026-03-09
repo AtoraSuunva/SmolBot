@@ -7,6 +7,7 @@ import {
 } from 'discord.js'
 import { getGuild, SleetSlashCommand } from 'sleetcord'
 import { getOptionCount } from 'sleetcord-common'
+
 import type { WarningConfig } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { channelFormatter, formatConfig } from '../../helpers/format.js'

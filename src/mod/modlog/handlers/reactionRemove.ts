@@ -11,11 +11,8 @@ import {
 import prettyMilliseconds from 'pretty-ms'
 import { escapeAllMarkdown, formatUser, SleetModule } from 'sleetcord'
 import { SECOND } from 'sleetcord-common'
-import {
-  formatLog,
-  getModlogTicketQueue,
-  getValidatedConfigFor,
-} from '../utils.js'
+
+import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logReactionRemove = new SleetModule(
   {
@@ -98,7 +95,6 @@ async function messageReactionRemove(
   if (reaction.emoji.id) {
     embeds.push({
       thumbnail: {
-        // biome-ignore lint/style/noNonNullAssertion: imageURL is only null if emoji.id is null
         url: reaction.emoji.imageURL({
           extension: reaction.emoji.animated ? 'gif' : 'png',
         })!,

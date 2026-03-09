@@ -1,8 +1,4 @@
-import {
-  type ChatInputCommandInteraction,
-  EmbedBuilder,
-  MessageFlags,
-} from 'discord.js'
+import { type ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const fields = new SleetSlashSubcommand(
@@ -19,8 +15,7 @@ async function runHelp(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder().setTitle('Welcome Help').addFields([
     {
       name: 'message',
-      value:
-        'The welcome message posted, use `/welcome message` to see what you can use.',
+      value: 'The welcome message posted, use `/welcome message` to see what you can use.',
     },
     {
       name: 'channel',
@@ -33,8 +28,7 @@ async function runHelp(interaction: ChatInputCommandInteraction) {
     },
     {
       name: 'instant',
-      value:
-        'Will the bot instantly welcome people? Or wait for their first message?',
+      value: 'Will the bot instantly welcome people? Or wait for their first message?',
     },
     {
       name: 'ignore_roles',

@@ -7,12 +7,8 @@ import {
   InteractionContextType,
   type PartialGuildMember,
 } from 'discord.js'
-import {
-  botHasPermissionsGuard,
-  getGuild,
-  getMembers,
-  SleetSlashCommand,
-} from 'sleetcord'
+import { botHasPermissionsGuard, getGuild, getMembers, SleetSlashCommand } from 'sleetcord'
+
 import type { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../helpers/db.js'
 import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
@@ -23,8 +19,7 @@ const DEFAULT_PREPEND = '\u{17B5}' // Khmer Vowel Inherent Aa "◌឵"
 export const dehoist = new SleetSlashCommand(
   {
     name: 'dehoist',
-    description:
-      'Dehoists users by placing an invisible character in front of their name',
+    description: 'Dehoists users by placing an invisible character in front of their name',
     contexts: [InteractionContextType.Guild],
     integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['ManageNicknames'],
@@ -92,11 +87,8 @@ async function runDehoist(interaction: ChatInputCommandInteraction) {
   const guild = await getGuild(interaction, true)
   await botHasPermissionsGuard(interaction, ['ManageNicknames'])
 
-  const hoistCharacters = (
-    interaction.options.getString('hoist_characters') ?? '!'
-  ).split('')
-  const dehoistPrepend =
-    interaction.options.getString('dehoist_prepend') ?? DEFAULT_PREPEND
+  const hoistCharacters = (interaction.options.getString('hoist_characters') ?? '!').split('')
+  const dehoistPrepend = interaction.options.getString('dehoist_prepend') ?? DEFAULT_PREPEND
   const automatic = interaction.options.getBoolean('automatic')
 
   await interaction.deferReply()
@@ -180,19 +172,11 @@ interface FetchMemberOptions {
   startingWith: string[]
 }
 
-async function fetchMembers({
-  guild,
-  startingWith,
-}: FetchMemberOptions): Promise<GuildMember[]> {
+async function fetchMembers({ guild, startingWith }: FetchMemberOptions): Promise<GuildMember[]> {
   return fetchGuildMembers(guild)
     .then((members) =>
       members
-        .filter(
-          (m) =>
-            !m.user.bot &&
-            m.manageable &&
-            startingWith.includes(m.displayName[0]),
-        )
+        .filter((m) => !m.user.bot && m.manageable && startingWith.includes(m.displayName[0]))
         .toJSON(),
     )
     .catch(() => [])
@@ -203,9 +187,7 @@ async function checkToDehoist(members: DehoistableMember[]) {
 
   if (
     !firstMember ||
-    !(await firstMember.guild.members
-      .fetchMe()
-      .then((me) => me.permissions.has('ManageNicknames')))
+    !(await firstMember.guild.members.fetchMe().then((me) => me.permissions.has('ManageNicknames')))
   ) {
     return
   }

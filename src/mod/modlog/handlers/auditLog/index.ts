@@ -8,11 +8,8 @@ import {
   type User,
 } from 'discord.js'
 import { SleetModule } from 'sleetcord'
-import {
-  type ChannelAuditLog,
-  channelDelete,
-  logChannelModified,
-} from './channelModify.js'
+
+import { type ChannelAuditLog, channelDelete, logChannelModified } from './channelModify.js'
 import {
   logAutoModerationActionExecution,
   logMemberTimeout,
@@ -31,10 +28,7 @@ export const logAuditLog = new SleetModule(
   },
 )
 
-async function guildAuditLogEntryCreate(
-  auditLogEntry: GuildAuditLogsEntry,
-  guild: Guild,
-) {
+async function guildAuditLogEntryCreate(auditLogEntry: GuildAuditLogsEntry, guild: Guild) {
   switch (auditLogEntry.action) {
     case AuditLogEvent.ChannelCreate:
     case AuditLogEvent.ChannelDelete:
@@ -54,9 +48,7 @@ async function guildAuditLogEntryCreate(
   }
 }
 
-async function autoModerationActionExecution(
-  action: AutoModerationActionExecution,
-) {
+async function autoModerationActionExecution(action: AutoModerationActionExecution) {
   logAutoModerationActionExecution(action)
 }
 
@@ -66,9 +58,7 @@ export async function resolveUser(
   client: Client,
 ): Promise<User | null> {
   if (maybeUser === null || maybeUser.username === null) {
-    return maybeUserId
-      ? await client.users.fetch(maybeUserId).catch(() => null)
-      : null
+    return maybeUserId ? await client.users.fetch(maybeUserId).catch(() => null) : null
   }
 
   return maybeUser

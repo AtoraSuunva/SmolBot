@@ -9,12 +9,8 @@ import {
   type PublicThreadChannel,
   type ThreadEditOptions,
 } from 'discord.js'
-import {
-  escapeAllMarkdown,
-  formatUser,
-  getChannel,
-  SleetSlashCommand,
-} from 'sleetcord'
+import { escapeAllMarkdown, formatUser, getChannel, SleetSlashCommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 
 export const lock_thread = new SleetSlashCommand(
@@ -87,8 +83,7 @@ async function logToChannel(
 }
 
 async function runLockThread(interaction: ChatInputCommandInteraction) {
-  const thread =
-    (await getChannel(interaction, 'thread')) ?? interaction.channel
+  const thread = (await getChannel(interaction, 'thread')) ?? interaction.channel
   const reason = interaction.options.getString('reason', true)
   const formattedReason = `Locked by ${formatUser(interaction.user, {
     markdown: false,

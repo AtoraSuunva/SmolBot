@@ -26,6 +26,7 @@ import {
 } from 'discord.js'
 import { formatUser, getGuild } from 'sleetcord'
 import { MINUTE, notNullish } from 'sleetcord-common'
+
 import type { UserReport } from '../../generated/prisma/client.js'
 import { getComponentsOfType } from '../../helpers/components.js'
 import { prisma } from '../../helpers/db.js'
@@ -76,9 +77,7 @@ export async function sendReport(
     createBlockButton(reportID),
   ])
 
-  const actionLog = new EmbedBuilder()
-    .setColor(Colors.DarkGold)
-    .setTitle('Action Log')
+  const actionLog = new EmbedBuilder().setColor(Colors.DarkGold).setTitle('Action Log')
 
   return resolved.reportChannel.send({
     content: resolved.config.message,
@@ -120,9 +119,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
     return
   }
 
-  const user = await interaction.client.users
-    .fetch(report.userID)
-    .catch(() => null)
+  const user = await interaction.client.users.fetch(report.userID).catch(() => null)
 
   if (!user) {
     await interaction.reply({
@@ -150,11 +147,7 @@ export async function handleReportButtonInteraction(interaction: Interaction) {
   }
 }
 
-async function replyToReport(
-  interaction: ButtonInteraction,
-  report: UserReport,
-  user: User,
-) {
+async function replyToReport(interaction: ButtonInteraction, report: UserReport, user: User) {
   const originalMessage = interaction.message
   const customId = `report:${report.reportID}:reply_prompt:${interaction.id}`
 
@@ -214,8 +207,7 @@ async function replyToReport(
   const defer = modalInteraction.deferReply()
 
   const message = modalInteraction.fields.getTextInputValue('message')
-  const isAnonString =
-    modalInteraction.fields.getTextInputValue('anon') || 'yes'
+  const isAnonString = modalInteraction.fields.getTextInputValue('anon') || 'yes'
   const isAnon = isAnonString.toLowerCase() === 'yes'
 
   const guild = await getGuild(interaction, true)
@@ -280,20 +272,14 @@ async function replyToReport(
 
   const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
-  actionLog.setDescription(
-    `${actionLog.data.description ?? ''}\n${newLog}`.trim(),
-  )
+  actionLog.setDescription(`${actionLog.data.description ?? ''}\n${newLog}`.trim())
 
   return originalMessage.edit({
     embeds: [...originalMessage.embeds.slice(0, -1), actionLog],
   })
 }
 
-async function blockReportUser(
-  interaction: ButtonInteraction,
-  report: UserReport,
-  user: User,
-) {
+async function blockReportUser(interaction: ButtonInteraction, report: UserReport, user: User) {
   const guild = await getGuild(interaction, true)
   const originalMessage = interaction.message
 
@@ -337,10 +323,9 @@ async function blockReportUser(
     .setMaxLength(2048)
     .setStyle(TextInputStyle.Paragraph)
 
-  const messageRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      reasonInput,
-    )
+  const messageRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+    reasonInput,
+  )
 
   const modal = new ModalBuilder()
     .setCustomId(customId)
@@ -385,9 +370,7 @@ async function blockReportUser(
   const newLog = `${interaction.user} ${hyperlink('Blocked the user', url)}`
   const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
-  actionLog.setDescription(
-    `${actionLog.data.description ?? ''}\n${newLog}`.trim(),
-  )
+  actionLog.setDescription(`${actionLog.data.description ?? ''}\n${newLog}`.trim())
 
   const newComponents = changeBlockButtonTo(
     'unblock',
@@ -401,11 +384,7 @@ async function blockReportUser(
   })
 }
 
-async function unblockReportUser(
-  interaction: ButtonInteraction,
-  report: UserReport,
-  user: User,
-) {
+async function unblockReportUser(interaction: ButtonInteraction, report: UserReport, user: User) {
   const guild = await getGuild(interaction, true)
   const originalMessage = interaction.message
 
@@ -453,16 +432,11 @@ async function unblockReportUser(
     fetchReply: true,
   })
 
-  const newLog = `${interaction.user} ${hyperlink(
-    'Unblocked the user',
-    reply.url,
-  )}`
+  const newLog = `${interaction.user} ${hyperlink('Unblocked the user', reply.url)}`
 
   const actionLog = new EmbedBuilder(originalMessage.embeds.at(-1)?.data)
 
-  actionLog.setDescription(
-    `${actionLog.data.description ?? ''}\n${newLog}`.trim(),
-  )
+  actionLog.setDescription(`${actionLog.data.description ?? ''}\n${newLog}`.trim())
 
   const newComponents = changeBlockButtonTo(
     'block',
@@ -490,16 +464,14 @@ function changeBlockButtonTo(
   reportID: string,
   from: ActionRow<MessageActionRowComponent>[],
 ): ActionRowBuilder<ButtonBuilder>[] {
-  const newButton =
-    to === 'block' ? createBlockButton(reportID) : createUnblockButton(reportID)
+  const newButton = to === 'block' ? createBlockButton(reportID) : createUnblockButton(reportID)
   const oldCommand = to === 'block' ? ':unblock' : ':block'
 
   return from.map((row) =>
     new ActionRowBuilder<ButtonBuilder>().addComponents(
       row.components
         .map((component) =>
-          component.customId?.endsWith(oldCommand) &&
-          component.type === ComponentType.Button
+          component.customId?.endsWith(oldCommand) && component.type === ComponentType.Button
             ? newButton
             : component.data.type === ComponentType.Button
               ? new ButtonBuilder(component.data)
