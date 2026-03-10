@@ -267,7 +267,7 @@ async function handleThreadDelete(thread: AnyThreadChannel) {
     }
   } else {
     // Mod thread was deleted, lock the user thread
-    otherThread.setLocked(true)
+    await otherThread.setLocked(true)
   }
 }
 

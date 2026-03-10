@@ -26,10 +26,10 @@ import { ansiFormat, BackgroundColor, type Markup, TextColor } from '../../../he
 import type { AnyComponent } from '../../../helpers/components.js'
 import { plural } from '../../../helpers/format.js'
 import { addToEmbed } from '../../../helpers/quoteMessage.js'
+import { getRawMessage } from '../../../helpers/rawMessage.js'
 import { deleteEvents, type MessageDeleteAuditLog } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
 import { formatLog, formatTime, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
-import type { MessageWithRaw } from './messageDeleteBulk.js'
 
 export const logMessageDelete = new SleetModule(
   {
@@ -285,7 +285,7 @@ export async function messageToLog(
   if (includeInteraction && message.interactionMetadata) {
     const { interactionMetadata } = message
     // witness the beauty of working with undocumented properties, thank you discord
-    const raw = (message as unknown as MessageWithRaw).rawData
+    const raw = getRawMessage(message)
     const rawIM = raw?.interaction_metadata as unknown as APIUndocumentedInteractionMetadata
 
     messageCommand = rawIM.command_type === ApplicationCommandType.Message

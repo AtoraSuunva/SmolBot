@@ -17,8 +17,8 @@ function parseBoolean(value: string | undefined | null): Result<boolean> {
 
 function parseInteger(
   value: string | undefined | null,
-  min?: number | undefined,
-  max?: number | undefined,
+  min?: number,
+  max?: number,
 ): Result<number> {
   if (value === null || value === undefined) return Result.err(new Error('Invalid integer string'))
   const parsed = Number.parseInt(value, 10)

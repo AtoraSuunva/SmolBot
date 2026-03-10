@@ -243,17 +243,17 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
 
 function handleInteractionCreate(interaction: Interaction) {
   if (interaction.isUserSelectMenu() && interaction.customId === USER_SELECT_ID) {
-    handleUserSelectInteraction(interaction)
+    return handleUserSelectInteraction(interaction)
   } else if (interaction.isButton()) {
     switch (interaction.customId) {
       case MENTION_ID:
-        handleMentionButton(interaction)
-        break
+        return handleMentionButton(interaction)
       case ID_ID:
-        handleIDButton(interaction)
-        break
+        return handleIDButton(interaction)
     }
   }
+
+  return
 }
 
 async function handleUserSelectInteraction(interaction: UserSelectMenuInteraction) {
@@ -265,7 +265,7 @@ async function handleUserSelectInteraction(interaction: UserSelectMenuInteractio
       .map((m) => m.user.id),
   )
 
-  interaction.reply({
+  await interaction.reply({
     content: resultFormat(members),
     flags: MessageFlags.Ephemeral,
     components: [ACTION_BUTTON_ROW, selectRow],
@@ -275,7 +275,7 @@ async function handleUserSelectInteraction(interaction: UserSelectMenuInteractio
 async function handleMentionButton(interaction: ButtonInteraction) {
   const members = await getInteractionMembers(interaction)
 
-  interaction.reply({
+  await interaction.reply({
     flags: MessageFlags.Ephemeral,
     content: members.map((m) => `<@${m}>`).join('\n') || 'No members selected',
   })
@@ -284,7 +284,7 @@ async function handleMentionButton(interaction: ButtonInteraction) {
 async function handleIDButton(interaction: ButtonInteraction) {
   const members = await getInteractionMembers(interaction)
 
-  interaction.reply({
+  await interaction.reply({
     flags: MessageFlags.Ephemeral,
     content: members.join('\n') || 'No members selected',
   })

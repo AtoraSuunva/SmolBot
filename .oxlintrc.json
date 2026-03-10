@@ -1,9 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "options": {
-    // Enable when ts 7.0 is out
-    "typeAware": false,
-    "typeCheck": false
+    "typeAware": true,
+    "typeCheck": true
   },
   "categories": {
     "correctness": "error",
@@ -21,7 +20,13 @@
     // most sorting is done on temp objects anyway
     "no-array-sort": "allow",
     // message ordering is often important and we have to work with ratelimits. This keeps a single module from queueing too many messages and instantly ratelimiting everything else
-    "no-await-in-loop": "allow"
+    "no-await-in-loop": "allow",
+    // we often use enums to organize string tokens (i.e. Token.Add = "+", Token.Subtract = "-", etc.) and parsing strings to enums is extra work for no extra safety (comparing the strings to enums _is_ the validation)
+    "no-unsafe-enum-comparison": "allow",
+    // we are smarter than the compiler :)
+    "no-unsafe-type-assertion": "allow",
+    // Discord.js offers formatters using .toString() for multiple types and it was becoming a hassle to allowlist them
+    "restrict-template-expressions": "allow"
   },
   "ignorePatterns": ["src/generated/**/*"]
 }

@@ -211,21 +211,19 @@ async function runTranslate(
   const from = validateLanguage(fromInput)
 
   if (!from) {
-    interaction.reply({
+    return interaction.reply({
       content: `${inlineCode(escapeAllMarkdown(fromInput))} is not a valid language to translate from.`,
       flags: MessageFlags.Ephemeral,
     })
-    return
   }
 
   const to = validateLanguage(toInput)
 
   if (!to) {
-    interaction.reply({
+    return interaction.reply({
       content: `${inlineCode(escapeAllMarkdown(toInput))} is not a valid language to translate to.`,
       flags: MessageFlags.Ephemeral,
     })
-    return
   }
 
   await interaction.deferReply({
@@ -237,12 +235,10 @@ async function runTranslate(
   try {
     res = await translate(text, { from, to, autoCorrect })
   } catch (e) {
-    await interaction.editReply({
+    return interaction.editReply({
       content: `Failed to translate, try again later. Received an error:\n${codeBlock(cleanCodeBlockContent(String(e)))}`,
       allowedMentions: { parse: [] },
     })
-
-    return
   }
 
   const lines = []
@@ -291,7 +287,7 @@ async function runTranslate(
     ]
   }
 
-  await interaction.editReply({
+  return interaction.editReply({
     content,
     files,
     allowedMentions: { parse: [] },

@@ -30,7 +30,7 @@ interface IApplicationEmoji extends APIApplicationEmoji {}
  *
  * All this does is add a `toString` method to format the emoji as a Discord emoji string.
  */
-class WrappedApplicationEmoji implements IApplicationEmoji {
+export class WrappedApplicationEmoji implements IApplicationEmoji {
   id: string
   name: string
   animated: boolean
@@ -228,7 +228,7 @@ async function createEmoji(module: string, options: ApplicationEmojiCreateOption
   return newEmoji
 }
 
-async function resolveFile(attachment: string | Buffer<ArrayBufferLike>): Promise<Buffer> {
+async function resolveFile(attachment: string | Buffer): Promise<Buffer> {
   if (Buffer.isBuffer(attachment)) {
     return attachment
   }
@@ -243,10 +243,7 @@ async function resolveFile(attachment: string | Buffer<ArrayBufferLike>): Promis
   return file
 }
 
-function resolveBase64(
-  attachment: string | Buffer<ArrayBufferLike>,
-  contentType = 'image/png',
-): string {
+function resolveBase64(attachment: string | Buffer, contentType = 'image/png'): string {
   if (Buffer.isBuffer(attachment)) {
     return `data:${contentType};base64,${attachment.toString('base64')}`
   }
@@ -254,7 +251,7 @@ function resolveBase64(
   return attachment
 }
 
-async function hashAttachment(attachment: string | Buffer<ArrayBufferLike>) {
+async function hashAttachment(attachment: string | Buffer) {
   const file = typeof attachment === 'string' ? await readFile(attachment) : attachment
   return murmur3_32_hex(new Uint8Array(file))
 }

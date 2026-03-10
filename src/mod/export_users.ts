@@ -87,10 +87,10 @@ async function runExportUsers(interaction: ChatInputCommandInteraction) {
 
   guild.client.on('guildMembersChunk', handler)
 
-  stringifier.on('error', (err) => {
+  stringifier.on('error', async (err) => {
     clearTimeout(timeout)
     guild.client.off('guildMembersChunk', handler)
-    interaction.editReply({
+    await interaction.editReply({
       content: `Failed to export users: ${err.message}`,
     })
   })

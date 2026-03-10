@@ -391,7 +391,7 @@ function quotePoll(message: Message, embed: EmbedBuilder) {
   const totalVotes = poll.answers.reduce((acc, v) => acc + v.voteCount, 0)
 
   embed
-    .setTitle(`${escapeAllMarkdown(poll.question.text ?? 'Missing Question').substring(0, 256)}`)
+    .setTitle(escapeAllMarkdown(poll.question.text ?? 'Missing Question').substring(0, 256))
     .addFields(
       poll.answers.map((v) => ({
         name: `${v.emoji ? `${v.emoji} ` : ''}${v.text}`,

@@ -44,8 +44,8 @@ async function runLockThreadConfig(interaction: ChatInputCommandInteraction) {
   })
 
   if (!oldConfig) {
-    interaction.reply({
-      content: `There is no old config to delete for ${sourceChannel}`,
+    await interaction.reply({
+      content: `There is no old config to delete for ${sourceChannel as unknown}`,
       flags: MessageFlags.Ephemeral,
     })
 

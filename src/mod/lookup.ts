@@ -1,7 +1,6 @@
 import {
   ActionRowBuilder,
   type APIApplication,
-  type APIApplicationEmoji,
   ApplicationCommandOptionType,
   ApplicationFlags,
   ApplicationIntegrationType,
@@ -46,7 +45,7 @@ import { notNullish } from 'sleetcord-common'
 
 import { mapComponents } from '../helpers/components.js'
 import { plural } from '../helpers/format.js'
-import { syncApplicationEmojis } from '../helpers/syncEmojis.js'
+import { syncApplicationEmojis, WrappedApplicationEmoji } from '../helpers/syncEmojis.js'
 
 const Emotes = await syncApplicationEmojis('lookup', {
   //------------------------------
@@ -219,7 +218,7 @@ async function lookupAndRespond(interaction: LookupInteraction, data: string, ep
     flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 
-  let error: unknown | null
+  let error: unknown
 
   if (isLikelyID(data)) {
     // Probably an ID, check if it's a user or guild
@@ -347,10 +346,10 @@ async function fetchRPCDetails(app: string): Promise<APIApplication> {
  * @param flags The flags to get details for
  * @returns An array of badge emojis/text that can be displayed
  */
-function getUserBadgeEmojis(flags: UserFlagsBitField | null): (APIApplicationEmoji | string)[] {
+function getUserBadgeEmojis(flags: UserFlagsBitField | null): (WrappedApplicationEmoji | string)[] {
   if (!flags) return []
 
-  const badges: (APIApplicationEmoji | string)[] = []
+  const badges: (WrappedApplicationEmoji | string)[] = []
 
   // Object.entries(UserFlags) returns an array of:
   //   - ['StringName', bit]
@@ -368,7 +367,7 @@ function getUserBadgeEmojis(flags: UserFlagsBitField | null): (APIApplicationEmo
   return badges
 }
 
-const Badges: Record<keyof typeof UserFlags, APIApplicationEmoji> = {
+const Badges: Record<keyof typeof UserFlags, WrappedApplicationEmoji> = {
   Staff: Emotes.staff,
   Partner: Emotes.partner,
   Hypesquad: Emotes.hypesquad,
@@ -468,9 +467,9 @@ async function createUserLookupInfo(user: User, { minimal = false }: { minimal?:
   }
 
   const links = [
-    avatarURL ? `${hyperlink('Avatar', avatarURL)}` : '',
-    fullSizeBannerURL ? `${hyperlink('Banner', fullSizeBannerURL)}` : '',
-    avatarDecorationURL ? `${hyperlink('Avatar Decoration', avatarDecorationURL)}` : '',
+    avatarURL ? hyperlink('Avatar', avatarURL) : '',
+    fullSizeBannerURL ? hyperlink('Banner', fullSizeBannerURL) : '',
+    avatarDecorationURL ? hyperlink('Avatar Decoration', avatarDecorationURL) : '',
   ]
     .filter((t) => !!t)
     .join(' | ')
@@ -726,7 +725,10 @@ async function sendGuildInviteLookup(
 
   const inviteInfo = [
     `# Invite: ${inlineCode(code)}`,
-    `${hyperlink(`#${invite.channel?.name ?? 'Unknown Channel'}`, `https://discord.com/channels/${guild.id}/${invite.channelId}`)}`,
+    hyperlink(
+      `#${invite.channel?.name ?? 'Unknown Channel'}`,
+      `https://discord.com/channels/${guild.id}/${invite.channelId}`,
+    ),
   ]
 
   if (invite.expiresAt) {
@@ -905,10 +907,10 @@ async function sendGroupDMInviteLookup(
   const gdmInfo = [
     `# Group DM Invite: ${inlineCode(code)}`,
     `**ID:** ${inlineCode(invite.channel.id)}`,
-    `${hyperlink(
+    hyperlink(
       `#${invite.channel.name ?? 'Unknown Channel'}`,
       `https://discord.com/channels/@me/${invite.channel.id}`,
-    )}`,
+    ),
     `${Emotes.offline} ${plural('Member', invite.memberCount ?? 0)}`,
     `**Icon:** ${iconURL ? hyperlink('Icon', iconURL) : 'None'}`,
     `**Created At:** ${formatDate(createdAt)}`,
@@ -1239,6 +1241,7 @@ function formatGuildFeatures(features: `${GuildFeature}`[]): string {
     .toSorted()
     .map((f) => GuildFeaturesMap[f])
     .filter(notNullish)
+
   const formattedFeats = feats.join(' ')
 
   return formattedFeats.length > 1024
@@ -1246,7 +1249,7 @@ function formatGuildFeatures(features: `${GuildFeature}`[]): string {
     : formattedFeats
 }
 
-const GuildFeaturesMap: Record<`${GuildFeature}`, APIApplicationEmoji> = {
+const GuildFeaturesMap: Record<`${GuildFeature}`, WrappedApplicationEmoji> = {
   ANIMATED_BANNER: Emotes.animated_banner,
   ANIMATED_ICON: Emotes.animated_icon,
   APPLICATION_COMMAND_PERMISSIONS_V2: Emotes.app_command_permissions_v2,

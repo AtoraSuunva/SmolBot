@@ -49,7 +49,7 @@ async function guildAuditLogEntryCreate(auditLogEntry: GuildAuditLogsEntry, guil
 }
 
 async function autoModerationActionExecution(action: AutoModerationActionExecution) {
-  logAutoModerationActionExecution(action)
+  return logAutoModerationActionExecution(action)
 }
 
 export async function resolveUser(

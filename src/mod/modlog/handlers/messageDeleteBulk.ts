@@ -18,6 +18,7 @@ import { formatUser, SleetModule } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 
 import { plural } from '../../../helpers/format.js'
+import { getRawMessage } from '../../../helpers/rawMessage.js'
 import { deleteEvents, type MessageBulkDeleteAuditLog } from '../../messageDeleteAuditLog.js'
 import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 import type { ChannelAuditLog } from './auditLog/channelModify.js'
@@ -97,9 +98,7 @@ export async function messageDeleteBulkWithAuditLog(
     data: {
       messages: sortedMessages
         .map((m) => {
-          const data = structuredClone((m as unknown as MessageWithRaw).rawData) as
-            | APIMessage
-            | undefined
+          const data = structuredClone(getRawMessage(m))
           if (!data) return null
 
           if ('mentions' in data) {
@@ -318,26 +317,5 @@ interface AttachmentBodyV1 {
     roles: Record<string, MinimalRole>
     channels: Record<string, MinimalChannel>
     users: Record<string, MinimalUser>
-  }
-}
-
-// A glorious and ugly hack
-// Caching the data ourselves means d.js may or may not emit the right events depending on the cache
-// If d.js disposes of the message for some reason (hitting cache limits...) then we're storing extra data that won't be in message delete bulk events
-// If we just attach it to the message... then we know it'll be there on every message and when we see message delete bulk events :)
-// The alternative is either storing data and listening to raw events ourselves (effort) or converting messages to APIMessages (effort)
-// TODO: replace this with a WeakMap? honestly not sure why i didn't just do that in the first place
-export interface MessageWithRaw {
-  rawData: APIMessage
-}
-
-// Since _patch is a private method, we need to get around TS by using bracket notation
-const oldPatch = Message.prototype['_patch']
-
-Message.prototype['_patch'] = function (data: APIMessage) {
-  oldPatch.call(this, data)
-  ;(this as unknown as MessageWithRaw).rawData = {
-    ...(this as unknown as MessageWithRaw).rawData,
-    ...data,
   }
 }

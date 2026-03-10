@@ -174,7 +174,7 @@ async function runCreateModMailButton(interaction: ChatInputCommandInteraction) 
   const channel = await guild.channels.fetch(interaction.channelId).catch(() => null)
 
   if (!channel || !THREADABLE_CHANNEL_TYPES.has(channel.type)) {
-    interaction.reply({
+    await interaction.reply({
       content:
         'You cannot create threads in this channel type. Try a text channel, announcement channel, or forum channel.',
       flags: MessageFlags.Ephemeral,

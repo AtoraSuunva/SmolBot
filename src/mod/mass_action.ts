@@ -516,7 +516,7 @@ export async function runMassAction({
   await updateProgress(true)
 
   // Then handle it in batches of 100
-  for await (const batch of partitionArray(uniqueUsers, MAX_MEMBER_FETCH)) {
+  for (const batch of partitionArray(uniqueUsers, MAX_MEMBER_FETCH)) {
     const members = await guild.members.fetch({ user: batch })
 
     if (actionUserType === UserType.Everyone || actionUserType === UserType.MembersOnly) {

@@ -177,7 +177,9 @@ export function formatTime(timestamp: Date | null = new Date()): string {
 function padExpressions(strings: TemplateStringsArray, ...expressions: unknown[]) {
   return strings
     .map(
-      (v, i) => v + (expressions[i] !== undefined ? String(expressions[i]).padStart(2, '0') : ''),
+      (v, i) =>
+        v +
+        (expressions[i] !== undefined ? String(expressions[i] as unknown).padStart(2, '0') : ''),
     )
     .join('')
 }

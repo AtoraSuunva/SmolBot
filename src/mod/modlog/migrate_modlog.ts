@@ -1,11 +1,12 @@
 import { ChannelType, type Client, GatewayIntentBits, Partials } from 'discord.js'
 import env from 'env-var'
 import { SleetClient, SleetModule } from 'sleetcord'
-import { baseLogger } from 'sleetcord-common'
+import { baseLogger, initDBLogging } from 'sleetcord-common'
 
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import '../../helpers/dbLogging.js'
+
+initDBLogging(prisma)
 
 const migrate_modlog = new SleetModule(
   {

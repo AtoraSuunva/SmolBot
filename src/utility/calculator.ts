@@ -336,10 +336,12 @@ const precedence: Record<string, number> = {
   [Token.Divide]: 2,
 }
 
-const isOperator = (token: string) =>
-  [Token.Add, Token.Subtract, Token.Multiply, Token.Divide, Token.Exponential].includes(
+function isOperator(token: string): token is Token {
+  return [Token.Add, Token.Subtract, Token.Multiply, Token.Divide, Token.Exponential].includes(
     token as Token,
   )
+}
+
 const isNumber = (token: string) => !Number.isNaN(Number.parseFloat(token))
 
 function tokenize(equation: string): string[] {

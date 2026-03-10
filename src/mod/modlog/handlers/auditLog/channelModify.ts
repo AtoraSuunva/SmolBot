@@ -221,7 +221,7 @@ type AuditLogChangeArray = Extract<APIAuditLogChange['old_value'], unknown[]>
 function formatChangeArray(change: AuditLogChangeArray): string {
   return change
     .map((c) => {
-      if (typeof c !== 'object') return String(change)
+      if (typeof c === 'string') return c
 
       if ('allow' in c) {
         return `<Overwrite:${OverwriteType[c.type]} (${c.id}) [a:${c.allow}/d:${c.deny}]>`
@@ -235,7 +235,7 @@ function formatChangeArray(change: AuditLogChangeArray): string {
         return `<ForumTag:${c.name} (${c.id})>`
       }
 
-      if ('position' in c) {
+      if ('name' in c) {
         return `<Role:${c.name} (${c.id})>`
       }
 

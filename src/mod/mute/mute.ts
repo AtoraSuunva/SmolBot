@@ -939,7 +939,7 @@ async function unmuteAction({
             'Every muted user in this channel has been unmuted. You can now delete this channel.'
           components.push(createDeleteChannelRow(executor?.id))
         } else {
-          channel.send({
+          await channel.send({
             content:
               'Every muted user in this channel has been unmuted. You can now delete this channel.',
             components: [createDeleteChannelRow(executor?.id)],
