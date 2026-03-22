@@ -28,5 +28,5 @@
     // Discord.js offers formatters using .toString() for multiple types and it was becoming a hassle to allowlist them
     "restrict-template-expressions": "allow"
   },
-  "ignorePatterns": ["src/generated/**/*"]
+  "ignorePatterns": ["src/generated/**/*", "prisma.config.ts"]
 }
