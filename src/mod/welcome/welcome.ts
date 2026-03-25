@@ -89,7 +89,9 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
   const welcomeSettings = await getSettingsFor(member.guild.id)
 
   // No settings for this guild
-  if (welcomeSettings === null) return
+  if (welcomeSettings === null) {
+    return
+  }
 
   const config = await getValidatedConfigFor(
     member.guild,
@@ -97,8 +99,8 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
     (config) => config.memberWelcome,
   )
 
-  if (!config) {
-    // We don't need to hold the modlog ticket if we don't have a config
+  if (!config || !config.channel) {
+    // We don't need to hold the modlog ticket if we don't have a config or there's no log channel
     ticket.removeFromQueue()
   }
 
@@ -111,9 +113,9 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
     reactWith,
   } = welcomeSettings
 
+  // Don't instantly welcome people and the user didn't post a message
+  // Instead note down the join for later
   if (!instant && !channel) {
-    // Don't instantly welcome people and the user didn't post a message
-    // Instead note down the join for later
     const set = newMembers.get(member.guild.id) ?? new Set()
     set.add(member.id)
     newMembers.set(member.guild.id, set)
@@ -128,12 +130,13 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
   // probably should auto do this somewhere lol
   const roleIDs = ignoreRoles.split(',')
 
+  // Ignore them because of their roles
   if (member.roles.cache.some((r) => roleIDs.includes(r.id))) {
-    return // Ignore them because of their roles
+    return
   }
 
+  // Ignore them because they've joined before
   if (!rejoins && (await hasJoinedBefore(member.guild.id, member.id))) {
-    // Ignore them because they've joined before
     return
   }
 
@@ -154,21 +157,29 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
     sentMessage = await sendChannel.send(msg)
   }
 
-  const firstMessage = message ? ` first message at ${message.url}` : ''
-  const messagePreview = message
-    ? await messageToLog(message, {
-        includeAttachments: true,
-        includeEmbeds: true,
-        includeInteraction: true,
-        includePoll: true,
-        includeReference: true,
-        includeStickers: true,
-        includeTimestamp: true,
-        includeUser: true,
-      })
-    : ''
+  await addJoin(member.guild.id, member.id)
+
+  if (reactWith && message) {
+    message.react(reactWith).catch(() => {
+      /* ignore */
+    })
+  }
 
   if (config) {
+    const firstMessage = message ? ` first message at ${message.url}` : ''
+    const messagePreview = message
+      ? await messageToLog(message, {
+          includeAttachments: true,
+          includeEmbeds: true,
+          includeInteraction: true,
+          includePoll: true,
+          includeReference: true,
+          includeStickers: true,
+          includeTimestamp: true,
+          includeUser: true,
+        })
+      : ''
+
     const logMessage = formatLog(
       '👋',
       'Member Welcome',
@@ -195,23 +206,15 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
 
     const { channel } = config
     if (channel) {
+      await ticket.waitUntilFirst()
+
       await channel.send({
         content,
         files,
         allowedMentions: { parse: [] },
       })
     }
-    ticket.removeFromQueue()
   }
-
-  if (reactWith && message) {
-    // ignore errors, not my problem really
-    message.react(reactWith).catch(() => {
-      /* ignore */
-    })
-  }
-
-  await addJoin(member.guild.id, member.id)
 }
 
 async function addJoin(guildID: string, userID: string) {
