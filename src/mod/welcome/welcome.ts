@@ -16,6 +16,7 @@ import { formatUser, SleetSlashCommand, tryFetchMember } from 'sleetcord'
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
+import { sendToModlog } from '../modlog/sendToModlog.js'
 import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../modlog/utils.js'
 import { welcomeCache } from './cache.js'
 import { config } from './config.js'
@@ -208,7 +209,7 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
     if (channel) {
       await ticket.waitUntilFirst()
 
-      await channel.send({
+      await sendToModlog(channel, {
         content,
         files,
         allowedMentions: { parse: [] },

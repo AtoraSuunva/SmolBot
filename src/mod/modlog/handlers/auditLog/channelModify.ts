@@ -17,6 +17,7 @@ import {
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser } from 'sleetcord'
 
+import { sendToModlog } from '../../sendToModlog.js'
 import {
   formatLog,
   getModlogTicketQueue,
@@ -127,7 +128,7 @@ export async function logChannelModified(auditLogEntry: ChannelAuditLog, guild: 
 
   await ticket.waitUntilFirst()
 
-  await conf.channel.send({
+  await sendToModlog(conf.channel, {
     content,
     files,
     allowedMentions: { parse: [] },

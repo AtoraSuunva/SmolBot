@@ -20,6 +20,7 @@ import { notNullish } from 'sleetcord-common'
 import { plural } from '../../../helpers/format.js'
 import { getRawMessage } from '../../../helpers/rawMessage.js'
 import { deleteEvents, type MessageBulkDeleteAuditLog } from '../../messageDeleteAuditLog.js'
+import { sendToModlog } from '../sendToModlog.js'
 import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 import type { ChannelAuditLog } from './auditLog/channelModify.js'
 import { messageDeleteWithAuditLog } from './messageDelete.js'
@@ -276,7 +277,7 @@ export async function messageDeleteBulkWithAuditLog(
 
   await ticket.waitUntilFirst()
 
-  const sentMessage = await channel.send({
+  const sentMessage = await sendToModlog(channel, {
     content,
     files,
     allowedMentions: { parse: [] },

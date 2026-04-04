@@ -2,6 +2,7 @@ import type { Guild, GuildMember, PartialUser, User } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
 
 import { UserUpdate } from '../modlog_config.js'
+import { sendToModlog } from '../sendToModlog.js'
 import { formatLog, getValidatedConfigFor } from '../utils.js'
 
 export const logUserUpdate = new SleetModule(
@@ -70,7 +71,7 @@ async function userUpdate(oldUser: User | PartialUser, newUser: User) {
 
     const message = `${formatUser(oldUser)}${logMessage[config.userUpdate as UserUpdate]}`
 
-    await channel.send({
+    await sendToModlog(channel, {
       content: formatLog('👥', 'User Update', message, eventDate),
       allowedMentions: { parse: [] },
     })

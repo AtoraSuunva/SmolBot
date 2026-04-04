@@ -11,6 +11,7 @@ import { formatUser, SleetModule } from 'sleetcord'
 import { HOUR } from 'sleetcord-common'
 
 import { prisma } from '../../../helpers/db.js'
+import { sendToModlog } from '../sendToModlog.js'
 import { EVENT_COLORS, formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logGuildMemberAdd = new SleetModule(
@@ -79,7 +80,7 @@ async function guildMemberAdd(member: GuildMember) {
 
   await ticket.waitUntilFirst()
 
-  await channel.send({
+  await sendToModlog(channel, {
     content: formatLog('📥', 'Member Join', msg, eventDate),
     embeds: [embed],
     allowedMentions: { parse: [] },

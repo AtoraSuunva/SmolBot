@@ -29,6 +29,7 @@ import { addToEmbed } from '../../../helpers/quoteMessage.js'
 import { getRawMessage } from '../../../helpers/rawMessage.js'
 import { deleteEvents, type MessageDeleteAuditLog } from '../../messageDeleteAuditLog.js'
 import { editStore } from '../../unedit.js'
+import { sendToModlog } from '../sendToModlog.js'
 import { formatLog, formatTime, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logMessageDelete = new SleetModule(
@@ -84,10 +85,16 @@ export async function messageDeleteWithAuditLog(
     } around ${message.url} sent ${time(message.createdAt, 'f')} `
 
     await ticket.waitUntilFirst()
-    await channel.send({
-      content: formatLog('🗑️', 'Message deleted', msg, eventDate),
-      allowedMentions: { parse: [] },
-    })
+    await sendToModlog(
+      channel,
+      {
+        content: formatLog('🗑️', 'Message deleted', msg, eventDate),
+      },
+      {
+        merge: true,
+      },
+    )
+
     return
   }
 
@@ -129,7 +136,7 @@ export async function messageDeleteWithAuditLog(
   }
 
   await ticket.waitUntilFirst()
-  await channel.send({
+  await sendToModlog(channel, {
     content: formatLog('🗑️', 'Message Deleted', msg, eventDate).slice(0, 2000),
     files,
     allowedMentions: { parse: [] },

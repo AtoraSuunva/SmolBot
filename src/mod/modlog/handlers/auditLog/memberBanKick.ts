@@ -1,6 +1,7 @@
 import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js'
 import { formatUser } from 'sleetcord'
 
+import { sendToModlog } from '../../sendToModlog.js'
 import {
   formatLog,
   getModlogTicketQueue,
@@ -54,7 +55,7 @@ export async function logMemberBanKick(auditLogEntry: BanAuditLog, guild: Guild)
 
   await ticket.waitUntilFirst()
 
-  await conf.channel.send({
+  await sendToModlog(conf.channel, {
     content: formatLog(
       LogEmoji[auditLogEntry.action],
       LogName[auditLogEntry.action],

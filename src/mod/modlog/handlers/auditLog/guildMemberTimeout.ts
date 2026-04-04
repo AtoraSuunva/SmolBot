@@ -10,6 +10,7 @@ import { DateTime, Interval } from 'luxon'
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser } from 'sleetcord'
 
+import { sendToModlog } from '../../sendToModlog.js'
 import {
   formatLog,
   getModlogTicketQueue,
@@ -75,7 +76,7 @@ export async function logMemberTimeout(auditLogEntry: TimeoutAuditLog, guild: Gu
 
   await ticket.waitUntilFirst()
 
-  await conf.channel.send({
+  await sendToModlog(conf.channel, {
     content: formatLog(emoji, 'Member Timeout', message, eventDate),
     allowedMentions: { parse: [] },
   })
@@ -114,7 +115,7 @@ export async function logAutoModerationActionExecution(execution: AutoModeration
 
   await ticket.waitUntilFirst()
 
-  await conf.channel.send({
+  await sendToModlog(conf.channel, {
     content: formatLog('⏱️', 'Member Timeout', message, eventDate),
     allowedMentions: { parse: [] },
   })

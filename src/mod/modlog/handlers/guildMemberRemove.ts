@@ -2,6 +2,7 @@ import { EmbedBuilder, type GuildMember, type PartialGuildMember } from 'discord
 import prettyMilliseconds from 'pretty-ms'
 import { formatUser, SleetModule } from 'sleetcord'
 
+import { sendToModlog } from '../sendToModlog.js'
 import { EVENT_COLORS, formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../utils.js'
 
 export const logGuildMemberRemove = new SleetModule(
@@ -54,7 +55,7 @@ async function handleGuildMemberRemove(member: GuildMember | PartialGuildMember)
 
   await ticket.waitUntilFirst()
 
-  await channel.send({
+  await sendToModlog(channel, {
     content: formatLog(
       '📤',
       'Member Remove',
