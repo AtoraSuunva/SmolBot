@@ -166,15 +166,17 @@ async function handleGuildMemberAdd(member: GuildMember) {
 const DEFAULT_REASON = 'Anti-raid triggered'
 
 async function applyAction(result: MemberCheckResult, config: Prisma.AntiRaidConfigCreateInput) {
+  const reason = typeof config.reason === 'string' ? config.reason : DEFAULT_REASON
+
   switch (result.action) {
     case AntiRaidActions.None:
       break
     case AntiRaidActions.Kick:
-      return result.member.kick(config.reason ?? DEFAULT_REASON)
+      return result.member.kick(reason)
     case AntiRaidActions.Ban:
-      return result.member.ban({ reason: config.reason ?? DEFAULT_REASON })
+      return result.member.ban({ reason })
     case AntiRaidActions.Timeout:
-      return result.member.timeout(config.timeoutDuration, config.reason ?? DEFAULT_REASON)
+      return result.member.timeout(config.timeoutDuration, reason)
   }
 
   return null

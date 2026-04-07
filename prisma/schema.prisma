@@ -2,9 +2,10 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider   = "prisma-client"
-  output     = "../src/generated/prisma"
-  engineType = "client"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  engineType      = "client"
+  previewFeatures = ["strictUndefinedChecks"]
 }
 
 datasource db {

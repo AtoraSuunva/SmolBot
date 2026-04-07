@@ -7,6 +7,7 @@ import {
 } from 'discord.js'
 import { makeChoices } from 'sleetcord'
 
+import { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 
 export enum AntiRaidActions {
@@ -91,7 +92,10 @@ export const antiRaidOptions: APIApplicationCommandBasicOption[] = [
   },
 ]
 
-export async function getAntiRaidConfigOrDefault(guild: Guild, forceDefault = false) {
+export async function getAntiRaidConfigOrDefault(
+  guild: Guild,
+  forceDefault = false,
+): Promise<Prisma.AntiRaidConfigGetPayload<true>> {
   if (!forceDefault) {
     const config = await prisma.antiRaidConfig.findUnique({
       where: {
