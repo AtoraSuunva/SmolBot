@@ -9,6 +9,7 @@ interface SendToModlogOptions {
 
 interface ModlogQueue {
   sendOptions: SendMessageOptions
+  channel: GuildTextBasedChannel
   timeout: NodeJS.Timeout
   promise: Promise<Message<true>>
   resolve: (message: Message<true>) => void
@@ -40,7 +41,7 @@ export async function sendToModlog(
   if (!merge) {
     // If merge is false, immediately send the message and clear the queue
     if (queue) {
-      await flushModlogQueue(channel)
+      await flushModlogQueue(queue)
     }
 
     return channel.send(sendOptions)
@@ -61,7 +62,7 @@ export async function sendToModlog(
 
   if (contentLength > 2000 || embedCount > 10) {
     // If it does, send the existing queue immediately and start a new queue with the new message
-    await flushModlogQueue(channel)
+    await flushModlogQueue(queue)
     return createModlogQueue(channel, sendOptions)
   } else {
     // Merge the new message with the existing queue
@@ -73,26 +74,21 @@ export async function sendToModlog(
   }
 }
 
-async function flushModlogQueue(channel: GuildTextBasedChannel): Promise<Message<true>> {
-  const queue = modlogQueues.get(channel.id)
-  if (!queue) throw new Error(`No modlog queue to flush for channel ${channel.id}`)
-
+async function flushModlogQueue(queue: ModlogQueue): Promise<Message<true>> {
   clearTimeout(queue.timeout)
-  modlogQueues.delete(channel.id)
+  modlogQueues.delete(queue.channel.id)
 
-  const message = await channel.send(queue.sendOptions)
+  const message = await queue.channel.send(queue.sendOptions)
   queue.resolve(message)
   return message
 }
 
 function createModlogQueue(channel: GuildTextBasedChannel, sendOptions: SendMessageOptions) {
   const { promise, resolve } = Promise.withResolvers<Message<true>>()
-  const timeout = setTimeout(
-    async () => await flushModlogQueue(channel).then(resolve),
-    QUEUE_TIMEOUT,
-  )
+  const timeout = setTimeout(() => flushModlogQueue(queue).then(resolve), QUEUE_TIMEOUT)
 
-  modlogQueues.set(channel.id, { sendOptions, timeout, promise, resolve })
+  const queue: ModlogQueue = { channel, sendOptions, timeout, promise, resolve }
+  modlogQueues.set(channel.id, queue)
   return promise
 }
 
