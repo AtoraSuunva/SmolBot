@@ -6,6 +6,7 @@ import {
   type AttachmentPayload,
   type ChatInputCommandInteraction,
   codeBlock,
+  escapeCodeBlock,
   type Guild,
   GuildMember,
   InteractionContextType,
@@ -684,7 +685,10 @@ function formatUserOrId(idOnly: boolean, user: UserOrId, escapeMarkdown = false)
     ? user
     : idOnly
       ? user.id
-      : formatUser(user, { markdown: false, escapeMarkdown })
+      : formatUser(user, {
+          markdown: false,
+          escapeMarkdown: escapeMarkdown ? escapeCodeBlock : false,
+        })
 }
 
 function actionResultToUserOrId(
