@@ -76,10 +76,11 @@ async function logToChannel(
     `**Reason:** ${reason}`,
   ].join('\n')
 
-  return channel.send({
+  await channel.send({
     content: formattedReason,
     allowedMentions: { parse: [] },
   })
+  return
 }
 
 async function runLockThread(interaction: ChatInputCommandInteraction) {
@@ -97,46 +98,50 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
   }
 
   if (!thread) {
-    return interaction.reply({
+    await interaction.reply({
       content: 'Please provide a thread to lock',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   if (!interaction.inGuild()) {
-    return interaction.reply({
+    await interaction.reply({
       content: 'You can only use this command in a server',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   if (!thread.isThread()) {
-    return interaction.reply({
+    await interaction.reply({
       content: 'You can only lock threads & forum posts',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   if (thread.archived && thread.locked) {
-    return interaction.reply({
+    await interaction.reply({
       content: 'This thread is already archived & locked',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   if (!thread.editable) {
-    return interaction.reply({
+    await interaction.reply({
       content: 'I cannot edit this thread',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
-  const defer = interaction.deferReply({
+  await interaction.deferReply({
     flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 
   if (!ephemeral) {
-    await defer
     await interaction.editReply({
       content: `Locking thread ${thread} for "${reason}"...`,
       allowedMentions: { parse: [] },
@@ -159,18 +164,18 @@ async function runLockThread(interaction: ChatInputCommandInteraction) {
       reason: formattedReason,
     })
   } catch (error) {
-    await defer
-    return interaction.editReply({
+    await interaction.editReply({
       content: `An error occurred while locking the thread: ${String(error)}`,
       allowedMentions: { parse: [] },
     })
+    return
   }
 
   await logToChannel(interaction, thread, reason)
-  await defer
 
-  return interaction.editReply({
+  await interaction.editReply({
     content: `Locked thread ${thread} for "${reason}"`,
     allowedMentions: { parse: [] },
   })
+  return
 }

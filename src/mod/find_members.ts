@@ -241,19 +241,19 @@ async function runFindMembers(interaction: ChatInputCommandInteraction) {
   })
 }
 
-function handleInteractionCreate(interaction: Interaction) {
+async function handleInteractionCreate(interaction: Interaction) {
   if (interaction.isUserSelectMenu() && interaction.customId === USER_SELECT_ID) {
-    return handleUserSelectInteraction(interaction)
+    await handleUserSelectInteraction(interaction)
   } else if (interaction.isButton()) {
     switch (interaction.customId) {
       case MENTION_ID:
-        return handleMentionButton(interaction)
+        await handleMentionButton(interaction)
+        break
       case ID_ID:
-        return handleIDButton(interaction)
+        await handleIDButton(interaction)
+        break
     }
   }
-
-  return
 }
 
 async function handleUserSelectInteraction(interaction: UserSelectMenuInteraction) {

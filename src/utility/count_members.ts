@@ -151,6 +151,9 @@ function getMemberNameForCheckChoice(choice: CheckChoice): MemberNameGetter {
         ...(member.user.globalName ? [member.user.globalName] : []),
         member.user.username,
       ]
+
+    default:
+      return (member) => [member.user.username]
   }
 }
 

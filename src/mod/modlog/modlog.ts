@@ -26,14 +26,16 @@ export const modlogHandlers = new SleetModule(
     name: 'modlogHandlers',
   },
   {},
-  [
-    logAuditLog,
-    logGuildMemberAdd,
-    logGuildMemberRemove,
-    logMessageDelete,
-    logMessageDeleteBulk,
-    logReactionRemove,
-    logUserUpdate,
-    modlogMessageReactionAdd,
-  ],
+  {
+    modules: [
+      logAuditLog,
+      logGuildMemberAdd,
+      logGuildMemberRemove,
+      logMessageDelete,
+      logMessageDeleteBulk,
+      logReactionRemove,
+      logUserUpdate,
+      modlogMessageReactionAdd,
+    ],
+  },
 )

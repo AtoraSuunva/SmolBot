@@ -58,7 +58,7 @@ async function runLockThreadConfig(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  return interaction.reply({
+  await interaction.reply({
     content: `Lock Thread deleted, previous config:\n${formatConfig({
       config: oldConfig,
       guild,

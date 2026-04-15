@@ -199,7 +199,7 @@ async function runConfig(interaction: ChatInputCommandInteraction) {
         config,
         guild,
         formatters: {
-          tagID: channel ? makeForumTagFormatter(channel as ForumChannel) : (t) => String(t),
+          tagID: channel ? makeForumTagFormatter(channel as ForumChannel) : (t) => t,
         },
       })
     }),

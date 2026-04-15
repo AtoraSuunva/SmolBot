@@ -39,7 +39,7 @@ export async function logMemberBanKick(auditLogEntry: BanAuditLog, guild: Guild)
       break
   }
 
-  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
+  const conf = await getValidatedConfigFor(guild, action, (config) => config[action])
   if (!conf) return
 
   const executor = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)

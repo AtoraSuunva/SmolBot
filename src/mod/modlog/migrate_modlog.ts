@@ -6,8 +6,6 @@ import { baseLogger, initDBLogging } from 'sleetcord-common'
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 
-initDBLogging(prisma)
-
 const migrate_modlog = new SleetModule(
   {
     name: 'migrate_modlog',
@@ -47,6 +45,7 @@ const sleetClient = new SleetClient({
   },
 })
 
+initDBLogging(prisma, sleetClient)
 sleetClient.addModules([migrate_modlog])
 await sleetClient.login()
 

@@ -204,7 +204,7 @@ async function replyToReport(interaction: ButtonInteraction, report: UserReport,
     return
   }
 
-  const defer = modalInteraction.deferReply()
+  await modalInteraction.deferReply()
 
   const message = modalInteraction.fields.getTextInputValue('message')
   const isAnonString = modalInteraction.fields.getTextInputValue('anon') || 'yes'
@@ -256,13 +256,12 @@ async function replyToReport(interaction: ButtonInteraction, report: UserReport,
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 
-    await defer
-    return modalInteraction.editReply({
+    await modalInteraction.editReply({
       content: `Failed to send reply to user.\n${codeBlock('js', msg)}`,
     })
+    return
   }
 
-  await defer
   const reply = await modalInteraction.editReply({
     content: "Sent reply to user! Here's a copy of the reply:",
     embeds: [embed],
@@ -274,7 +273,7 @@ async function replyToReport(interaction: ButtonInteraction, report: UserReport,
 
   actionLog.setDescription(`${actionLog.data.description ?? ''}\n${newLog}`.trim())
 
-  return originalMessage.edit({
+  await originalMessage.edit({
     embeds: [...originalMessage.embeds.slice(0, -1), actionLog],
   })
 }
@@ -307,10 +306,12 @@ async function blockReportUser(interaction: ButtonInteraction, report: UserRepor
         /* ignore */
       })
 
-    return interaction.reply({
+    await interaction.reply({
       content: 'This user is already blocked from reporting.',
       flags: MessageFlags.Ephemeral,
     })
+
+    return
   }
 
   const customId = `report:${report.reportID}:block_prompt:${interaction.id}`
@@ -378,10 +379,11 @@ async function blockReportUser(interaction: ButtonInteraction, report: UserRepor
     getComponentsOfType(originalMessage.components, ComponentType.ActionRow),
   )
 
-  return originalMessage.edit({
+  await originalMessage.edit({
     embeds: [...originalMessage.embeds.slice(0, -1), actionLog],
     components: newComponents,
   })
+  return
 }
 
 async function unblockReportUser(interaction: ButtonInteraction, report: UserReport, user: User) {

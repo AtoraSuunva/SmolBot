@@ -5,18 +5,14 @@ model AutomodConfig {
 }
 
 model AutomodRule {
-  ruleID      Int     @id @map("rule_id")
-  guildID     String  @map("guild_id")
+  ruleID     Int     @id @map("rule_id")
+  guildID    String  @map("guild_id")
   // Discriminator between rule types, bot-set
-  type        String
-  // Description shown to admins when viewing rules
-  description String  @map("name")
+  type       String
+  // Name shown to admins when viewing rules
+  name       String
   // Message shown to users when rule is triggered
-  message     String?
-  // Action to apply
-  action      String
-  // Whether to delete the message(s) that triggered the rule
-  delete      Boolean @default(false)
+  message    String?
   // Parameters the rule takes, as JSON
-  parameters  Json
+  parameters Json
 }

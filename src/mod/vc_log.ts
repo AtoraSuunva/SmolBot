@@ -130,25 +130,27 @@ async function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState
   if (!channel?.isTextBased()) return
 
   if (!oldState.channelId && newState.channelId) {
-    return sendLog(
+    await sendLog(
       channel,
       '📥',
       'Join',
       `${formatUser(oldState.member)} joined ${String(newState.channel)}`,
     )
+    return
   }
 
   if (oldState.channelId && !newState.channelId) {
-    return sendLog(
+    await sendLog(
       channel,
       '📤',
       'Left',
       `${formatUser(oldState.member)} left ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (oldState.channelId !== newState.channelId) {
-    return sendLog(
+    await sendLog(
       channel,
       '⏩',
       'Move',
@@ -156,78 +158,87 @@ async function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState
         oldState.channel,
       )} => ${String(newState.channel)}`,
     )
+    return
   }
 
   if (!oldState.streaming && newState.streaming) {
-    return sendLog(
+    await sendLog(
       channel,
       '🔴',
       'Live',
       `${formatUser(oldState.member)} started streaming in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (oldState.streaming && !newState.streaming) {
-    return sendLog(
+    await sendLog(
       channel,
       '⏹️',
       'Dead',
       `${formatUser(oldState.member)} stopped streaming in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (!oldState.selfVideo && newState.selfVideo) {
-    return sendLog(
+    await sendLog(
       channel,
       '📱',
       'YCam',
       `${formatUser(oldState.member)} started their camera in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (oldState.selfVideo && !newState.selfVideo) {
-    return sendLog(
+    await sendLog(
       channel,
       '📵',
       'XCam',
       `${formatUser(oldState.member)} stopped their camera in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (!oldState.serverDeaf && newState.serverDeaf) {
-    return sendLog(
+    await sendLog(
       channel,
       '🙉',
       'Deaf',
       `${formatUser(oldState.member)} was server deafened in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (oldState.serverDeaf && !newState.serverDeaf) {
-    return sendLog(
+    await sendLog(
       channel,
       '🔊',
       'Hear',
       `${formatUser(oldState.member)} stopped being server deafened in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (!oldState.serverMute && newState.serverMute) {
-    return sendLog(
+    await sendLog(
       channel,
       '🙊',
       'Mute',
       `${formatUser(oldState.member)} was server muted in ${String(oldState.channel)}`,
     )
+    return
   }
 
   if (oldState.serverMute && !newState.serverMute) {
-    return sendLog(
+    await sendLog(
       channel,
       '🎙️',
       'Talk',
       `${formatUser(oldState.member)} stopped being server muted in ${String(oldState.channel)}`,
     )
+    return
   }
 
   return

@@ -46,7 +46,9 @@ export const report = new SleetSlashCommand(
   {
     run: runReport,
   },
-  [report_message, report_user, report_manage],
+  {
+    modules: [report_message, report_user, report_manage],
+  },
 )
 
 async function runReport(interaction: ChatInputCommandInteraction) {

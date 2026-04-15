@@ -144,19 +144,21 @@ async function handleInteractionCreate(interaction: Interaction) {
   const singleplayer = textDisplays.find((t) => t.id === SINGLEPLAYER_ID)
 
   if (singleplayer && interaction.message.interactionMetadata?.user.id !== interaction.user.id) {
-    return await interaction.reply({
+    await interaction.reply({
       content: "You can't use this.",
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   const rawEquation = textDisplays.find((t) => t.id === DISPLAY_ID)?.content.replace('# ', '')
 
   if (!rawEquation) {
-    return await interaction.reply({
+    await interaction.reply({
       content: 'Something went wrong',
       flags: MessageFlags.Ephemeral,
     })
+    return
   }
 
   const equation = rawEquation.startsWith('Error:') ? '0' : rawEquation
@@ -172,9 +174,10 @@ async function handleInteractionCreate(interaction: Interaction) {
 
   switch (op) {
     case Token.Clear: {
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [emptyDisplay, ...buttons, ...singleplayerComponents],
       })
+      return
     }
 
     case Token.Divide:
@@ -183,30 +186,33 @@ async function handleInteractionCreate(interaction: Interaction) {
     case Token.Add:
     case Token.Exponential: {
       if (lastWasOperator) {
-        return await interaction.editReply({
+        await interaction.editReply({
           components: [
             makeDisplay(`${equation.slice(0, -1)}${op}`),
             ...buttons,
             ...singleplayerComponents,
           ],
         })
+        return
       }
 
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [
           makeDisplay(`${equation}${lastWasNumber ? ` ${op}` : ''}`),
           ...buttons,
           ...singleplayerComponents,
         ],
       })
+      return
     }
 
     case Token.ParenthesisIcon: {
       // If the last token was an operator, add an opening parenthesis
       if (lastWasOperator) {
-        return await interaction.editReply({
+        await interaction.editReply({
           components: [makeDisplay(`${equation} (`), ...buttons, ...singleplayerComponents],
         })
+        return
       }
 
       // Otherwise it's a number, in which case:
@@ -218,36 +224,39 @@ async function handleInteractionCreate(interaction: Interaction) {
         (equation.match(/\(/g) || []).length - (equation.match(/\)/g) || []).length
 
       if (unmatchedOpening > 0) {
-        return await interaction.editReply({
+        await interaction.editReply({
           components: [
             makeDisplay(`${equation}${lastWasNumber ? ')' : ''}`),
             ...buttons,
             ...singleplayerComponents,
           ],
         })
+        return
       }
 
       // Otherwise add a multiplication operator and an opening parenthesis
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [
           makeDisplay(`${equation}${lastWasNumber ? ` ${Token.Multiply} (` : ''}`),
           ...buttons,
           ...singleplayerComponents,
         ],
       })
+      return
     }
 
     case Token.Sign: {
       if (lastWasOperator) {
         const endsWithNegativeSign = equation[equation.length - 1] === '-'
 
-        return await interaction.editReply({
+        await interaction.editReply({
           components: [
             makeDisplay(endsWithNegativeSign ? equation.slice(0, -1).trim() : `${equation} -`),
             ...buttons,
             ...singleplayerComponents,
           ],
         })
+        return
       }
 
       // Otherwise last was a number, invert the sign of that number
@@ -256,13 +265,14 @@ async function handleInteractionCreate(interaction: Interaction) {
       const number = equation.substring(lastSpace + 1)
       const hasNegativeSign = number.startsWith('-')
 
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [
           makeDisplay(`${firstPart}${hasNegativeSign ? number.substring(1) : `-${number}`}`),
           ...buttons,
           ...singleplayerComponents,
         ],
       })
+      return
     }
 
     case Token.Equal: {
@@ -274,9 +284,10 @@ async function handleInteractionCreate(interaction: Interaction) {
         result = String(error)
       }
 
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [makeDisplay(result), ...buttons, ...singleplayerComponents],
       })
+      return
     }
 
     case Token.Period: {
@@ -285,13 +296,14 @@ async function handleInteractionCreate(interaction: Interaction) {
         .slice(-1)[0]
         .match(/^-?\d+$/)
 
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [
           makeDisplay(`${equation}${lastWasNonDecimalNumber ? '.' : ''}`),
           ...buttons,
           ...singleplayerComponents,
         ],
       })
+      return
     }
 
     default: {
@@ -300,7 +312,7 @@ async function handleInteractionCreate(interaction: Interaction) {
       const lastCharacter = equation[equation.length - 1]
       const space = lastWasNumber || lastCharacter === '(' || lastCharacter === '-' ? '' : ' '
 
-      return await interaction.editReply({
+      await interaction.editReply({
         components: [
           makeDisplay(
             `${equation === '0' ? '' : lastWasZero ? equation.slice(0, -1) : equation}${space}${op}`,
@@ -309,6 +321,7 @@ async function handleInteractionCreate(interaction: Interaction) {
           ...singleplayerComponents,
         ],
       })
+      return
     }
   }
 }

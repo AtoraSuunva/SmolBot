@@ -27,5 +27,7 @@ export const warnings = new SleetSlashCommand(
     ],
   },
   {},
-  [importWarnings, myWarnings],
+  {
+    modules: [importWarnings, myWarnings],
+  },
 )

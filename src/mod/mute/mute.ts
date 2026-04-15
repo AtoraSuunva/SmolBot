@@ -320,19 +320,21 @@ async function runMute({
   const mutedRole = findMutedRole(guild, config.roleID)
 
   if (!mutedRole) {
-    return interaction.editReply({
+    await interaction.editReply({
       content: `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
         '`, `',
       )}\``,
     })
+    return
   }
 
   const isOwner = interactionMember.id === guild.ownerId
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
-    return interaction.editReply({
+    await interaction.editReply({
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
       allowedMentions: { parse: [] },
     })
+    return
   }
 
   const toAction: GuildMember[] = []
@@ -372,10 +374,11 @@ async function runMute({
   }
 
   if (toAction.length === 0) {
-    return interaction.editReply({
+    await interaction.editReply({
       content: `No valid users to ${action}.\n${formatFails(earlyFailed)}`,
       allowedMentions: { parse: [] },
     })
+    return
   }
 
   const formattedReason = `${capitalAction} by ${interactionMember.displayName}${reason ? ` for "${reason}"` : ''}`
@@ -434,18 +437,21 @@ async function runMute({
   const formattedFeedback = `${content}${formattedAddendum}`
 
   if (formattedFeedback.length >= 1950) {
-    return interaction.editReply({
+    await interaction.editReply({
       content: `**${capitalAction}**: ${plural('user', succeeded.length)}\nDetails are too long to show here, see attachment:`,
       components: components ?? [],
       allowedMentions: { parse: [] },
     })
+    return
   }
 
-  return interaction.editReply({
+  await interaction.editReply({
     content: formattedFeedback,
     components: components ?? [],
     allowedMentions: { parse: [] },
   })
+
+  return
 }
 
 /**
@@ -616,10 +622,8 @@ async function sendToLogChannel(
   const logChannel = await guild.channels.fetch(logChannelID).catch(() => null)
 
   if (logChannel?.isTextBased()) {
-    return logChannel.send(payload)
+    await logChannel.send(payload)
   }
-
-  return
 }
 
 const TO_ALLOW: PermissionResolvable = ['ViewChannel', 'SendMessages']

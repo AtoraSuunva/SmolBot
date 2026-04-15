@@ -34,7 +34,7 @@ export async function logMemberTimeout(auditLogEntry: TimeoutAuditLog, guild: Gu
 
   const action: LoggedAction = 'memberTimeout'
 
-  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
+  const conf = await getValidatedConfigFor(guild, action, (config) => config[action])
   if (!conf) return
 
   const executor = await resolveUser(auditLogEntry.executor, auditLogEntry.executorId, guild.client)
@@ -90,7 +90,7 @@ export async function logAutoModerationActionExecution(execution: AutoModeration
 
   const action: LoggedAction = 'automodTimeout'
 
-  const conf = await getValidatedConfigFor(guild, action, (config) => !!config[action])
+  const conf = await getValidatedConfigFor(guild, action, (config) => config[action])
   if (!conf) return
   if (execution.action.type !== AutoModerationActionType.Timeout) return
 

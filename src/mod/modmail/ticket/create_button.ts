@@ -425,7 +425,7 @@ async function handleCreateTicketButton(
     let formatted = ''
 
     if ('value' in field) {
-      formatted = field.value
+      formatted = String(field.value)
     } else if ('values' in field) {
       formatted = field.values.join(', ')
     }

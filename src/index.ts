@@ -1,16 +1,14 @@
 import { withQueryTags } from '@prisma/sqlcommenter-query-tags'
 import { GatewayIntentBits, Options, Partials, type RESTOptions } from 'discord.js'
 import env from 'env-var'
-import { type ModuleRunner, SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
-import { baseLogger, getModuleRunner, initDBLogging, initSentry, Sentry } from 'sleetcord-common'
+import { SleetClient, type SleetModuleEventHandlers, SleetModuleMiddleware } from 'sleetcord'
+import { baseLogger, initDBLogging, initSentry, Sentry, sentryMiddleware } from 'sleetcord-common'
 
 import { prisma } from './helpers/db.js'
 import { modules } from './modules.js'
 import { startApiServer } from './utility/api/server.js'
 
 const initLogger = baseLogger.child({ module: 'init' })
-
-const runner = getModuleRunner()
 
 /**
  * Sleet module runner that adds some prisma sql commenter tags to trace queries to events and modules
@@ -19,13 +17,13 @@ const runner = getModuleRunner()
  * @param event The Sleet/Discord.js event that triggered the module
  * @returns The result of running the callback
  */
-const moduleRunner: ModuleRunner = (module, callback, event) => {
+const withQueryTagsMiddleware: SleetModuleMiddleware = (module, event, next) => {
   return withQueryTags(
     {
       event: event.name,
       module: module.name,
     },
-    async () => runner(module, callback, event),
+    async () => next(),
   )
 }
 
@@ -67,15 +65,12 @@ async function main() {
     },
   })
 
-  initLogger.info('Init DB Logging')
-  initDBLogging(prisma)
-
   initLogger.info('Init Sleet')
   const sleetClient = new SleetClient({
     sleet: {
       token: TOKEN,
       applicationId: APPLICATION_ID,
-      moduleRunner,
+      middleware: [sentryMiddleware, withQueryTagsMiddleware],
     },
     client: {
       rest: {
@@ -113,6 +108,9 @@ async function main() {
       enforceNonce: true,
     },
   })
+
+  initLogger.info('Init DB Logging')
+  initDBLogging(prisma, sleetClient)
 
   // TODO: some modules should be locked to, say, a dev guild only
   // `registerOnlyInGuilds` solves that, but we need a way to pass which guild(s) to the commands

@@ -22,17 +22,15 @@ export const thanksAutoreply = new SleetModule(
     name: 'thanks-autoreply',
   },
   {
-    messageCreate: (message) => {
+    messageCreate: async (message) => {
       if (message.author.bot) return
 
       if (THANKS_REGEX.test(message.content)) {
-        return message.reply({
+        await message.reply({
           content: 'np',
           allowedMentions: { parse: [], repliedUser: false },
         })
       }
-
-      return
     },
   },
 )

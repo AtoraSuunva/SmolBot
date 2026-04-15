@@ -1,5 +1,9 @@
-import { ApplicationCommandOptionType } from 'discord.js'
-import { SleetSlashCommand, SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashCommand } from 'sleetcord'
+
+import { automod_add } from './commands/add.js'
+import { automod_edit } from './commands/edit.js'
+import { automod_remove } from './commands/remove.js'
+import { automod_view } from './commands/view.js'
 
 // TODO for automod:
 //  - Add a way to view the automod rules
@@ -19,79 +23,8 @@ import { SleetSlashCommand, SleetSlashCommandGroup, SleetSlashSubcommand } from 
 //  - Add a way to edit automod rules?
 //    - How? Good way to handle multiple types? Generate slash commands like add?
 
-const automod_add_content_repeat_rule = new SleetSlashSubcommand(
-  {
-    name: 'content-repeat-rule',
-    description: 'Filter out message content repeats',
-    options: [
-      {
-        name: 'max-repeats',
-        description: 'The maximum number of repeats allowed',
-        type: ApplicationCommandOptionType.Integer,
-        required: true,
-        min_value: 2,
-        max_value: 100,
-      },
-    ],
-  },
-  {
-    async run(interaction) {
-      await interaction.reply('ok')
-    },
-  },
-)
-
-const automod_add = new SleetSlashCommandGroup({
-  name: 'add',
-  description: 'Add a new rule to automod',
-  options: [automod_add_content_repeat_rule],
-})
-
-const automod_remove = new SleetSlashSubcommand(
-  {
-    name: 'remove',
-    description: 'Remove a rule from automod',
-    options: [
-      {
-        name: 'rule',
-        description: 'The rule to remove',
-        type: ApplicationCommandOptionType.String,
-      },
-    ],
-  },
-  {
-    async run(interaction) {
-      await interaction.reply('ok')
-    },
-  },
-)
-
-const automod_view = new SleetSlashSubcommand(
-  {
-    name: 'view',
-    description: 'View the automod rules',
-    options: [
-      {
-        name: 'name',
-        description: 'Search rules by name',
-        type: ApplicationCommandOptionType.String,
-      },
-      {
-        name: 'type',
-        description: 'Search rules by type',
-        type: ApplicationCommandOptionType.String,
-      },
-    ],
-  },
-  {
-    async run(interaction) {
-      await interaction.reply('ok')
-    },
-  },
-)
-
 export const automod = new SleetSlashCommand({
   name: 'automod',
   description: "Manage the bot's automod",
-  options: [automod_add, automod_remove, automod_view],
+  options: [automod_add, automod_view, automod_edit, automod_remove],
 })

@@ -18,5 +18,7 @@ export const modmail = new SleetSlashCommand(
     options: [modmail_fields, modmail_ticket, modmail_server, modmail_forum],
   },
   {},
-  [handle_ticket_message, handle_thread_update],
+  {
+    modules: [handle_ticket_message, handle_thread_update],
+  },
 )

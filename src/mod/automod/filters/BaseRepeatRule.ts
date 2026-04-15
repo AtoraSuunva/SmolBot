@@ -1,8 +1,6 @@
-import { s } from '@sapphire/shapeshift'
-import type { Awaitable, GuildMember, Message } from 'discord.js'
+import { ApplicationCommandOptionType, type Message } from 'discord.js'
 
-import type { Prisma } from '../../../generated/prisma/client.js'
-import { AutomodRule, type AutomodRuleData, type RuleTriggerInfo } from './AutomodRule.js'
+import { AutomodRule } from './AutomodRule.js'
 
 export interface RepeatInfractionInfo<Identifier> {
   /** The previous messages that "matched" some criteria to count as an infraction */
@@ -13,83 +11,37 @@ export interface RepeatInfractionInfo<Identifier> {
   repeats: number
 }
 
-const unpackValidator = s.tuple([s.number()])
-
-export abstract class BaseRepeatRule<Identifier> extends AutomodRule<[number]> {
-  private readonly infractionInfo = new Map<GuildMember, RepeatInfractionInfo<Identifier>>()
-
-  private maxRepeats: number
-
-  constructor(data: AutomodRuleData) {
-    super(
+export const BaseRepeatRule = new AutomodRule(
+  {
+    name: 'base-repeat',
+    description: 'Repeat rule',
+    options: [
       {
-        name: 'base-repeat',
-        description: 'Repeat rule',
+        name: 'max-repeats',
+        description: 'The maximum number of repeats allowed',
+        type: ApplicationCommandOptionType.Integer,
+        required: true,
+        min_value: 2,
+        max_value: 100,
       },
-      data,
-    )
-
-    const [maxRepeats] = this.unpackParameters(data.parameters)
-    this.maxRepeats = maxRepeats
-  }
-
-  override unpackParameters(params: Prisma.JsonNullValueInput | Prisma.InputJsonValue) {
-    return unpackValidator.parse(params)
-  }
-
-  override packParameters() {
-    return [this.maxRepeats] as [number]
-  }
-
-  async resetCounter(member: GuildMember, message: Message<true>, data?: Identifier) {
-    this.infractionInfo.set(member, {
-      previousMessages: [message],
-      lastIdentifier: data ?? (await this.getIdentifier(message)),
-      repeats: 0,
-    })
-  }
-
-  abstract isRepeat(
-    message: Message<true>,
-    info: RepeatInfractionInfo<Identifier>,
-    newIdentifier: Identifier,
-  ): Awaitable<boolean>
-
-  abstract getIdentifier(message: Message<true>): Awaitable<Identifier>
-
-  override async filterMessage(message: Message<true>): Promise<RuleTriggerInfo | null> {
-    const member = await message.guild.members.fetch(message.author.id)
-    const info = this.infractionInfo.get(member)
-
-    if (!info || info.previousMessages.length === 0) {
-      await this.resetCounter(member, message)
-      return null
-    }
-
-    const newIdentifier = await this.getIdentifier(message)
-    const isRepeat = await this.isRepeat(message, info, newIdentifier)
-
-    if (!isRepeat) {
-      await this.resetCounter(member, message, newIdentifier)
-      return null
-    }
-
-    const { previousMessages, repeats } = info
-    const newRepeats = repeats + 1
-
-    this.infractionInfo.set(member, {
-      previousMessages: [...previousMessages, message],
-      lastIdentifier: newIdentifier,
-      repeats: newRepeats,
-    })
-
-    if (newRepeats >= this.maxRepeats) {
-      return {
-        causedBy: [...previousMessages, message],
-        reason: this.message,
-      }
-    }
-
-    return null
-  }
-}
+      {
+        name: 'cooldown',
+        description: 'The cooldown between each repeat',
+        type: ApplicationCommandOptionType.Integer,
+      },
+    ] as const,
+  },
+  {
+    async run(i) {
+      await i.reply('ok')
+      return Promise.resolve({
+        'max-repeats': 1,
+        cooldown: 0,
+      })
+    },
+    async messageCreate(message) {
+      // need some way to access rule parameters here...
+      console.log('messageCreate', message.content)
+    },
+  },
+)

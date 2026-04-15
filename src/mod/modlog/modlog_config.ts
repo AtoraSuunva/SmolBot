@@ -168,18 +168,20 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
   // No options specified, show the current config
   if (getOptionCount(interaction) === 0) {
     if (!oldConfig) {
-      return interaction.reply({
+      await interaction.reply({
         content:
           "You don't have an existing modlog config, use `/modlog config` with options to create one.",
       })
+      return
     }
 
-    return interaction.reply({
+    await interaction.reply({
       content: `Current config:\n${formatConfig({
         config: oldConfig,
         guild,
       })}`,
     })
+    return
   }
 
   const channel = interaction.options.getChannel('channel')
@@ -210,7 +212,7 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
 
   clearCacheFor(guild)
 
-  return interaction.reply({
+  await interaction.reply({
     content: `Modlog Config:\n${formatConfig({
       config: mergedConfig,
       oldConfig,
@@ -218,6 +220,7 @@ async function runModlogConfig(interaction: ChatInputCommandInteraction) {
     })}`,
     allowedMentions: { parse: [] },
   })
+  return
 }
 
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =

@@ -39,7 +39,7 @@ const getOutput = <
 >(
   input: Readonly<[...Input]>,
 ) =>
-  input.reduce<Reducer<Input>>(
+  input.reduce(
     (output, record) => Object.assign(output, { [record.name]: record.type }),
     {} as Reducer<Input>,
   )
