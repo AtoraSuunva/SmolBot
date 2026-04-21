@@ -64,10 +64,11 @@ jobs:
         with:
           context: .
           push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           build-args: |
-            DOCKER_METADATA_OUTPUT_JSON
             GIT_COMMIT_SHA=${{ github.sha }}
 
       - name: Create Sentry release
