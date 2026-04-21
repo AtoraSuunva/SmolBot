@@ -43,7 +43,7 @@ app.post(
   authMiddleware({ requirePermissions: Permission.CreateToken }),
   shapeShiftValidator('json', createTokenJson),
   async (c) => {
-    const { name, permissions = 0, expiresAt = null } = c.req.valid('json')
+    const { name, permissions = 0, expiresAt } = c.req.valid('json')
     const token = c.get('token')
 
     if ((token.permissions | permissions) !== token.permissions) {

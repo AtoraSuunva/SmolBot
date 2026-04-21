@@ -36,11 +36,10 @@ import { validator } from 'hono/validator'
  * @param schema The schema to validate against.
  * @returns A Hono validator.
  */
-export function shapeShiftValidator<
-  Target extends keyof ValidationTargets,
-  Schema extends ObjectValidator<T>,
-  T extends object,
->(target: Target, schema: Schema) {
+export function shapeShiftValidator<Schema extends ObjectValidator<T>, T extends object>(
+  target: keyof ValidationTargets,
+  schema: Schema,
+) {
   return validator(target, (value, c): InferType<Schema> | Response => {
     const result = schema.run(value)
 

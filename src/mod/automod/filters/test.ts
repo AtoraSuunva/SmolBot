@@ -31,12 +31,7 @@ type Reducer<T extends unknown[], Acc = object> = T extends []
     ? Reducer<Tail, Acc & Callback<Head>>
     : never
 
-const getOutput = <
-  Type extends ApplicationCommandOptionType,
-  Name extends string,
-  Item extends { name: Name; type: Type },
-  Input extends Item[],
->(
+const getOutput = <Input extends { name: string; type: ApplicationCommandOptionType }[]>(
   input: Readonly<[...Input]>,
 ) =>
   input.reduce(
