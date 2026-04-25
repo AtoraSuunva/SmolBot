@@ -311,12 +311,13 @@ export function tableFormat<T extends Record<string, Value>>(
   let printRows = 0
 
   if (characterLimit === Number.POSITIVE_INFINITY) {
-    printRows = rowTotalLength.length
+    printRows = data.length
   } else {
     for (let i = 1; i < rowTotalLength.length; i++) {
       printedLength += rowTotalLength[i]
       if (printedLength > characterLimit) break
-      printRows = i
+      // dont count the header + separator row length as an index
+      printRows = i - 1
     }
   }
 
@@ -326,7 +327,7 @@ export function tableFormat<T extends Record<string, Value>>(
 
   // Print the headers
 
-  const measureIndex = printRows - 1
+  const measureIndex = printRows
 
   for (const key of keys) {
     const name: string = columnsNames[key] ?? String(key)

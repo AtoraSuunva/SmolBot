@@ -1,4 +1,3 @@
-// import { automod } from './automod/automod.js'
 import { actionLogModules } from './actionlog/index.js'
 import { manual_log } from './actionlog/manual_log.js'
 import { antiraidModules } from './antiraid/index.js'

@@ -5,14 +5,20 @@ model AutomodConfig {
 }
 
 model AutomodRule {
-  ruleID     Int     @id @map("rule_id")
-  guildID    String  @map("guild_id")
+  ruleID       String  @id @map("rule_id")
+  guildID      String  @map("guild_id")
   // Discriminator between rule types, bot-set
-  type       String
+  type         String
   // Name shown to admins when viewing rules
-  name       String
+  name         String
   // Message shown to users when rule is triggered
-  message    String?
+  message      String?
+  // Action to take when rule is triggered, e.g. "timeout", "ban", "kick", "mute", "log"
+  action       String  @default("log")
+  // Duration of the action in seconds, if applicable (e.g. for timeout)
+  duration     Int?
+  // Should the target be deleted? (e.g. delete the triggering message/reaction/etc.)
+  deleteTarget Boolean @default(false)
   // Parameters the rule takes, as JSON
-  parameters Json
+  parameters   Json
 }

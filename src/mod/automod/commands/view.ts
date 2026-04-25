@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ChatInputCommandInteraction } from 'disco
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
 import { plural } from '../../../helpers/format.js'
-import { formatRules, getRulesMany } from './utils.js'
+import { formatRules, getRulesMany } from '../utils.js'
 
 export const automod_view = new SleetSlashSubcommand(
   {
@@ -32,7 +32,7 @@ async function runAutomodView(interaction: ChatInputCommandInteraction) {
   const name = interaction.options.getString('name')
   const type = interaction.options.getString('type')
 
-  const rules = await getRulesMany({ guildId: interaction.guildId, name, type })
+  const rules = await getRulesMany({ guildID: interaction.guildId, name, type })
 
   if (rules.length === 0) {
     await interaction.reply('No rules found')

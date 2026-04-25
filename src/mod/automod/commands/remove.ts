@@ -2,7 +2,8 @@ import { ApplicationCommandOptionType, ChatInputCommandInteraction } from 'disco
 import { escapeAllMarkdown, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
 import { prisma } from '../../../helpers/db.js'
-import { formatRules, getRuleFirst, ruleAutocomplete } from './utils.js'
+import { formatRules } from '../utils.js'
+import { getRuleFirst, ruleAutocomplete } from '../utils.js'
 
 export const automod_remove = new SleetSlashSubcommand(
   {
@@ -27,22 +28,22 @@ async function runAutomodRemove(interaction: ChatInputCommandInteraction) {
   inGuildGuard(interaction)
   await interaction.deferReply()
 
-  const ruleName = interaction.options.getString('rule', true)
+  const ruleID = interaction.options.getString('rule', true)
 
-  const rule = await getRuleFirst({ guildId: interaction.guildId, name: ruleName })
+  const rule = await getRuleFirst({ guildID: interaction.guildId, ruleID })
 
   if (!rule) {
-    await interaction.editReply(`No rule found with name "${escapeAllMarkdown(ruleName)}"`)
+    await interaction.editReply(`No rule found with ID "${escapeAllMarkdown(ruleID)}"`)
     return
   }
 
-  await prisma.automodRule.delete({
+  const oldRule = await prisma.automodRule.delete({
     where: {
       ruleID: rule.ruleID,
     },
   })
 
-  const formattedRule = formatRules([rule])
-
-  await interaction.editReply(`Removed rule:\n${formattedRule}`)
+  await interaction.editReply(
+    `Removed rule "${oldRule.name}" from automod:\n${formatRules([oldRule])}`,
+  )
 }

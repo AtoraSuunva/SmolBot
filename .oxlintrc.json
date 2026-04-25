@@ -26,7 +26,9 @@
     // we are smarter than the compiler :)
     "no-unsafe-type-assertion": "allow",
     // Discord.js offers formatters using .toString() for multiple types and it was becoming a hassle to allowlist them
-    "restrict-template-expressions": "allow"
+    "restrict-template-expressions": "allow",
+    // TS checks this better, we have some cases where we really mess with return types and this false-positives
+    "typescript/consistent-return": "allow"
   },
   "ignorePatterns": ["src/generated/**/*", "prisma.config.ts"]
 }
