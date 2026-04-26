@@ -183,8 +183,8 @@ export class AutomodRule<
    *
    * New options are prepended to the existing options, so they will show up first when adding/editing rules
    */
-  withBodyOptions(options: NonNullable<SleetSlashSubcommandBody['options']>) {
-    const newOptions = [...options, ...(this.inputBody.options ?? [])]
+  withBodyOptions(options: NonNullable<SleetSlashSubcommandBody['options']>, replace = false) {
+    const newOptions = replace ? options : [...options, ...(this.inputBody.options ?? [])]
 
     // required options need to be first
     newOptions.sort((a, b) => {

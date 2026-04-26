@@ -6,7 +6,8 @@ import { prisma } from '../../../helpers/db.js'
 import { automodActionChoices } from '../actions.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { messageRepeatsRule } from '../rules/MessageRepeats.js'
-import { formatRules } from '../utils.js'
+import { formatRule } from '../utils.js'
+import { Prisma } from '../../../generated/prisma/client.js'
 
 export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
   {
@@ -59,7 +60,7 @@ export const automod_add = new AutomodRuleGroup(
       const action = interaction.options.getString('action', true)
       const message = interaction.options.getString('message')
       const duration = interaction.options.getInteger('duration')
-      const deleteMessage = interaction.options.getBoolean('delete')
+      const deleteTarget = interaction.options.getBoolean('delete')
 
       const newRule = await prisma.automodRule.create({
         data: {
@@ -70,12 +71,12 @@ export const automod_add = new AutomodRuleGroup(
           type: rule.name,
           message,
           duration,
-          deleteMessage,
+          deleteTarget: deleteTarget ?? Prisma.skip,
           parameters: params,
         },
       })
 
-      await interaction.editReply(`Added rule "${name}" to automod:\n${formatRules([newRule])}`)
+      await interaction.editReply(`Added rule "${name}" to automod:\n${formatRule(newRule)}`)
     },
   },
 )

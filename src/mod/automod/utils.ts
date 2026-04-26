@@ -3,16 +3,25 @@ import { AutocompleteHandler } from 'sleetcord'
 
 import { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
-import { tableFormat } from '../../helpers/format.js'
+import { formatConfig, tableFormat } from '../../helpers/format.js'
 
+/**
+ * Create an autocomplete handler for automod rules. This will match for rule type if the autocomplete is for a subcommand in a group
+ *
+ * Returns { name: 'rule-id:rule-name', value: 'rule-id' }[]
+ */
 export const ruleAutocomplete: AutocompleteHandler<string> = async ({ interaction, value }) => {
   if (!interaction.inGuild()) {
     return []
   }
 
+  const group = interaction.options.getSubcommandGroup()
+  const subcommand = interaction.options.getSubcommand()
+
   const rules = await prisma.automodRule.findMany({
     where: {
       guildID: interaction.guildId,
+      ...(group ? { type: subcommand } : {}),
       OR: [
         {
           name: { contains: value },
@@ -64,17 +73,43 @@ export async function getRuleFirst({ guildID, ruleID }: GetAutomodRuleParams) {
   })
 }
 
-export function formatRules(rules: Prisma.AutomodRuleGetPayload<true>[]): string {
+type Rule = Prisma.AutomodRuleGetPayload<true>
+
+export function formatRule(rule: Rule, oldRule: Rule | null = null): string {
+  return formatConfig({
+        config: rule,
+        oldConfig: oldRule,
+        omit: ['guildID'],
+        mapKeys: {
+          ruleID: 'Rule ID',
+          type: 'Type',
+          name: 'Name',
+          message: 'Message',
+          action: 'Action',
+          duration: 'Duration',
+          deleteTarget: 'Delete',
+          parameters: 'Parameters',
+        },
+        formatters: {
+          parameters: (params) => JSON.stringify(params),
+        }
+      })
+}
+
+export function formatRules(rules: Rule[]): string {
   return codeBlock(
     'm',
     cleanCodeBlockContent(
       tableFormat(rules, {
-        keys: ['ruleID', 'type', 'name', 'message', 'parameters'],
+        keys: ['ruleID', 'type', 'name', 'message', 'action', 'duration', 'deleteTarget', 'parameters'],
         columnNames: {
           ruleID: 'Rule ID',
           type: 'Type',
           name: 'Name',
           message: 'Message',
+          action: 'Action',
+          duration: 'Duration',
+          deleteTarget: 'Delete',
           parameters: 'Parameters',
         },
         formatters: {
