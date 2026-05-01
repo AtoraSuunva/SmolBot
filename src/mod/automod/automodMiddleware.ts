@@ -17,6 +17,8 @@ interface AutomodStoreEntry<T> {
 
 export const automodAsyncStore = new AsyncLocalStorage<AutomodStoreEntry<any>>()
 
+export type AutomodStoreReturn<Rule extends AutomodRule> = AutomodStoreEntry<Rule['paramType']>
+
 export function getAutomodStore<Rule extends AutomodRule>(): AutomodStoreEntry<Rule['paramType']> {
   const store = automodAsyncStore.getStore()
   if (!store) {

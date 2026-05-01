@@ -48,7 +48,7 @@ type Reducer<T extends unknown[], Acc = {}> = T extends []
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 
-type Nullable<T> = { [K in keyof T]?: T[K] | null }
+type Nullable<T> = { [K in keyof T]: T[K] | null }
 
 type ReduceOrUndefined<T extends unknown[] | undefined> = T extends unknown[]
   ? Prettify<Reducer<T>>
@@ -100,7 +100,7 @@ export interface AutomodAction {
   /** The user to apply the action to */
   targetUser: User
   /** The channel to send a message to the user */
-  targetChannel?: SendableChannels
+  targetChannel?: SendableChannels | null
   /** Override the action to apply */
   action?: AutomodAction
   /** Override the duration of the action in seconds */

@@ -1,4 +1,5 @@
 import { InputJsonValue, JsonValue } from '@prisma/client/runtime/client'
+import { ApplicationCommandOptionType } from 'discord.js'
 import { inGuildGuard, SleetSlashSubcommandBody } from 'sleetcord'
 
 import { Prisma } from '../../../generated/prisma/client.js'
@@ -7,7 +8,6 @@ import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { messageRepeatsRule } from '../rules/MessageRepeats.js'
 import { formatRule, ruleAutocomplete } from '../utils.js'
 import { addOptions } from './add.js'
-import { ApplicationCommandOptionType } from 'discord.js'
 
 // oxlint-disable-next-line oxc/no-map-spread: we want to copy the options to avoid mutating the add options
 const addOpts = addOptions.map((opt) => {
@@ -17,13 +17,16 @@ const addOpts = addOptions.map((opt) => {
   }
 })
 
-const editOptions: NonNullable<SleetSlashSubcommandBody['options']> = [{
-  name: 'rule',
-  description: 'The rule to edit',
-  type: ApplicationCommandOptionType.String,
-  required: true,
-  autocomplete: ruleAutocomplete,
-}, ...addOpts]
+const editOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
+  {
+    name: 'rule',
+    description: 'The rule to edit',
+    type: ApplicationCommandOptionType.String,
+    required: true,
+    autocomplete: ruleAutocomplete,
+  },
+  ...addOpts,
+]
 
 function assignDefined(
   target: object,
@@ -32,7 +35,9 @@ function assignDefined(
   return Object.assign(
     target,
     ...sources.map((source) => {
-      return Object.fromEntries(Object.entries(source).filter(([, value]) => value !== undefined && value !== null))
+      return Object.fromEntries(
+        Object.entries(source).filter(([, value]) => value !== undefined && value !== null),
+      )
     }),
   )
 }
@@ -66,7 +71,6 @@ export const automod_edit = new AutomodRuleGroup(
       const action = interaction.options.getString('action')
       const message = interaction.options.getString('message')
       const duration = interaction.options.getInteger('duration')
-      const deleteTarget = interaction.options.getBoolean('delete')
 
       const newRule = await prisma.automodRule.update({
         where: {
@@ -75,9 +79,8 @@ export const automod_edit = new AutomodRuleGroup(
         data: {
           name: name ?? Prisma.skip,
           action: action ?? Prisma.skip,
-          message: message ?? Prisma.skip,
+          message: message ? (message === '-' ? null : message) : Prisma.skip,
           duration: duration ?? Prisma.skip,
-          deleteTarget: deleteTarget ?? Prisma.skip,
           parameters: assignDefined({}, oldRule.parameters ?? {}, params),
         },
       })

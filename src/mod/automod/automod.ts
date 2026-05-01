@@ -11,19 +11,12 @@ import { messageRepeatsRule } from './rules/MessageRepeats.js'
 //  - [X] Add a way to view the automod rules
 //    - [ ] Include way to search
 //    - [ ] Include pagination
-//  - [X] Add a way to remove automod rules
-//  - [X] Add a way to add automod rules
-//    - Rules should have:
-//      - [X] Bot-set type
-//      - [X] User-customizable name
-//      - [X] User-customizable message (shown on trigger, optional)
-//      - [X] User-customizable arguments (varies per rule)
-//    - [X] Each rule should (somehow) define what it needs to generate the slash commands
-//    - [X] Each rule should be able to parse the DB row and create itself (on load)
-//      - Could use the type as a discriminator to determine which rule to create
-//    - [X] Each rule should be able to serialize itself into a Prisma-compatible payload
-//  - [ ] Add a way to edit automod rules?
-//    - How? Good way to handle multiple types? Generate slash commands like add?
+//  - [ ] Log channel for automod actions
+//    - Just integrate with modlog? Probably the best, doesn't require extra config
+//    - But make sure to include the parameters in the log for context (e.g. "user sent 5 messages in 10 seconds") -> format function?
+//    - Option to enable/fine-tune what gets logged (e.g. maybe I don't want to log message repeats that trigger a timeout, but I do want to log ones that trigger a ban)?
+//      - Maybe later, if needed
+//  - [ ] Add more rules (automod backoff timeout, reactions, pressure spam, newlines, etc)
 
 export const automod = new SleetSlashCommand(
   {

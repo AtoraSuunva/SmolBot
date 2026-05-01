@@ -1,8 +1,15 @@
-import { ApplicationCommandOptionType, type Message } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  AutoModerationActionType,
+  Guild,
+  SendableChannels,
+  User,
+  type Message,
+} from 'discord.js'
 import { SECOND } from 'sleetcord-common'
 
-import { getAutomodStore } from '../automodMiddleware.js'
-import { AutomodRule } from '../modules/AutomodRule.js'
+import { AutomodStoreReturn, getAutomodStore } from '../automodMiddleware.js'
+import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
 
 export interface RepeatInfractionInfo<Identifier> {
   /** The previous messages that "matched" some criteria to count as an infraction */
@@ -38,69 +45,132 @@ export const messageRepeatsRule = new AutomodRule(
         required: true,
         min_value: 0,
       },
+      {
+        name: 'delete',
+        description: 'Delete the messages that triggered the rule (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      {
+        name: 'native_automod',
+        description: 'Count messages caught & blocked by native automod (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
     ] as const,
   },
   {
     async run(i, required) {
       const repeats = i.options.getInteger('repeats', required)
       const interval = i.options.getInteger('interval', required)
+      const deleteTarget = i.options.getBoolean('delete') ?? false
+      const nativeAutomod = i.options.getBoolean('native_automod') ?? false
 
       return Promise.resolve({
         repeats,
         interval,
+        delete: deleteTarget,
+        native_automod: nativeAutomod,
       })
     },
 
-    async messageCreate(message) {
+    async messageCreate(message): Promise<AutomodEventResult> {
       if (message.author.bot) {
         return
       }
 
       const { rule, params } = getAutomodStore<typeof messageRepeatsRule>()
 
-      const key = `${rule.ruleID}-${message.guildId}-${message.author.id}`
-      const now = Date.now()
+      return checkForRepeats(
+        rule,
+        params,
+        message.content,
+        message.author,
+        message.guild!,
+        message.channel as SendableChannels,
+        message,
+      )
+    },
 
-      let info = infractionInfoMap.get(key)
-      if (!info) {
-        info = {
-          previousMessages: [],
-          lastIdentifier: '',
-          lastInfractionTimestamp: 0,
-          repeatCount: 1,
-        }
-        infractionInfoMap.set(key, info)
+    async autoModerationActionExecution(action): Promise<AutomodEventResult> {
+      const { rule, params } = getAutomodStore<typeof messageRepeatsRule>()
+
+      if (!params.native_automod || action.action.type !== AutoModerationActionType.BlockMessage) {
+        return
       }
 
-      const identifier = message.content.toLowerCase()
-      const intervalMs = params.interval * SECOND
-      const isWithinInterval =
-        intervalMs === 0 ? true : now - info.lastInfractionTimestamp < intervalMs
+      // User that triggered the rule
+      const user = await this.client.users.fetch(action.userId).catch(() => null)
+      // Channel the rule alert was sent
+      const channel = action.alertSystemMessageId
+        ? ((await this.client.channels
+            .fetch(action.alertSystemMessageId)
+            .catch(() => null)) as SendableChannels)
+        : null
 
-      if (identifier === info.lastIdentifier && isWithinInterval) {
-        info.repeatCount++
-        info.lastInfractionTimestamp = now
-        info.previousMessages.push(message)
-
-        if (info.repeatCount >= params.repeats) {
-          if (rule.deleteTarget && 'bulkDelete' in message.channel) {
-            await message.channel.bulkDelete(info.previousMessages).catch(() => {})
-          }
-
-          return {
-            targetUser: message.author,
-            targetChannel: message.channel,
-          }
-        }
-      } else {
-        // reset the infraction info if the message is different or cooldown has expired
-        info.lastIdentifier = identifier
-        info.lastInfractionTimestamp = now
-        info.repeatCount = 1
-        info.previousMessages = [message]
+      if (!user) {
+        // give up
+        return
       }
 
-      return
+      return checkForRepeats(rule, params, action.content ?? '', user, action.guild, channel)
     },
   },
 )
+
+type MessageRepeatStore = AutomodStoreReturn<typeof messageRepeatsRule>
+
+async function checkForRepeats(
+  rule: MessageRepeatStore['rule'],
+  params: MessageRepeatStore['params'],
+  content: string,
+  user: User,
+  guild: Guild,
+  channel: SendableChannels | null,
+  message?: Message,
+) {
+  const key = `${rule.ruleID}-${guild.id}-${user.id}`
+  const now = Date.now()
+  const identifier = content.toLowerCase()
+
+  let info = infractionInfoMap.get(key)
+  if (!info) {
+    info = {
+      previousMessages: message ? [message] : [],
+      lastIdentifier: identifier,
+      lastInfractionTimestamp: now,
+      repeatCount: 1,
+    }
+    infractionInfoMap.set(key, info)
+
+    return
+  }
+
+  const intervalMs = params.interval * SECOND
+  const isWithinInterval = intervalMs === 0 ? true : now - info.lastInfractionTimestamp < intervalMs
+
+  if (identifier === info.lastIdentifier && isWithinInterval) {
+    info.repeatCount++
+    info.lastInfractionTimestamp = now
+    if (message) {
+      info.previousMessages.push(message)
+    }
+
+    if (info.repeatCount >= params.repeats) {
+      if (params.delete && message && 'bulkDelete' in message.channel) {
+        await message.channel.bulkDelete(info.previousMessages).catch(() => {})
+      }
+
+      return {
+        targetUser: user,
+        targetChannel: channel,
+      }
+    }
+  } else {
+    // reset the infraction info if the message is different or cooldown has expired
+    info.lastIdentifier = identifier
+    info.lastInfractionTimestamp = now
+    info.repeatCount = 1
+    info.previousMessages = message ? [message] : []
+  }
+
+  return
+}

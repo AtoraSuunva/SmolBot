@@ -7,18 +7,17 @@ import { automodActionChoices } from '../actions.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { messageRepeatsRule } from '../rules/MessageRepeats.js'
 import { formatRule } from '../utils.js'
-import { Prisma } from '../../../generated/prisma/client.js'
 
 export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
   {
     name: 'name',
-    description: 'The name of the rule (for your reference, not shown to users)',
+    description: 'Name of the rule (for your reference, not shown to users)',
     type: ApplicationCommandOptionType.String,
     required: true,
   },
   {
     name: 'action',
-    description: 'The action to take when the rule is triggered',
+    description: 'Action to take when the rule is triggered',
     type: ApplicationCommandOptionType.String,
     required: true,
     choices: automodActionChoices,
@@ -26,21 +25,16 @@ export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
   {
     name: 'message',
     description:
-      'The message to show when the rule is triggered (optional, leave blank for a silent rule)',
+      'Message to show when the rule is triggered (use "-" for a silent rule, default: "-")',
     type: ApplicationCommandOptionType.String,
     max_length: 1900,
   },
   {
     name: 'duration',
-    description: 'The duration of the punishment in seconds (for timeout)',
+    description: 'Duration of the punishment in seconds (for timeout)',
     type: ApplicationCommandOptionType.Integer,
     min_value: 1,
     max_value: (7 * DAY) / 1000,
-  },
-  {
-    name: 'delete',
-    description: 'Whether to delete the message/reaction/etc that triggered the rule',
-    type: ApplicationCommandOptionType.Boolean,
   },
 ]
 
@@ -60,7 +54,6 @@ export const automod_add = new AutomodRuleGroup(
       const action = interaction.options.getString('action', true)
       const message = interaction.options.getString('message')
       const duration = interaction.options.getInteger('duration')
-      const deleteTarget = interaction.options.getBoolean('delete')
 
       const newRule = await prisma.automodRule.create({
         data: {
@@ -69,9 +62,8 @@ export const automod_add = new AutomodRuleGroup(
           name,
           action,
           type: rule.name,
-          message,
+          message: message ? (message === '-' ? null : message) : null,
           duration,
-          deleteTarget: deleteTarget ?? Prisma.skip,
           parameters: params,
         },
       })

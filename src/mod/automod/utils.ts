@@ -77,23 +77,22 @@ type Rule = Prisma.AutomodRuleGetPayload<true>
 
 export function formatRule(rule: Rule, oldRule: Rule | null = null): string {
   return formatConfig({
-        config: rule,
-        oldConfig: oldRule,
-        omit: ['guildID'],
-        mapKeys: {
-          ruleID: 'Rule ID',
-          type: 'Type',
-          name: 'Name',
-          message: 'Message',
-          action: 'Action',
-          duration: 'Duration',
-          deleteTarget: 'Delete',
-          parameters: 'Parameters',
-        },
-        formatters: {
-          parameters: (params) => JSON.stringify(params),
-        }
-      })
+    config: rule,
+    oldConfig: oldRule,
+    omit: ['guildID'],
+    mapKeys: {
+      ruleID: 'Rule ID',
+      type: 'Type',
+      name: 'Name',
+      message: 'Message',
+      action: 'Action',
+      duration: 'Duration',
+      parameters: 'Parameters',
+    },
+    formatters: {
+      parameters: (params) => JSON.stringify(params),
+    },
+  })
 }
 
 export function formatRules(rules: Rule[]): string {
@@ -101,7 +100,7 @@ export function formatRules(rules: Rule[]): string {
     'm',
     cleanCodeBlockContent(
       tableFormat(rules, {
-        keys: ['ruleID', 'type', 'name', 'message', 'action', 'duration', 'deleteTarget', 'parameters'],
+        keys: ['ruleID', 'type', 'name', 'message', 'action', 'duration', 'parameters'],
         columnNames: {
           ruleID: 'Rule ID',
           type: 'Type',
@@ -109,7 +108,6 @@ export function formatRules(rules: Rule[]): string {
           message: 'Message',
           action: 'Action',
           duration: 'Duration',
-          deleteTarget: 'Delete',
           parameters: 'Parameters',
         },
         formatters: {
