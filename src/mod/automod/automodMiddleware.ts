@@ -1,10 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import { EventDetails, SleetModuleMiddleware } from 'sleetcord'
+import { EventDetails, formatUser, SleetModuleMiddleware } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 
 import { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
+import { plural } from '../../helpers/format.js'
+import { sendToModlog } from '../modlog/sendToModlog.js'
+import { formatLog, getValidatedConfigFor } from '../modlog/utils.js'
 import { AutomodAction } from './actions.js'
 import { AutomodEventResult, AutomodRule } from './modules/AutomodRule.js'
 
@@ -60,6 +63,16 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
     if ('guild' in arg && arg.guild && 'id' in arg.guild) {
       guildID = arg.guild.id
+      break
+    }
+
+    if (
+      'message' in arg &&
+      arg.message &&
+      typeof arg.message === 'object' &&
+      'guildId' in arg.message
+    ) {
+      guildID = arg.message.guildId
       break
     }
   }
@@ -127,9 +140,12 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
         return
       }
 
+      let actionable = false
+
       switch (action) {
         case 'ban': {
           if (member.bannable) {
+            actionable = true
             await member.ban({
               reason: `Automod rule ${rule.ruleID} triggered`,
               deleteMessageSeconds: duration,
@@ -139,18 +155,21 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
         case 'kick': {
           if (member.kickable) {
+            actionable = true
             await member.kick(`Automod rule ${rule.ruleID} triggered`)
           }
         }
 
         case 'mute': {
           if (member.moderatable) {
+            actionable = true
             await member.timeout(duration * 1000, `Automod rule ${rule.ruleID} triggered`)
           }
         }
 
         case 'timeout': {
           if (member.moderatable) {
+            actionable = true
             await member.timeout(duration * 1000, `Automod rule ${rule.ruleID} triggered`)
           }
         }
@@ -166,6 +185,34 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       if (rule.message && targetChannel) {
         await targetChannel.send({
           content: rule.message.replace('{user}', `<@${targetUser.id}>`),
+        })
+      }
+
+      // log to modlog
+
+      const config = await getValidatedConfigFor(
+        member.guild,
+        'automodAction',
+        (config) => config.automodAction,
+      )
+
+      if (config) {
+        // 🐲 10:55:14 PM [Automod] User [username] (123456789) @user triggered **Automod Rule Name** and was **kicked**: Sent 5 identical messages in 10 seconds
+        const loggedAction =
+          action === 'log' || !actionable
+            ? ''
+            : ` and was **${action}${duration > 0 ? ` for ${plural('second', duration)}` : ''}**`
+        const details = result.logMessage ? `:\n> ${result.logMessage}` : ''
+        const content = formatLog(
+          '🐲',
+          'Automod',
+          `${formatUser(member)} triggered **${rule.name}**${loggedAction}${details}`,
+          new Date(),
+        )
+
+        await sendToModlog(config.channel, {
+          content,
+          allowedMentions: { parse: [] },
         })
       }
     }

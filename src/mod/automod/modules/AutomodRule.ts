@@ -15,6 +15,8 @@ import {
   type SleetSlashSubcommandBody,
 } from 'sleetcord'
 
+import { AutomodAction } from '../actions.js'
+
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
   T extends ApplicationCommandOptionType.String
     ? string
@@ -96,7 +98,9 @@ function validatorFromType(
 /**
  * Apply an action to a target user, with an optional override for the action and duration
  */
-export interface AutomodAction {
+export interface AutomodTrigger {
+  /** The message to append to the modlog log */
+  logMessage?: string
   /** The user to apply the action to */
   targetUser: User
   /** The channel to send a message to the user */
@@ -107,7 +111,7 @@ export interface AutomodAction {
   duration?: number
 }
 
-export type AutomodEventResult = AutomodAction | null | undefined | void
+export type AutomodEventResult = AutomodTrigger | null | undefined | void
 
 type RunResult<T extends unknown[] | undefined> = [T] extends [undefined]
   ? undefined
