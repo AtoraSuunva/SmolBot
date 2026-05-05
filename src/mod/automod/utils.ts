@@ -113,6 +113,7 @@ export function formatRules(rules: Rule[]): string {
         formatters: {
           parameters: (params) => JSON.stringify(params),
         },
+        characterLimit: 1900,
       }),
     ),
   )

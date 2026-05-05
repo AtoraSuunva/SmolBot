@@ -5,7 +5,7 @@ import { inGuildGuard, SleetSlashSubcommandBody } from 'sleetcord'
 import { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
-import { messageRepeatsRule } from '../rules/MessageRepeats.js'
+import { rules } from '../rules/index.js'
 import { formatRule, ruleAutocomplete } from '../utils.js'
 import { addOptions } from './add.js'
 
@@ -47,7 +47,7 @@ export const automod_edit = new AutomodRuleGroup(
     name: 'edit',
     description: 'Edit an existing automod rule',
     requireParams: false,
-    options: [messageRepeatsRule].map((opt) => opt.withBodyOptions(editOptions, true)),
+    options: rules.map((opt) => opt.withBodyOptions(editOptions, true)),
   },
   {
     async runResult(interaction, _rule, params) {

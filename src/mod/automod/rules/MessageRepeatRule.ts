@@ -2,12 +2,14 @@ import {
   ApplicationCommandOptionType,
   AutoModerationActionType,
   Guild,
+  GuildTextBasedChannel,
   SendableChannels,
   User,
   type Message,
 } from 'discord.js'
 import { SECOND } from 'sleetcord-common'
 
+import { plural } from '../../../helpers/format.js'
 import { AutomodStoreReturn, getAutomodStore } from '../automodMiddleware.js'
 import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
 
@@ -18,6 +20,8 @@ export interface RepeatInfractionInfo<Identifier> {
   lastIdentifier: Identifier
   /** The timestamp of the last infraction */
   lastInfractionTimestamp: number
+  /** The timestamp of the first infraction in the current series */
+  firstInfractionTimestamp: number
   /** The number of times this infraction has been repeated consecutively */
   repeatCount: number
 }
@@ -73,7 +77,7 @@ export const messageRepeatsRule = new AutomodRule(
     },
 
     async messageCreate(message): Promise<AutomodEventResult> {
-      if (message.author.bot) {
+      if (message.author.bot || !message.inGuild()) {
         return
       }
 
@@ -84,7 +88,7 @@ export const messageRepeatsRule = new AutomodRule(
         params,
         message.content,
         message.author,
-        message.guild!,
+        message.guild,
         message.channel as SendableChannels,
         message,
       )
@@ -118,6 +122,9 @@ export const messageRepeatsRule = new AutomodRule(
 
 type MessageRepeatStore = AutomodStoreReturn<typeof messageRepeatsRule>
 
+/**
+ * Check if a message is a repeat and should trigger the automod rule, and return the appropriate action if so
+ */
 async function checkForRepeats(
   rule: MessageRepeatStore['rule'],
   params: MessageRepeatStore['params'],
@@ -126,7 +133,7 @@ async function checkForRepeats(
   guild: Guild,
   channel: SendableChannels | null,
   message?: Message,
-) {
+): Promise<AutomodEventResult> {
   const key = `${rule.ruleID}-${guild.id}-${user.id}`
   const now = Date.now()
   const identifier = content.toLowerCase()
@@ -137,6 +144,7 @@ async function checkForRepeats(
       previousMessages: message ? [message] : [],
       lastIdentifier: identifier,
       lastInfractionTimestamp: now,
+      firstInfractionTimestamp: now,
       repeatCount: 1,
     }
     infractionInfoMap.set(key, info)
@@ -155,22 +163,52 @@ async function checkForRepeats(
     }
 
     if (info.repeatCount >= params.repeats) {
-      if (params.delete && message && 'bulkDelete' in message.channel) {
-        await message.channel.bulkDelete(info.previousMessages).catch(() => {})
+      if (params.delete) {
+        await deleteMessages(info.previousMessages)
       }
 
+      const seconds = Math.round((now - info.firstInfractionTimestamp) / 1000)
+
       return {
+        logMessage: `Sent ${info.repeatCount} identical messages in ${plural('second', seconds)}`,
         targetUser: user,
         targetChannel: channel,
       }
     }
   } else {
-    // reset the infraction info if the message is different or cooldown has expired
-    info.lastIdentifier = identifier
-    info.lastInfractionTimestamp = now
-    info.repeatCount = 1
-    info.previousMessages = message ? [message] : []
+    // Reset the infraction info if the message is different or cooldown has expired
+    infractionInfoMap.set(key, {
+      previousMessages: message ? [message] : [],
+      lastIdentifier: identifier,
+      lastInfractionTimestamp: now,
+      firstInfractionTimestamp: now,
+      repeatCount: 1,
+    })
   }
 
   return
+}
+
+/**
+ * Delete messages, groups messages into bulk deletions where possible, and falls back to individual deletions if not (e.g. for messages in different channels)
+ *
+ * @param messages The messages to delete
+ */
+async function deleteMessages(messages: Message[]) {
+  const channelToMessages = new Map<GuildTextBasedChannel, Message[]>()
+
+  for (const message of messages) {
+    const channel = message.channel as GuildTextBasedChannel
+    const channelMessages = channelToMessages.get(channel) ?? []
+    channelMessages.push(message)
+    channelToMessages.set(channel, channelMessages)
+  }
+
+  for (const [channel, messages] of channelToMessages.entries()) {
+    if (messages.length > 1) {
+      await channel.bulkDelete(messages).catch(() => {})
+    } else {
+      await messages[0].delete().catch(() => {})
+    }
+  }
 }

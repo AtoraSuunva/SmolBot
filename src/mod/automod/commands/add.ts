@@ -1,11 +1,11 @@
-import { ApplicationCommandOptionType } from 'discord-api-types/v9'
+import { ApplicationCommandOptionType } from 'discord.js'
 import { inGuildGuard, SleetSlashSubcommandBody } from 'sleetcord'
 import { DAY } from 'sleetcord-common'
 
 import { prisma } from '../../../helpers/db.js'
 import { automodActionChoices } from '../actions.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
-import { messageRepeatsRule } from '../rules/MessageRepeats.js'
+import { rules } from '../rules/index.js'
 import { formatRule } from '../utils.js'
 
 export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
@@ -43,7 +43,7 @@ export const automod_add = new AutomodRuleGroup(
     name: 'add',
     description: 'Add a new rule to automod',
     requireParams: false,
-    options: [messageRepeatsRule].map((opt) => opt.withBodyOptions(addOptions)),
+    options: rules.map((opt) => opt.withBodyOptions(addOptions)),
   },
   {
     async runResult(interaction, rule, params) {
