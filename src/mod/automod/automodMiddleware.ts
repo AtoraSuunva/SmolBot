@@ -8,6 +8,7 @@ import { prisma } from '../../helpers/db.js'
 import { plural } from '../../helpers/format.js'
 import { sendToModlog } from '../modlog/sendToModlog.js'
 import { formatLog, getValidatedConfigFor } from '../modlog/utils.js'
+import { muteMembers } from '../mute/mute.js'
 import { AutomodAction } from './actions.js'
 import { AutomodEventResult, AutomodRule } from './modules/AutomodRule.js'
 
@@ -34,17 +35,20 @@ export function getAutomodStore<Rule extends AutomodRule>(): AutomodStoreEntry<R
   }
 }
 
+const actionToVerb: Record<AutomodAction, string> = {
+  ban: 'banned',
+  kick: 'kicked',
+  mute: 'muted',
+  timeout: 'timed out',
+  log: 'flagged',
+}
+
 export const automodMiddleware: SleetModuleMiddleware = async (module, event, next) => {
   // ignore anything that isn't an AutomodRule
   if (!(module instanceof AutomodRule)) {
     await next()
     return
   }
-
-  automodMiddlewareLogger.debug(
-    { eventName: event.name, ruleType: module.body.name },
-    `Received event ${event.name} for automod rule type ${module.body.name}`,
-  )
 
   // try to load this rule from the database for the guild
   const { name } = module.body
@@ -79,7 +83,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
   if (!guildID) {
     // if we can't find a guild ID, just skip automod processing since we don't know which rules to load
-    automodMiddlewareLogger.debug(
+    automodMiddlewareLogger.warn(
       { eventName: event.name },
       `Could not find guild ID in event arguments, skipping automod processing for event ${event.name}`,
     )
@@ -97,12 +101,13 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
   if (rules.length === 0) {
     // no rules of this type for this guild, skip processing
-    automodMiddlewareLogger.debug(
-      { eventName: event.name, guildID, ruleType: name },
-      `No automod rules of type ${name} found for guild ${guildID}, skipping automod processing for event ${event.name}`,
-    )
     return
   }
+
+  automodMiddlewareLogger.info(
+    { eventName: event.name, ruleCount: rules.length },
+    `Found ${rules.length} automod rules of type ${name} for guild ${guildID} to process for event ${event.name}`,
+  )
 
   // for each rule, unpack the parameters and run the event handler
   for (const rule of rules) {
@@ -116,7 +121,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       continue
     }
 
-    automodMiddlewareLogger.debug(
+    automodMiddlewareLogger.info(
       { ruleId: rule.ruleID, ruleType: name, params: params.unwrap() },
       `Running automod rule ${rule.ruleID} of type ${name} with parameters`,
     )
@@ -142,43 +147,57 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
       let actionable = false
 
+      const reason = `Automod rule ${rule.ruleID} triggered: ${result.logMessage ?? 'No additional details'}`
+
       switch (action) {
         case 'ban': {
           if (member.bannable) {
             actionable = true
             await member.ban({
-              reason: `Automod rule ${rule.ruleID} triggered`,
+              reason,
               deleteMessageSeconds: duration,
             })
           }
+          break
         }
 
         case 'kick': {
           if (member.kickable) {
             actionable = true
-            await member.kick(`Automod rule ${rule.ruleID} triggered`)
+            await member.kick(reason)
           }
+          break
         }
 
         case 'mute': {
           if (member.moderatable) {
             actionable = true
-            await member.timeout(duration * 1000, `Automod rule ${rule.ruleID} triggered`)
+            const me = await member.guild.members.fetchMe()
+
+            await muteMembers({
+              action: 'mute',
+              guild: member.guild,
+              members: [member],
+              reason,
+              executor: me,
+            })
           }
+          break
         }
 
         case 'timeout': {
           if (member.moderatable) {
             actionable = true
-            await member.timeout(duration * 1000, `Automod rule ${rule.ruleID} triggered`)
+            if (duration > 0) {
+              await member.timeout(duration * 1000, reason)
+            }
           }
+          break
         }
 
         case 'log': {
-          automodMiddlewareLogger.info(
-            { guildID, userId: targetUser.id, action, duration, ruleId: rule.ruleID },
-            `Automod rule ${rule.ruleID} triggered for user ${targetUser.id}, applying action ${action} for duration ${duration}`,
-          )
+          // do nothing, just continue to modlog
+          break
         }
       }
 
@@ -201,7 +220,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
         const loggedAction =
           action === 'log' || !actionable
             ? ''
-            : ` and was **${action}${duration > 0 ? ` for ${plural('second', duration)}` : ''}**`
+            : ` and was **${actionToVerb[action]}**${duration > 0 ? ` for ${plural('second', duration)}` : ''}`
         const details = result.logMessage ? `:\n> ${result.logMessage}` : ''
         const content = formatLog(
           '🐲',

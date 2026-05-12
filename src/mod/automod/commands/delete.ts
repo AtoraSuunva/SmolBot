@@ -5,14 +5,14 @@ import { prisma } from '../../../helpers/db.js'
 import { formatRules } from '../utils.js'
 import { getRuleFirst, ruleAutocomplete } from '../utils.js'
 
-export const automod_remove = new SleetSlashSubcommand(
+export const automod_delete = new SleetSlashSubcommand(
   {
-    name: 'remove',
-    description: 'Remove a rule from automod',
+    name: 'delete',
+    description: 'Delete a rule from automod',
     options: [
       {
         name: 'rule',
-        description: 'The rule to remove',
+        description: 'The rule to delete',
         type: ApplicationCommandOptionType.String,
         required: true,
         autocomplete: ruleAutocomplete,
@@ -20,11 +20,11 @@ export const automod_remove = new SleetSlashSubcommand(
     ],
   },
   {
-    run: runAutomodRemove,
+    run: runAutomodDelete,
   },
 )
 
-async function runAutomodRemove(interaction: ChatInputCommandInteraction) {
+async function runAutomodDelete(interaction: ChatInputCommandInteraction) {
   inGuildGuard(interaction)
   await interaction.deferReply()
 

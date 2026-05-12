@@ -9,7 +9,8 @@ import { rules } from '../rules/index.js'
 import { formatRule, ruleAutocomplete } from '../utils.js'
 import { addOptions } from './add.js'
 
-// oxlint-disable-next-line oxc/no-map-spread: we want to copy the options to avoid mutating the add options
+// we want to copy the options to avoid mutating the add options
+// oxlint-disable-next-line oxc/no-map-spread
 const addOpts = addOptions.map((opt) => {
   return {
     ...opt,
@@ -47,7 +48,7 @@ export const automod_edit = new AutomodRuleGroup(
     name: 'edit',
     description: 'Edit an existing automod rule',
     requireParams: false,
-    options: rules.map((opt) => opt.withBodyOptions(editOptions, true)),
+    options: rules.map((opt) => opt.withBodyOptions(editOptions)),
   },
   {
     async runResult(interaction, _rule, params) {

@@ -52,7 +52,7 @@ export const regexRule = new AutomodRule(
     },
 
     async messageCreate(message): Promise<AutomodEventResult> {
-      if (message.author.bot || !message.inGuild()) {
+      if (message.author.bot || message.system || !message.inGuild()) {
         return
       }
 

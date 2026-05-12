@@ -32,6 +32,7 @@ import {
   getGuild,
   getMembers,
   inGuildGuard,
+  PreRunError,
   SleetSlashCommand,
   SleetUserCommand,
 } from 'sleetcord'
@@ -267,7 +268,7 @@ const createDeleteChannelRow = (userId?: string | null) =>
       .setStyle(ButtonStyle.Danger),
   )
 
-interface MuteParams {
+interface InteractionMuteParams {
   interaction: CommandInteraction
   action: MuteAction
   members: GuildMember[]
@@ -285,26 +286,113 @@ async function runMute({
   ephemeral = false,
   channel = null,
   separateChannels = false,
-}: MuteParams): Promise<unknown> {
+}: InteractionMuteParams) {
   inGuildGuard(interaction)
   const guild = await getGuild(interaction, true)
 
   await botHasPermissionsGuard(interaction, ['ManageRoles'])
 
-  if (members.length === 0) {
-    await interaction.reply({
-      content: `Failed to resolve any members to ${action}, are they still in the server?`,
-      flags: MessageFlags.Ephemeral,
-    })
-    return
-  }
-
-  const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
-
   const response = await interaction.deferReply({
     flags: ephemeral ? MessageFlags.Ephemeral : '0',
     withResponse: true,
   })
+
+  const result = await muteMembers({
+    guild,
+    executor: interaction.member as GuildMember,
+    action,
+    members,
+    reason,
+    ephemeral,
+    sourceChannel: interaction.channel,
+    messageLink: responseMessageLink(interaction, response),
+    muteChannel: channel,
+    separateChannels,
+  })
+
+  if (result.success) {
+    await interaction.editReply({
+      content: result.content ?? null,
+      components: result.components ?? [],
+    })
+  } else {
+    await interaction.editReply({
+      content: result.content,
+    })
+  }
+}
+
+interface MuteMembersParams {
+  /** The guild where the action is taking place */
+  guild: Guild
+  /** The member executing the action */
+  executor: GuildMember
+  /** The action to perform (mute or unmute) */
+  action: MuteAction
+  /** The members to be muted or unmuted */
+  members: GuildMember[]
+  /** The reason for the action */
+  reason?: string | null
+  /** Whether the action should be ephemeral */
+  ephemeral?: boolean
+  /** The channel where the action was initiated */
+  sourceChannel?: GuildTextBasedChannel | null
+  /** The link to the message associated with the action */
+  messageLink?: string | null
+  /** The channel where the mute should be applied */
+  muteChannel?: NonThreadGuildTextBasedChannel | null
+  /** Whether to mute members in separate channels */
+  separateChannels?: boolean
+}
+
+interface MuteMembersSuccess {
+  success: true
+  members: GuildMember[]
+  content?: string
+  components?: ActionRowBuilder<ButtonBuilder>[]
+}
+
+interface MuteMembersFailure {
+  success: false
+  members: GuildMember[]
+  content: string
+}
+
+type MuteResult = MuteMembersSuccess | MuteMembersFailure
+
+/**
+ * Mute or unmute the specified members
+ */
+export async function muteMembers({
+  guild,
+  executor,
+  action,
+  members,
+  reason = null,
+  ephemeral = false,
+  sourceChannel = null,
+  messageLink = null,
+  muteChannel = null,
+  separateChannels = false,
+}: MuteMembersParams): Promise<MuteResult> {
+  const me = await guild.members.fetchMe()
+  const myPermissions = me.permissions
+
+  const missingPermissions = myPermissions.missing(['ManageRoles'])
+
+  if (missingPermissions.length > 0) {
+    throw new PreRunError(`I'm missing these permissions: ${missingPermissions.join(', ')}`)
+  }
+
+  if (members.length === 0) {
+    return {
+      success: false,
+      members,
+      content: `Failed to resolve any members to ${action}, are they still in the server?`,
+    }
+  }
+
+  const capitalAction = action === 'mute' ? 'Muted' : 'Unmuted'
 
   const config: Prisma.MuteConfigGetPayload<true> =
     (await prisma.muteConfig.findUnique({
@@ -313,28 +401,29 @@ async function runMute({
       },
     })) ?? CONFIG_DEFAULT
 
-  const interactionMember = await guild.members.fetch(interaction.user.id)
-  const me = await guild.members.fetchMe()
-  const userHighestRole = interactionMember.roles.highest
+  const userHighestRole = executor.roles.highest
   const myHighestRole = me.roles.highest
   const mutedRole = findMutedRole(guild, config.roleID)
 
   if (!mutedRole) {
-    await interaction.editReply({
-      content: `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
-        '`, `',
-      )}\``,
-    })
-    return
+    const content = `No muted role found, specify a role using \`/mute_manage\` or set up a role with one of the following names: \`${mutedRoles.join(
+      '`, `',
+    )}\``
+
+    return {
+      success: false,
+      members,
+      content,
+    }
   }
 
-  const isOwner = interactionMember.id === guild.ownerId
+  const isOwner = executor.id === guild.ownerId
   if (!isOwner && mutedRole.comparePositionTo(userHighestRole) > 0) {
-    await interaction.editReply({
+    return {
+      success: false,
+      members,
       content: `Your highest role needs to be higher than ${mutedRole} to ${action}`,
-      allowedMentions: { parse: [] },
-    })
-    return
+    }
   }
 
   const toAction: GuildMember[] = []
@@ -346,7 +435,7 @@ async function runMute({
 
     if (member.id === me.user.id) {
       earlyFailed.push({ member, reason: 'This is me.' })
-    } else if (member.id === interaction.user.id) {
+    } else if (member.id === executor.user.id) {
       earlyFailed.push({ member, reason: `You cannot ${action} yourself.` })
     } else if (!isOwner && member.roles.highest.position >= userHighestRole.position) {
       earlyFailed.push({
@@ -374,14 +463,14 @@ async function runMute({
   }
 
   if (toAction.length === 0) {
-    await interaction.editReply({
+    return {
+      success: false,
+      members,
       content: `No valid users to ${action}.\n${formatFails(earlyFailed)}`,
-      allowedMentions: { parse: [] },
-    })
-    return
+    }
   }
 
-  const formattedReason = `${capitalAction} by ${interactionMember.displayName}${reason ? ` for "${reason}"` : ''}`
+  const formattedReason = `${capitalAction} by ${executor.displayName}${reason ? ` for "${reason}"` : ''}`
 
   const { succeeded, failed, addendum, components } = await (action === 'mute'
     ? muteAction({
@@ -389,17 +478,17 @@ async function runMute({
         members: toAction,
         mutedRole,
         reason: formattedReason,
-        channel,
+        channel: muteChannel,
         separateChannels: separateChannels,
-        executor: interactionMember,
+        executor: executor,
       })
     : unmuteAction({
         config,
         members: toAction,
         mutedRole,
         reason: formattedReason,
-        sourceChannel: interaction.channel,
-        executor: interactionMember,
+        sourceChannel,
+        executor: executor,
       }))
 
   const totalFails = [...earlyFailed, ...failed]
@@ -407,8 +496,8 @@ async function runMute({
   const fail = totalFails.length > 0 ? `\n**Failed:**\n${formatFails(totalFails)}` : ''
 
   const content = `**${capitalAction}:**${succ}${fail}`
-  const url = responseMessageLink(interaction, response)
-  const byLine = `By ${formatUser(interactionMember)} in ${url}${ephemeral ? ' (ephemeral)' : ''}`
+  const url = messageLink ?? sourceChannel
+  const byLine = `By ${formatUser(executor)}${url ? ` in ${url}` : ''}${ephemeral ? ' (ephemeral)' : ''}`
 
   const formattedAddendum = addendum && addendum.length > 0 ? `\n${addendum}` : ''
 
@@ -437,21 +526,20 @@ async function runMute({
   const formattedFeedback = `${content}${formattedAddendum}`
 
   if (formattedFeedback.length >= 1950) {
-    await interaction.editReply({
+    return {
+      success: true,
+      members: succeeded.map((s) => s.member),
       content: `**${capitalAction}**: ${plural('user', succeeded.length)}\nDetails are too long to show here, see attachment:`,
       components: components ?? [],
-      allowedMentions: { parse: [] },
-    })
-    return
+    }
   }
 
-  await interaction.editReply({
+  return {
+    success: true,
+    members: succeeded.map((s) => s.member),
     content: formattedFeedback,
     components: components ?? [],
-    allowedMentions: { parse: [] },
-  })
-
-  return
+  }
 }
 
 /**

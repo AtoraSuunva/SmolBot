@@ -2,8 +2,8 @@ import { SleetSlashCommand } from 'sleetcord'
 
 import { automodMiddleware } from './automodMiddleware.js'
 import { automod_add } from './commands/add.js'
+import { automod_delete } from './commands/delete.js'
 import { automod_edit } from './commands/edit.js'
-import { automod_remove } from './commands/remove.js'
 import { automod_view } from './commands/view.js'
 import { rules } from './rules/index.js'
 
@@ -17,7 +17,7 @@ export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [automod_add, automod_view, automod_edit, automod_remove],
+    options: [automod_add, automod_view, automod_edit, automod_delete],
   },
   {},
   {

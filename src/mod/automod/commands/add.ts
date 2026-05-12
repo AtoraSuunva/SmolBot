@@ -14,6 +14,7 @@ export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
     description: 'Name of the rule (for your reference, not shown to users)',
     type: ApplicationCommandOptionType.String,
     required: true,
+    max_length: 100,
   },
   {
     name: 'action',

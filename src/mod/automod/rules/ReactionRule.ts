@@ -23,14 +23,14 @@ export const reactionFilterRule = new AutomodRule(
     ] as const,
   },
   {
-    async run(i) {
-      const emoji = i.options.getString('emoji', true)
-      const del = i.options.getBoolean('delete') ?? false
+    async run(i, required) {
+      const emoji = i.options.getString('emoji', required)
+      const del = i.options.getBoolean('delete', required) ?? false
 
-      return Promise.resolve({
+      return {
         emoji,
         delete: del,
-      })
+      }
     },
 
     async messageReactionAdd(reaction, user): Promise<AutomodEventResult> {

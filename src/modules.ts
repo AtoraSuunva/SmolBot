@@ -7,10 +7,10 @@ import { secretModules } from './secret/index.js'
 import { utilityModules } from './utility/index.js'
 
 export const modules: SleetModule[] = [
+  logging,
+  sentryLogger,
   ...miscModules,
   ...modModules,
   ...secretModules,
   ...utilityModules,
-  logging,
-  sentryLogger,
 ]
