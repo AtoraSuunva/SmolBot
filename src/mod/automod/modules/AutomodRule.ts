@@ -186,9 +186,17 @@ export class AutomodRule<
    * This allows you to add new options to the rule like "name" and "description" without having to redefine the entire rule, for example to have /automod add repeat name:foo message:stop that repeats:1 interval:10 and `/automod add repeat name:bar message:stop that repeats:3 interval:10`
    *
    * New options are prepended to the existing options, so they will show up first when adding/editing rules
+   *
+   * @param options The new options to add to the rule
+   * @param replace If true, replace the options instead of merging them
+   * @param required If undefined, keep the existing required values. If true or false, override all options to be required: true/false
    */
-  withBodyOptions(options: NonNullable<SleetSlashSubcommandBody['options']>, replace = false) {
-    const newOptions = replace ? options : [...options, ...(this.inputBody.options ?? [])]
+  withBodyOptions(
+    options: NonNullable<SleetSlashSubcommandBody['options']>,
+    replace = false,
+    required?: boolean,
+  ) {
+    let newOptions = replace ? options : [...options, ...(this.inputBody.options ?? [])]
 
     // required options need to be first
     newOptions.sort((a, b) => {
@@ -201,6 +209,13 @@ export class AutomodRule<
 
       return 0
     })
+
+    if (required !== undefined) {
+      newOptions = newOptions.map((opt) => ({
+        ...opt,
+        required: required,
+      }))
+    }
 
     return new AutomodRule(
       {

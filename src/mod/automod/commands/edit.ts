@@ -26,7 +26,6 @@ const editOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
     required: true,
     autocomplete: ruleAutocomplete,
   },
-  ...addOpts,
 ]
 
 function assignDefined(
@@ -48,7 +47,10 @@ export const automod_edit = new AutomodRuleGroup(
     name: 'edit',
     description: 'Edit an existing automod rule',
     requireParams: false,
-    options: rules.map((opt) => opt.withBodyOptions(editOptions)),
+    options: rules.map((opt) =>
+      // add addOpts as non-required options and then add editOptions as required
+      opt.withBodyOptions(addOpts, false, false).withBodyOptions(editOptions),
+    ),
   },
   {
     async runResult(interaction, _rule, params) {
