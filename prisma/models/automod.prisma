@@ -16,7 +16,11 @@ model AutomodRule {
   // Action to take when rule is triggered, e.g. "timeout", "ban", "kick", "mute", "log"
   action     String  @default("log")
   // Duration of the action in seconds, if applicable (e.g. for timeout)
-  duration   Int?
+  duration   Int     @default(30)
   // Parameters the rule takes, as JSON
   parameters Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @default(now()) @map("updated_at")
+
+  @@index([guildID])
 }

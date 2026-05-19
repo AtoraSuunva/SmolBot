@@ -55,8 +55,10 @@ export const mute_manage = new SleetSlashCommand(
       {
         name: 'max_channels',
         description:
-          'Max number of channels to create. An overflow channel is created for any extra users (default: 25)',
+          'Max number of channels to create. At the cap, new mutes are placed in the last channel (default: 50)',
         type: ApplicationCommandOptionType.Integer,
+        min_value: 1,
+        max_value: 50,
       },
       {
         name: 'channel_topic',
@@ -128,7 +130,7 @@ async function runMuteManage(interaction: ChatInputCommandInteraction) {
     separateUsers: separateUsers ?? oldConfig?.separateUsers ?? false,
     categoryID: category?.id ?? oldConfig?.categoryID ?? null,
     nameTemplate: nameTemplate ?? oldConfig?.nameTemplate ?? 'muted-{user}',
-    maxChannels: maxChannels ?? oldConfig?.maxChannels ?? 25,
+    maxChannels: maxChannels ?? oldConfig?.maxChannels ?? null,
     channelTopic: channelTopic ?? oldConfig?.channelTopic ?? null,
     starterMessage: starterMessage ?? oldConfig?.starterMessage ?? null,
   }

@@ -1,10 +1,28 @@
 import { type BaseValidator, type MappedObjectValidator, s } from '@sapphire/shapeshift'
 import {
+  APISelectMenuComponent,
+  APISelectMenuDefaultValue,
   ApplicationCommandOptionType,
   Awaitable,
+  BaseSelectMenuBuilder,
+  ChannelSelectMenuBuilder,
   ChatInputCommandInteraction,
+  CheckboxBuilder,
+  CheckboxGroupBuilder,
+  ComponentType,
+  FileUploadBuilder,
+  LabelBuilder,
+  MentionableSelectMenuBuilder,
+  ModalBuilder,
+  RoleSelectMenuBuilder,
+  SelectMenuDefaultValueType,
   SendableChannels,
+  StringSelectMenuBuilder,
+  TextDisplayBuilder,
+  TextInputBuilder,
+  TextInputStyle,
   User,
+  UserSelectMenuBuilder,
 } from 'discord.js'
 import {
   ListenerResult,
@@ -15,7 +33,8 @@ import {
   type SleetSlashSubcommandBody,
 } from 'sleetcord'
 
-import { AutomodAction } from '../actions.js'
+import { AutomodAction, automodActionStringSelectChoices } from '../actions.js'
+import { RuleInfo } from '../utils.js'
 
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
   T extends ApplicationCommandOptionType.String
@@ -226,4 +245,338 @@ export class AutomodRule<
       this.inputOptions,
     )
   }
+
+  asDetailEditModal(rule: RuleInfo): ModalBuilder {
+    const modal = new ModalBuilder({
+      customId: `automod:edit:${rule.ruleID}`,
+      title: `Edit Rule "${rule.name}" (${rule.ruleID})`,
+    })
+
+    const nameInput = new TextInputBuilder({
+      customId: 'name',
+      style: TextInputStyle.Short,
+      value: rule.name,
+      placeholder: 'Use a name that helps you remember what this rule does',
+      required: true,
+      maxLength: 100,
+    })
+
+    const nameLabel = new LabelBuilder({
+      label: 'Name',
+      description: 'Name of the rule (for your reference, not shown to members)',
+    }).setTextInputComponent(nameInput)
+
+    // we don't want to mutate the original choices
+    // oxlint-disable-next-line oxc/no-map-spread
+    const options = automodActionStringSelectChoices.map((choice) => ({
+      ...choice,
+      default: choice.value === rule.action,
+    }))
+
+    const actionSelect = new StringSelectMenuBuilder({
+      customId: 'action',
+      required: true,
+      minValues: 1,
+      maxValues: 1,
+      options,
+    })
+
+    const actionLabel = new LabelBuilder({
+      label: 'Action',
+      description: 'Action to take when the rule is triggered',
+    }).setStringSelectMenuComponent(actionSelect)
+
+    const messageInput = new TextInputBuilder({
+      customId: 'message',
+      style: TextInputStyle.Paragraph,
+      value: rule.message ?? '',
+      placeholder: "Keep your message short and concise. Members won't read long messages.",
+      required: false,
+      maxLength: 1500,
+    })
+
+    const messageLabel = new LabelBuilder({
+      label: 'Message',
+      description:
+        'Message to show to members when the rule is triggered (use "-" or leave empty for a silent rule)',
+    }).setTextInputComponent(messageInput)
+
+    const durationInput = new TextInputBuilder({
+      customId: 'duration',
+      style: TextInputStyle.Short,
+      value: rule.duration ? String(rule.duration) : '',
+      placeholder: 'Enter a whole number in seconds (e.g. 30 for 30 seconds, 3600 for 1 hour)',
+      required: false,
+    })
+
+    const durationLabel = new LabelBuilder({
+      label: 'Duration',
+      description: 'Duration of the punishment in seconds for timeouts (default: 30s)',
+    }).setTextInputComponent(durationInput)
+
+    const howToEditParamsTextDisplay = new TextDisplayBuilder({
+      content: `To edit the parameters of the rule, use the slash command \`/automod edit ${rule.type} rule:${rule.ruleID}\`. Discord does not allow modals to have more than 5 input components, which is not enough :(`,
+    })
+
+    modal.addLabelComponents(nameLabel, actionLabel, messageLabel, durationLabel)
+    modal.addTextDisplayComponents(howToEditParamsTextDisplay)
+    return modal
+  }
+
+  asParameterEditModal(rule: RuleInfo): ModalBuilder {
+    const modal = new ModalBuilder({
+      customId: `automod:edit-params:${rule.ruleID}`,
+      title: `Edit Rule "${rule.name}" (${rule.ruleID})`,
+    })
+
+    const modalOptionLimit = 5
+    let currentOptions = 0
+
+    for (const option of this.inputBody.options ?? []) {
+      if (currentOptions + 1 >= modalOptionLimit) {
+        const remaining = (this.inputBody.options?.length ?? 0) - currentOptions
+        modal.addTextDisplayComponents({
+          type: ComponentType.TextDisplay,
+          content: `And ${remaining} more option${remaining === 1 ? '' : 's'}... Use \`/automod edit ${rule.type} rule:${rule.ruleID}\` to edit those options for now.`,
+        })
+        break
+      }
+
+      currentOptions++
+
+      const label = new LabelBuilder().setLabel(option.name).setDescription(option.description)
+      const value =
+        option.name in rule
+          ? // oxlint-disable-next-line typescript/no-base-to-string
+            String(rule[option.name as keyof typeof rule])
+          : rule.parameters && typeof rule.parameters === 'object' && option.name in rule.parameters
+            ? // oxlint-disable-next-line typescript/no-base-to-string
+              String(rule.parameters[option.name as keyof typeof rule.parameters])
+            : ''
+
+      switch (option.type) {
+        case ApplicationCommandOptionType.String:
+        case ApplicationCommandOptionType.Number:
+        case ApplicationCommandOptionType.Integer: {
+          if (option.choices) {
+            const selectMenu = new StringSelectMenuBuilder({
+              required: option.required ?? false,
+            })
+
+            for (const choice of option.choices) {
+              selectMenu.addOptions({
+                label: choice.name,
+                value: String(choice.value),
+                default: String(choice.value) === value,
+              })
+            }
+
+            label.setStringSelectMenuComponent(selectMenu)
+            break
+          }
+
+          const textInput = new TextInputBuilder({
+            style:
+              option.type === ApplicationCommandOptionType.String
+                ? TextInputStyle.Paragraph
+                : TextInputStyle.Short,
+            value,
+          })
+
+          if (option.required !== undefined) {
+            textInput.setRequired(option.required)
+          }
+
+          if (option.type === ApplicationCommandOptionType.String) {
+            if (option.min_length !== undefined) {
+              textInput.setMinLength(option.min_length)
+            }
+
+            if (option.max_length !== undefined) {
+              textInput.setMaxLength(option.max_length)
+            }
+          }
+
+          label.setTextInputComponent(textInput)
+          break
+        }
+
+        case ApplicationCommandOptionType.Boolean: {
+          const checkbox = new CheckboxBuilder({
+            custom_id: option.name,
+            default: value === 'true',
+          })
+
+          label.setCheckboxComponent(checkbox)
+          break
+        }
+
+        case ApplicationCommandOptionType.User:
+        case ApplicationCommandOptionType.Channel:
+        case ApplicationCommandOptionType.Role:
+        case ApplicationCommandOptionType.Mentionable: {
+          const defaults = value
+            .split(',')
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+
+          switch (option.type) {
+            case ApplicationCommandOptionType.User:
+              label.setUserSelectMenuComponent(
+                new UserSelectMenuBuilder({
+                  defaultValues: defaultValuesForType(defaults, SelectMenuDefaultValueType.User),
+                }),
+              )
+              break
+
+            case ApplicationCommandOptionType.Channel:
+              const selectMenu = new ChannelSelectMenuBuilder({
+                defaultValues: defaultValuesForType(defaults, SelectMenuDefaultValueType.Channel),
+              })
+
+              if (option.channel_types) {
+                selectMenu.setChannelTypes(option.channel_types)
+              }
+
+              label.setChannelSelectMenuComponent(selectMenu)
+              break
+
+            case ApplicationCommandOptionType.Role:
+              label.setRoleSelectMenuComponent(
+                new RoleSelectMenuBuilder({
+                  defaultValues: defaultValuesForType(defaults, SelectMenuDefaultValueType.Role),
+                }),
+              )
+              break
+
+            case ApplicationCommandOptionType.Mentionable:
+              label.setMentionableSelectMenuComponent(
+                new MentionableSelectMenuBuilder({
+                  defaultValues: defaultValuesForType(defaults),
+                }),
+              )
+              break
+          }
+
+          const input = label.data.component as BaseSelectMenuBuilder<APISelectMenuComponent>
+
+          input.setMaxValues(1)
+
+          if (option.required !== undefined) {
+            input.setRequired(option.required)
+          }
+
+          break
+        }
+
+        case ApplicationCommandOptionType.Attachment: {
+          const existing = value
+            ? value
+                .split(',')
+                .map((v) => v.trim())
+                .filter((v) => v.length > 0)
+            : []
+
+          if (existing.length > 0) {
+            const checkboxGroup = new CheckboxGroupBuilder({
+              custom_id: `keep:${option.name}`,
+            })
+
+            for (const file of existing) {
+              checkboxGroup.addOptions({
+                label: file,
+                value: file,
+                default: true,
+              })
+            }
+
+            const checkboxGroupLabel = new LabelBuilder()
+              .setLabel(`Attachments to keep:`)
+              .setCheckboxGroupComponent(checkboxGroup)
+            modal.addLabelComponents(checkboxGroupLabel)
+          }
+
+          const fileInput = new FileUploadBuilder({
+            required: option.required ?? false,
+          })
+
+          label.setFileUploadComponent(fileInput)
+          break
+        }
+
+        default:
+          // @ts-expect-error we want this to be a compile error if there's a new option type and forget to handle it here
+          throw new Error(`Invalid option type for automod: ${option.type}`)
+      }
+
+      if (label.data.component) {
+        label.data.component.setCustomId(option.name)
+        modal.addLabelComponents(label)
+      }
+    }
+
+    if (modal.components.length === 0) {
+      modal.addTextDisplayComponents({
+        type: ComponentType.TextDisplay,
+        content: 'No options to edit for this rule',
+      })
+    }
+
+    return modal
+  }
+}
+
+/**
+ * Helper function to create default values for select menu components based on the option type and a list of string values (IDs)
+ *
+ * Values can either be prefixed IDs:
+ *
+ * ```js
+ * U:74768773940256768   // User ID
+ * C:211956704798048256  // Channel ID
+ * R:524137689184862229  // Role ID
+ * ```
+ *
+ * Or if an overrideType is provided, they can be raw IDs without prefixes, and the overrideType will be used for all values:
+ *
+ * ```js
+ * // Role ID will be treated as a User ID and the prefix will be ignored
+ * defaultValuesForType(['74768773940256768', 'R:211956704798048256'], SelectMenuDefaultValueType.User)
+ * ```
+ *
+ * @param values The list of string values (IDs) to convert to default values
+ * @param overrideType If provided, all values will be treated as this type. Any prefixes will be overridden
+ * @returns An array of APISelectMenuDefaultValue objects to be used as default values for select menu components
+ */
+function defaultValuesForType<T extends SelectMenuDefaultValueType>(
+  values: string[],
+  overrideType?: T,
+): APISelectMenuDefaultValue<T>[] {
+  if (overrideType) {
+    return values.map((value) => ({ type: overrideType, id: value.split(':')[1] ?? value }))
+  }
+
+  return values.map((value) => {
+    const [prefix, id] = value.split(':')
+    let type: SelectMenuDefaultValueType
+
+    switch (prefix) {
+      case 'U':
+        type = SelectMenuDefaultValueType.User
+        break
+
+      case 'C':
+        type = SelectMenuDefaultValueType.Channel
+        break
+
+      case 'R':
+        type = SelectMenuDefaultValueType.Role
+        break
+
+      default:
+        throw new Error(`Invalid default prefix for value: ${value}`)
+    }
+
+    return { type, id } as APISelectMenuDefaultValue<T>
+  })
 }

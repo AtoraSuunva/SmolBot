@@ -32,6 +32,8 @@ interface FormatConfigOptions<Config extends Record<string, Value>> {
   omit?: (keyof Config)[]
   /** Whether to snake_case the keys */
   snakeCase?: boolean
+  /** Whether to omit keys with null or undefined values */
+  omitNullOrUndefined?: boolean
 }
 
 export const guildFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
@@ -67,7 +69,34 @@ const defaultFormatters: Record<string, GuildFormatter<Value>> = {
 }
 
 /**
- * Format a configuration object into a string, with appropriate formatting
+ * Format a configuration object into a codeblock that can be displayed to users
+ *
+ * ```ts
+ * const config = {
+ *   guild_id: '123456789012345678',
+ *   channel_id: '987654321098765432',
+ *   role_id: '111111111111111111',
+ *   some_string: 'hello world',
+ *   some_number: 42,
+ *   some_boolean: true,
+ * }
+ *
+ * const formatted = formatConfig({
+ *   config,
+ *   guild: myGuild, // a Guild object with the above IDs
+ * })
+ * ```
+ *
+ * Formatted output:
+ *
+ * ```ini
+ * guild_id     = myGuildName (123456789012345678)
+ * channel_id   = #myChannelName (987654321098765432)
+ * role_id      = @myRoleName (111111111111111111)
+ * some_string  = hello world
+ * some_number  = 42
+ * some_boolean = true
+ * ```
  * @param options The options for formatting the config
  * @returns The formatted config, as a string
  */
@@ -82,6 +111,7 @@ export function formatConfig<Config extends Record<string, Value>>(
     mapKeys = {} as NonNullable<FormatConfigOptions<Config>['mapKeys']>,
     oldConfig,
     omit = ['guildid', 'updatedat', 'createdat'],
+    omitNullOrUndefined = false,
     snakeCase = true,
   } = options
 
@@ -91,7 +121,11 @@ export function formatConfig<Config extends Record<string, Value>>(
 
   const formatted = Object.entries(config)
     .sort(([key1], [key2]) => key1.localeCompare(key2))
-    .filter(([key]) => !omit.includes(key.toLowerCase()))
+    .filter(
+      ([key, value]) =>
+        !omit.includes(key.toLowerCase()) &&
+        !(omitNullOrUndefined && (value === null || value === undefined)),
+    )
     .map(([key, value]): [string, Value] => {
       const isNew = oldConfig && oldConfig[key] !== value
       let displayKey = mapKeys[key as keyof Config] ?? key
@@ -119,6 +153,51 @@ export function formatConfig<Config extends Record<string, Value>>(
     .join('\n')
 
   return codeBlock('ini', cleanCodeBlockContent(formatted))
+}
+
+/**
+ * Parse a config string in the format of `key = value` pairs into an object.
+ * This does not perform any advanced parsing, all values are returned as strings.
+ *
+ * @example
+ * const configStr = `
+ *   guild_id = 123456789012345678
+ *   channel_id = 987654321098765432
+ *   role_id = 111111111111111111
+ *   some_string = hello world
+ *   some_number = 42
+ *   some_boolean = true
+ * `
+ *
+ * const config = parseConfig(configStr)
+ *
+ * config = {
+ *   guild_id: '123456789012345678',
+ *   channel_id: '987654321098765432',
+ *   role_id: '111111111111111111',
+ *   some_string: 'hello world',
+ *   some_number: '42',
+ *   some_boolean: 'true',
+ * }
+ *
+ * @param configStr The config string to parse
+ * @returns The parsed config object
+ */
+export function parseConfig(configStr: string): Record<string, string> {
+  const config: Record<string, string> = {}
+
+  const lines = configStr.split('\n')
+
+  for (const line of lines) {
+    if (!line.includes('=')) continue
+
+    const [key, ...rest] = line.split('=')
+    if (!key || rest.length === 0) continue
+
+    config[key.trim()] = rest.join('=').trim()
+  }
+
+  return config
 }
 
 /**

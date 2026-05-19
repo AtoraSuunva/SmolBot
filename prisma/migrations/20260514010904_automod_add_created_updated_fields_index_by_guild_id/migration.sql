@@ -1,0 +1,21 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_AutomodRule" (
+    "rule_id" TEXT NOT NULL PRIMARY KEY,
+    "guild_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "message" TEXT,
+    "action" TEXT NOT NULL DEFAULT 'log',
+    "duration" INTEGER,
+    "parameters" JSONB NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO "new_AutomodRule" ("action", "duration", "guild_id", "message", "name", "parameters", "rule_id", "type") SELECT "action", "duration", "guild_id", "message", "name", "parameters", "rule_id", "type" FROM "AutomodRule";
+DROP TABLE "AutomodRule";
+ALTER TABLE "new_AutomodRule" RENAME TO "AutomodRule";
+CREATE INDEX "AutomodRule_guild_id_idx" ON "AutomodRule"("guild_id");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;

@@ -1,9 +1,16 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction } from 'discord.js'
-import { escapeAllMarkdown, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
+import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction,
+  Colors,
+  MessageComponentInteraction,
+  MessageFlags,
+  TextDisplayBuilder,
+} from 'discord.js'
+import { escapeAllMarkdown, formatUser, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
 import { prisma } from '../../../helpers/db.js'
-import { formatRules } from '../utils.js'
-import { getRuleFirst, ruleAutocomplete } from '../utils.js'
+import { formatRuleDetails } from '../utils.js'
+import { findFirstRule, ruleAutocomplete } from '../utils.js'
 
 export const automod_delete = new SleetSlashSubcommand(
   {
@@ -26,16 +33,38 @@ export const automod_delete = new SleetSlashSubcommand(
 
 async function runAutomodDelete(interaction: ChatInputCommandInteraction) {
   inGuildGuard(interaction)
-  await interaction.deferReply()
-
   const ruleID = interaction.options.getString('rule', true)
 
-  const rule = await getRuleFirst({ guildID: interaction.guildId, ruleID })
+  return deleteAndReply(interaction, ruleID)
+}
+
+export async function handleDeleteInteraction(
+  interaction: MessageComponentInteraction<'cached' | 'raw'>,
+  params: string[],
+) {
+  const ruleID = params[0]
+
+  return deleteAndReply(interaction, ruleID)
+}
+
+async function deleteAndReply(
+  interaction:
+    | ChatInputCommandInteraction<'cached' | 'raw'>
+    | MessageComponentInteraction<'cached' | 'raw'>,
+  ruleID: string,
+) {
+  const rule = await findFirstRule({ guildID: interaction.guildId, ruleID })
 
   if (!rule) {
-    await interaction.editReply(`No rule found with ID "${escapeAllMarkdown(ruleID)}"`)
+    await interaction.reply({
+      content: `No rule found with ID "${escapeAllMarkdown(ruleID)}"`,
+      flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
+    })
     return
   }
+
+  await interaction.deferReply()
 
   const oldRule = await prisma.automodRule.delete({
     where: {
@@ -43,7 +72,14 @@ async function runAutomodDelete(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  await interaction.editReply(
-    `Removed rule "${oldRule.name}" from automod:\n${formatRules([oldRule])}`,
-  )
+  const header = new TextDisplayBuilder({
+    content: `${formatUser(interaction.user)} deleted rule "${escapeAllMarkdown(oldRule.name)}" (${oldRule.ruleID})`,
+  })
+  const container = formatRuleDetails(oldRule, { showButtons: false, accentColor: Colors.Red })
+
+  await interaction.editReply({
+    components: [header, container],
+    flags: MessageFlags.IsComponentsV2,
+    allowedMentions: { parse: [] },
+  })
 }

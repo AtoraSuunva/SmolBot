@@ -810,6 +810,15 @@ async function muteAction({
     try {
       let mutedChannel = channel
 
+      // Check if we're at the cap of channels created in the category
+      const limit = config.maxChannels ?? 50
+      if (category.children.cache.size >= limit) {
+        // Use the last channel in the category
+        mutedChannel = category.children.cache
+          .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
+          .last() as NonThreadGuildTextBasedChannel
+      }
+
       if (!mutedChannel) {
         const firstUser = succeeded[0].member
 
@@ -822,8 +831,12 @@ async function muteAction({
             .fetch()
             .then((c) => Array.from(c.values()).map((c) => c?.name))
 
-          const limit = config.maxChannels ?? 25
-          for (let i = 1; i < limit; i++) {
+          // We already checked if we were at the channel limit, so we know there's a free name available
+          // i.e. if there's 25+ channels and the limit is 25, then the fallback logic above already picked a muteChannel and this block never runs
+          // if there's 24 channels and the limit is 25, there's at least 1 channel name that's free
+          // even if the names aren't sequential or continuous (e.g. muted-1, muted-2, muted-4), there's always a free name (muted-3) that this block will find
+          // in a sort-of "empty pigeonhole" scenario
+          for (let i = 1; i <= limit; i++) {
             const possibleName = channelName.replace('{i}', i.toString())
             if (!existingChannels.includes(possibleName)) {
               channelName = possibleName
