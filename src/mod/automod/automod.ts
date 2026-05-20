@@ -10,8 +10,7 @@ import { automod_view, handleViewInteraction } from './commands/view.js'
 import { rules } from './rules/index.js'
 
 // TODO for automod:
-// - [ ] Add more rules (phash, pressure spam, newlines, etc)
-// - [ ] Run rules in batch (i.e. pass an array of params to the rule so it can handle it all at once. This allows any parsing/sanitization to be done once instead of per message per rule)
+// - [ ] Add more rules (phash, pressure, newlines, forbidden, emoji-only, embeds, scam)
 
 export const automod = new SleetSlashCommand(
   {

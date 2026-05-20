@@ -14,6 +14,7 @@ import { Prisma } from '../../generated/prisma/client.js'
 import type { Prisma as PrismaType } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { formatConfig } from '../../helpers/format.js'
+import type { PrismaAutomodRule } from './automodMiddleware.js'
 import { rules } from './rules/index.js'
 
 export const automodTypes = rules.map((rule) => rule.name)
@@ -68,7 +69,7 @@ export type FindAutomodRulesParams = {
 }
 
 interface GetAutomodRulesPaginatedResult {
-  rules: RuleInfo[]
+  rules: PrismaAutomodRule[]
   count: number
   page: number
   pageSize: number
@@ -139,8 +140,6 @@ export async function findFirstRule({ guildID, ruleID }: GetAutomodRuleParams) {
   })
 }
 
-export type RuleInfo = Prisma.AutomodRuleGetPayload<true>
-
 export interface FormatRuleOptions {
   showButtons?: boolean
   accentColor?: Parameters<ContainerBuilder['setAccentColor']>[0]
@@ -149,19 +148,19 @@ export interface FormatRuleOptions {
 // -----------------------------------------------------------------
 // | ### 9d13a5ac: My reaction rule                                |
 // | Type: `reaction-filter`                                       |
-// | Action: `timeout` (15s)                                       |
+// | Action: `timeout (15s)`                                       |
 // | Message:                                                      |
 // | > No eggplant emoji allowed >:(                               |
 // |---------------------------------------------------------------|
 // | Parameters:                                                   |
 // | ```ini                                                        |
-// | emoji: 🍆                                                     |
+// | emoji = 🍆                                                    |
 // | ```                                                           |
 // |---------------------------------------------------------------|
 // | [Edit Rule] [Copy Rule] [Delete Rule]                         |
 // -----------------------------------------------------------------
 export function formatRuleDetails(
-  rule: RuleInfo,
+  rule: PrismaAutomodRule,
   { showButtons = true, accentColor }: FormatRuleOptions = {},
 ): ContainerBuilder {
   const container = new ContainerBuilder()
@@ -237,7 +236,7 @@ export function formatRuleDetails(
 // | parameters (json preview)                       |             |
 // -----------------------------------------------------------------
 export function formatRule(
-  rule: RuleInfo,
+  rule: PrismaAutomodRule,
   { showButtons = true, accentColor }: FormatRuleOptions = {},
 ): ContainerBuilder {
   const container = new ContainerBuilder()
@@ -279,7 +278,7 @@ export function formatRule(
   return container
 }
 
-export function formatRules(rules: RuleInfo[]): ContainerBuilder {
+export function formatRules(rules: PrismaAutomodRule[]): ContainerBuilder {
   const container = new ContainerBuilder()
 
   let first = true

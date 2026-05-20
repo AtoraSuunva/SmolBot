@@ -76,51 +76,63 @@ export const messageRepeatsRule = new AutomodRule(
       })
     },
 
-    async messageCreate(message): Promise<AutomodEventResult> {
+    async messageCreate(message): Promise<AutomodEventResult[]> {
       if (message.author.bot || message.system || !message.inGuild()) {
-        return
+        return []
       }
 
-      const { rule, params } = getAutomodStore<typeof messageRepeatsRule>()
+      const ruleInstances = getAutomodStore<typeof messageRepeatsRule>()
 
-      return checkForRepeats(
-        rule,
-        params,
-        message.content,
-        message.author,
-        message.guild,
-        message.channel as SendableChannels,
-        message,
+      return await Promise.all(
+        ruleInstances.map(({ rule, params }) =>
+          checkForRepeats(
+            rule,
+            params,
+            message.content,
+            message.author,
+            message.guild,
+            message.channel,
+            message,
+          ),
+        ),
       )
     },
 
-    async autoModerationActionExecution(action): Promise<AutomodEventResult> {
-      const { rule, params } = getAutomodStore<typeof messageRepeatsRule>()
+    async autoModerationActionExecution(action): Promise<AutomodEventResult[]> {
+      const ruleInstances = getAutomodStore<typeof messageRepeatsRule>()
+      const ruleResults: Promise<AutomodEventResult>[] = []
 
-      if (!params.native_automod || action.action.type !== AutoModerationActionType.BlockMessage) {
-        return
+      for (const { rule, params } of ruleInstances) {
+        if (
+          !params.native_automod ||
+          action.action.type !== AutoModerationActionType.BlockMessage
+        ) {
+          continue
+        }
+
+        // User that triggered the rule
+        const user = await this.client.users.fetch(action.userId).catch(() => null)
+        // Channel the rule alert was sent
+        const channel = action.alertSystemMessageId
+          ? ((await this.client.channels
+              .fetch(action.alertSystemMessageId)
+              .catch(() => null)) as SendableChannels)
+          : null
+
+        if (!user) {
+          // give up
+          continue
+        }
+
+        ruleResults.push(checkForRepeats(rule, params, action.content, user, action.guild, channel))
       }
 
-      // User that triggered the rule
-      const user = await this.client.users.fetch(action.userId).catch(() => null)
-      // Channel the rule alert was sent
-      const channel = action.alertSystemMessageId
-        ? ((await this.client.channels
-            .fetch(action.alertSystemMessageId)
-            .catch(() => null)) as SendableChannels)
-        : null
-
-      if (!user) {
-        // give up
-        return
-      }
-
-      return checkForRepeats(rule, params, action.content ?? '', user, action.guild, channel)
+      return Promise.all(ruleResults)
     },
   },
 )
 
-type MessageRepeatStore = AutomodStoreReturn<typeof messageRepeatsRule>
+type MessageRepeatStore = AutomodStoreReturn<typeof messageRepeatsRule>[number]
 
 /**
  * Check if a message is a repeat and should trigger the automod rule, and return the appropriate action if so
@@ -170,6 +182,7 @@ async function checkForRepeats(
       const seconds = Math.round((now - info.firstInfractionTimestamp) / 1000)
 
       return {
+        rule,
         logMessage: `Sent ${info.repeatCount} identical messages in ${plural('second', seconds)}`,
         targetUser: user,
         targetChannel: channel,

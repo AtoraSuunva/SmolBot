@@ -6,15 +6,17 @@ import {
   MessageComponentInteraction,
   MessageFlags,
   TextDisplayBuilder,
+  type ModalBuilder,
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser, inGuildGuard, SleetSlashSubcommandBody } from 'sleetcord'
 import { MINUTE } from 'sleetcord-common'
 
 import { Prisma } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
+import type { PrismaAutomodRule } from '../automodMiddleware.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { rules } from '../rules/index.js'
-import { formatRuleDetails, ruleAutocomplete, RuleInfo } from '../utils.js'
+import { formatRuleDetails, ruleAutocomplete } from '../utils.js'
 import { addOptions } from './add.js'
 
 // we want to copy the options to avoid mutating the add options
@@ -198,7 +200,7 @@ export async function handleEditInteraction(
   })
 }
 
-function createEditModal(ruleInfo: RuleInfo) {
+function createEditModal(ruleInfo: PrismaAutomodRule): ModalBuilder {
   const rule = rules.find((r) => r.name === ruleInfo.type)
 
   if (!rule) {

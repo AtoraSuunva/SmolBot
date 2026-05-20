@@ -34,7 +34,7 @@ import {
 } from 'sleetcord'
 
 import { AutomodAction, automodActionStringSelectChoices } from '../actions.js'
-import { RuleInfo } from '../utils.js'
+import type { PrismaAutomodRule } from '../automodMiddleware.js'
 
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
   T extends ApplicationCommandOptionType.String
@@ -118,6 +118,7 @@ function validatorFromType(
  * Apply an action to a target user, with an optional override for the action and duration
  */
 export interface AutomodTrigger {
+  rule: PrismaAutomodRule
   /** The message to append to the modlog log */
   logMessage?: string
   /** The user to apply the action to */
@@ -141,7 +142,7 @@ type AutomodEventHandlers<T extends SleetSlashSubcommandBody['options'] = []> = 
     [Event in keyof SlashEventHandlers]: (
       this: SleetContext,
       ...args: Parameters<NonNullable<SlashEventHandlers[Event]>>
-    ) => ListenerResult<AutomodEventResult>
+    ) => ListenerResult<AutomodEventResult[]>
   },
   'autocomplete' | 'run'
 > & {
@@ -246,7 +247,7 @@ export class AutomodRule<
     )
   }
 
-  asDetailEditModal(rule: RuleInfo): ModalBuilder {
+  asDetailEditModal(rule: PrismaAutomodRule): ModalBuilder {
     const modal = new ModalBuilder({
       customId: `automod:edit:${rule.ruleID}`,
       title: `Edit Rule "${rule.name}" (${rule.ruleID})`,
@@ -323,7 +324,7 @@ export class AutomodRule<
     return modal
   }
 
-  asParameterEditModal(rule: RuleInfo): ModalBuilder {
+  asParameterEditModal(rule: PrismaAutomodRule): ModalBuilder {
     const modal = new ModalBuilder({
       customId: `automod:edit-params:${rule.ruleID}`,
       title: `Edit Rule "${rule.name}" (${rule.ruleID})`,

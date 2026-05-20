@@ -1,12 +1,21 @@
-import { ApplicationCommandOptionType, escapeInlineCode, inlineCode } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  escapeInlineCode,
+  inlineCode,
+  type Message,
+  type OmitPartialGroupDMChannel,
+  type SendableChannels,
+  type User,
+} from 'discord.js'
 
 import { workerMatch } from '../../../helpers/regexWorker.js'
-import { getAutomodStore } from '../automodMiddleware.js'
+import { getAutomodStore, type AutomodStoreReturn } from '../automodMiddleware.js'
 import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
 
 export const regexRule = new AutomodRule(
   {
-    name: 'regex-rule',
+    name: 'regex',
+    // TODO: support regex matching for other events like message updates, reactions, usernames/display names, etc.
     description: 'Trigger when a message matches a specified regular expression',
     options: [
       {
@@ -51,32 +60,52 @@ export const regexRule = new AutomodRule(
       })
     },
 
-    async messageCreate(message): Promise<AutomodEventResult> {
+    async messageCreate(message): Promise<AutomodEventResult[]> {
       if (message.author.bot || message.system || !message.inGuild()) {
-        return
+        return []
       }
 
-      const { params } = getAutomodStore<typeof regexRule>()
+      const ruleInstances = getAutomodStore<typeof regexRule>()
 
-      const regex = new RegExp(params.pattern, params.flags)
+      const user = message.author
+      const content = message.content
+      const channel = message.channel
 
-      if (await workerMatch(regex, message.content)) {
-        const targetUser = await this.client.users.fetch(message.author.id)
-
-        if (params.delete) {
-          await message.delete().catch(() => null)
-        }
-
-        const formattedRegex = inlineCode(escapeInlineCode(regex.toString()))
-
-        return {
-          targetUser,
-          targetChannel: message.channel,
-          logMessage: `Matched regex ${formattedRegex} in ${message.url}`,
-        }
-      }
-
-      return
+      return Promise.all(
+        ruleInstances.map(({ rule, params }) =>
+          checkRegexMatch(rule, params, user, content, channel, message),
+        ),
+      )
     },
   },
 )
+
+type RegexRuleStore = AutomodStoreReturn<typeof regexRule>[number]
+
+async function checkRegexMatch(
+  rule: RegexRuleStore['rule'],
+  params: RegexRuleStore['params'],
+  user: User,
+  content: string,
+  channel?: SendableChannels,
+  message?: OmitPartialGroupDMChannel<Message>,
+): Promise<AutomodEventResult> {
+  const regex = new RegExp(params.pattern, params.flags)
+
+  if (await workerMatch(regex, content)) {
+    if (message && params.delete) {
+      await message.delete().catch(() => null)
+    }
+
+    const formattedRegex = inlineCode(escapeInlineCode(regex.toString()))
+
+    const url = message ? `on ${message.url}` : channel ? ` in <#${channel.id}>` : ''
+
+    return {
+      rule,
+      targetUser: user,
+      targetChannel: channel ?? null,
+      logMessage: `Matched regex ${formattedRegex}${url}`,
+    }
+  }
+}

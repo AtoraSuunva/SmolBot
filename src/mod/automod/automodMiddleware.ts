@@ -14,25 +14,27 @@ import { AutomodEventResult, AutomodRule } from './modules/AutomodRule.js'
 
 const automodMiddlewareLogger = baseLogger.child({ module: 'automodMiddleware' })
 
+export type PrismaAutomodRule = Prisma.AutomodRuleGetPayload<true>
+
 interface AutomodStoreEntry<T> {
-  rule: Prisma.AutomodRuleGetPayload<true>
+  rule: PrismaAutomodRule
   params: T
 }
 
-export const automodAsyncStore = new AsyncLocalStorage<AutomodStoreEntry<any>>()
+export const automodAsyncStore = new AsyncLocalStorage<AutomodStoreEntry<any>[]>()
 
-export type AutomodStoreReturn<Rule extends AutomodRule> = AutomodStoreEntry<Rule['paramType']>
+export type AutomodStoreReturn<Rule extends AutomodRule> = AutomodStoreEntry<Rule['paramType']>[]
 
-export function getAutomodStore<Rule extends AutomodRule>(): AutomodStoreEntry<Rule['paramType']> {
+export function getAutomodStore<Rule extends AutomodRule>(): AutomodStoreEntry<
+  Rule['paramType']
+>[] {
   const store = automodAsyncStore.getStore()
+
   if (!store) {
     throw new Error('No automod parameters found in async store')
   }
 
-  return {
-    rule: store.rule,
-    params: store.params as Rule['paramType'],
-  }
+  return store as AutomodStoreEntry<Rule['paramType']>[]
 }
 
 const actionToVerb: Record<AutomodAction, string> = {
@@ -100,7 +102,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   })
 
   if (rules.length === 0) {
-    // no rules of this type for this guild, skip processing
+    // no rules of this type for this guild, skip processing by not calling next()
     return
   }
 
@@ -108,6 +110,8 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     { eventName: event.name, ruleCount: rules.length },
     `Found ${rules.length} automod rules of type ${name} for guild ${guildID} to process for event ${event.name}`,
   )
+
+  const automodRules: AutomodStoreEntry<any>[] = []
 
   // for each rule, unpack the parameters and run the event handler
   for (const rule of rules) {
@@ -121,119 +125,125 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       continue
     }
 
-    automodMiddlewareLogger.info(
-      { ruleId: rule.ruleID, ruleType: name, params: params.unwrap() },
-      `Running automod rule ${rule.ruleID} of type ${name} with parameters`,
+    automodRules.push({ rule, params: params.value })
+  }
+
+  const ruleIDs = automodRules.map((r) => r.rule.ruleID)
+
+  automodMiddlewareLogger.info(
+    { rules: ruleIDs, ruleType: name, params: automodRules.map((r) => r.params) },
+    `Running ${ruleIDs.length} automod rule(s) of type ${name} with parameters`,
+  )
+  const results = await (automodAsyncStore.run(automodRules, next) as Promise<AutomodEventResult[]>)
+
+  for (const result of results) {
+    if (!result) {
+      continue
+    }
+
+    const { rule } = result
+    const targetUser = result.targetUser
+    const targetChannel = result.targetChannel
+    const { client } = targetUser
+    const member = await client.guilds
+      .fetch(guildID)
+      .then((guild) => guild.members.fetch(targetUser.id))
+      .catch(() => null)
+    const action = result.action ?? (rule.action as AutomodAction)
+    const duration = result.duration ?? rule.duration ?? 0
+
+    if (!member) {
+      return
+    }
+
+    let actionable = false
+
+    const reason = `Automod rule ${rule.ruleID} triggered: ${result.logMessage ?? 'No additional details'}`
+
+    switch (action) {
+      case 'ban': {
+        if (member.bannable) {
+          actionable = true
+          await member.ban({
+            reason,
+            deleteMessageSeconds: duration,
+          })
+        }
+        break
+      }
+
+      case 'kick': {
+        if (member.kickable) {
+          actionable = true
+          await member.kick(reason)
+        }
+        break
+      }
+
+      case 'mute': {
+        if (member.moderatable) {
+          actionable = true
+          const me = await member.guild.members.fetchMe()
+
+          await muteMembers({
+            action: 'mute',
+            guild: member.guild,
+            members: [member],
+            reason,
+            executor: me,
+          })
+        }
+        break
+      }
+
+      case 'timeout': {
+        if (member.moderatable) {
+          actionable = true
+          if (duration > 0) {
+            await member.timeout(duration * 1000, reason)
+          }
+        }
+        break
+      }
+
+      case 'log': {
+        // do nothing, just continue to modlog
+        break
+      }
+    }
+
+    if (rule.message && targetChannel) {
+      await targetChannel.send({
+        content: rule.message.replace('{user}', `<@${targetUser.id}>`),
+      })
+    }
+
+    // log to modlog
+
+    const config = await getValidatedConfigFor(
+      member.guild,
+      'automodAction',
+      (config) => config.automodAction,
     )
-    const result = await (automodAsyncStore.run(
-      { rule, params: params.unwrap() },
-      next,
-    ) as Promise<AutomodEventResult>)
 
-    if (result) {
-      const targetUser = result.targetUser
-      const targetChannel = result.targetChannel
-      const { client } = targetUser
-      const member = await client.guilds
-        .fetch(guildID)
-        .then((guild) => guild.members.fetch(targetUser.id))
-        .catch(() => null)
-      const action = result.action ?? (rule.action as AutomodAction)
-      const duration = result.duration ?? rule.duration ?? 0
-
-      if (!member) {
-        return
-      }
-
-      let actionable = false
-
-      const reason = `Automod rule ${rule.ruleID} triggered: ${result.logMessage ?? 'No additional details'}`
-
-      switch (action) {
-        case 'ban': {
-          if (member.bannable) {
-            actionable = true
-            await member.ban({
-              reason,
-              deleteMessageSeconds: duration,
-            })
-          }
-          break
-        }
-
-        case 'kick': {
-          if (member.kickable) {
-            actionable = true
-            await member.kick(reason)
-          }
-          break
-        }
-
-        case 'mute': {
-          if (member.moderatable) {
-            actionable = true
-            const me = await member.guild.members.fetchMe()
-
-            await muteMembers({
-              action: 'mute',
-              guild: member.guild,
-              members: [member],
-              reason,
-              executor: me,
-            })
-          }
-          break
-        }
-
-        case 'timeout': {
-          if (member.moderatable) {
-            actionable = true
-            if (duration > 0) {
-              await member.timeout(duration * 1000, reason)
-            }
-          }
-          break
-        }
-
-        case 'log': {
-          // do nothing, just continue to modlog
-          break
-        }
-      }
-
-      if (rule.message && targetChannel) {
-        await targetChannel.send({
-          content: rule.message.replace('{user}', `<@${targetUser.id}>`),
-        })
-      }
-
-      // log to modlog
-
-      const config = await getValidatedConfigFor(
-        member.guild,
-        'automodAction',
-        (config) => config.automodAction,
+    if (config) {
+      // 🐲 10:55:14 PM [Automod] User [username] (123456789) @user triggered **Automod Rule Name** and was **kicked**: Sent 5 identical messages in 10 seconds
+      const loggedAction =
+        action === 'log' || !actionable
+          ? ''
+          : ` and was **${actionToVerb[action]}**${duration > 0 ? ` for ${plural('second', duration)}` : ''}`
+      const details = result.logMessage ? `:\n> ${result.logMessage}` : ''
+      const content = formatLog(
+        '🐲',
+        'Automod',
+        `${formatUser(member)} triggered **${rule.name}**${loggedAction}${details}`,
+        new Date(),
       )
 
-      if (config) {
-        // 🐲 10:55:14 PM [Automod] User [username] (123456789) @user triggered **Automod Rule Name** and was **kicked**: Sent 5 identical messages in 10 seconds
-        const loggedAction =
-          action === 'log' || !actionable
-            ? ''
-            : ` and was **${actionToVerb[action]}**${duration > 0 ? ` for ${plural('second', duration)}` : ''}`
-        const details = result.logMessage ? `:\n> ${result.logMessage}` : ''
-        const content = formatLog(
-          '🐲',
-          'Automod',
-          `${formatUser(member)} triggered **${rule.name}**${loggedAction}${details}`,
-          new Date(),
-        )
-
-        await sendToModlog(config.channel, {
-          content,
-          allowedMentions: { parse: [] },
-        })
-      }
+      await sendToModlog(config.channel, {
+        content,
+        allowedMentions: { parse: [] },
+      })
     }
   }
 }
