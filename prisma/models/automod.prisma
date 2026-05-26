@@ -1,7 +1,20 @@
 model AutomodConfig {
-  guildID String  @id @map("guild_id")
+  guildID         String  @id @map("guild_id")
   // Message to prepend to the automod trigger message
-  prepend String?
+  prepend         String?
+  // Channels to ignore
+  /// [AutomodIgnoredChannels]
+  ignoredChannels Json    @default("[]")
+  // Roles to ignore
+  /// [AutomodIgnoredRoles]
+  ignoredRoles    Json    @default("[]")
+  // Users to ignore
+  /// [AutomodIgnoredUsers]
+  ignoredUsers    Json    @default("[]")
+  // Whether to ignore bots
+  ignoreBots      Boolean @default(true)
+  // Whether to ignore users with admin permissions
+  ignoreAdmins    Boolean @default(true)
 }
 
 model AutomodRule {
@@ -18,7 +31,8 @@ model AutomodRule {
   // Duration of the action in seconds, if applicable (e.g. for timeout)
   duration   Int      @default(30)
   // Parameters the rule takes, as JSON
-  parameters Json
+  /// [AutomodParameters]
+  parameters Json     @default("{}")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 

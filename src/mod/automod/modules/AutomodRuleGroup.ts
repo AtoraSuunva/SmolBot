@@ -7,7 +7,7 @@ import {
   SleetSlashCommandGroupBody,
 } from 'sleetcord'
 
-import { InputJsonValue } from '../../../generated/prisma/internal/prismaNamespace.js'
+import type { AutomodParameters } from '../types.js'
 import { AutomodRule } from './AutomodRule.js'
 
 export interface AutomodRuleGroupBody<RequireParams extends boolean> extends Omit<
@@ -23,7 +23,7 @@ interface AutomodRuleGroupHandlers extends NoRunSlashEventHandlers {
     this: SleetContext,
     interaction: ChatInputCommandInteraction,
     rule: AutomodRule,
-    params: InputJsonValue,
+    params: AutomodParameters,
   ) => Awaitable<void>
 }
 
@@ -72,12 +72,7 @@ export class AutomodRuleGroup<RequireParams extends boolean> extends SleetSlashC
           this.requireParams,
         )
         if (subcommandHandler instanceof AutomodRule) {
-          await this.runResult?.call(
-            context,
-            interaction,
-            subcommandHandler,
-            subcommandResult as InputJsonValue,
-          )
+          await this.runResult?.call(context, interaction, subcommandHandler, subcommandResult)
         }
         return subcommandResult
       }

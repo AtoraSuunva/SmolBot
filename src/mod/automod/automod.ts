@@ -1,8 +1,14 @@
-import { Interaction, MessageFlags } from 'discord.js'
+import {
+  ApplicationIntegrationType,
+  Interaction,
+  InteractionContextType,
+  MessageFlags,
+} from 'discord.js'
 import { inGuildGuard, SleetSlashCommand } from 'sleetcord'
 
 import { automodMiddleware } from './automodMiddleware.js'
 import { automod_add, handleCopyInteraction } from './commands/add.js'
+import { automod_config } from './commands/config.js'
 import { automod_delete, handleDeleteInteraction } from './commands/delete.js'
 import { automod_details, handleDetailsInteraction } from './commands/details.js'
 import { automod_edit, handleEditInteraction } from './commands/edit.js'
@@ -16,7 +22,17 @@ export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [automod_add, automod_view, automod_details, automod_edit, automod_delete],
+    options: [
+      automod_add,
+      automod_view,
+      automod_details,
+      automod_edit,
+      automod_delete,
+      automod_config,
+    ],
+    contexts: [InteractionContextType.Guild],
+    default_member_permissions: ['ManageGuild'],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
   },
   {
     interactionCreate,

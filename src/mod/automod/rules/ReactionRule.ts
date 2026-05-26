@@ -1,9 +1,7 @@
 import {
   ApplicationCommandOptionType,
-  type GuildTextBasedChannel,
   type MessageReaction,
   type PartialMessageReaction,
-  type User,
 } from 'discord.js'
 
 import { getAutomodStore, type AutomodStoreReturn } from '../automodMiddleware.js'
@@ -39,22 +37,12 @@ export const reactionRule = new AutomodRule(
       }
     },
 
-    async messageReactionAdd(reaction, user): Promise<AutomodEventResult[]> {
-      const { message } = reaction
-      if (!message.inGuild()) {
-        return []
-      }
-
-      const resolvedUser = await reaction.client.users.fetch(user.id).catch(() => null)
-      if (!resolvedUser || resolvedUser.bot) {
-        return []
-      }
-
+    async messageReactionAdd(reaction): Promise<AutomodEventResult[]> {
       const ruleInstances = getAutomodStore<typeof reactionRule>()
 
       return Promise.all(
         ruleInstances.map(({ rule, params }) =>
-          checkReactionMatch(rule, params, reaction, resolvedUser).catch(() => null),
+          checkReactionMatch(rule, params, reaction).catch(() => null),
         ),
       )
     },
@@ -67,7 +55,6 @@ async function checkReactionMatch(
   rule: ReactionRuleStore['rule'],
   params: ReactionRuleStore['params'],
   reaction: MessageReaction | PartialMessageReaction,
-  user: User,
 ): Promise<AutomodEventResult> {
   const emojis = params.emoji.split(',').map((e) => e.trim())
 
@@ -78,13 +65,11 @@ async function checkReactionMatch(
       }
 
       const emote = reaction.emoji.id
-        ? `${reaction.emoji.name} (${reaction.emoji.id})`
-        : reaction.emoji.name
+        ? `**${reaction.emoji.name}** (${reaction.emoji.id})`
+        : `**${reaction.emoji.name}**`
 
       return {
         rule,
-        targetUser: user,
-        targetChannel: reaction.message.channel as GuildTextBasedChannel,
         logMessage: `Added reaction ${emote} to ${reaction.message.url}`,
       }
     }

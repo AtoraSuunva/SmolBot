@@ -4,8 +4,6 @@ import {
   inlineCode,
   type Message,
   type OmitPartialGroupDMChannel,
-  type SendableChannels,
-  type User,
 } from 'discord.js'
 
 import { workerMatch } from '../../../helpers/regexWorker.js'
@@ -15,7 +13,7 @@ import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
 export const regexRule = new AutomodRule(
   {
     name: 'regex',
-    // TODO: support regex matching for other events like message updates, reactions, usernames/display names, etc.
+    // TODO: support regex matching for other events like usernames/display names, etc.
     description: 'Trigger when a message matches a specified regular expression',
     options: [
       {
@@ -61,19 +59,65 @@ export const regexRule = new AutomodRule(
     },
 
     async messageCreate(message): Promise<AutomodEventResult[]> {
-      if (message.author.bot || message.system || !message.inGuild()) {
+      if (message.system || !message.inGuild()) {
         return []
       }
 
       const ruleInstances = getAutomodStore<typeof regexRule>()
 
-      const user = message.author
       const content = message.content
-      const channel = message.channel
+      const onTarget = `message ${message.url}`
 
       return Promise.all(
         ruleInstances.map(({ rule, params }) =>
-          checkRegexMatch(rule, params, user, content, channel, message),
+          checkRegexMatch(rule, params, content, onTarget, message),
+        ),
+      )
+    },
+
+    async messageUpdate(_oldMessage, newMessage): Promise<AutomodEventResult[]> {
+      // Check against the updated message
+      if (newMessage.system || !newMessage.inGuild()) {
+        return []
+      }
+
+      const ruleInstances = getAutomodStore<typeof regexRule>()
+
+      const content = newMessage.content
+
+      const onTarget = `edited message ${newMessage.url}`
+
+      return Promise.all(
+        ruleInstances.map(({ rule, params }) =>
+          checkRegexMatch(rule, params, content, onTarget, newMessage),
+        ),
+      )
+    },
+
+    async messageReactionAdd(reaction): Promise<AutomodEventResult[]> {
+      const { message } = reaction
+      if (!message.inGuild()) {
+        return []
+      }
+
+      // Check the regex against the reaction name
+      const ruleInstances = getAutomodStore<typeof regexRule>()
+
+      const content = reaction.emoji.name
+
+      if (!content) {
+        return []
+      }
+
+      const emote = reaction.emoji.id
+        ? `**${reaction.emoji.name}** (${reaction.emoji.id})`
+        : `**${reaction.emoji.name}**`
+
+      const onTarget = `reaction ${emote} on message ${message.url}`
+
+      return Promise.all(
+        ruleInstances.map(({ rule, params }) =>
+          checkRegexMatch(rule, params, content, onTarget, message),
         ),
       )
     },
@@ -85,9 +129,8 @@ type RegexRuleStore = AutomodStoreReturn<typeof regexRule>[number]
 async function checkRegexMatch(
   rule: RegexRuleStore['rule'],
   params: RegexRuleStore['params'],
-  user: User,
   content: string,
-  channel?: SendableChannels,
+  onTarget: string,
   message?: OmitPartialGroupDMChannel<Message>,
 ): Promise<AutomodEventResult> {
   const regex = new RegExp(params.pattern, params.flags)
@@ -99,13 +142,9 @@ async function checkRegexMatch(
 
     const formattedRegex = inlineCode(escapeInlineCode(regex.toString()))
 
-    const url = message ? `on ${message.url}` : channel ? ` in <#${channel.id}>` : ''
-
     return {
       rule,
-      targetUser: user,
-      targetChannel: channel ?? null,
-      logMessage: `Matched regex ${formattedRegex}${url}`,
+      logMessage: `Matched regex ${formattedRegex} on ${onTarget}`,
     }
   }
 }

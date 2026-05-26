@@ -21,8 +21,8 @@ import {
   TextDisplayBuilder,
   TextInputBuilder,
   TextInputStyle,
-  User,
   UserSelectMenuBuilder,
+  type GuildMember,
 } from 'discord.js'
 import {
   ListenerResult,
@@ -35,6 +35,7 @@ import {
 
 import { AutomodAction, automodActionStringSelectChoices } from '../actions.js'
 import type { PrismaAutomodRule } from '../automodMiddleware.js'
+import type { AutomodParameters } from '../types.js'
 
 type PrimitiveFromOptionType<T extends ApplicationCommandOptionType> =
   T extends ApplicationCommandOptionType.String
@@ -115,20 +116,24 @@ function validatorFromType(
 }
 
 /**
- * Apply an action to a target user, with an optional override for the action and duration
+ * Apply an action, with optional overrides for the action, target member, target channel, and duration
+ *
+ * The target member and channel are normally automatically pulled based on the event (e.g. messageCreate will use the message author and channel),
+ * but rules can override the target member and channel if they need more flexibility
  */
 export interface AutomodTrigger {
+  /** The specific automod rule that was triggered, since rules are sent to the handlers in batches */
   rule: PrismaAutomodRule
-  /** The message to append to the modlog log */
+  /** The message to append to the modlog log message, if there's any details for the trigger */
   logMessage?: string
-  /** The user to apply the action to */
-  targetUser: User
-  /** The channel to send a message to the user */
-  targetChannel?: SendableChannels | null
-  /** Override the action to apply */
-  action?: AutomodAction
-  /** Override the duration of the action in seconds */
-  duration?: number
+  /** Override the member to apply the action to, by default it's determined from the event */
+  overrideMember?: GuildMember
+  /** Override the channel to send a message to the member, by default it's determined from the event */
+  overrideChannel?: SendableChannels | null
+  /** Override the action to apply, by default it's determined from the rule */
+  overrideAction?: AutomodAction
+  /** Override the duration of the action in seconds, by default it's determined from the rule */
+  overrideDuration?: number
 }
 
 export type AutomodEventResult = AutomodTrigger | null | undefined | void
@@ -191,7 +196,7 @@ export class AutomodRule<
     interaction: ChatInputCommandInteraction,
     requireParams: boolean,
     ...args: unknown[]
-  ): Awaitable<unknown> {
+  ): Awaitable<AutomodParameters> {
     return (this.handlers as AutomodEventHandlers).run.call(
       context,
       interaction,
@@ -351,8 +356,7 @@ export class AutomodRule<
           ? // oxlint-disable-next-line typescript/no-base-to-string
             String(rule[option.name as keyof typeof rule])
           : rule.parameters && typeof rule.parameters === 'object' && option.name in rule.parameters
-            ? // oxlint-disable-next-line typescript/no-base-to-string
-              String(rule.parameters[option.name as keyof typeof rule.parameters])
+            ? String(rule.parameters[option.name])
             : ''
 
       switch (option.type) {

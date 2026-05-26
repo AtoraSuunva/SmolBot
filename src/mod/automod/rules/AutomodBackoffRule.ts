@@ -128,7 +128,6 @@ async function autoModerationActionExecution(
     return
   }
 
-  const { client } = execution.guild
   const key = `${execution.guild.id}-${execution.userId}-${execution.ruleId}`
 
   // If a rule has multiple actions (e.g. block message + timeout), it will trigger separate executions for each action
@@ -186,12 +185,6 @@ async function autoModerationActionExecution(
 
   // Check if the automod rule should trigger
   if (params.trigger_after > 0 && triggerCount >= params.trigger_after) {
-    const user = await client.users.fetch(execution.userId).catch(() => null)
-
-    if (!user) {
-      return
-    }
-
     const nativeRule = await execution.guild.autoModerationRules
       .fetch(execution.ruleId)
       .catch(() => null)
@@ -201,7 +194,6 @@ async function autoModerationActionExecution(
     return {
       rule,
       logMessage: `Discord automod rule "${ruleName}" (${execution.ruleId}) triggered ${plural('time', triggerCount)}. Rule action triggered.`,
-      targetUser: user,
     }
   }
 
@@ -212,12 +204,6 @@ async function autoModerationActionExecution(
       params.max_duration,
     )
 
-    const user = await client.users.fetch(execution.userId).catch(() => null)
-
-    if (!user) {
-      return
-    }
-
     const nativeRule = await execution.guild.autoModerationRules
       .fetch(execution.ruleId)
       .catch(() => null)
@@ -226,10 +212,9 @@ async function autoModerationActionExecution(
 
     return {
       rule,
-      action: 'timeout',
-      duration: duration,
+      overrideAction: 'timeout',
+      overrideDuration: duration,
       logMessage: `Discord automod rule "${ruleName}" (${execution.ruleId}) triggered ${plural('time', triggerCount)}. User timed out.`,
-      targetUser: user,
     }
   }
 }

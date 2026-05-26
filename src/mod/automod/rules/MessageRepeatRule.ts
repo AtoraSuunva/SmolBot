@@ -3,7 +3,6 @@ import {
   AutoModerationActionType,
   Guild,
   GuildTextBasedChannel,
-  SendableChannels,
   User,
   type Message,
 } from 'discord.js'
@@ -77,7 +76,7 @@ export const messageRepeatsRule = new AutomodRule(
     },
 
     async messageCreate(message): Promise<AutomodEventResult[]> {
-      if (message.author.bot || message.system || !message.inGuild()) {
+      if (!message.inGuild()) {
         return []
       }
 
@@ -85,15 +84,7 @@ export const messageRepeatsRule = new AutomodRule(
 
       return await Promise.all(
         ruleInstances.map(({ rule, params }) =>
-          checkForRepeats(
-            rule,
-            params,
-            message.content,
-            message.author,
-            message.guild,
-            message.channel,
-            message,
-          ),
+          checkForRepeats(rule, params, message.content, message.author, message.guild, message),
         ),
       )
     },
@@ -112,19 +103,13 @@ export const messageRepeatsRule = new AutomodRule(
 
         // User that triggered the rule
         const user = await this.client.users.fetch(action.userId).catch(() => null)
-        // Channel the rule alert was sent
-        const channel = action.alertSystemMessageId
-          ? ((await this.client.channels
-              .fetch(action.alertSystemMessageId)
-              .catch(() => null)) as SendableChannels)
-          : null
 
         if (!user) {
           // give up
           continue
         }
 
-        ruleResults.push(checkForRepeats(rule, params, action.content, user, action.guild, channel))
+        ruleResults.push(checkForRepeats(rule, params, action.content, user, action.guild))
       }
 
       return Promise.all(ruleResults)
@@ -143,7 +128,6 @@ async function checkForRepeats(
   content: string,
   user: User,
   guild: Guild,
-  channel: SendableChannels | null,
   message?: Message,
 ): Promise<AutomodEventResult> {
   const key = `${rule.ruleID}-${guild.id}-${user.id}`
@@ -184,8 +168,6 @@ async function checkForRepeats(
       return {
         rule,
         logMessage: `Sent ${info.repeatCount} identical messages in ${plural('second', seconds)}`,
-        targetUser: user,
-        targetChannel: channel,
       }
     }
   } else {

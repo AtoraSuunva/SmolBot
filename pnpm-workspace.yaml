@@ -1,10 +1,10 @@
-onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
-  - '@sentry-internal/node-cpu-profiler'
-  - '@sentry/cli'
-  - '@sentry/profiling-node'
-  - better-sqlite3
-  - esbuild
-  - prisma
 strictDepBuilds: true
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
+  '@sentry/profiling-node': true
+  better-sqlite3: true
+  esbuild: true
+  prisma: true

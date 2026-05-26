@@ -2,10 +2,16 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client"
-  output          = "../src/generated/prisma"
-  engineType      = "client"
-  previewFeatures = ["strictUndefinedChecks"]
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  engineType          = "client"
+  previewFeatures     = ["strictUndefinedChecks"]
+  importFileExtension = "js"
+}
+
+generator json {
+  provider = "prisma-json-types-generator"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {

@@ -297,3 +297,17 @@ export function formatRules(rules: PrismaAutomodRule[]): ContainerBuilder {
 
   return container
 }
+
+export type AutomodConfig = Prisma.AutomodConfigGetPayload<true>
+
+export function getAutomodConfig(guildID: string): Promise<AutomodConfig> {
+  return prisma.automodConfig.upsert({
+    where: {
+      guildID,
+    },
+    update: {},
+    create: {
+      guildID,
+    },
+  })
+}
