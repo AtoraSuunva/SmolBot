@@ -26,6 +26,7 @@ RUN pnpm sentry:sourcemaps:inject
 
 # Step that only pulls in (production) deps required to run the app
 FROM node:26-alpine AS prod-build
+ENV CI=true
 WORKDIR /home/node/app
 RUN rm -rf /usr/local/bin/yarn*
 RUN npm uninstall -g yarn
