@@ -72,7 +72,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   const config = await getAutomodConfig(guild.id)
 
   if (config.ignoredChannels?.includes(channel?.id ?? '')) {
-    automodMiddlewareLogger.info(
+    automodMiddlewareLogger.debug(
       { channelId: channel?.id },
       `Channel ${channel?.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
     )
@@ -84,7 +84,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     const ignoredRole = config.ignoredRoles.find((r) => memberRoles.has(r))
 
     if (ignoredRole) {
-      automodMiddlewareLogger.info(
+      automodMiddlewareLogger.debug(
         { roleId: ignoredRole, memberId: member.id },
         `Member ${member.id} has role ${ignoredRole} which is configured to be ignored, skipping automod processing for event ${event.name}`,
       )
@@ -93,7 +93,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   }
 
   if (config.ignoredUsers?.includes(member?.id ?? '')) {
-    automodMiddlewareLogger.info(
+    automodMiddlewareLogger.debug(
       { userId: member?.id },
       `User ${member?.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
     )
@@ -101,7 +101,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   }
 
   if (member?.user.bot && config.ignoreBots) {
-    automodMiddlewareLogger.info(
+    automodMiddlewareLogger.debug(
       { userId: member.id },
       `User ${member.id} is a bot and ignoreBots is enabled, skipping automod processing for event ${event.name}`,
     )
@@ -109,7 +109,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   }
 
   if (member?.permissions.has('Administrator') && config.ignoreAdmins) {
-    automodMiddlewareLogger.info(
+    automodMiddlewareLogger.debug(
       { userId: member.id },
       `User ${member.id} has Administrator permissions and ignoreAdmins is enabled, skipping automod processing for event ${event.name}`,
     )
@@ -129,7 +129,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     return
   }
 
-  automodMiddlewareLogger.info(
+  automodMiddlewareLogger.debug(
     { eventName: event.name, ruleCount: rules.length },
     `Found ${rules.length} automod rules of type ${name} for guild ${guild.id} to process for event ${event.name}`,
   )
@@ -153,7 +153,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
   const ruleIDs = automodRules.map((r) => r.rule.ruleID)
 
-  automodMiddlewareLogger.info(
+  automodMiddlewareLogger.debug(
     { rules: ruleIDs, ruleType: name, params: automodRules.map((r) => r.params) },
     `Running ${ruleIDs.length} automod rule(s) of type ${name} with parameters`,
   )
