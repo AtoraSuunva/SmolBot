@@ -3,9 +3,9 @@ FROM node:26-alpine AS dev-build
 WORKDIR /home/node/app
 RUN npm install -g corepack
 RUN corepack enable
+COPY package.json ./
 RUN corepack install
 COPY pnpm-lock.yaml ./
-COPY package.json ./
 COPY pnpm-workspace.yaml ./
 RUN apk add --no-cache python3 make g++
 RUN pnpm fetch
