@@ -869,9 +869,27 @@ async function muteAction({
         // You can get around this by giving the bot admin, but that's a solution in the same way as
         // "installing a 'door' by blowing up your wall" is a solution
 
-        await mutedChannel.permissionOverwrites.create(mutedRole, {
-          ViewChannel: false,
+        // Block other muted users so they can't see the channel
+        // Add in the user overrides so they can see the channel
+        const cached = mutedChannel.permissionOverwrites.cache
+        const newOverwrites = cached.map<OverwriteData>((o) => o.toJSON() as OverwriteData)
+
+        newOverwrites.push({
+          id: mutedRole.id,
+          type: OverwriteType.Role,
+          deny: cached.get(mutedRole.id)?.deny.add('ViewChannel') ?? 'ViewChannel',
         })
+
+        newOverwrites.push(
+          ...succeeded.map<OverwriteData>((s) => ({
+            id: s.member.id,
+            type: OverwriteType.Member,
+            allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
+            deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
+          })),
+        )
+
+        await mutedChannel.permissionOverwrites.set(newOverwrites)
 
         if (config.starterMessage) {
           const starterMessage = config.starterMessage
@@ -892,21 +910,6 @@ async function muteAction({
           }
         }
       }
-
-      // Add in the user overrides so they can see the channel
-      const cached = mutedChannel.permissionOverwrites.cache
-      const newOverwrites = cached.map<OverwriteData>((o) => o.toJSON() as OverwriteData)
-
-      newOverwrites.push(
-        ...succeeded.map<OverwriteData>((s) => ({
-          id: s.member.id,
-          type: OverwriteType.Member,
-          allow: cached.get(s.member.id)?.allow.add(TO_ALLOW) ?? TO_ALLOW,
-          deny: cached.get(s.member.id)?.deny.remove(TO_ALLOW) ?? [],
-        })),
-      )
-
-      await mutedChannel.permissionOverwrites.set(newOverwrites)
 
       const formattedLog = `🔇 ${succeeded.map((s) => formatUser(s.member)).join(', ')} ${succeeded.length > 1 ? 'have' : 'has'} been muted by ${formattedExecutor}`
 
