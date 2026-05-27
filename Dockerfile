@@ -1,6 +1,7 @@
 # Step that pulls in everything needed to build the app and builds it
 FROM node:26-alpine AS dev-build
 WORKDIR /home/node/app
+RUN npm install -g corepack
 RUN corepack enable
 RUN corepack install
 COPY pnpm-lock.yaml ./
