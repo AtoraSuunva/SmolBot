@@ -88,20 +88,20 @@ export const automodBackoffRule = new AutomodRule(
   },
   {
     async run(i, required) {
-      const automodRules = i.options.getString('automod_rules', required)
-      const baseDuration = i.options.getInteger('base_duration', required) ?? 2
-      const maxDuration = i.options.getInteger('max_duration', required) ?? (7 * DAY) / 1000
-      const decayAfter = i.options.getInteger('decay_after', required) ?? 0
-      const timeoutAfter = i.options.getInteger('timeout_after', required) ?? 1
-      const triggerAfter = i.options.getInteger('trigger_after', required) ?? 0
+      const automodRules = i.options.getString('automod_rules')
+      const baseDuration = i.options.getInteger('base_duration')
+      const maxDuration = i.options.getInteger('max_duration')
+      const decayAfter = i.options.getInteger('decay_after')
+      const timeoutAfter = i.options.getInteger('timeout_after')
+      const triggerAfter = i.options.getInteger('trigger_after')
 
       return {
-        automod_rules: automodRules,
-        base_duration: baseDuration,
-        max_duration: maxDuration,
-        decay_after: decayAfter,
-        timeout_after: timeoutAfter,
-        trigger_after: triggerAfter,
+        automod_rules: automodRules ?? (required ? '' : null),
+        base_duration: baseDuration ?? (required ? 2 : null),
+        max_duration: maxDuration ?? (required ? (7 * DAY) / 1000 : null),
+        decay_after: decayAfter ?? (required ? 0 : null),
+        timeout_after: timeoutAfter ?? (required ? 1 : null),
+        trigger_after: triggerAfter ?? (required ? 0 : null),
       }
     },
 
@@ -174,7 +174,7 @@ async function autoModerationActionExecution(
 
   // Check for decay_after
   if (params.decay_after > 0) {
-    const decayTimestamp = now - params.decay_after * 1000
+    const decayTimestamp = now + params.decay_after * 1000
 
     entry.triggerTimestamps = entry.triggerTimestamps.filter(
       (timestamp) => timestamp <= decayTimestamp,

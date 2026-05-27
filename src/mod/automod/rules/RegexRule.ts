@@ -35,26 +35,28 @@ export const regexRule = new AutomodRule(
     ] as const,
   },
   {
-    async run(i) {
-      const pattern = i.options.getString('pattern', true)
-      const flags = i.options.getString('flags') ?? ''
-      const del = i.options.getBoolean('delete') ?? false
+    async run(i, required) {
+      const pattern = i.options.getString('pattern')
+      const flags = i.options.getString('flags')
+      const del = i.options.getBoolean('delete')
 
       // Validate the regex pattern and flags
-      try {
-        // oxlint-disable-next-line no-new We're just validating the regex
-        new RegExp(pattern, flags)
-      } catch (e) {
-        throw new Error(
-          `Invalid regular expression: ${e instanceof Error ? e.message : String(e)}`,
-          { cause: e },
-        )
+      if (pattern || flags) {
+        try {
+          // oxlint-disable-next-line no-new We're just validating the regex
+          new RegExp(pattern ?? '', flags ?? '')
+        } catch (e) {
+          throw new Error(
+            `Invalid regular expression: ${e instanceof Error ? e.message : String(e)}`,
+            { cause: e },
+          )
+        }
       }
 
       return Promise.resolve({
-        pattern,
-        flags,
-        delete: del,
+        pattern: pattern ?? (required ? '' : null),
+        flags: flags ?? (required ? '' : null),
+        delete: del ?? (required ? false : null),
       })
     },
 

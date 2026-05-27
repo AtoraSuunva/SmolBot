@@ -62,16 +62,16 @@ export const messageRepeatsRule = new AutomodRule(
   },
   {
     async run(i, required) {
-      const repeats = i.options.getInteger('repeats', required)
-      const interval = i.options.getInteger('interval', required)
-      const deleteTarget = i.options.getBoolean('delete') ?? false
-      const nativeAutomod = i.options.getBoolean('native_automod') ?? false
+      const repeats = i.options.getInteger('repeats')
+      const interval = i.options.getInteger('interval')
+      const deleteTarget = i.options.getBoolean('delete')
+      const nativeAutomod = i.options.getBoolean('native_automod')
 
       return Promise.resolve({
-        repeats,
-        interval,
-        delete: deleteTarget,
-        native_automod: nativeAutomod,
+        repeats: repeats ?? (required ? 2 : null),
+        interval: interval ?? (required ? 0 : null),
+        delete: deleteTarget ?? (required ? false : null),
+        native_automod: nativeAutomod ?? (required ? false : null),
       })
     },
 

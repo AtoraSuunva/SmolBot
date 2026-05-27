@@ -28,12 +28,12 @@ export const reactionRule = new AutomodRule(
   },
   {
     async run(i, required) {
-      const emoji = i.options.getString('emoji', required)
-      const del = i.options.getBoolean('delete', required) ?? false
+      const emoji = i.options.getString('emoji')
+      const del = i.options.getBoolean('delete')
 
       return {
-        emoji,
-        delete: del,
+        emoji: emoji ?? (required ? '' : null),
+        delete: del ?? (required ? false : null),
       }
     },
 
