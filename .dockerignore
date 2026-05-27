@@ -1,0 +1,14 @@
+.git
+.github
+.vscode
+node_modules
+dist
+src/generated
+coverage
+*.log
+pnpm-debug.log*
+.env*
+prisma/db
+prisma/**/*.db
+prisma/**/*.sqlite
+*.md

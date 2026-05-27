@@ -1,13 +1,8 @@
 # Step that pulls in everything needed to build the app and builds it
-# Pinned to avoid sudden new versions breaking builds :)
 FROM node:26-alpine AS dev-build
-ARG GIT_COMMIT_SHA
-ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
-RUN rm -rf /usr/local/bin/yarn*
-RUN npm uninstall -g yarn
-RUN npm install -g corepack
 RUN corepack enable
+RUN corepack install
 COPY pnpm-lock.yaml ./
 COPY package.json ./
 COPY pnpm-workspace.yaml ./
@@ -16,7 +11,8 @@ RUN pnpm fetch
 RUN pnpm install --frozen-lockfile --offline
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
-COPY /prisma ./prisma/
+COPY /prisma/schema.prisma ./prisma/schema.prisma
+COPY /prisma/models ./prisma/models/
 RUN pnpm run generate
 COPY src/ ./src/
 RUN pnpm run build
@@ -25,33 +21,27 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:26-alpine AS prod-build
+FROM dev-build AS prod-build
 ENV CI=true
-WORKDIR /home/node/app
-RUN rm -rf /usr/local/bin/yarn*
-RUN npm uninstall -g yarn
-RUN npm install -g corepack
-RUN corepack enable
-COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
-COPY --from=dev-build /home/node/app/node_modules ./node_modules/
-COPY --from=dev-build /home/node/app/package.json ./
-COPY --from=dev-build /home/node/app/pnpm-workspace.yaml ./
-COPY --from=dev-build /home/node/app/prisma.config.ts ./
-COPY --from=dev-build /home/node/app/prisma ./prisma/
-RUN pnpm fetch --prod
-RUN pnpm install --prod --frozen-lockfile --offline
-COPY --from=dev-build /home/node/app/dist ./dist/
-COPY --from=dev-build /home/node/app/resources ./resources/
+COPY /prisma ./prisma/
+RUN pnpm prune --prod
 
 
 # The actual runtime itself
 FROM node:26-alpine AS prod-runtime
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 # See https://github.com/prisma/prisma/issues/19729
 RUN apk upgrade --update-cache --available && \
     apk add --no-cache openssl && \
     rm -rf /var/cache/apk/*
 WORKDIR /home/node/app
-COPY --from=prod-build /home/node/app ./
+COPY --from=prod-build /home/node/app/node_modules ./node_modules/
+COPY --from=prod-build /home/node/app/package.json ./package.json
+COPY --from=prod-build /home/node/app/prisma.config.ts ./prisma.config.ts
+COPY --from=prod-build /home/node/app/prisma ./prisma/
+COPY --from=prod-build /home/node/app/dist ./dist/
+COPY --from=prod-build /home/node/app/resources ./resources/
 RUN mkdir -p /home/node/app/prisma/db
 RUN chown -R node:node /home/node/app/prisma/db
 USER node

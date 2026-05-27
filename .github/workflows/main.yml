@@ -73,8 +73,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.image_ref.outputs.value }}:buildcache
-          cache-to: type=registry,ref=${{ steps.image_ref.outputs.value }}:buildcache,mode=min
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ steps.image_ref.outputs.value }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ steps.image_ref.outputs.value }}:buildcache,mode=min
           build-args: |
             GIT_COMMIT_SHA=${{ github.sha }}
 
