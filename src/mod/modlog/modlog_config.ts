@@ -131,10 +131,6 @@ const modlogConfigOptions = {
     type: ApplicationCommandOptionType.Integer,
     min_value: 0,
   },
-  automod_trigger: {
-    description: 'Log when an automod rule is triggered',
-    type: ApplicationCommandOptionType.Boolean,
-  },
 } satisfies ModlogConfigOptions
 
 export const modlog_config = new SleetSlashSubcommand(

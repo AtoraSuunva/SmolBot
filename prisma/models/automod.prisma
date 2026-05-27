@@ -32,7 +32,7 @@ model AutomodRule {
   duration   Int      @default(30)
   // Parameters the rule takes, as JSON
   /// [AutomodParameters]
-  parameters Json     @default("{}")
+  parameters Json     @default("\"{}\"")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 

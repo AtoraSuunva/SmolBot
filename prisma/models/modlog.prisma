@@ -24,7 +24,6 @@ model ModLogConfig {
   automodAction     Boolean @default(false) @map("automod_action")
   reactionRemove    Boolean @default(false) @map("reaction_remove")
   reactionTime      Int     @default(0) @map("reaction_time")
-  automodTrigger    Boolean @default(false) @map("automod_trigger")
 }
 
 model ModLogChannels {
@@ -46,5 +45,4 @@ model ModLogChannels {
   channelUpdate     String? @map("channel_update")
   automodAction     String? @map("automod_action")
   reactionRemove    String? @map("reaction_remove")
-  automodTrigger    String? @map("automod_trigger")
 }
