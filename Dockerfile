@@ -32,6 +32,7 @@ RUN pnpm prune --prod
 FROM node:26-alpine AS prod-runtime
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
+ENV NODE_ENV=production
 # See https://github.com/prisma/prisma/issues/19729
 RUN apk upgrade --update-cache --available && \
     apk add --no-cache openssl && \
