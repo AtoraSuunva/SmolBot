@@ -51,7 +51,7 @@ export const automod_add = new AutomodRuleGroup(
     name: 'add',
     description: 'Add a new rule to automod',
     requireParams: true,
-    options: rules.map((opt) => opt.withBodyOptions(addOptions)),
+    options: rules.map((opt) => opt.withBody({ options: addOptions })),
   },
   {
     async runResult(interaction, rule, params) {

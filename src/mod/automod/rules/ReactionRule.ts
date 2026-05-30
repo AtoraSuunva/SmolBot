@@ -10,18 +10,18 @@ import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
 export const reactionRule = new AutomodRule(
   {
     name: 'reaction',
-    description: 'Trigger when a user adds a reaction that matches certain criteria',
+    description: 'Trigger when a matching reaction is added',
     options: [
       {
         name: 'emoji',
         description:
-          'The emojis to filter for (unicode, custom emoji name, or custom emoji ID. Comma-separated)',
+          'The emojis to filter (unicode, custom emoji name, or custom emoji ID. Comma-separated)',
         type: ApplicationCommandOptionType.String,
         required: true,
       },
       {
         name: 'delete',
-        description: 'Delete the reaction that triggered the rule (default: false)',
+        description: 'Delete the triggering reaction (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ] as const,

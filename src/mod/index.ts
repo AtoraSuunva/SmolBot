@@ -2,8 +2,7 @@ import { actionLogModules } from './actionlog/index.js'
 import { manual_log } from './actionlog/manual_log.js'
 import { antiraidModules } from './antiraid/index.js'
 import { auto_tag } from './auto_tag.js'
-import { automod } from './automod/automod.js'
-import { maliciousFile } from './automod/maliciousFile.js'
+import { automod, automod_rules } from './automod/automod.js'
 import { dehoist } from './dehoist.js'
 import { delete_police_config } from './delete_police_config.js'
 // import { export_users } from './export_users.js'
@@ -32,6 +31,7 @@ export const modModules = [
   ...muteModules,
   ...warningsModules,
   automod,
+  automod_rules,
   auto_tag,
   dehoist,
   delete_police_config,
@@ -40,7 +40,6 @@ export const modModules = [
   lock_thread_config,
   lock_thread,
   lookup,
-  maliciousFile,
   manual_log,
   mass_ban,
   mass_find,

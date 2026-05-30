@@ -161,7 +161,20 @@ type AutomodEventHandlers<T extends SleetSlashSubcommandBody['options'] = []> = 
 }
 
 /**
- * Base class for an automod rule. Automod roughly mimics what Sleet does for SleetModules, except they're restricted to being subcommands since we mount them under "/automod add <rule>" and "/automod edit <rule>"
+ * Options to change how to override the slash command body
+ */
+interface WithBodyOptions {
+  /** Change how the slash command options are overridden */
+  options?: {
+    /** If true, replace the existing options instead of merging them */
+    replace?: boolean
+    /** If defined, override the required property of all options */
+    required?: boolean
+  }
+}
+
+/**
+ * Base class for an automod rule. Automod roughly mimics what Sleet does for SleetModules, except they're restricted to being subcommands since we mount them under "/automod_rules add <rule>" and "/automod_rules edit <rule>"
  *
  * Some rules:
  * - The body name should be unique across all rules, as it's used to identify the type of the rule in the database
@@ -206,45 +219,50 @@ export class AutomodRule<
   }
 
   /**
-   * Create a new instance of this rule but with new options merged into the body. Required options are automatically sorted to the front
+   * Create a new instance of this rule by merging the existing body with a new body.
    *
-   * This allows you to add new options to the rule like "name" and "description" without having to redefine the entire rule, for example to have /automod add repeat name:foo message:stop that repeats:1 interval:10 and `/automod add repeat name:bar message:stop that repeats:3 interval:10`
+   * Used to create add/edit subcommands using the same base
    *
-   * New options are prepended to the existing options, so they will show up first when adding/editing rules
-   *
-   * @param options The new options to add to the rule
-   * @param replace If true, replace the options instead of merging them
-   * @param required If undefined, keep the existing required values. If true or false, override all options to be required: true/false
+   * @param body The new body to merge with the existing body.
+   * @param withOptions Options to control how the body is merged.
+   * @returns A new AutomodRule instance with the merged body. The handlers and sleet module options are preserved.
    */
-  withBodyOptions(
-    options: NonNullable<SleetSlashSubcommandBody['options']>,
-    replace = false,
-    required?: boolean,
-  ) {
-    let newOptions = replace ? options : [...options, ...(this.inputBody.options ?? [])]
+  withBody(body: Partial<Body>, withOptions: WithBodyOptions = {}): AutomodRule<Body> {
+    const { options, ...otherBody } = body
 
-    // required options need to be first
-    newOptions.sort((a, b) => {
-      if (a.required && !b.required) {
-        return -1
+    let newOptions = this.inputBody.options
+
+    if (options) {
+      if (withOptions.options?.replace) {
+        newOptions = options
+      } else {
+        newOptions = [...options, ...(this.inputBody.options ?? [])]
+
+        // required options need to be first
+        newOptions.sort((a, b) => {
+          if (a.required && !b.required) {
+            return -1
+          }
+          if (!a.required && b.required) {
+            return 1
+          }
+
+          return 0
+        })
+
+        if (withOptions.options?.required !== undefined) {
+          newOptions = newOptions.map((opt) => ({
+            ...opt,
+            required: withOptions.options?.required ?? false,
+          }))
+        }
       }
-      if (!a.required && b.required) {
-        return 1
-      }
-
-      return 0
-    })
-
-    if (required !== undefined) {
-      newOptions = newOptions.map((opt) => ({
-        ...opt,
-        required: required,
-      }))
     }
 
     return new AutomodRule(
       {
         ...this.inputBody,
+        ...otherBody,
         options: newOptions,
       },
       this.handlers as AutomodEventHandlers<Body['options']>,
@@ -321,7 +339,7 @@ export class AutomodRule<
     }).setTextInputComponent(durationInput)
 
     const howToEditParamsTextDisplay = new TextDisplayBuilder({
-      content: `To edit the parameters of the rule, use the slash command \`/automod edit ${rule.type} rule:${rule.ruleID}\`. Discord does not allow modals to have more than 5 input components, which is not enough :(`,
+      content: `To edit the parameters of the rule, use the slash command \`/automod_rules edit ${rule.type} rule:${rule.ruleID}\`. Discord does not allow modals to have more than 5 input components, which is not enough :(`,
     })
 
     modal.addLabelComponents(nameLabel, actionLabel, messageLabel, durationLabel)
@@ -343,7 +361,7 @@ export class AutomodRule<
         const remaining = (this.inputBody.options?.length ?? 0) - currentOptions
         modal.addTextDisplayComponents({
           type: ComponentType.TextDisplay,
-          content: `And ${remaining} more option${remaining === 1 ? '' : 's'}... Use \`/automod edit ${rule.type} rule:${rule.ruleID}\` to edit those options for now.`,
+          content: `And ${remaining} more option${remaining === 1 ? '' : 's'}... Use \`/automod_rules edit ${rule.type} rule:${rule.ruleID}\` to edit those options for now.`,
         })
         break
       }

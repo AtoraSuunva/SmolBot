@@ -14,22 +14,22 @@ export const regexRule = new AutomodRule(
   {
     name: 'regex',
     // TODO: support regex matching for other events like usernames/display names, etc.
-    description: 'Trigger when a message matches a specified regular expression',
+    description: 'Match against a regex',
     options: [
       {
         name: 'pattern',
-        description: 'The regular expression pattern to match against messages',
+        description: 'Regex to match against',
         type: ApplicationCommandOptionType.String,
         required: true,
       },
       {
         name: 'flags',
-        description: "Optional regex flags (e.g. 'i' for case-insensitive, 'g' for global).",
+        description: 'Regex flags',
         type: ApplicationCommandOptionType.String,
       },
       {
         name: 'delete',
-        description: 'Delete the message that triggered the rule (default: false)',
+        description: 'Delete the triggering messages (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ] as const,

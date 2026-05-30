@@ -58,8 +58,10 @@ export const automod_edit = new AutomodRuleGroup(
     description: 'Edit an existing automod rule',
     requireParams: false,
     options: rules.map((opt) =>
-      // add addOpts as non-required options and then add editOptions as required
-      opt.withBodyOptions(addOpts, false, false).withBodyOptions(editOptions),
+      // add addOpts as non-required options and then add editOptions as-is
+      opt
+        .withBody({ options: addOpts }, { options: { required: false } })
+        .withBody({ options: editOptions }),
     ),
   },
   {

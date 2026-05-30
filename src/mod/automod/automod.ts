@@ -16,20 +16,23 @@ import { automod_view, handleViewInteraction } from './commands/view.js'
 import { rules } from './rules/index.js'
 
 // TODO for automod:
-// - [ ] Add more rules (phash, pressure, newlines, forbidden, emoji-only, embeds, scam)
+// - [ ] Add more rules (phash, pressure, newlines, forbidden, emoji-only, scam, cross-channel)
+
+// It's ugly to split these out, but we're actually running into the 8,000 character limit for commands
+export const automod_rules = new SleetSlashCommand({
+  name: 'automod_rules',
+  description: "Manage the bot's automod rules",
+  options: [automod_add, automod_edit],
+  contexts: [InteractionContextType.Guild],
+  default_member_permissions: ['ManageGuild'],
+  integration_types: [ApplicationIntegrationType.GuildInstall],
+})
 
 export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [
-      automod_add,
-      automod_view,
-      automod_details,
-      automod_edit,
-      automod_delete,
-      automod_config,
-    ],
+    options: [automod_view, automod_details, automod_delete, automod_config],
     contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     integration_types: [ApplicationIntegrationType.GuildInstall],

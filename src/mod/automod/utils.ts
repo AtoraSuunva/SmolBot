@@ -7,6 +7,8 @@ import {
   ContainerBuilder,
   SectionBuilder,
   TextDisplayBuilder,
+  type GuildTextBasedChannel,
+  type Message,
 } from 'discord.js'
 import { AutocompleteHandler, escapeAllMarkdown, makeChoices } from 'sleetcord'
 
@@ -310,4 +312,28 @@ export function getAutomodConfig(guildID: string): Promise<AutomodConfig> {
       guildID,
     },
   })
+}
+
+/**
+ * Delete messages, groups messages into bulk deletions where possible, and falls back to individual deletions if not (e.g. for messages in different channels)
+ *
+ * @param messages The messages to delete
+ */
+export async function deleteMessages(messages: Message[]) {
+  const channelToMessages = new Map<GuildTextBasedChannel, Message[]>()
+
+  for (const message of messages) {
+    const channel = message.channel as GuildTextBasedChannel
+    const channelMessages = channelToMessages.get(channel) ?? []
+    channelMessages.push(message)
+    channelToMessages.set(channel, channelMessages)
+  }
+
+  for (const [channel, messages] of channelToMessages.entries()) {
+    if (messages.length > 1) {
+      await channel.bulkDelete(messages).catch(() => {})
+    } else {
+      await messages[0].delete().catch(() => {})
+    }
+  }
 }

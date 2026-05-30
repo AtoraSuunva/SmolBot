@@ -42,45 +42,43 @@ const triggerTimestampSeparate = 250
 export const automodBackoffRule = new AutomodRule(
   {
     name: 'automod-backoff',
-    description:
-      'Timeout users for exponentially longer durations when they trigger Discord automod (base ^ triggers)',
+    description: 'Timeout users when they trigger Discord automod (base ^ triggers)',
     options: [
       {
         name: 'automod_rules',
-        description:
-          'The IDs of the native automod rules to apply this backoff to (comma-separated)',
+        description: 'IDs of the native automod rules to apply backoff to (comma-separated)',
         type: ApplicationCommandOptionType.String,
         required: true,
       },
       {
         name: 'base_duration',
-        description: 'The base duration (in seconds) of the timeout (default: 2)',
+        description: 'Base timeout duration (seconds, default: 2)',
         type: ApplicationCommandOptionType.Integer,
       },
       {
         name: 'max_duration',
-        description: 'The maximum duration (in seconds) of the timeout (default: 604800 / 7 days)',
+        description: 'Maximum timeout duration (seconds, default: 604800 / 7 days)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 1,
         max_value: (28 * DAY) / 1000, // Discord's max timeout duration is 28 days
       },
       {
         name: 'decay_after',
-        description: 'Seconds after which the count of triggers decrements (default: 0 for never)',
+        description: 'When to start decaying the triggers (seconds, default: 0 for never)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
       },
       {
         name: 'timeout_after',
         description:
-          'The number of triggers after which the timeout starts applying (default: 1, immediately)',
+          'Start applying the timeout after this many triggers (default: 1, immediately)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 1,
       },
       {
         name: 'trigger_after',
         description:
-          'Trigger the rule (no timeout) after the Discord rule triggers this many times (default: 0 for never)',
+          'Trigger the rule and apply the action after this many triggers (default: 0 for never)',
         type: ApplicationCommandOptionType.Integer,
         min_value: 0,
       },

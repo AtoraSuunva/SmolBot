@@ -86,7 +86,7 @@ const modlogConfigOptions = {
     type: ApplicationCommandOptionType.Boolean,
   },
   automod_timeout: {
-    description: 'Log when a member is timed out by automod',
+    description: 'Log when a member is timed out by Discord automod',
     type: ApplicationCommandOptionType.Boolean,
   },
   user_update: {
