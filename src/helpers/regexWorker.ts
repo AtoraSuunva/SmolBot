@@ -15,11 +15,11 @@ import functionTimeout, { isTimeoutError } from 'function-timeout'
  * @param options The timeout before considering the match a failure
  * @returns True if the string matches the regex, false if it does not or times out
  */
-function isMatch(regex: RegExp, text: string, options: { timeout: number }) {
+function isMatch(regex: RegExp, text: string, options: { timeout: number }): boolean {
   try {
     return functionTimeout(() => structuredClone(regex).test(text), {
       timeout: options.timeout,
-    })
+    })()
   } catch (e) {
     if (isTimeoutError(e)) {
       return false
@@ -55,9 +55,10 @@ if (isMainThread) {
 
     try {
       const result = isMatch(regex, text, { timeout })
-      port.postMessage({ success: true, result } as WorkerResult)
+      port.postMessage({ success: true, result } satisfies WorkerResult)
     } catch (e) {
-      port.postMessage({ success: false, error: e } as WorkerResult)
+      const error = Error.isError(e) ? e : new Error(String(e))
+      port.postMessage({ success: false, error } satisfies WorkerResult)
     } finally {
       port.close()
     }
