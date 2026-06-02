@@ -97,11 +97,18 @@ export const ACTION_KEYS_CAMEL = ACTION_KEYS.map((a) => a.camel)
 /** snake_case keys for modlog actions: member_ban, member_timeout, etc */
 export const ACTION_KEYS_SNAKE = ACTION_KEYS.map((a) => a.snake)
 
+const validadedConfigCache = new Map<string, ValidConfig | null>()
+
 export async function getValidatedConfigFor(
   guild: Guild,
   loggedAction: LoggedAction | '' = '',
   checker: ConfigChecker = () => true,
 ): Promise<ValidConfig | null> {
+  const cacheKey = `${guild.id}-${loggedAction}`
+  const cached = validadedConfigCache.get(cacheKey)
+
+  if (cached && checker(cached.config)) return cached
+
   const config = await getConfigFor(guild)
 
   if (!config?.enabled || !checker(config)) return null
@@ -110,7 +117,9 @@ export async function getValidatedConfigFor(
     const channel = await getChannelFor(guild, loggedAction, false)
 
     if (channel) {
-      return { config, channel }
+      const validConfig = { config, channel }
+      validadedConfigCache.set(cacheKey, validConfig)
+      return validConfig
     }
   }
 
@@ -118,7 +127,9 @@ export async function getValidatedConfigFor(
 
   if (!channel?.isTextBased()) return null
 
-  return { config, channel }
+  const validConfig = { config, channel }
+  validadedConfigCache.set(cacheKey, validConfig)
+  return validConfig
 }
 
 const channelsCache = new Map<Guild, ModLogChannels>()
@@ -167,6 +178,12 @@ export async function getChannelFor(
 export function clearCacheFor(guild: Guild) {
   configCache.delete(guild)
   channelsCache.delete(guild)
+
+  for (const key of validadedConfigCache.keys()) {
+    if (key.startsWith(guild.id)) {
+      validadedConfigCache.delete(key)
+    }
+  }
 }
 
 export function formatLog(emoji: string, type: string, message: string, timestamp: Date): string {
