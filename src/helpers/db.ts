@@ -1,4 +1,5 @@
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { queryTags } from '@prisma/sqlcommenter-query-tags'
 import env from 'env-var'
 import { HOUR } from 'sleetcord-common'
 
@@ -25,6 +26,7 @@ const adapter = new PrismaBetterSqlite3({
 export const prisma = new PrismaClient({
   adapter,
   errorFormat: NODE_ENV === 'development' ? 'pretty' : 'colorless',
+  comments: [queryTags()],
   log: [
     {
       emit: 'event',
@@ -60,5 +62,9 @@ if (adapter.provider === 'sqlite') {
   // https://www.sqlite.org/wal.html
   // For speed
   await prisma.$executeRaw`PRAGMA journal_mode=WAL`
+  await prisma.$executeRaw`PRAGMA busy_timeout=5000`
+  await prisma.$executeRaw`PRAGMA synchronous=NORMAL`
+  await prisma.$executeRaw`PRAGMA foreign_keys=ON`
+  await prisma.$executeRaw`PRAGMA temp_store=MEMORY`
   setInterval(() => void analyzeDatabase(), 12 * HOUR)
 }

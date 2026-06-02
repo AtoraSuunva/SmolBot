@@ -149,7 +149,7 @@ async function checkForRepeats(
   const intervalMs = params.interval * SECOND
   const isWithinInterval = intervalMs === 0 ? true : now - info.lastInfractionTimestamp < intervalMs
 
-  if (isWithinInterval && identifier === info.lastIdentifier) {
+  if (isWithinInterval && identifier && identifier === info.lastIdentifier) {
     info.repeatCount++
     info.lastInfractionTimestamp = now
     if (message) {

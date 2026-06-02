@@ -12,9 +12,10 @@ import { formatLog, getValidatedConfigFor } from '../modlog/utils.js'
 import { muteMembers } from '../mute/mute.js'
 import { AutomodAction } from './actions.js'
 import { AutomodEventResult, AutomodRule } from './modules/AutomodRule.js'
-import { getAutomodConfig } from './utils.js'
+import { getAutomodConfigCached } from './utils.js'
 
 const automodMiddlewareLogger = baseLogger.child({ module: 'automodMiddleware' })
+let automodMiddlewareInvocationCounter = 0
 
 export type PrismaAutomodRule = AutomodRuleGetPayload<true>
 
@@ -47,7 +48,17 @@ const actionToVerb: Record<AutomodAction, string> = {
   log: 'flagged',
 }
 
+function measureDuration(name: string, startMark: string, endMark: string): number {
+  return performance.measure(name, startMark, endMark).duration
+}
+
 export const automodMiddleware: SleetModuleMiddleware = async (module, event, next) => {
+  const invocationId = ++automodMiddlewareInvocationCounter
+  const performancePrefix = `automodMiddleware-${module.body.name}-${event.name}-${invocationId}`
+  const markName = (label: string) => `${performancePrefix}-${label}`
+  const durationName = (label: string) => `${performancePrefix}-Duration-${label}`
+
+  performance.mark(markName('Start'))
   // ignore anything that isn't an AutomodRule
   if (!(module instanceof AutomodRule)) {
     await next()
@@ -58,6 +69,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   const { name } = module.body
 
   const { guild, member, channel } = await getEntitiesFromEvent(event)
+  performance.mark(markName('EntitiesResolved'))
 
   if (!guild) {
     // if we can't find a guild ID, just skip automod processing since we don't know which rules to load
@@ -65,37 +77,35 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       { eventName: event.name },
       `Could not find guild ID in event arguments, skipping automod processing for event ${event.name}`,
     )
-    await next()
     return
   }
 
-  const config = await getAutomodConfig(guild.id)
+  const config = await getAutomodConfigCached(guild.id)
 
-  if (config.ignoredChannels?.includes(channel?.id ?? '')) {
+  if (channel && config.ignoredChannels?.includes(channel.id)) {
     automodMiddlewareLogger.debug(
-      { channelId: channel?.id },
-      `Channel ${channel?.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
+      { channelId: channel.id },
+      `Channel ${channel.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
     )
     return
   }
 
   if (config.ignoredRoles?.length && member) {
-    const memberRoles = new Set(member.roles.cache.map((r) => r.id))
-    const ignoredRole = config.ignoredRoles.find((r) => memberRoles.has(r))
+    const ignoredRole = member.roles.cache.find((r) => config.ignoredRoles.includes(r.id))
 
     if (ignoredRole) {
       automodMiddlewareLogger.debug(
-        { roleId: ignoredRole, memberId: member.id },
-        `Member ${member.id} has role ${ignoredRole} which is configured to be ignored, skipping automod processing for event ${event.name}`,
+        { roleId: ignoredRole.id, memberId: member.id },
+        `Member ${member.id} has role ${ignoredRole.id} which is configured to be ignored, skipping automod processing for event ${event.name}`,
       )
       return
     }
   }
 
-  if (config.ignoredUsers?.includes(member?.id ?? '')) {
+  if (member && config.ignoredUsers?.includes(member.id)) {
     automodMiddlewareLogger.debug(
-      { userId: member?.id },
-      `User ${member?.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
+      { userId: member.id },
+      `User ${member.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
     )
     return
   }
@@ -116,6 +126,8 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     return
   }
 
+  performance.mark(markName('ConfigLoaded'))
+
   // pull the rules from the database, if any exists
   const rules = await prisma.automodRule.findMany({
     where: {
@@ -123,6 +135,8 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       type: name,
     },
   })
+
+  performance.mark(markName('RulesLoaded'))
 
   if (rules.length === 0) {
     // no rules of this type for this guild, skip processing by not calling next()
@@ -151,7 +165,13 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     automodRules.push({ rule, params: params.value })
   }
 
+  performance.mark(markName('ParametersUnpacked'))
+
   const ruleIDs = automodRules.map((r) => r.rule.ruleID)
+
+  if (ruleIDs.length === 0) {
+    return
+  }
 
   automodMiddlewareLogger.debug(
     { rules: ruleIDs, ruleType: name, params: automodRules.map((r) => r.params) },
@@ -159,10 +179,24 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   )
   const results = await (automodAsyncStore.run(automodRules, next) as Promise<AutomodEventResult[]>)
 
+  performance.mark(markName('ExecutionCompleted'))
+
+  const hasTriggeredResults = results.some((r) => r !== undefined)
+
+  const modlogConfig = hasTriggeredResults
+    ? await getValidatedConfigFor(guild, 'automodAction', (config) => config.automodAction)
+    : null
+
+  performance.mark(markName('ModlogConfigLoaded'))
+
   for (const result of results) {
     if (!result) {
       continue
     }
+
+    performance.mark(markName('ProcessingResultStart'))
+
+    performance.mark(markName(`ProcessingResult-${result.rule.ruleID}`))
 
     const { rule } = result
 
@@ -244,13 +278,6 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     }
 
     // log to modlog
-
-    const modlogConfig = await getValidatedConfigFor(
-      guild,
-      'automodAction',
-      (config) => config.automodAction,
-    )
-
     if (modlogConfig) {
       // 🐲 10:55:14 PM [Automod] User [username] (123456789) @user triggered **Automod Rule Name** in <#channelId> and was **kicked**: Sent 5 identical messages in 10 seconds
       const byUser = formatUser(punishMember.user)
@@ -273,7 +300,64 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
         allowedMentions: { parse: [] },
       })
     }
+
+    performance.mark(markName(`ResultProcessed-${result.rule.ruleID}`))
   }
+
+  performance.mark(markName('ResultsProcessed'))
+
+  performance.mark(markName('End'))
+
+  const configLoadedDuration = measureDuration(
+    durationName('StartToConfigLoaded'),
+    markName('Start'),
+    markName('ConfigLoaded'),
+  )
+  const rulesLoadedDuration = measureDuration(
+    durationName('ConfigLoadedToRulesLoaded'),
+    markName('ConfigLoaded'),
+    markName('RulesLoaded'),
+  )
+  const parametersUnpackedDuration = measureDuration(
+    durationName('RulesLoadedToParametersUnpacked'),
+    markName('RulesLoaded'),
+    markName('ParametersUnpacked'),
+  )
+  const executionCompletedDuration = measureDuration(
+    durationName('ParametersUnpackedToExecutionCompleted'),
+    markName('ParametersUnpacked'),
+    markName('ExecutionCompleted'),
+  )
+  const modlogConfigLoadedDuration = measureDuration(
+    durationName('ExecutionCompletedToModlogConfigLoaded'),
+    markName('ExecutionCompleted'),
+    markName('ModlogConfigLoaded'),
+  )
+  const resultsProcessedDuration = measureDuration(
+    durationName('ModlogConfigLoadedToResultsProcessed'),
+    markName('ModlogConfigLoaded'),
+    markName('ResultsProcessed'),
+  )
+  const totalDuration = measureDuration(
+    durationName('StartToEnd'),
+    markName('Start'),
+    markName('End'),
+  )
+
+  automodMiddlewareLogger.info(
+    {
+      ruleType: name,
+      eventName: event.name,
+      startToConfigLoadedMs: configLoadedDuration,
+      configLoadedToRulesLoadedMs: rulesLoadedDuration,
+      rulesLoadedToParametersUnpackedMs: parametersUnpackedDuration,
+      parametersUnpackedToExecutionCompletedMs: executionCompletedDuration,
+      executionCompletedToModlogConfigLoadedMs: modlogConfigLoadedDuration,
+      modlogConfigLoadedToResultsProcessedMs: resultsProcessedDuration,
+      totalMs: totalDuration,
+    },
+    `${name} [${event.name}]: Start - ${configLoadedDuration.toFixed(2)}ms → Automod Config Loaded - ${rulesLoadedDuration.toFixed(2)}ms → Rules Loaded - ${parametersUnpackedDuration.toFixed(2)}ms → Parameters Unpacked - ${executionCompletedDuration.toFixed(2)}ms → Execution Completed - ${modlogConfigLoadedDuration.toFixed(2)}ms → Modlog Config Loaded - ${resultsProcessedDuration.toFixed(2)}ms → Results Processed → Total - ${totalDuration.toFixed(2)}ms`,
+  )
 }
 
 interface Entities {

@@ -17,12 +17,8 @@ import { escapeAllMarkdown, inGuildGuard, SleetSlashSubcommand } from 'sleetcord
 import { getComponentsOfType } from '../../../helpers/components.js'
 import { formatConfig, parseConfig } from '../../../helpers/format.js'
 import { automodActionCommandOptionChoices } from '../actions.js'
-import {
-  formatRules,
-  FindAutomodRulesParams,
-  findRulesPaginated,
-  automodChoices,
-} from '../utils.js'
+import { automodChoices } from '../constants.js'
+import { formatRules, FindAutomodRulesParams, findRulesPaginated } from '../utils.js'
 
 const FILTERS_ID = 999
 

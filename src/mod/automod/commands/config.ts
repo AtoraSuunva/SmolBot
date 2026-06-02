@@ -5,6 +5,7 @@ import { Prisma } from '../../../generated/prisma/client.js'
 import type { AutomodConfigCreateInput } from '../../../generated/prisma/models.js'
 import { prisma } from '../../../helpers/db.js'
 import { formatConfig } from '../../../helpers/format.js'
+import { invalidateAutomodConfigCache } from '../utils.js'
 
 export const automod_config = new SleetSlashSubcommand(
   {
@@ -76,23 +77,11 @@ async function handleConfigRun(interaction: ChatInputCommandInteraction) {
     guildID: guild.id,
     prepend: prepend === '-' ? null : (prepend ?? oldConfig?.prepend ?? Prisma.skip),
     ignoredChannels:
-      ignoreChannels === '-'
-        ? []
-        : ignoreChannels
-          ? ignoreChannels.split(',').map((id) => id.trim())
-          : (oldConfig?.ignoredChannels ?? Prisma.skip),
+      ignoreChannels === '-' ? '' : (ignoreChannels ?? oldConfig?.ignoredChannels ?? Prisma.skip),
     ignoredRoles:
-      ignoreRoles === '-'
-        ? []
-        : ignoreRoles
-          ? ignoreRoles.split(',').map((id) => id.trim())
-          : (oldConfig?.ignoredRoles ?? Prisma.skip),
+      ignoreRoles === '-' ? '' : (ignoreRoles ?? oldConfig?.ignoredRoles ?? Prisma.skip),
     ignoredUsers:
-      ignoreUsers === '-'
-        ? []
-        : ignoreUsers
-          ? ignoreUsers.split(',').map((id) => id.trim())
-          : (oldConfig?.ignoredUsers ?? Prisma.skip),
+      ignoreUsers === '-' ? '' : (ignoreUsers ?? oldConfig?.ignoredUsers ?? Prisma.skip),
     ignoreBots: ignoreBots !== null ? ignoreBots : (oldConfig?.ignoreBots ?? Prisma.skip),
     ignoreAdmins: ignoreAdmins !== null ? ignoreAdmins : (oldConfig?.ignoreAdmins ?? Prisma.skip),
   }
@@ -110,6 +99,8 @@ async function handleConfigRun(interaction: ChatInputCommandInteraction) {
     config: newConfig,
     oldConfig,
   })
+
+  invalidateAutomodConfigCache(guild.id)
 
   await interaction.editReply({
     content: `Automod configuration updated successfully!\n${formattedConfig}`,

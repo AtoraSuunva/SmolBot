@@ -3,14 +3,11 @@ model AutomodConfig {
   // Message to prepend to the automod trigger message
   prepend         String?
   // Channels to ignore
-  /// [AutomodIgnoredChannels]
-  ignoredChannels Json    @default("[]")
+  ignoredChannels String @default("")
   // Roles to ignore
-  /// [AutomodIgnoredRoles]
-  ignoredRoles    Json    @default("[]")
+  ignoredRoles    String @default("")
   // Users to ignore
-  /// [AutomodIgnoredUsers]
-  ignoredUsers    Json    @default("[]")
+  ignoredUsers    String @default("")
   // Whether to ignore bots
   ignoreBots      Boolean @default(true)
   // Whether to ignore users with admin permissions
@@ -36,5 +33,5 @@ model AutomodRule {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@index([guildID])
+  @@index([guildID, type])
 }
