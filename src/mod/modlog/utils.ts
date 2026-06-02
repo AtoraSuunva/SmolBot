@@ -1,7 +1,7 @@
 import { type Guild, type GuildTextBasedChannel, time } from 'discord.js'
 import { TicketQueue } from 'ticket-queue'
 
-import { type ModLogConfig, Prisma } from '../../generated/prisma/client.js'
+import { type ModLogChannels, type ModLogConfig, Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { type CamelToSnakeCase, toSnakeCase } from '../../helpers/format.js'
 
@@ -99,7 +99,7 @@ export const ACTION_KEYS_SNAKE = ACTION_KEYS.map((a) => a.snake)
 
 export async function getValidatedConfigFor(
   guild: Guild,
-  loggedAction: LoggedAction | '',
+  loggedAction: LoggedAction | '' = '',
   checker: ConfigChecker = () => true,
 ): Promise<ValidConfig | null> {
   const config = await getConfigFor(guild)
@@ -121,33 +121,37 @@ export async function getValidatedConfigFor(
   return { config, channel }
 }
 
-export async function getChannelFor(
-  guild: Guild,
-  loggedAction: LoggedAction,
-  fallback = true,
-): Promise<GuildTextBasedChannel | null> {
+const channelsCache = new Map<Guild, ModLogChannels>()
+
+async function getCachedChannelFor(guild: Guild): Promise<ModLogChannels | null> {
+  const cached = channelsCache.get(guild)
+
+  if (cached) return cached
+
   const channels = await prisma.modLogChannels.findFirst({
-    select: {
-      [loggedAction]: true,
-    },
     where: {
       guildID: guild.id,
     },
   })
 
-  let channelID: string | undefined = channels?.[loggedAction]
+  if (channels) channelsCache.set(guild, channels)
+
+  return channels
+}
+
+export async function getChannelFor(
+  guild: Guild,
+  loggedAction: LoggedAction,
+  fallback = true,
+): Promise<GuildTextBasedChannel | null> {
+  const channels = await getCachedChannelFor(guild)
+
+  let channelID: string | null | undefined = channels?.[loggedAction]
 
   if (!channelID) {
     if (!fallback) return null
 
-    const config = await prisma.modLogConfig.findFirst({
-      select: {
-        channelID: true,
-      },
-      where: {
-        guildID: guild.id,
-      },
-    })
+    const config = await getConfigFor(guild)
 
     if (!config) return null
     channelID = config.channelID
@@ -162,6 +166,7 @@ export async function getChannelFor(
 
 export function clearCacheFor(guild: Guild) {
   configCache.delete(guild)
+  channelsCache.delete(guild)
 }
 
 export function formatLog(emoji: string, type: string, message: string, timestamp: Date): string {

@@ -15,6 +15,7 @@ import {
   ACTION_KEYS,
   ACTION_KEYS_CAMEL,
   ACTION_KEYS_SNAKE,
+  clearCacheFor,
   getValidatedConfigFor,
   type LoggedAction,
 } from './utils.js'
@@ -63,7 +64,7 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
     },
   })
 
-  const mainConfig = await getValidatedConfigFor(guild, '')
+  const mainConfig = await getValidatedConfigFor(guild)
   const mainChannel = mainConfig?.channel ?? null
 
   if (getOptionCount(interaction) === 0) {
@@ -99,6 +100,8 @@ async function runModlogChannels(interaction: ChatInputCommandInteraction) {
     update: mergedConfig,
     create: mergedConfig,
   })
+
+  clearCacheFor(guild)
 
   return interaction.reply({
     content: `Modlog channel overrides:\n${formatConfig({
