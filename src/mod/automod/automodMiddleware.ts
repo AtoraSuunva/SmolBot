@@ -5,14 +5,13 @@ import { EventDetails, formatUser, SleetModuleMiddleware } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
 
 import type { AutomodRuleGetPayload } from '../../generated/prisma/models.js'
-import { prisma } from '../../helpers/db.js'
 import { plural } from '../../helpers/format.js'
 import { sendToModlog } from '../modlog/sendToModlog.js'
 import { formatLog, getValidatedConfigFor } from '../modlog/utils.js'
 import { muteMembers } from '../mute/mute.js'
 import { AutomodAction } from './actions.js'
 import { AutomodEventResult, AutomodRule } from './modules/AutomodRule.js'
-import { getAutomodConfigCached } from './utils.js'
+import { getAutomodConfigCached, getAutomodRulesCached } from './utils.js'
 
 const automodMiddlewareLogger = baseLogger.child({ module: 'automodMiddleware' })
 let automodMiddlewareInvocationCounter = 0
@@ -129,12 +128,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
   performance.mark(markName('ConfigLoaded'))
 
   // pull the rules from the database, if any exists
-  const rules = await prisma.automodRule.findMany({
-    where: {
-      guildID: guild.id,
-      type: name,
-    },
-  })
+  const rules = await getAutomodRulesCached(guild.id, name)
 
   performance.mark(markName('RulesLoaded'))
 
@@ -308,9 +302,14 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
 
   performance.mark(markName('End'))
 
-  const configLoadedDuration = measureDuration(
-    durationName('StartToConfigLoaded'),
+  const entitiesResolvedDuration = measureDuration(
+    durationName('StartToEntitiesResolved'),
     markName('Start'),
+    markName('EntitiesResolved'),
+  )
+  const configLoadedDuration = measureDuration(
+    durationName('EntitiesResolvedToConfigLoaded'),
+    markName('EntitiesResolved'),
     markName('ConfigLoaded'),
   )
   const rulesLoadedDuration = measureDuration(
@@ -348,7 +347,8 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     {
       ruleType: name,
       eventName: event.name,
-      startToConfigLoadedMs: configLoadedDuration,
+      startToEntitiesResolvedMs: entitiesResolvedDuration,
+      entitiesResolvedToConfigLoadedMs: configLoadedDuration,
       configLoadedToRulesLoadedMs: rulesLoadedDuration,
       rulesLoadedToParametersUnpackedMs: parametersUnpackedDuration,
       parametersUnpackedToExecutionCompletedMs: executionCompletedDuration,
@@ -356,7 +356,7 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
       modlogConfigLoadedToResultsProcessedMs: resultsProcessedDuration,
       totalMs: totalDuration,
     },
-    `${name} [${event.name}]: Start - ${configLoadedDuration.toFixed(2)}ms → Automod Config Loaded - ${rulesLoadedDuration.toFixed(2)}ms → Rules Loaded - ${parametersUnpackedDuration.toFixed(2)}ms → Parameters Unpacked - ${executionCompletedDuration.toFixed(2)}ms → Execution Completed - ${modlogConfigLoadedDuration.toFixed(2)}ms → Modlog Config Loaded - ${resultsProcessedDuration.toFixed(2)}ms → Results Processed → Total - ${totalDuration.toFixed(2)}ms`,
+    `${name} [${event.name}]: Start - ${entitiesResolvedDuration.toFixed(2)}ms → Entities Resolved - ${configLoadedDuration.toFixed(2)}ms → Automod Config Loaded - ${rulesLoadedDuration.toFixed(2)}ms → Rules Loaded - ${parametersUnpackedDuration.toFixed(2)}ms → Parameters Unpacked - ${executionCompletedDuration.toFixed(2)}ms → Execution Completed - ${modlogConfigLoadedDuration.toFixed(2)}ms → Modlog Config Loaded - ${resultsProcessedDuration.toFixed(2)}ms → Results Processed → Total - ${totalDuration.toFixed(2)}ms`,
   )
 }
 

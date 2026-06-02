@@ -124,18 +124,64 @@ export async function findRulesPaginated(
   }
 }
 
-export interface GetAutomodRuleParams {
-  guildID: string
-  ruleID: string
+/**
+ * Wrapper around prisma.automodRule.findFirst in case I add custom logic later
+ *
+ * @param payload The same payload as prisma.automodRule.findFirst
+ * @returns The first automod rule that matches the payload, or null if no rules match
+ */
+export async function findFirstAutomodRule(
+  payload: Prisma.AutomodRuleFindFirstArgs,
+): Promise<PrismaAutomodRule | null> {
+  return prisma.automodRule.findFirst(payload)
 }
 
-export async function findFirstRule({ guildID, ruleID }: GetAutomodRuleParams) {
-  return prisma.automodRule.findFirst({
-    where: {
-      guildID,
-      ruleID,
-    },
-  })
+/**
+ * Wrapper around prisma.automodRule.create that invalidates the automod rules cache after creation
+ *
+ * @param payload The same payload as prisma.automodRule.create
+ * @returns The created automod rule
+ */
+export async function createAutomodRule(
+  payload: Prisma.AutomodRuleCreateArgs,
+): Promise<PrismaAutomodRule> {
+  const newRule = await prisma.automodRule.create(payload)
+
+  invalidateAutomodRulesCache(newRule.guildID, newRule.type)
+
+  return newRule
+}
+
+/**
+ * Wrapper around prisma.automodRule.update that invalidates the automod rules cache after update
+ *
+ * @param payload The same payload as prisma.automodRule.update
+ * @returns The updated automod rule
+ */
+export async function updateAutomodRule(
+  payload: Prisma.AutomodRuleUpdateArgs,
+): Promise<PrismaAutomodRule> {
+  const updatedRule = await prisma.automodRule.update(payload)
+
+  invalidateAutomodRulesCache(updatedRule.guildID, updatedRule.type)
+
+  return updatedRule
+}
+
+/**
+ * Wrapper around prisma.automodRule.delete that invalidates the automod rules cache after deletion
+ *
+ * @param payload The same payload as prisma.automodRule.delete
+ * @returns The deleted automod rule
+ */
+export async function deleteAutomodRule(
+  payload: Prisma.AutomodRuleDeleteArgs,
+): Promise<PrismaAutomodRule> {
+  const deletedRule = await prisma.automodRule.delete(payload)
+
+  invalidateAutomodRulesCache(deletedRule.guildID, deletedRule.type)
+
+  return deletedRule
 }
 
 export interface FormatRuleOptions {
@@ -337,6 +383,51 @@ export async function getAutomodConfigCached(guildID: string): Promise<AutomodCo
  */
 export function invalidateAutomodConfigCache(guildID: string) {
   configCache.delete(guildID)
+}
+
+export type AutomodRule = Prisma.AutomodRuleGetPayload<true>
+
+const ruleCache = new Map<string, AutomodRule[]>()
+
+/**
+ * Get the automod rules for a guild and type, using a cache to reduce database queries. If there are no rules, an empty array is returned
+ *
+ * @param guildID The ID of the guild to get the rules for
+ * @param type The type of rules to get
+ * @returns The automod rules for the guild and type
+ */
+export async function getAutomodRulesCached(
+  guildID: string,
+  type: string,
+): Promise<PrismaAutomodRule[]> {
+  const key = `${guildID}:${type}`
+  const cachedRules = ruleCache.get(key)
+  if (cachedRules) {
+    return cachedRules
+  }
+
+  const rules = await prisma.automodRule.findMany({
+    where: {
+      guildID,
+      type,
+    },
+  })
+
+  ruleCache.set(key, rules)
+  return rules
+}
+
+/**
+ * Invalidate the automod rules cache for a guild and type, should be called after updating the rules to ensure the cache is not stale
+ *
+ * The cache will automatically be filled next time it's needed
+ *
+ * @param guildID The ID of the guild to invalidate the cache for
+ * @param type The type of rules to invalidate the cache for
+ */
+export function invalidateAutomodRulesCache(guildID: string, type: string) {
+  const key = `${guildID}:${type}`
+  ruleCache.delete(key)
 }
 
 /**

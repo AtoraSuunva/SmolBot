@@ -12,11 +12,15 @@ import { escapeAllMarkdown, formatUser, inGuildGuard, SleetSlashSubcommandBody }
 import { MINUTE } from 'sleetcord-common'
 
 import { Prisma } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../helpers/db.js'
 import type { PrismaAutomodRule } from '../automodMiddleware.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { rules } from '../rules/index.js'
-import { formatRuleDetails, ruleAutocomplete } from '../utils.js'
+import {
+  findFirstAutomodRule,
+  formatRuleDetails,
+  ruleAutocomplete,
+  updateAutomodRule,
+} from '../utils.js'
 import { addOptions } from './add.js'
 
 // we want to copy the options to avoid mutating the add options
@@ -71,8 +75,9 @@ export const automod_edit = new AutomodRuleGroup(
 
       const ruleID = interaction.options.getString('rule', true)
 
-      const oldRule = await prisma.automodRule.findFirst({
+      const oldRule = await findFirstAutomodRule({
         where: {
+          guildID: interaction.guildId,
           ruleID,
         },
       })
@@ -87,7 +92,7 @@ export const automod_edit = new AutomodRuleGroup(
       const message = interaction.options.getString('message')
       const duration = interaction.options.getInteger('duration')
 
-      const newRule = await prisma.automodRule.update({
+      const newRule = await updateAutomodRule({
         where: {
           ruleID: oldRule.ruleID,
         },
@@ -127,8 +132,9 @@ export async function handleEditInteraction(
 ) {
   const ruleID = params[0]
 
-  const oldRule = await prisma.automodRule.findFirst({
+  const oldRule = await findFirstAutomodRule({
     where: {
+      guildID: interaction.guildId,
       ruleID,
     },
   })
@@ -170,7 +176,7 @@ export async function handleEditInteraction(
     return
   }
 
-  const newRule = await prisma.automodRule.update({
+  const newRule = await updateAutomodRule({
     where: {
       ruleID: oldRule.ruleID,
     },

@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { escapeAllMarkdown, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
-import { findFirstRule, formatRuleDetails, ruleAutocomplete } from '../utils.js'
+import { findFirstAutomodRule, formatRuleDetails, ruleAutocomplete } from '../utils.js'
 
 export const automod_details = new SleetSlashSubcommand(
   {
@@ -34,7 +34,7 @@ async function runAutomodDetails(interaction: ChatInputCommandInteraction) {
 
   await interaction.deferReply()
 
-  const rule = await findFirstRule({ guildID: interaction.guildId, ruleID })
+  const rule = await findFirstAutomodRule({ where: { guildID: interaction.guildId, ruleID } })
 
   if (!rule) {
     await interaction.editReply({
@@ -60,7 +60,7 @@ export async function handleDetailsInteraction(
   await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
   const [ruleID] = params
-  const rules = await findFirstRule({ guildID: interaction.guildId, ruleID })
+  const rules = await findFirstAutomodRule({ where: { guildID: interaction.guildId, ruleID } })
 
   if (!rules) {
     await interaction.editReply(`Rule "${ruleID}" not found`)

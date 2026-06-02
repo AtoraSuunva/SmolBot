@@ -9,11 +9,10 @@ import { escapeAllMarkdown, formatUser, inGuildGuard, SleetSlashSubcommandBody }
 import { DAY } from 'sleetcord-common'
 
 import { Prisma } from '../../../generated/prisma/client.js'
-import { prisma } from '../../../helpers/db.js'
 import { automodActionCommandOptionChoices } from '../actions.js'
 import { AutomodRuleGroup } from '../modules/AutomodRuleGroup.js'
 import { rules } from '../rules/index.js'
-import { formatRule, formatRuleDetails } from '../utils.js'
+import { createAutomodRule, findFirstAutomodRule, formatRule, formatRuleDetails } from '../utils.js'
 
 export const addOptions: NonNullable<SleetSlashSubcommandBody['options']> = [
   {
@@ -63,7 +62,7 @@ export const automod_add = new AutomodRuleGroup(
       const message = interaction.options.getString('message')
       const duration = interaction.options.getInteger('duration')
 
-      const newRule = await prisma.automodRule.create({
+      const newRule = await createAutomodRule({
         data: {
           ruleID: crypto.randomUUID().split('-')[0],
           guildID: interaction.guildId,
@@ -95,12 +94,7 @@ export async function handleCopyInteraction(
   params: string[],
 ) {
   const [ruleID] = params
-  const rule = await prisma.automodRule.findFirst({
-    where: {
-      guildID: interaction.guildId,
-      ruleID,
-    },
-  })
+  const rule = await findFirstAutomodRule({ where: { guildID: interaction.guildId, ruleID } })
 
   if (!rule) {
     await interaction.reply({
@@ -112,7 +106,7 @@ export async function handleCopyInteraction(
 
   await interaction.deferReply()
 
-  const newRule = await prisma.automodRule.create({
+  const newRule = await createAutomodRule({
     data: {
       ruleID: crypto.randomUUID().split('-')[0],
       guildID: interaction.guildId,

@@ -8,9 +8,8 @@ import {
 } from 'discord.js'
 import { escapeAllMarkdown, formatUser, inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
-import { prisma } from '../../../helpers/db.js'
-import { formatRuleDetails } from '../utils.js'
-import { findFirstRule, ruleAutocomplete } from '../utils.js'
+import { deleteAutomodRule, formatRuleDetails } from '../utils.js'
+import { findFirstAutomodRule, ruleAutocomplete } from '../utils.js'
 
 export const automod_delete = new SleetSlashSubcommand(
   {
@@ -53,7 +52,7 @@ async function deleteAndReply(
     | MessageComponentInteraction<'cached' | 'raw'>,
   ruleID: string,
 ) {
-  const rule = await findFirstRule({ guildID: interaction.guildId, ruleID })
+  const rule = await findFirstAutomodRule({ where: { guildID: interaction.guildId, ruleID } })
 
   if (!rule) {
     await interaction.reply({
@@ -66,7 +65,7 @@ async function deleteAndReply(
 
   await interaction.deferReply()
 
-  const oldRule = await prisma.automodRule.delete({
+  const oldRule = await deleteAutomodRule({
     where: {
       ruleID: rule.ruleID,
     },
