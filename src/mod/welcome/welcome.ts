@@ -15,6 +15,7 @@ import { formatUser, SleetSlashCommand, tryFetchMember } from 'sleetcord'
 
 import type { WelcomeSettings } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
+import { KeyedMutex } from '../../helpers/mutex.js'
 import { messageToLog } from '../modlog/handlers/messageDelete.js'
 import { sendToModlog } from '../modlog/sendToModlog.js'
 import { formatLog, getModlogTicketQueue, getValidatedConfigFor } from '../modlog/utils.js'
@@ -42,7 +43,7 @@ export const welcome = new SleetSlashCommand(
 )
 
 /** Guild ID -> Set of member IDs */
-const newMembers = new Map<string, Set<string>>()
+const newMembers = new Set<GuildMember>()
 
 async function handleGuildMemberAdd(member: GuildMember) {
   if (member.user.bot) return
@@ -69,21 +70,29 @@ async function handleMessageCreate(message: Message) {
     return // Failed to fetch member
   }
 
-  const newJoins = newMembers.get(member.guild.id)
-
   // Check if this member is new before trying to welcome them
   // We can't just rely on welcome joins since someone might want to welcome rejoins but only when
   // they send a message, but someone leaving doesn't clear the welcome joins.
   // We need to know who is "new" (including rejoins) and we should try to welcome on message
   // This could be another table for persistence (ie. someone joins, bot dies, bot comes back,
   // they send a message), but for now, meh, it's fine, and I'd need to cache it anyway.
-  if (!newJoins?.has(member.id)) return
+  if (!newMembers.has(member)) return
 
   return handleJoin(member, message.channel, message)
 }
 
+const joiningMembers = new KeyedMutex<GuildMember>()
+
 async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, message?: Message) {
   if (member.user.bot) return
+
+  using lock = joiningMembers.tryAcquire(member)
+
+  if (!lock) {
+    // Prevent multiple simultaneous welcomes for the same member
+    return
+  }
+
   const eventDate = new Date()
   using ticket = getModlogTicketQueue(member.guild).acquireTicket()
 
@@ -117,9 +126,7 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
   // Don't instantly welcome people and the user didn't post a message
   // Instead note down the join for later
   if (!instant && !channel) {
-    const set = newMembers.get(member.guild.id) ?? new Set()
-    set.add(member.id)
-    newMembers.set(member.guild.id, set)
+    newMembers.add(member)
     return
   }
 
@@ -159,6 +166,7 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
   }
 
   await addJoin(member.guild.id, member.id)
+  newMembers.delete(member)
 
   if (reactWith && message) {
     message.react(reactWith).catch(() => {
@@ -219,10 +227,6 @@ async function handleJoin(member: GuildMember, channel?: GuildTextBasedChannel, 
 }
 
 async function addJoin(guildID: string, userID: string) {
-  const set = newMembers.get(guildID) ?? new Set()
-  set.delete(userID)
-  newMembers.set(guildID, set)
-
   return await prisma.welcomeJoins.upsert({
     where: {
       guildID_userID: {
