@@ -435,21 +435,43 @@ export function invalidateAutomodRulesCache(guildID: string, type: string) {
  *
  * @param messages The messages to delete
  */
-export async function deleteMessages(messages: Message[]) {
-  const channelToMessages = new Map<GuildTextBasedChannel, Message[]>()
+export async function deleteMessages(messages: Message[] | Set<Message>) {
+  const channelToMessages = new Map<GuildTextBasedChannel, Set<Message>>()
 
   for (const message of messages) {
     const channel = message.channel as GuildTextBasedChannel
-    const channelMessages = channelToMessages.get(channel) ?? []
-    channelMessages.push(message)
+    const channelMessages = channelToMessages.get(channel) ?? new Set<Message>()
+    channelMessages.add(message)
     channelToMessages.set(channel, channelMessages)
   }
 
   for (const [channel, messages] of channelToMessages.entries()) {
-    if (messages.length > 1) {
-      await channel.bulkDelete(messages).catch(() => {})
+    if (messages.size > 1) {
+      await channel.bulkDelete(Array.from(messages)).catch(() => {})
     } else {
-      await messages[0].delete().catch(() => {})
+      await Array.from(messages)[0]
+        .delete()
+        .catch(() => {})
     }
+  }
+}
+
+/**
+ * Normalize a Discord media URL by removing search parameters and normalizing the hostname (e.g. media.discordapp.net -> cdn.discordapp.com)
+ *
+ * @param url The URL to normalize
+ * @returns The normalized URL
+ * @throws An error if the URL is invalid
+ */
+export function normalizeUrl(url: string): string {
+  try {
+    const parsedUrl = new URL(url)
+    parsedUrl.search = ''
+    if (parsedUrl.hostname === 'media.discordapp.net') {
+      parsedUrl.hostname = 'cdn.discordapp.com'
+    }
+    return parsedUrl.toString()
+  } catch {
+    throw new Error(`Invalid URL: ${url}`)
   }
 }

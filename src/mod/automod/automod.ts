@@ -8,6 +8,7 @@ import { inGuildGuard, SleetSlashCommand } from 'sleetcord'
 
 import { automodMiddleware } from './automodMiddleware.js'
 import { automod_add, handleCopyInteraction } from './commands/add.js'
+import { automod_add_phash } from './commands/add_phash.js'
 import { automod_config } from './commands/config.js'
 import { automod_delete, handleDeleteInteraction } from './commands/delete.js'
 import { automod_details, handleDetailsInteraction } from './commands/details.js'
@@ -32,7 +33,7 @@ export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [automod_view, automod_details, automod_delete, automod_config],
+    options: [automod_view, automod_details, automod_delete, automod_config, automod_add_phash],
     contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     integration_types: [ApplicationIntegrationType.GuildInstall],

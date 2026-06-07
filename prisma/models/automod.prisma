@@ -3,11 +3,11 @@ model AutomodConfig {
   // Message to prepend to the automod trigger message
   prepend         String?
   // Channels to ignore
-  ignoredChannels String @default("")
+  ignoredChannels String  @default("")
   // Roles to ignore
-  ignoredRoles    String @default("")
+  ignoredRoles    String  @default("")
   // Users to ignore
-  ignoredUsers    String @default("")
+  ignoredUsers    String  @default("")
   // Whether to ignore bots
   ignoreBots      Boolean @default(true)
   // Whether to ignore users with admin permissions
@@ -34,4 +34,26 @@ model AutomodRule {
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([guildID, type])
+}
+
+model PhashInfo {
+  // The "phash" of the image, using thumbhash
+  phash     String
+  // The guild this phash is associated with, or null if it's a global phash. Allows for a global "known images" list while letting guilds setup their own phashes
+  guildID   String   @map("guild_id")
+  // Whether this phash is associated with a scam image
+  isScam    Boolean  @default(false) @map("is_scam")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([phash, guildID])
+  @@index([phash])
+}
+
+model PhashUrl {
+  // The URL of the image, which is associated with a phash
+  url   String @id
+  // The phash this URL is associated with
+  phash String
+
+  createdAt DateTime @default(now()) @map("created_at")
 }
