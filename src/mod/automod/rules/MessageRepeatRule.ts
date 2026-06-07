@@ -120,6 +120,14 @@ type MessageRepeatStore = AutomodStoreReturn<typeof messageRepeatsRule>[number]
 
 /**
  * Check if a message is a repeat and should trigger the automod rule, and return the appropriate action if so
+ *
+ * @param rule The automod rule being checked
+ * @param params The parameters for this rule instance
+ * @param content The content to check for repeats, typically the message content (taken from the message or automod execution)
+ * @param user The user who sent the message
+ * @param guild The guild where the message was sent
+ * @param message The message object itself, used for deletion if necessary
+ * @returns An AutomodEventResult indicating the action to take if this is a repeat, or undefined if not
  */
 async function checkForRepeats(
   rule: MessageRepeatStore['rule'],

@@ -9,7 +9,7 @@ import { deleteMessages } from '../utils.js'
 
 export interface RepeatInfractionInfo<Identifier> {
   /** The previous messages that "matched" some criteria to count as an infraction */
-  previousMessages: Message[]
+  previousMessages: Set<Message>
   /** Some "key" that was last derived from the message, something like message content or attachment hashes */
   lastIdentifier: Identifier
   /** The timestamp of the last infraction */
@@ -119,18 +119,13 @@ async function checkForRepeats(
   const key = `${rule.ruleID}-${guild.id}-${user.id}`
   const now = Date.now()
 
-  const info = infractionInfoMap.get(key)
-  if (!info) {
-    infractionInfoMap.set(key, {
-      previousMessages: message ? [message] : [],
-      lastIdentifier: identifiers,
-      lastInfractionTimestamp: now,
-      firstInfractionTimestamp: now,
-      repeatCount: 1,
-    })
-
-    return
-  }
+  const info = infractionInfoMap.getOrInsert(key, {
+    previousMessages: new Set<Message>([message]),
+    lastIdentifier: identifiers,
+    lastInfractionTimestamp: now,
+    firstInfractionTimestamp: now,
+    repeatCount: 1,
+  })
 
   const intervalMs = params.interval * SECOND
   const isWithinInterval = intervalMs === 0 ? true : now - info.lastInfractionTimestamp < intervalMs
@@ -140,12 +135,12 @@ async function checkForRepeats(
     ? info.lastIdentifier.intersection(identifiers)
     : new Set<string>()
 
-  if (isWithinInterval && intersection.size > 0) {
-    info.repeatCount += intersection.size
+  if (isWithinInterval && (repeats > 0 || intersection.size > 0)) {
+    info.repeatCount += intersection.size + repeats
     info.lastInfractionTimestamp = now
 
     if (message) {
-      info.previousMessages.push(message)
+      info.previousMessages.add(message)
     }
 
     if (info.repeatCount >= params.repeats) {
@@ -157,7 +152,7 @@ async function checkForRepeats(
 
       // Then reset it
       infractionInfoMap.set(key, {
-        previousMessages: [],
+        previousMessages: new Set<Message>(),
         lastIdentifier: identifiers,
         lastInfractionTimestamp: now,
         firstInfractionTimestamp: now,
@@ -172,7 +167,7 @@ async function checkForRepeats(
   } else {
     // Reset the infraction info if the embed is different or cooldown has expired
     infractionInfoMap.set(key, {
-      previousMessages: [message],
+      previousMessages: new Set<Message>([message]),
       lastIdentifier: identifiers,
       lastInfractionTimestamp: now,
       firstInfractionTimestamp: now,
