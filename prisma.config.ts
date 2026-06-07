@@ -1,7 +1,11 @@
 import path from 'node:path'
 
 import type { PrismaConfig } from 'prisma'
-import 'dotenv/config'
+
+if (!process.env.DATABASE_URL) {
+  // load env files
+  await import('dotenv/config')
+}
 
 export default {
   datasource: {
