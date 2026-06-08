@@ -1,4 +1,5 @@
 import { ApplicationCommandOptionType, type Message } from 'discord.js'
+import { DAY } from 'sleetcord-common'
 
 import { prisma } from '../../../helpers/db.js'
 import { plural } from '../../../helpers/format.js'
@@ -120,3 +121,26 @@ function addImagePhashUrl(phash: string, url: string) {
     },
   })
 }
+
+/**
+ * Clear out scam phashes that are older than the age limit, to prevent it from growing indefinitely
+ */
+function clearOldScamPhashes() {
+  const cutoffDate = new Date(Temporal.Now.instant().subtract({ days: 14 }).epochMilliseconds)
+
+  return prisma.phashInfo.deleteMany({
+    where: {
+      isScam: true,
+      updatedAt: {
+        lt: cutoffDate,
+      },
+    },
+  })
+}
+
+// clear on startup and then once a day after that
+clearOldScamPhashes().catch(() => {})
+
+setInterval(() => {
+  clearOldScamPhashes().catch(() => {})
+}, DAY)

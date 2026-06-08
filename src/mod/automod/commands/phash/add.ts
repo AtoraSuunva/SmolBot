@@ -7,6 +7,8 @@ import {
   LabelBuilder,
   ModalBuilder,
   SnowflakeUtil,
+  TextInputBuilder,
+  TextInputStyle,
   type APIAttachment,
   type ChatInputCommandInteraction,
   type Interaction,
@@ -20,6 +22,7 @@ import { normalizeUrl } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
 const UPLOAD_INPUT_ID = 'phash_bulk_upload'
+const URL_INPUT_ID = 'url_input'
 
 export const automod_phash_add = new SleetSlashSubcommand(
   {
@@ -67,7 +70,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
 
     if (!int) return
 
-    const upload = int.fields.getUploadedFiles(UPLOAD_INPUT_ID, true)
+    const upload = int.fields.getUploadedFiles(UPLOAD_INPUT_ID) ?? []
 
     for (const [, file] of upload) {
       if (file.contentType?.startsWith('image/')) {
@@ -77,6 +80,29 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
         if (phash) {
           phashes.push(phash)
         }
+      }
+    }
+
+    const urls =
+      int.fields
+        .getTextInputValue(URL_INPUT_ID)
+        ?.split('\n')
+        .map((u) => u.trim()) ?? []
+
+    for (const url of urls) {
+      if (!url) continue
+
+      let parsedUrl: string
+      try {
+        parsedUrl = normalizeUrl(url)
+      } catch {
+        continue
+      }
+
+      const phash = await getPhashFromUrl(parsedUrl)
+
+      if (phash) {
+        phashes.push(phash)
       }
     }
 
@@ -154,19 +180,28 @@ function createBulkUploadModal(): ModalBuilder {
     customId: SnowflakeUtil.generate().toString(),
   })
 
-  const uploadInput = new FileUploadBuilder({
-    custom_id: UPLOAD_INPUT_ID,
-    min_values: 1,
-    max_values: 10,
-    required: true,
-  })
-
   const uploadLabel = new LabelBuilder({
     label: 'Upload images to add as scam phashes (max 10)',
-  })
+  }).setFileUploadComponent(
+    new FileUploadBuilder({
+      custom_id: UPLOAD_INPUT_ID,
+      min_values: 1,
+      max_values: 10,
+    }),
+  )
 
-  uploadLabel.setFileUploadComponent(uploadInput)
-  modal.addLabelComponents(uploadLabel)
+  const urlLabel = new LabelBuilder({
+    label: 'Provide URLs of images to add as scam phashes (one per line)',
+  }).setTextInputComponent(
+    new TextInputBuilder({
+      custom_id: URL_INPUT_ID,
+      style: TextInputStyle.Paragraph,
+      placeholder:
+        'https://media.discordapp.net/attachments/...\nhttps://cdn.discordapp.net/attachments/...',
+    }),
+  )
+
+  modal.addLabelComponents(uploadLabel, urlLabel)
 
   return modal
 }
