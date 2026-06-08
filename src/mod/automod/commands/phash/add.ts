@@ -172,13 +172,27 @@ function createBulkUploadModal(): ModalBuilder {
 }
 
 function addImagesAsScam(phashes: string[], guildID?: string) {
-  return prisma.phashInfo.createManyAndReturn({
-    data: phashes.map((phash) => ({
-      phash,
-      guildID: guildID ?? '*',
-      isScam: true,
-    })),
-  })
+  // we can't createManyAndReturn while ignoring duplicates (with sqlite at least), so we need to do it as a transaction
+  return prisma.$transaction(
+    phashes.map((phash) =>
+      prisma.phashInfo.upsert({
+        where: {
+          phash_guildID: {
+            guildID: guildID ?? '*',
+            phash,
+          },
+        },
+        update: {
+          isScam: true,
+        },
+        create: {
+          guildID: guildID ?? '*',
+          phash,
+          isScam: true,
+        },
+      }),
+    ),
+  )
 }
 
 const RawDataSymbol = Symbol('rawData')
