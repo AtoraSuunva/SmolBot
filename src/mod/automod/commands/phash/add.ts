@@ -2,21 +2,30 @@ import {
   ApplicationCommandOptionType,
   Attachment,
   codeBlock,
+  FileUploadBuilder,
   inlineCode,
-  User,
+  LabelBuilder,
+  ModalBuilder,
+  SnowflakeUtil,
   type APIAttachment,
   type ChatInputCommandInteraction,
+  type Interaction,
 } from 'discord.js'
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
+import { MINUTE } from 'sleetcord-common'
 
-import { prisma } from '../../../helpers/db.js'
-import { plural } from '../../../helpers/format.js'
-import { normalizeUrl } from '../utils.js'
+import { prisma } from '../../../../helpers/db.js'
+import { plural } from '../../../../helpers/format.js'
+import { normalizeUrl } from '../../utils.js'
+import { isAppOwner } from './utils.js'
 
-export const automod_add_phash = new SleetSlashSubcommand(
+const UPLOAD_INPUT_ID = 'phash_bulk_upload'
+
+export const automod_phash_add = new SleetSlashSubcommand(
   {
-    name: 'add_phash',
-    description: 'Add a phash to the database, marking it as a scam image',
+    name: 'add',
+    description:
+      'Add a phash to the database, marking it as a scam image, send no params for a bulk upload modal',
     options: [
       {
         name: 'image',
@@ -41,15 +50,38 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   const attachment = interaction.options.getAttachment('image')
   const url = interaction.options.getString('url')
 
-  if (!attachment && !url) {
-    await interaction.reply({
-      content: 'You must provide either an image attachment or a URL.',
-      ephemeral: true,
-    })
-    return
-  }
-
   let phashes: string[] = []
+
+  let respondInteraction: Interaction = interaction
+
+  // If there's no attachment or url provided, we open up a modal for bulk uploading
+  if (!attachment && !url) {
+    const modal = createBulkUploadModal()
+    await interaction.showModal(modal)
+
+    const filter = (i: Interaction) => i.isModalSubmit() && i.customId === modal.data.custom_id
+
+    const int = await interaction.awaitModalSubmit({ time: 10 * MINUTE, filter }).catch(() => {
+      /* ignore */
+    })
+
+    if (!int) return
+
+    const upload = int.fields.getUploadedFiles(UPLOAD_INPUT_ID, true)
+
+    for (const [, file] of upload) {
+      if (file.contentType?.startsWith('image/')) {
+        const rawAttachment = getRawAttachment(file)
+        const phash = rawAttachment?.placeholder
+
+        if (phash) {
+          phashes.push(phash)
+        }
+      }
+    }
+
+    respondInteraction = int
+  }
 
   if (attachment) {
     if (!attachment.contentType?.startsWith('image/')) {
@@ -74,14 +106,14 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     phashes.push(phash)
   }
 
-  await interaction.deferReply()
+  await respondInteraction.deferReply()
 
   if (url) {
     let parsedUrl: string
     try {
       parsedUrl = normalizeUrl(url)
     } catch {
-      await interaction.editReply({
+      await respondInteraction.editReply({
         content: 'Invalid URL provided.',
       })
       return
@@ -92,7 +124,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     if (phash) {
       phashes.push(phash)
     } else {
-      await interaction.editReply({
+      await respondInteraction.editReply({
         content: 'No phash found for the provided URL.',
       })
       return
@@ -100,7 +132,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   }
 
   if (phashes.length === 0) {
-    await interaction.editReply({
+    await respondInteraction.editReply({
       content: 'Found no phashes to add.',
     })
     return
@@ -109,29 +141,34 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   const isOwner = isAppOwner(interaction)
 
   // if the user is the app owner, add the phash as a global scam image (guildID = '*'), otherwise add it as a guild-specific scam image
-  const newPhashes = await addImagesAsScam(phashes, isOwner ? undefined : interaction.guildId)
+  const newPhashes = await addImagesAsScam(phashes, isOwner ? '*' : interaction.guildId)
 
-  await interaction.editReply(
+  await respondInteraction.editReply(
     `Added ${plural('phash', newPhashes.length)} for guild ${inlineCode(newPhashes[0]?.guildID)} to the database:\n${codeBlock(newPhashes.map((p) => p.phash).join('\n'))}`,
   )
 }
 
-function isAppOwner(interaction: ChatInputCommandInteraction) {
-  const appOwner = interaction.client.application?.owner
+function createBulkUploadModal(): ModalBuilder {
+  const modal = new ModalBuilder({
+    title: 'Bulk Upload Scam Images',
+    customId: SnowflakeUtil.generate().toString(),
+  })
 
-  if (!appOwner) {
-    return false
-  }
+  const uploadInput = new FileUploadBuilder({
+    custom_id: UPLOAD_INPUT_ID,
+    min_values: 1,
+    max_values: 10,
+    required: true,
+  })
 
-  if (appOwner instanceof User) {
-    return interaction.user.id === appOwner.id
-  }
+  const uploadLabel = new LabelBuilder({
+    label: 'Upload images to add as scam phashes (max 10)',
+  })
 
-  // If the owner is a team, check if the user is a member of the team
-  return (
-    appOwner.owner?.id === interaction.user.id ||
-    appOwner.members.some((member) => member.user.id === interaction.user.id)
-  )
+  uploadLabel.setFileUploadComponent(uploadInput)
+  modal.addLabelComponents(uploadLabel)
+
+  return modal
 }
 
 function addImagesAsScam(phashes: string[], guildID?: string) {

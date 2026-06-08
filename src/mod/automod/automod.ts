@@ -8,16 +8,16 @@ import { inGuildGuard, SleetSlashCommand } from 'sleetcord'
 
 import { automodMiddleware } from './automodMiddleware.js'
 import { automod_add, handleCopyInteraction } from './commands/add.js'
-import { automod_add_phash } from './commands/add_phash.js'
 import { automod_config } from './commands/config.js'
 import { automod_delete, handleDeleteInteraction } from './commands/delete.js'
 import { automod_details, handleDetailsInteraction } from './commands/details.js'
 import { automod_edit, handleEditInteraction } from './commands/edit.js'
+import { automod_phash } from './commands/phash/index.js'
 import { automod_view, handleViewInteraction } from './commands/view.js'
 import { rules } from './rules/index.js'
 
 // TODO for automod:
-// - [ ] Add more rules (phash, pressure, newlines, forbidden, emoji-only, scam, cross-channel)
+// - [ ] Add more rules (pressure, newlines, forbidden, emoji-only, scam, cross-channel)
 
 // It's ugly to split these out, but we're actually running into the 8,000 character limit for commands
 export const automod_rules = new SleetSlashCommand({
@@ -33,7 +33,7 @@ export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [automod_view, automod_details, automod_delete, automod_config, automod_add_phash],
+    options: [automod_view, automod_details, automod_delete, automod_config, automod_phash],
     contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     integration_types: [ApplicationIntegrationType.GuildInstall],
