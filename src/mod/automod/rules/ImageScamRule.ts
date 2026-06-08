@@ -126,7 +126,9 @@ function addImagePhashUrl(phash: string, url: string) {
  * Clear out scam phashes that are older than the age limit, to prevent it from growing indefinitely
  */
 function clearOldScamPhashes() {
-  const cutoffDate = new Date(Temporal.Now.instant().subtract({ days: 14 }).epochMilliseconds)
+  const cutoffDate = new Date(
+    Temporal.Now.instant().subtract({ milliseconds: 14 * DAY }).epochMilliseconds,
+  )
 
   return prisma.phashInfo.deleteMany({
     where: {
