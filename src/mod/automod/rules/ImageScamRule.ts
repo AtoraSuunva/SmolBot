@@ -4,12 +4,10 @@ import { DAY } from 'sleetcord-common'
 import { prisma } from '../../../helpers/db.js'
 import { plural } from '../../../helpers/format.js'
 import { getAutomodStore } from '../automodMiddleware.js'
+import { getScamMatchesForHashes } from '../hash/checkPhash.js'
 import { getImagePhashes } from '../hash/hashEmbeds.js'
-import { phashDistance } from '../hash/phash.js'
 import { AutomodRule, type AutomodEventResult } from '../modules/AutomodRule.js'
 import { bitstringToHex } from '../utils.js'
-
-const PHASH_HAMMING_THRESHOLD = 10
 
 export const imageScamRule = new AutomodRule(
   {
@@ -55,7 +53,7 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
 
   const ruleInstances = getAutomodStore<typeof imageScamRule>()
   const hashEntries = await getImagePhashes(message)
-  const scamImages = await checkHashesforScam(
+  const scamImages = await getScamMatchesForHashes(
     hashEntries.map((entry) => entry.phash),
     message.guildId,
   )
@@ -77,51 +75,6 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
   }
 
   return []
-}
-
-/**
- * Count how many of the given phashes are marked as scam in the database for the given guild (or globally)
- *
- * @param hashes The phashes to check against the database
- * @param guildID The guild ID to check for guild-specific scam images, or undefined to only check global scam images
- * @returns The number of matching scam images found in the database
- */
-async function checkHashesforScam(hashes: string[], guildID?: string): Promise<string[]> {
-  if (hashes.length === 0) {
-    return []
-  }
-
-  const checkGuildIDs = guildID ? [guildID, '*'] : ['*'] // Check both the specific guild and global entries if a guild ID is provided
-
-  const scamPhashes = await prisma.phashInfo.findMany({
-    where: {
-      guildID: {
-        in: checkGuildIDs,
-      },
-      isScam: true,
-    },
-    select: {
-      phash: true,
-    },
-  })
-
-  if (scamPhashes.length === 0) {
-    return []
-  }
-
-  const matches: string[] = []
-
-  for (const hash of hashes) {
-    const isScam = scamPhashes.some(
-      (scamHash) => phashDistance(hash, scamHash.phash) <= PHASH_HAMMING_THRESHOLD,
-    )
-
-    if (isScam) {
-      matches.push(hash)
-    }
-  }
-
-  return matches
 }
 
 /**
@@ -147,17 +100,16 @@ function addImagePhashUrl(phash: string, url: string) {
 }
 
 /**
- * Clear out scam phashes that are older than the age limit, to prevent it from growing indefinitely
+ * Clear out phash URLs that are older than the age limit, to prevent it from growing indefinitely
  */
-function clearOldScamPhashes() {
+function clearOldPhashUrls() {
   const cutoffDate = new Date(
     Temporal.Now.instant().subtract({ milliseconds: 1 * DAY }).epochMilliseconds,
   )
 
-  return prisma.phashInfo.deleteMany({
+  return prisma.phashUrl.deleteMany({
     where: {
-      isScam: true,
-      updatedAt: {
+      createdAt: {
         lt: cutoffDate,
       },
     },
@@ -165,8 +117,8 @@ function clearOldScamPhashes() {
 }
 
 // clear on startup and then once a day after that
-clearOldScamPhashes().catch(() => {})
+clearOldPhashUrls().catch(() => {})
 
 setInterval(() => {
-  clearOldScamPhashes().catch(() => {})
+  clearOldPhashUrls().catch(() => {})
 }, DAY)
