@@ -1,8 +1,7 @@
-import type { APIEmbed, APIEmbedImage, Message } from 'discord.js'
-import { notNullish } from 'sleetcord-common'
+import type { Message } from 'discord.js'
 
-import { getRawMessage } from '../../../helpers/rawMessage.js'
 import { normalizeUrl } from '../utils.js'
+import { computeImagePhash } from './phash.js'
 
 /** Discord doesn't seem to embed images over this size */
 export const MAX_IMAGE_SIZE = 100 * 1024 * 1024
@@ -19,25 +18,55 @@ interface HashEntry {
  * @returns A promise that resolves to an array of hashes (or filenames, if that's more efficient or if hashes aren't possible)
  */
 export async function getImagePhashes(message: Message): Promise<HashEntry[]> {
-  const rawMessage = getRawMessage(message)
+  const imageUrls = [
+    ...message.embeds
+      .map((embed) => embed.image?.url ?? embed.thumbnail?.url)
+      .filter((url): url is string => Boolean(url)),
+    ...message.attachments
+      .filter((attachment) => attachment.contentType?.startsWith('image/'))
+      .map((attachment) => attachment.url),
+  ]
 
-  if (!rawMessage) {
-    return []
-  }
+  const normalizedUrls = [...new Set(imageUrls.map((url) => normalizeUrl(url)))]
 
-  const { attachments, embeds } = rawMessage
+  const hashedEntries = await Promise.all(
+    normalizedUrls.map(async (url) => {
+      const image = await fetchImageBuffer(url)
 
-  const hashes = [
-    embeds
-      .map(getEmbedImage)
-      .filter(notNullish)
-      .map((e) => ({ phash: e.placeholder, url: normalizeUrl(e.url) })),
-    attachments.map((a) => ({ phash: a.placeholder, url: normalizeUrl(a.url) })),
-  ].flat()
+      if (!image) {
+        return null
+      }
 
-  return hashes.filter((h): h is HashEntry => h.phash !== null)
+      const imagePhash = await computeImagePhash(image).catch(() => null)
+
+      return imagePhash ? { phash: imagePhash, url } : null
+    }),
+  )
+
+  return hashedEntries.filter((entry): entry is HashEntry => entry !== null)
 }
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const response = await fetch(url)
 
-function getEmbedImage(embed: APIEmbed): APIEmbedImage | null {
-  return embed.image ?? embed.thumbnail ?? null
+    if (!response.ok) {
+      return null
+    }
+
+    const contentLength = response.headers.get('content-length')
+
+    if (contentLength && Number(contentLength) > MAX_IMAGE_SIZE) {
+      return null
+    }
+
+    const imageBytes = Buffer.from(await response.arrayBuffer())
+
+    if (imageBytes.length > MAX_IMAGE_SIZE) {
+      return null
+    }
+
+    return imageBytes
+  } catch {
+    return null
+  }
 }

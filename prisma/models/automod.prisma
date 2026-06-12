@@ -37,13 +37,14 @@ model AutomodRule {
 }
 
 model PhashInfo {
-  // The "phash" of the image, using thumbhash
+  // The "phash" of the image, using https://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html
   phash     String
   // The guild this phash is associated with, or null if it's a global phash. Allows for a global "known images" list while letting guilds setup their own phashes
   guildID   String   @map("guild_id")
   // Whether this phash is associated with a scam image
   isScam    Boolean  @default(false) @map("is_scam")
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@id([phash, guildID])
   @@index([phash])

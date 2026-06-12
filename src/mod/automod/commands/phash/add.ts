@@ -1,15 +1,14 @@
 import {
   ApplicationCommandOptionType,
-  Attachment,
   codeBlock,
   FileUploadBuilder,
   inlineCode,
   LabelBuilder,
+  MessageFlags,
   ModalBuilder,
   SnowflakeUtil,
   TextInputBuilder,
   TextInputStyle,
-  type APIAttachment,
   type ChatInputCommandInteraction,
   type Interaction,
 } from 'discord.js'
@@ -18,7 +17,8 @@ import { MINUTE } from 'sleetcord-common'
 
 import { prisma } from '../../../../helpers/db.js'
 import { plural } from '../../../../helpers/format.js'
-import { normalizeUrl } from '../../utils.js'
+import { computeImagePhash } from '../../hash/phash.js'
+import { normalizeUrl, phashToBase64 } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
 const UPLOAD_INPUT_ID = 'phash_bulk_upload'
@@ -53,7 +53,9 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   const attachment = interaction.options.getAttachment('image')
   const url = interaction.options.getString('url')
 
-  let phashes: string[] = []
+  const promises: Promise<string>[] = []
+  const phashes: string[] = []
+  const errors: Error[] = []
 
   let respondInteraction: Interaction = interaction
 
@@ -74,12 +76,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
 
     for (const [, file] of upload) {
       if (file.contentType?.startsWith('image/')) {
-        const rawAttachment = getRawAttachment(file)
-        const phash = rawAttachment?.placeholder
-
-        if (phash) {
-          phashes.push(phash)
-        }
+        promises.push(getImagePhashFromUrl(file.url))
       }
     }
 
@@ -87,23 +84,11 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
       int.fields
         .getTextInputValue(URL_INPUT_ID)
         ?.split('\n')
-        .map((u) => u.trim()) ?? []
+        .map((u) => u.trim())
+        .filter((u) => u.length > 0) ?? []
 
     for (const url of urls) {
-      if (!url) continue
-
-      let parsedUrl: string
-      try {
-        parsedUrl = normalizeUrl(url)
-      } catch {
-        continue
-      }
-
-      const phash = await getPhashFromUrl(parsedUrl)
-
-      if (phash) {
-        phashes.push(phash)
-      }
+      promises.push(getImagePhashFromUrl(url))
     }
 
     respondInteraction = int
@@ -113,49 +98,27 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     if (!attachment.contentType?.startsWith('image/')) {
       await interaction.reply({
         content: 'The provided attachment is not an image.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
       return
     }
 
-    const rawAttachment = getRawAttachment(attachment)
-    const phash = rawAttachment?.placeholder
-
-    if (!rawAttachment || !phash) {
-      await interaction.reply({
-        content: 'Failed to retrieve raw attachment data, please try again.',
-        ephemeral: true,
-      })
-      return
-    }
-
-    phashes.push(phash)
+    promises.push(getImagePhashFromUrl(attachment.url))
   }
 
   await respondInteraction.deferReply()
 
   if (url) {
-    let parsedUrl: string
-    try {
-      parsedUrl = normalizeUrl(url)
-    } catch {
-      await respondInteraction.editReply({
-        content: 'Invalid URL provided.',
-      })
-      return
-    }
-
-    const phash = await getPhashFromUrl(parsedUrl)
-
-    if (phash) {
-      phashes.push(phash)
-    } else {
-      await respondInteraction.editReply({
-        content: 'No phash found for the provided URL.',
-      })
-      return
-    }
+    promises.push(getImagePhashFromUrl(url))
   }
+
+  await Promise.all(
+    promises.map((p) =>
+      p
+        .then((phash) => phashes.push(phash))
+        .catch((e) => errors.push(e instanceof Error ? e : new Error(String(e)))),
+    ),
+  )
 
   if (phashes.length === 0) {
     await respondInteraction.editReply({
@@ -169,9 +132,49 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   // if the user is the app owner, add the phash as a global scam image (guildID = '*'), otherwise add it as a guild-specific scam image
   const newPhashes = await addImagesAsScam(phashes, isOwner ? '*' : interaction.guildId)
 
-  await respondInteraction.editReply(
-    `Added ${plural('phash', newPhashes.length)} for guild ${inlineCode(newPhashes[0]?.guildID)} to the database:\n${codeBlock(newPhashes.map((p) => p.phash).join('\n'))}`,
-  )
+  const contentChunks = []
+
+  if (newPhashes.length > 0) {
+    contentChunks.push(
+      `Added ${plural('phash', newPhashes.length)} for guild ${inlineCode(
+        newPhashes[0].guildID,
+      )} to the database:\n${codeBlock(newPhashes.map((p) => phashToBase64(p.phash)).join('\n'))}`,
+    )
+  }
+
+  if (errors.length > 0) {
+    contentChunks.push(
+      `Encountered ${plural('error', errors.length)} while processing images:\n${codeBlock(
+        errors.map((e) => e.message).join('\n'),
+      )}`,
+    )
+  }
+
+  const content = contentChunks.join('\n\n')
+
+  if (content.length === 0) {
+    await respondInteraction.editReply({
+      content: 'No new phashes were added, and no errors were encountered.',
+    })
+    return
+  }
+
+  if (content.length > 1900) {
+    await respondInteraction.editReply({
+      content: 'Command output was too long, sending as a file instead.',
+      files: [
+        {
+          name: 'result.txt',
+          attachment: Buffer.from(content, 'utf-8'),
+        },
+      ],
+    })
+  } else {
+    await respondInteraction.editReply({
+      content: contentChunks.join('\n\n'),
+      allowedMentions: { parse: [] },
+    })
+  }
 }
 
 function createBulkUploadModal(): ModalBuilder {
@@ -185,19 +188,21 @@ function createBulkUploadModal(): ModalBuilder {
   }).setFileUploadComponent(
     new FileUploadBuilder({
       custom_id: UPLOAD_INPUT_ID,
-      min_values: 1,
+      min_values: 0,
       max_values: 10,
+      required: false,
     }),
   )
 
   const urlLabel = new LabelBuilder({
-    label: 'Provide URLs of images to add as scam phashes (one per line)',
+    label: 'Image URLs to add (one per line)',
   }).setTextInputComponent(
     new TextInputBuilder({
       custom_id: URL_INPUT_ID,
       style: TextInputStyle.Paragraph,
       placeholder:
         'https://media.discordapp.net/attachments/...\nhttps://cdn.discordapp.net/attachments/...',
+      required: false,
     }),
   )
 
@@ -230,59 +235,36 @@ function addImagesAsScam(phashes: string[], guildID?: string) {
   )
 }
 
-const RawDataSymbol = Symbol('rawData')
-
 /**
- * Get the raw data associated with a Discord.js Attachment object. This is the data received directly from the Discord API, parsed from JSON into an object but otherwise unmodified.
+ * Accepts a link to an image, checks the database for an existing phash:
+ *  - If a phash exists for the URL, returns it
+ *  - If no phash exists, attempts to fetch the image and compute a phash, then returns it (and adds it to the database for future reference)
+ *  - If the image can't be fetched or hashed, returns null
  *
- * This is stored directly on the Attachment object using a symbol to avoid collisions with other properties.
- *
- * @param attachment The Attachment to get the raw API data for
- * @returns The raw APIAttachment data received from Discord
+ * @param url The URL of the image to fetch and compute the phash for
+ * @returns The computed phash, or null if the image couldn't be fetched or hashed
  */
-export function getRawAttachment(attachment: Attachment): APIAttachment | undefined {
-  return (attachment as unknown as AttachmentWithRaw)[RawDataSymbol]
-}
+async function getImagePhashFromUrl(url: string): Promise<string> {
+  // Check if the url is valid and normalize it (for media -> cdn urls)
+  let normalizedUrl = normalizeUrl(url)
 
-/**
- * Patch an attachment with new raw data
- *
- * @param attachment The Attachment to patch
- * @param data The new raw APIAttachment data to associate with the Attachment
- * @returns void
- */
-function patchAttachment(attachment: Attachment, data: APIAttachment) {
-  ;(attachment as unknown as AttachmentWithRaw)[RawDataSymbol] = Object.assign(
-    (attachment as unknown as AttachmentWithRaw)[RawDataSymbol] ?? {},
-    data,
-  )
-}
+  // Then check if we already have a phash for this URL in the database
+  const existingEntry = await prisma.phashUrl.findUnique({
+    where: {
+      url: normalizedUrl,
+    },
+  })
 
-export interface AttachmentWithRaw {
-  [RawDataSymbol]: APIAttachment
-}
+  if (existingEntry) {
+    return existingEntry.phash
+  }
 
-type AttachmentPatch = (data: APIAttachment) => void
+  // If not, fetch the image and compute the phash
+  const response = await fetch(url)
 
-// Since _patch is a private method, we need to get around TS by using bracket notation
-const oldPatch = (Attachment.prototype as unknown as { _patch: AttachmentPatch })['_patch']
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image from URL: [GET ${response.status}] ${url}`)
+  }
 
-;(Attachment.prototype as unknown as { _patch: AttachmentPatch })['_patch'] = function (
-  data: APIAttachment,
-) {
-  oldPatch.call(this, data)
-  patchAttachment(this as unknown as Attachment, data)
-}
-
-function getPhashFromUrl(url: string): Promise<string | null> {
-  return prisma.phashUrl
-    .findUnique({
-      where: {
-        url,
-      },
-      select: {
-        phash: true,
-      },
-    })
-    .then((entry) => entry?.phash ?? null)
+  return computeImagePhash(Buffer.from(await response.arrayBuffer()))
 }

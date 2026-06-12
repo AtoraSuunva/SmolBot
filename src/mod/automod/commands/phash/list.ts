@@ -4,6 +4,7 @@ import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 import { Prisma } from '../../../../generated/prisma/client.js'
 import { prisma } from '../../../../helpers/db.js'
 import { plural } from '../../../../helpers/format.js'
+import { phashToBase64 } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
 export const automod_phash_list = new SleetSlashSubcommand(
@@ -41,7 +42,7 @@ async function runListPhashes(interaction: ChatInputCommandInteraction) {
   const phashList = phashes
     .map(
       (entry) =>
-        `- ${entry.phash} (added <t:${Math.floor(entry.createdAt.getTime() / 1000)}:R>)${entry.guildID === '*' ? ' (global)' : ''}`,
+        `- \`${phashToBase64(entry.phash)}\` (added <t:${Math.floor(entry.createdAt.getTime() / 1000)}:R>)${entry.guildID === '*' ? ' (global)' : ''}`,
     )
     .join('\n')
 

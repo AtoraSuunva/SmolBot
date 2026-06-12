@@ -466,12 +466,54 @@ export async function deleteMessages(messages: Message[] | Set<Message>) {
 export function normalizeUrl(url: string): string {
   try {
     const parsedUrl = new URL(url)
-    parsedUrl.search = ''
+
     if (parsedUrl.hostname === 'media.discordapp.net') {
       parsedUrl.hostname = 'cdn.discordapp.com'
     }
+
+    if (parsedUrl.hostname === 'cdn.discordapp.net') {
+      parsedUrl.search = ''
+    }
+
     return parsedUrl.toString()
   } catch {
     throw new Error(`Invalid URL: ${url}`)
   }
+}
+
+/**
+ * Convert a phash string (64-character binary string) to a base64 string, can be inverted back with base64ToPhash
+ *
+ * Useful for displaying phases to the user in a more compact form, while storing the phash as a binary string in the database for easier comparison and hashing
+ *
+ * @example
+ * phashToBase64('1111000001110110100010111000100010011110011001110100110001000001') // "8HaLiJ5nTEE="
+ *
+ * @param phash The phash string to convert
+ * @returns The base64 representation of the phash
+ */
+export function phashToBase64(phash: string): string {
+  const match = phash.match(/.{8}/g)
+
+  if (!match) {
+    throw new Error(`Invalid phash string: ${phash}`)
+  }
+
+  const bytes = Buffer.from(match.map((b) => parseInt(b, 2)))
+  return bytes.toString('base64')
+}
+
+/**
+ * Convert a base64 string back to a phash string (64-character binary string), the inverse of phashToBase64
+ *
+ * Used to convert the user-displayed phash back into a binary string to compare against the database
+ *
+ * @example
+ * base64ToPhash("8HaLiJ5nTEE=") // '1111000001110110100010111000100010011110011001110100110001000001'
+ *
+ * @param base64 The base64 string to convert
+ * @returns The phash string representation of the base64 input
+ */
+export function base64ToPhash(base64: string): string {
+  return [...Buffer.from(base64, 'base64')].map((n) => n.toString(2).padStart(8, '0')).join('')
 }

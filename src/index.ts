@@ -126,6 +126,19 @@ async function main() {
   startApiServer()
 }
 
+process
+  .on('unhandledRejection', (reason, _promise) => {
+    initLogger.error('Unhandled promise rejection')
+    initLogger.error(reason)
+    Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)))
+  })
+  .on('uncaughtException', (err) => {
+    initLogger.error('Uncaught exception')
+    initLogger.error(err)
+    Sentry.captureException(err)
+    process.exit(1)
+  })
+
 // See https://docs.sentry.io/platforms/node/configuration/integrations/default-integrations/
 try {
   await main()
