@@ -482,38 +482,67 @@ export function normalizeUrl(url: string): string {
 }
 
 /**
- * Convert a phash string (64-character binary string) to a base64 string, can be inverted back with base64ToPhash
+ * Convert a binary string (e.g. a 64-bit phash string) into its hex representation.
  *
- * Useful for displaying phases to the user in a more compact form, while storing the phash as a binary string in the database for easier comparison and hashing
+ * This mirrors `_binary_array_to_hex` from python-imagehash for flattened bit arrays.
  *
- * @example
- * phashToBase64('1111000001110110100010111000100010011110011001110100110001000001') // "8HaLiJ5nTEE="
- *
- * @param phash The phash string to convert
- * @returns The base64 representation of the phash
+ * @param binaryString String containing only `0` and `1` characters.
+ * @returns Lowercase hex string, left-padded to the expected nibble width.
  */
-export function phashToBase64(phash: string): string {
-  const match = phash.match(/.{8}/g)
+export function bitstringToHex(binaryString: string): string {
+  const bitString = binaryString.trim()
 
-  if (!match) {
-    throw new Error(`Invalid phash string: ${phash}`)
+  if (!bitString) {
+    throw new Error('binaryString is empty')
   }
 
-  const bytes = Buffer.from(match.map((b) => parseInt(b, 2)))
-  return bytes.toString('base64')
+  if (!/^[01]+$/.test(bitString)) {
+    throw new Error('binaryString must contain only 0 and 1 characters')
+  }
+
+  const width = Math.ceil(bitString.length / 4)
+  const value = BigInt(`0b${bitString}`)
+
+  return value.toString(16).padStart(width, '0')
 }
 
 /**
- * Convert a base64 string back to a phash string (64-character binary string), the inverse of phashToBase64
+ * Internal function to convert a hex string back into a binary array.
  *
- * Used to convert the user-displayed phash back into a binary string to compare against the database
+ * Does the inverse of `_binary_array_to_hex` from here: https://github.com/JohannesBuchner/imagehash/blob/master/imagehash/__init__.py
  *
- * @example
- * base64ToPhash("8HaLiJ5nTEE=") // '1111000001110110100010111000100010011110011001110100110001000001'
+ * Can be used to import these hashes: https://github.com/multiplicitypoe/discord-crypto-spam-destroyer/blob/main/data/bad_hashes.txt
  *
- * @param base64 The base64 string to convert
- * @returns The phash string representation of the base64 input
+ * @param hexString Hex string (with or without `0x` prefix).
+ * @param nBits Original number of bits before hex nibble-padding.
+ *              If omitted, returns all bits represented by the hex string (len * 4).
+ * @param shape Optional 2D shape for reshaping the flat bit array.
+ * @returns Array of 0/1 bits (flat or 2D if shape is provided).
  */
-export function base64ToPhash(base64: string): string {
-  return [...Buffer.from(base64, 'base64')].map((n) => n.toString(2).padStart(8, '0')).join('')
+export function hexToBitstring(hexString: string, nBits?: number): string {
+  let hs = hexString.trim().toLowerCase()
+  if (hs.startsWith('0x')) hs = hs.slice(2)
+  if (!hs) throw new Error('hexString is empty')
+  if (!/^[0-9a-f]+$/i.test(hs)) throw new Error('hexString contains invalid characters')
+
+  const totalBits = hs.length * 4
+
+  // Build full padded bit string nibble-by-nibble to preserve leading zeros.
+  let bitString = ''
+  for (const ch of hs) {
+    const nibble = parseInt(ch, 16).toString(2).padStart(4, '0')
+    bitString += nibble
+  }
+
+  // Remove left-padding introduced by hex width rounding, if requested.
+  if (nBits !== undefined) {
+    if (!Number.isInteger(nBits) || nBits < 0 || nBits > totalBits) {
+      throw new Error(`nBits must be an integer between 0 and ${totalBits}`)
+    }
+    bitString = bitString.slice(totalBits - nBits)
+  }
+
+  const flat = Array.from(bitString, (b) => (b === '1' ? 1 : 0))
+
+  return flat.join('')
 }

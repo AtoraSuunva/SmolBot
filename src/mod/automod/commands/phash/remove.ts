@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from '
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
 import { prisma } from '../../../../helpers/db.js'
-import { base64ToPhash } from '../../utils.js'
+import { hexToBitstring } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
 export const automod_phash_remove = new SleetSlashSubcommand(
@@ -29,7 +29,7 @@ async function runRemovePhash(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply()
 
   const phash = interaction.options.getString('phash', true)
-  const bitstring = base64ToPhash(phash)
+  const bitstring = hexToBitstring(phash)
 
   const isOwner = isAppOwner(interaction)
 
@@ -37,7 +37,7 @@ async function runRemovePhash(interaction: ChatInputCommandInteraction) {
     where: {
       guildID: isOwner ? '*' : interaction.guildId,
       phash: {
-        in: [bitstring, phash], // Allow both raw bitstring and base64 input for convenience
+        in: [bitstring, phash], // Allow both raw bitstring and hex input for convenience
       },
     },
   })

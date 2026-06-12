@@ -7,7 +7,7 @@ import { getAutomodStore } from '../automodMiddleware.js'
 import { getImagePhashes } from '../hash/hashEmbeds.js'
 import { phashDistance } from '../hash/phash.js'
 import { AutomodRule, type AutomodEventResult } from '../modules/AutomodRule.js'
-import { phashToBase64 } from '../utils.js'
+import { bitstringToHex } from '../utils.js'
 
 const PHASH_HAMMING_THRESHOLD = 10
 
@@ -72,7 +72,7 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
 
     return ruleInstances.map((instance) => ({
       rule: instance.rule,
-      logMessage: `Message contains ${plural('image', scamImages.length, { boldNumber: false })} that match known scam images: ${scamImages.map((hash) => inlineCode(phashToBase64(hash))).join(', ')}`,
+      logMessage: `Message contains ${plural('image', scamImages.length, { boldNumber: false })} that match known scam images: ${scamImages.map((hash) => inlineCode(bitstringToHex(hash))).join(', ')}`,
     }))
   }
 
