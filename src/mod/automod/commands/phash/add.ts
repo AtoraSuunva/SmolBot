@@ -17,8 +17,8 @@ import { MINUTE } from 'sleetcord-common'
 
 import { prisma } from '../../../../helpers/db.js'
 import { plural } from '../../../../helpers/format.js'
-import { computeImagePhash } from '../../hash/phash.js'
-import { bitstringToHex, hexToBitstring, normalizeUrl } from '../../utils.js'
+import { getImagePhashFromUrl } from '../../hash/checkPhash.js'
+import { bitstringToHex, hexToBitstring } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
 const UPLOAD_INPUT_ID = 'phash_bulk_upload'
@@ -26,6 +26,18 @@ const UPLOAD_INPUT_ID_2 = 'phash_bulk_upload_2'
 const UPLOAD_INPUT_ID_3 = 'phash_bulk_upload_3'
 const URL_INPUT_ID = 'url_input'
 const PHASH_INPUT_ID = 'phash_input'
+
+interface ResolvedPhashInput {
+  phash: string
+  phashUrl?: {
+    phash: string
+    url: string
+    imageData: Uint8Array<ArrayBuffer>
+    imageFileName: string | null
+    imageContentType: string | null
+    imageSize: number
+  }
+}
 
 export const automod_phash_add = new SleetSlashSubcommand(
   {
@@ -62,8 +74,8 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   const url = interaction.options.getString('url')
   const phashInput = interaction.options.getString('phash')
 
-  const promises: Promise<string>[] = []
-  const phashes: string[] = []
+  const promises: Promise<ResolvedPhashInput>[] = []
+  const resolvedInputs: ResolvedPhashInput[] = []
   const errors: Error[] = []
 
   let respondInteraction: Interaction = interaction
@@ -88,7 +100,12 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
 
     for (const file of upload) {
       if (file.contentType?.startsWith('image/')) {
-        promises.push(getImagePhashFromUrl(file.url))
+        promises.push(
+          resolveInputFromImageUrl(file.url, {
+            fileName: file.name,
+            contentType: file.contentType,
+          }),
+        )
       }
     }
 
@@ -99,7 +116,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
       .filter((u) => u.length > 0)
 
     for (const url of urls) {
-      promises.push(getImagePhashFromUrl(url))
+      promises.push(resolveInputFromImageUrl(url))
     }
 
     const phashInput = int.fields
@@ -111,7 +128,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     for (const input of phashInput) {
       try {
         const phash = parsePhashInput(input)
-        promises.push(Promise.resolve(phash))
+        promises.push(Promise.resolve({ phash }))
       } catch (e) {
         errors.push(e instanceof Error ? e : new Error(String(e)))
       }
@@ -129,13 +146,18 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
       return
     }
 
-    promises.push(getImagePhashFromUrl(attachment.url))
+    promises.push(
+      resolveInputFromImageUrl(attachment.url, {
+        fileName: attachment.name,
+        contentType: attachment.contentType,
+      }),
+    )
   }
 
   await respondInteraction.deferReply()
 
   if (url) {
-    promises.push(getImagePhashFromUrl(url))
+    promises.push(resolveInputFromImageUrl(url))
   }
 
   if (phashInput) {
@@ -147,7 +169,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     for (const input of inputs) {
       try {
         const phash = parsePhashInput(input)
-        promises.push(Promise.resolve(phash))
+        promises.push(Promise.resolve({ phash }))
       } catch (e) {
         errors.push(e instanceof Error ? e : new Error(String(e)))
       }
@@ -157,10 +179,12 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   await Promise.all(
     promises.map((p) =>
       p
-        .then((phash) => phashes.push(phash))
+        .then((resolved) => resolvedInputs.push(resolved))
         .catch((e) => errors.push(e instanceof Error ? e : new Error(String(e)))),
     ),
   )
+
+  const phashes = resolvedInputs.map((entry) => entry.phash)
 
   if (phashes.length === 0) {
     await respondInteraction.editReply({
@@ -173,6 +197,18 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
 
   // if the user is the app owner, add the phash as a global scam image (guildID = '*'), otherwise add it as a guild-specific scam image
   const newPhashes = await addImagesAsScam(phashes, isOwner ? '*' : interaction.guildId)
+
+  const phashUrlEntries = resolvedInputs
+    .map((entry) => entry.phashUrl)
+    .filter((entry): entry is NonNullable<ResolvedPhashInput['phashUrl']> => Boolean(entry))
+
+  await Promise.all(
+    phashUrlEntries.map((entry) =>
+      upsertPhashUrlWithImage(entry).catch((e) =>
+        errors.push(e instanceof Error ? e : new Error(String(e))),
+      ),
+    ),
+  )
 
   const contentChunks = []
 
@@ -312,37 +348,63 @@ function addImagesAsScam(phashes: string[], guildID?: string) {
 }
 
 /**
- * Accepts a link to an image, checks the database for an existing phash:
- *  - If a phash exists for the URL, returns it
- *  - If no phash exists, attempts to fetch the image and compute a phash, then returns it (and adds it to the database for future reference)
- *  - If the image can't be fetched or hashed, returns null
+ * Resolve a phash from an image URL while preserving image metadata for DB persistence.
  *
- * @param url The URL of the image to fetch and compute the phash for
- * @returns The computed phash, or null if the image couldn't be fetched or hashed
+ * @param url The image URL to resolve.
+ * @param options Optional metadata hints from Discord attachments.
+ * @returns Resolved phash input payload for command processing.
  */
-async function getImagePhashFromUrl(url: string): Promise<string> {
-  // Check if the url is valid and normalize it (for media -> cdn urls)
-  let normalizedUrl = normalizeUrl(url)
-
-  // Then check if we already have a phash for this URL in the database
-  const existingEntry = await prisma.phashUrl.findUnique({
-    where: {
-      url: normalizedUrl,
-    },
+async function resolveInputFromImageUrl(
+  url: string,
+  options?: {
+    fileName?: string | null
+    contentType?: string | null
+  },
+): Promise<ResolvedPhashInput> {
+  const resolved = await getImagePhashFromUrl(url, {
+    fileName: options?.fileName,
+    contentType: options?.contentType,
+    forceFetch: true,
   })
 
-  if (existingEntry) {
-    return existingEntry.phash
+  if (!resolved.imageData) {
+    throw new Error(`Failed to read image data from URL: ${url}`)
   }
 
-  // If not, fetch the image and compute the phash
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image from URL: [GET ${response.status}] ${url}`)
+  return {
+    phash: resolved.phash,
+    phashUrl: {
+      phash: resolved.phash,
+      url: resolved.normalizedUrl,
+      imageData: resolved.imageData,
+      imageFileName: resolved.imageFileName,
+      imageContentType: resolved.imageContentType,
+      imageSize: resolved.imageSize ?? resolved.imageData.length,
+    },
   }
+}
 
-  return computeImagePhash(Buffer.from(await response.arrayBuffer()))
+function upsertPhashUrlWithImage(entry: NonNullable<ResolvedPhashInput['phashUrl']>) {
+  return prisma.phashUrl.upsert({
+    where: {
+      url: entry.url,
+    },
+    update: {
+      phash: entry.phash,
+      imageData: entry.imageData,
+      imageFileName: entry.imageFileName,
+      imageContentType: entry.imageContentType,
+      imageSize: entry.imageSize,
+    },
+    create: {
+      url: entry.url,
+      phash: entry.phash,
+      imageData: entry.imageData,
+      imageFileName: entry.imageFileName,
+      imageContentType: entry.imageContentType,
+      imageSize: entry.imageSize,
+    },
+  })
 }
 
 function parsePhashInput(input: string): string {

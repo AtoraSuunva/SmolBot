@@ -60,7 +60,16 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
 
   // add all urls we saw so we can mark the phash later without needing to rehash the image if we find out it's a scam
   prisma
-    .$transaction(hashEntries.map((entry) => addImagePhashUrl(entry.phash, entry.url)))
+    .$transaction(
+      hashEntries.map((entry) =>
+        addImagePhashUrl(entry.phash, entry.url, {
+          imageData: entry.imageData,
+          imageFileName: entry.imageFileName,
+          imageContentType: entry.imageContentType,
+          imageSize: entry.imageSize,
+        }),
+      ),
+    )
     .catch(() => {})
 
   if (scamImages.length > 0) {
@@ -68,9 +77,13 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
       await message.delete().catch(() => null)
     }
 
+    const matches = scamImages
+      .map((v) => `${inlineCode(bitstringToHex(v.phash))} (distance: ${v.distance})`)
+      .join(', ')
+
     return ruleInstances.map((instance) => ({
       rule: instance.rule,
-      logMessage: `Message contains ${plural('image', scamImages.length, { boldNumber: false })} that match known scam images: ${scamImages.map((hash) => inlineCode(bitstringToHex(hash))).join(', ')}`,
+      logMessage: `Message contains ${plural('image', scamImages.length, { boldNumber: false })} that match${scamImages.length > 1 ? '' : 'es'} known scam images: ${matches}`,
     }))
   }
 
@@ -81,20 +94,41 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
  * Add a url + phash entry to the database so we can mark the phash as scam using the url
  *
  * @param phash The phash to add
- * @param urls The URLs associated with this phash (e.g. the URLs of the images that were hashed to produce this phash)
+ * @param url The URL associated with this phash (e.g. the image URL that was hashed)
+ * @param image Optional image payload to store for later inspection/re-upload
  * @returns The created or updated ImagePhash entry
  */
-function addImagePhashUrl(phash: string, url: string) {
+function addImagePhashUrl(
+  phash: string,
+  url: string,
+  image?: {
+    imageData: Uint8Array<ArrayBuffer>
+    imageFileName: string | null
+    imageContentType: string | null
+    imageSize: number
+  },
+) {
+  const imageFields = image
+    ? {
+        imageData: image.imageData,
+        imageFileName: image.imageFileName,
+        imageContentType: image.imageContentType,
+        imageSize: image.imageSize,
+      }
+    : {}
+
   return prisma.phashUrl.upsert({
     where: {
       url,
     },
     update: {
       phash,
+      ...imageFields,
     },
     create: {
       phash,
       url,
+      ...imageFields,
     },
   })
 }

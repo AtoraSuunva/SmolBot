@@ -1,5 +1,10 @@
+import path from 'node:path'
+
 import { prisma } from '../../../helpers/db.js'
+import { normalizeUrl } from '../utils.js'
+import { fetchImageBuffer } from './hashEmbeds.js'
 import { phashDistance } from './phash.js'
+import { computeImagePhash } from './phash.js'
 
 /** Maximum hamming distance for considering two phashes a scam match. */
 export const PHASH_HAMMING_THRESHOLD = 10
@@ -22,6 +27,109 @@ export interface ComparedPhash extends ScamPhashCandidate {
   distance: number
   /** Whether this candidate belongs to global scope (guildID === '*'). */
   isGlobal: boolean
+}
+
+/** Binary image metadata attached to a phash URL. */
+export interface StoredPhashImage {
+  /** Raw image bytes, if available. */
+  imageData: Uint8Array<ArrayBuffer> | null
+  /** Original file name, if known. */
+  imageFileName: string | null
+  /** MIME type, if known. */
+  imageContentType: string | null
+  /** Image size in bytes, if known. */
+  imageSize: number | null
+}
+
+/** Resolved phash data from a URL lookup/fetch operation. */
+export interface ResolvedImagePhash extends StoredPhashImage {
+  /** Computed or cached 64-bit phash bitstring. */
+  phash: string
+  /** Normalized URL used for cache reads/writes. */
+  normalizedUrl: string
+  /** Whether the phash result came from the DB cache instead of a network fetch. */
+  fromCache: boolean
+}
+
+/** Closest-match entry enriched with optional stored image data for display. */
+export interface ComparedPhashWithImage extends ComparedPhash, StoredPhashImage {}
+
+/**
+ * Resolve a filename from URL path when no explicit filename is provided.
+ *
+ * @param url Input URL string.
+ * @returns Filename inferred from URL path, or null when unavailable.
+ */
+function inferFileNameFromUrl(url: string): string | null {
+  try {
+    const pathname = new URL(url).pathname
+    const fileName = path.posix.basename(pathname)
+    return fileName && fileName !== '/' ? fileName : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Resolve a phash from an image URL using cache-first behavior.
+ *
+ * @param url Source image URL.
+ * @param options Optional hints for metadata and cache behavior.
+ * @param options.fileName File name to store with the image, if available.
+ * @param options.contentType MIME type to store with the image, if available.
+ * @param options.forceFetch If true, bypass cache and fetch image bytes.
+ * @returns Resolved phash plus normalized URL and optional image payload metadata.
+ */
+export async function getImagePhashFromUrl(
+  url: string,
+  options?: {
+    fileName?: string | null | undefined
+    contentType?: string | null | undefined
+    forceFetch?: boolean | undefined
+  },
+): Promise<ResolvedImagePhash> {
+  const normalizedUrl = normalizeUrl(url)
+
+  if (!options?.forceFetch) {
+    const existingEntry = await prisma.phashUrl.findUnique({
+      where: {
+        url: normalizedUrl,
+      },
+      select: {
+        phash: true,
+        imageData: true,
+        imageFileName: true,
+        imageContentType: true,
+        imageSize: true,
+      },
+    })
+
+    if (existingEntry) {
+      return {
+        phash: existingEntry.phash,
+        normalizedUrl,
+        fromCache: true,
+        imageData: existingEntry.imageData,
+        imageFileName: existingEntry.imageFileName,
+        imageContentType: existingEntry.imageContentType,
+        imageSize: existingEntry.imageSize,
+      }
+    }
+  }
+
+  const image = await fetchImageBuffer(url)
+
+  const imageFileName = options?.fileName ?? inferFileNameFromUrl(normalizedUrl)
+
+  return {
+    phash: await computeImagePhash(image.imageData),
+    normalizedUrl,
+    fromCache: false,
+    imageData: image.imageData,
+    imageFileName,
+    imageContentType: image.imageContentType,
+    imageSize: image.imageData.length,
+  }
 }
 
 /**
@@ -101,6 +209,72 @@ export async function getClosestScamPhashes(
 }
 
 /**
+ * Return closest scam phashes along with any stored image payload for each match.
+ *
+ * @param targetPhash The bitstring phash to compare.
+ * @param guildID Guild ID to include guild-scoped scam phashes alongside global entries.
+ * @param limit Maximum number of closest matches to return.
+ * @returns Closest matching scam phashes enriched with optional image metadata.
+ */
+export async function getClosestScamPhashesWithImages(
+  targetPhash: string,
+  guildID?: string,
+  limit = 5,
+): Promise<ComparedPhashWithImage[]> {
+  const closest = await getClosestScamPhashes(targetPhash, guildID, limit)
+
+  if (closest.length === 0) {
+    return []
+  }
+
+  const uniquePhashes = [...new Set(closest.map((entry) => entry.phash))]
+  const imageRows = await prisma.phashUrl.findMany({
+    where: {
+      phash: {
+        in: uniquePhashes,
+      },
+      imageData: {
+        not: null,
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    select: {
+      phash: true,
+      imageData: true,
+      imageFileName: true,
+      imageContentType: true,
+      imageSize: true,
+    },
+  })
+
+  const imageByPhash = new Map<string, StoredPhashImage>()
+
+  for (const row of imageRows) {
+    if (!imageByPhash.has(row.phash)) {
+      imageByPhash.set(row.phash, {
+        imageData: row.imageData,
+        imageFileName: row.imageFileName,
+        imageContentType: row.imageContentType,
+        imageSize: row.imageSize,
+      })
+    }
+  }
+
+  return closest.map((entry) => {
+    const image = imageByPhash.get(entry.phash)
+
+    return Object.assign(entry, {
+      imageData: image?.imageData ?? null,
+      imageFileName: image?.imageFileName ?? null,
+      imageContentType: image?.imageContentType ?? null,
+      imageSize: image?.imageSize ?? null,
+    })
+  })
+}
+
+/**
  * Return target hashes that are within the scam distance threshold of known scam phashes.
  *
  * @param targetPhashes The phashes to test.
@@ -112,7 +286,7 @@ export async function getScamMatchesForHashes(
   targetPhashes: string[],
   guildID?: string,
   threshold = PHASH_HAMMING_THRESHOLD,
-): Promise<string[]> {
+): Promise<ComparedPhash[]> {
   if (targetPhashes.length === 0) {
     return []
   }
@@ -123,8 +297,10 @@ export async function getScamMatchesForHashes(
     return []
   }
 
-  return targetPhashes.filter((phash) => {
-    const [closest] = compareAgainstCandidates(phash, candidates, 1)
-    return closest ? closest.distance <= threshold : false
-  })
+  return targetPhashes
+    .map((phash) => {
+      const [closest] = compareAgainstCandidates(phash, candidates, 1)
+      return closest ? (closest.distance <= threshold ? closest : null) : null
+    })
+    .filter((entry): entry is ComparedPhash => entry !== null)
 }
