@@ -17,7 +17,11 @@ import { MINUTE } from 'sleetcord-common'
 
 import { prisma } from '../../../../helpers/db.js'
 import { plural } from '../../../../helpers/format.js'
-import { getImagePhashFromUrl } from '../../hash/checkPhash.js'
+import {
+  getImagePhashFromUrl,
+  type NonNullPhashEntry,
+  type PhashEntry,
+} from '../../hash/checkPhash.js'
 import { bitstringToHex, hexToBitstring } from '../../utils.js'
 import { isAppOwner } from './utils.js'
 
@@ -26,18 +30,6 @@ const UPLOAD_INPUT_ID_2 = 'phash_bulk_upload_2'
 const UPLOAD_INPUT_ID_3 = 'phash_bulk_upload_3'
 const URL_INPUT_ID = 'url_input'
 const PHASH_INPUT_ID = 'phash_input'
-
-interface ResolvedPhashInput {
-  phash: string
-  phashUrl?: {
-    phash: string
-    url: string
-    imageData: Uint8Array<ArrayBuffer>
-    imageFileName: string | null
-    imageContentType: string | null
-    imageSize: number
-  }
-}
 
 export const automod_phash_add = new SleetSlashSubcommand(
   {
@@ -74,8 +66,8 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   const url = interaction.options.getString('url')
   const phashInput = interaction.options.getString('phash')
 
-  const promises: Promise<ResolvedPhashInput>[] = []
-  const resolvedInputs: ResolvedPhashInput[] = []
+  const promises: Promise<PhashEntry>[] = []
+  const resolvedInputs: PhashEntry[] = []
   const errors: Error[] = []
 
   let respondInteraction: Interaction = interaction
@@ -128,7 +120,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     for (const input of phashInput) {
       try {
         const phash = parsePhashInput(input)
-        promises.push(Promise.resolve({ phash }))
+        promises.push(Promise.resolve({ phash, url: null, image: null }))
       } catch (e) {
         errors.push(e instanceof Error ? e : new Error(String(e)))
       }
@@ -169,7 +161,7 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
     for (const input of inputs) {
       try {
         const phash = parsePhashInput(input)
-        promises.push(Promise.resolve({ phash }))
+        promises.push(Promise.resolve({ phash, url: null, image: null }))
       } catch (e) {
         errors.push(e instanceof Error ? e : new Error(String(e)))
       }
@@ -198,9 +190,9 @@ async function runAddPhash(interaction: ChatInputCommandInteraction) {
   // if the user is the app owner, add the phash as a global scam image (guildID = '*'), otherwise add it as a guild-specific scam image
   const newPhashes = await addImagesAsScam(phashes, isOwner ? '*' : interaction.guildId)
 
-  const phashUrlEntries = resolvedInputs
-    .map((entry) => entry.phashUrl)
-    .filter((entry): entry is NonNullable<ResolvedPhashInput['phashUrl']> => Boolean(entry))
+  const phashUrlEntries = resolvedInputs.filter(
+    (entry): entry is NonNullPhashEntry => entry.url !== null && entry.image !== null,
+  )
 
   await Promise.all(
     phashUrlEntries.map((entry) =>
@@ -360,49 +352,48 @@ async function resolveInputFromImageUrl(
     fileName?: string | null
     contentType?: string | null
   },
-): Promise<ResolvedPhashInput> {
+): Promise<PhashEntry> {
   const resolved = await getImagePhashFromUrl(url, {
     fileName: options?.fileName,
     contentType: options?.contentType,
     forceFetch: true,
   })
 
-  if (!resolved.imageData) {
+  if (!resolved.image) {
     throw new Error(`Failed to read image data from URL: ${url}`)
   }
 
   return {
     phash: resolved.phash,
-    phashUrl: {
-      phash: resolved.phash,
-      url: resolved.normalizedUrl,
-      imageData: resolved.imageData,
-      imageFileName: resolved.imageFileName,
-      imageContentType: resolved.imageContentType,
-      imageSize: resolved.imageSize ?? resolved.imageData.length,
+    url: resolved.url,
+    image: {
+      bytes: resolved.image.bytes,
+      fileName: resolved.image.fileName,
+      contentType: resolved.image.contentType,
+      size: resolved.image.size,
     },
   }
 }
 
-function upsertPhashUrlWithImage(entry: NonNullable<ResolvedPhashInput['phashUrl']>) {
+function upsertPhashUrlWithImage(entry: NonNullPhashEntry) {
   return prisma.phashUrl.upsert({
     where: {
       url: entry.url,
     },
     update: {
       phash: entry.phash,
-      imageData: entry.imageData,
-      imageFileName: entry.imageFileName,
-      imageContentType: entry.imageContentType,
-      imageSize: entry.imageSize,
+      imageData: entry.image.bytes,
+      imageFileName: entry.image.fileName,
+      imageContentType: entry.image.contentType,
+      imageSize: entry.image.size,
     },
     create: {
       url: entry.url,
       phash: entry.phash,
-      imageData: entry.imageData,
-      imageFileName: entry.imageFileName,
-      imageContentType: entry.imageContentType,
-      imageSize: entry.imageSize,
+      imageData: entry.image.bytes,
+      imageFileName: entry.image.fileName,
+      imageContentType: entry.image.contentType,
+      imageSize: entry.image.size,
     },
   })
 }

@@ -546,3 +546,24 @@ export function hexToBitstring(hexString: string, nBits?: number): string {
 
   return flat.join('')
 }
+
+/**
+ * Takes a string that might be either a hex phash or a binary phash and returns a binary phash
+ *
+ * If the input is a hex string, it will be converted to binary. If it's already a binary string, it will be returned as is.
+ *
+ * @param phash The input phash string, either in hex or binary format.
+ * @returns A binary string representation of the phash.
+ * @throws An error if the input string is not a valid hex or binary phash.
+ */
+export function ensureBitstringPhash(phash: string): string {
+  const trimmed = phash.trim()
+
+  if (/^[0-9a-fA-F]+$/.test(trimmed)) {
+    return hexToBitstring(trimmed)
+  } else if (/^[01]+$/.test(trimmed)) {
+    return trimmed
+  } else {
+    throw new Error('Invalid phash format: must be a hex string or a binary string')
+  }
+}

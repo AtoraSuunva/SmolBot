@@ -9,12 +9,15 @@ import { computeImagePhash } from './phash.js'
 /** Maximum hamming distance for considering two phashes a scam match. */
 export const PHASH_HAMMING_THRESHOLD = 10
 
+export interface Phash {
+  /** 64-bit phash bitstring. */
+  phash: string
+}
+
 /**
  * Basic scam phash row fetched from storage.
  */
-interface ScamPhashCandidate {
-  /** 64-bit phash bitstring. */
-  phash: string
+export interface PhashGuild extends Phash {
   /** Guild scope for this phash; `*` indicates global scope. */
   guildID: string
 }
@@ -22,7 +25,7 @@ interface ScamPhashCandidate {
 /**
  * A scam phash candidate annotated with comparison metadata.
  */
-export interface ComparedPhash extends ScamPhashCandidate {
+export interface ComparedPhash extends PhashGuild {
   /** Hamming distance to the compared target phash. */
   distance: number
   /** Whether this candidate belongs to global scope (guildID === '*'). */
@@ -30,29 +33,32 @@ export interface ComparedPhash extends ScamPhashCandidate {
 }
 
 /** Binary image metadata attached to a phash URL. */
-export interface StoredPhashImage {
+export interface PhashImage {
   /** Raw image bytes, if available. */
-  imageData: Uint8Array<ArrayBuffer> | null
+  bytes: Uint8Array<ArrayBuffer> | null
   /** Original file name, if known. */
-  imageFileName: string | null
+  fileName: string | null
   /** MIME type, if known. */
-  imageContentType: string | null
+  contentType: string | null
   /** Image size in bytes, if known. */
-  imageSize: number | null
+  size: number | null
 }
 
 /** Resolved phash data from a URL lookup/fetch operation. */
-export interface ResolvedImagePhash extends StoredPhashImage {
-  /** Computed or cached 64-bit phash bitstring. */
-  phash: string
-  /** Normalized URL used for cache reads/writes. */
-  normalizedUrl: string
-  /** Whether the phash result came from the DB cache instead of a network fetch. */
-  fromCache: boolean
+export interface PhashEntry extends Phash {
+  url: string | null
+  image: PhashImage | null
 }
 
+type RemoveNullProps<T> = {
+  [K in keyof T]: NonNullable<T[K]>
+}
+
+/** Non-nullable version of a phash entry, ensuring all properties are present. */
+export type NonNullPhashEntry = RemoveNullProps<PhashEntry>
+
 /** Closest-match entry enriched with optional stored image data for display. */
-export interface ComparedPhashWithImage extends ComparedPhash, StoredPhashImage {}
+export interface ComparedPhashWithImage extends ComparedPhash, PhashEntry {}
 
 /**
  * Resolve a filename from URL path when no explicit filename is provided.
@@ -71,23 +77,62 @@ function inferFileNameFromUrl(url: string): string | null {
 }
 
 /**
+ * Get an image phash entry by its phash value, returning associated metadata if available.
+ *
+ * @param phash The phash bitstring to look up.
+ * @returns Resolved phash entry with optional image metadata, or null if not found.
+ */
+export async function getImagePhashFromPhash(phash: string): Promise<string | PhashEntry> {
+  const entry = await prisma.phashUrl.findFirst({
+    where: {
+      phash,
+    },
+    select: {
+      phash: true,
+      url: true,
+      imageData: true,
+      imageFileName: true,
+      imageContentType: true,
+      imageSize: true,
+    },
+  })
+
+  if (!entry) {
+    return phash
+  }
+
+  return {
+    phash: entry.phash,
+    url: entry.url,
+    image: {
+      bytes: entry?.imageData ?? null,
+      fileName: entry?.imageFileName ?? null,
+      contentType: entry?.imageContentType ?? null,
+      size: entry?.imageSize ?? null,
+    },
+  }
+}
+
+export interface GetImagePhashOptions {
+  /** File name to store with the image, if available. */
+  fileName?: string | null | undefined
+  /** MIME type to store with the image, if available. */
+  contentType?: string | null | undefined
+  /** If true, bypass cache and fetch image bytes. */
+  forceFetch?: boolean | undefined
+}
+
+/**
  * Resolve a phash from an image URL using cache-first behavior.
  *
  * @param url Source image URL.
  * @param options Optional hints for metadata and cache behavior.
- * @param options.fileName File name to store with the image, if available.
- * @param options.contentType MIME type to store with the image, if available.
- * @param options.forceFetch If true, bypass cache and fetch image bytes.
  * @returns Resolved phash plus normalized URL and optional image payload metadata.
  */
 export async function getImagePhashFromUrl(
   url: string,
-  options?: {
-    fileName?: string | null | undefined
-    contentType?: string | null | undefined
-    forceFetch?: boolean | undefined
-  },
-): Promise<ResolvedImagePhash> {
+  options?: GetImagePhashOptions,
+): Promise<PhashEntry> {
   const normalizedUrl = normalizeUrl(url)
 
   if (!options?.forceFetch) {
@@ -107,12 +152,13 @@ export async function getImagePhashFromUrl(
     if (existingEntry) {
       return {
         phash: existingEntry.phash,
-        normalizedUrl,
-        fromCache: true,
-        imageData: existingEntry.imageData,
-        imageFileName: existingEntry.imageFileName,
-        imageContentType: existingEntry.imageContentType,
-        imageSize: existingEntry.imageSize,
+        url: normalizedUrl,
+        image: {
+          bytes: existingEntry.imageData,
+          fileName: existingEntry.imageFileName,
+          contentType: existingEntry.imageContentType,
+          size: existingEntry.imageSize,
+        },
       }
     }
   }
@@ -123,12 +169,13 @@ export async function getImagePhashFromUrl(
 
   return {
     phash: await computeImagePhash(image.imageData),
-    normalizedUrl,
-    fromCache: false,
-    imageData: image.imageData,
-    imageFileName,
-    imageContentType: image.imageContentType,
-    imageSize: image.imageData.length,
+    url: normalizedUrl,
+    image: {
+      bytes: image.imageData,
+      fileName: imageFileName,
+      contentType: image.imageContentType,
+      size: image.imageData.length,
+    },
   }
 }
 
@@ -138,7 +185,7 @@ export async function getImagePhashFromUrl(
  * @param guildID Guild ID for guild-specific matches. If omitted, only global entries are returned.
  * @returns Scam phash candidates eligible for comparison.
  */
-async function getScamPhashCandidates(guildID?: string): Promise<ScamPhashCandidate[]> {
+async function getScamPhashCandidates(guildID?: string): Promise<PhashGuild[]> {
   const checkGuildIDs = guildID ? [guildID, '*'] : ['*']
 
   return prisma.phashInfo.findMany({
@@ -167,7 +214,7 @@ async function getScamPhashCandidates(guildID?: string): Promise<ScamPhashCandid
  */
 function compareAgainstCandidates(
   targetPhash: string,
-  candidates: ScamPhashCandidate[],
+  candidates: PhashGuild[],
   limit: number,
 ): ComparedPhash[] {
   return candidates
@@ -249,15 +296,15 @@ export async function getClosestScamPhashesWithImages(
     },
   })
 
-  const imageByPhash = new Map<string, StoredPhashImage>()
+  const imageByPhash = new Map<string, PhashImage>()
 
   for (const row of imageRows) {
     if (!imageByPhash.has(row.phash)) {
       imageByPhash.set(row.phash, {
-        imageData: row.imageData,
-        imageFileName: row.imageFileName,
-        imageContentType: row.imageContentType,
-        imageSize: row.imageSize,
+        bytes: row.imageData,
+        fileName: row.imageFileName,
+        contentType: row.imageContentType,
+        size: row.imageSize,
       })
     }
   }
@@ -266,10 +313,8 @@ export async function getClosestScamPhashesWithImages(
     const image = imageByPhash.get(entry.phash)
 
     return Object.assign(entry, {
-      imageData: image?.imageData ?? null,
-      imageFileName: image?.imageFileName ?? null,
-      imageContentType: image?.imageContentType ?? null,
-      imageSize: image?.imageSize ?? null,
+      url: null,
+      image: image ?? null,
     })
   })
 }

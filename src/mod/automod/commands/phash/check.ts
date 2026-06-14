@@ -6,13 +6,18 @@ import {
   MessageFlags,
   SectionBuilder,
   SeparatorBuilder,
+  SeparatorSpacingSize,
   TextDisplayBuilder,
   type ChatInputCommandInteraction,
 } from 'discord.js'
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
-import { getClosestScamPhashesWithImages, getImagePhashFromUrl } from '../../hash/checkPhash.js'
-import { bitstringToHex } from '../../utils.js'
+import {
+  getClosestScamPhashesWithImages,
+  getImagePhashFromPhash,
+  getImagePhashFromUrl,
+} from '../../hash/checkPhash.js'
+import { bitstringToHex, ensureBitstringPhash } from '../../utils.js'
 
 export const automod_phash_check = new SleetSlashSubcommand(
   {
@@ -31,6 +36,12 @@ export const automod_phash_check = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.String,
         required: false,
       },
+      {
+        name: 'phash',
+        description: 'Phash to check (hex or binary string)',
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      },
     ],
   },
   {
@@ -43,10 +54,16 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
 
   const attachment = interaction.options.getAttachment('image')
   const url = interaction.options.getString('url')
+  const phashInput = interaction.options.getString('phash')
 
-  if ((!attachment && !url) || (attachment && url)) {
+  if (
+    (!attachment && !url && !phashInput) ||
+    (attachment && url) ||
+    (attachment && phashInput) ||
+    (url && phashInput)
+  ) {
     await interaction.reply({
-      content: 'Provide exactly one input: either `image` or `url`.',
+      content: 'Provide exactly one input: either `image`, `url`, or `phash`.',
       flags: MessageFlags.Ephemeral,
     })
     return
@@ -60,16 +77,27 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
     return
   }
 
+  if (phashInput && !/^([0-9a-fA-F]{16}|[01]{64})$/.test(phashInput)) {
+    await interaction.reply({
+      content: 'The provided phash must be a hex string or a binary string.',
+      flags: MessageFlags.Ephemeral,
+    })
+    return
+  }
+
   await interaction.deferReply()
 
   try {
-    const resolved = await getImagePhashFromUrl(attachment?.url ?? url!, {
-      fileName: attachment?.name,
-      contentType: attachment?.contentType,
-      forceFetch: Boolean(attachment),
-    })
+    // either a string that's just the input hash (if we don't have any metadata for it) or a full PhashEntry if we found a matching phash in the database
+    const resolved = phashInput
+      ? await getImagePhashFromPhash(ensureBitstringPhash(phashInput))
+      : await getImagePhashFromUrl(attachment?.url ?? url!, {
+          fileName: attachment?.name,
+          contentType: attachment?.contentType,
+          forceFetch: Boolean(attachment),
+        })
 
-    const phash = resolved.phash
+    const phash = typeof resolved === 'string' ? resolved : resolved.phash
     const closest = await getClosestScamPhashesWithImages(phash, interaction.guildId, 5)
 
     // Build files list for closest entries that have stored image blobs
@@ -77,15 +105,15 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
     const fileNameByPhash = new Map<string, string>()
 
     for (const entry of closest) {
-      if (!entry.imageData || fileNameByPhash.has(entry.phash)) {
+      if (!entry.image?.bytes || fileNameByPhash.has(entry.phash)) {
         continue
       }
 
-      const extension = contentTypeToExtension(entry.imageContentType)
+      const extension = contentTypeToExtension(entry.image.contentType)
       const fallbackName = `closest-${bitstringToHex(entry.phash)}.${extension}`
-      const fileName = sanitizeFileName(entry.imageFileName) ?? fallbackName
+      const fileName = sanitizeFileName(entry.image.fileName) ?? fallbackName
 
-      files.push(new AttachmentBuilder(Buffer.from(entry.imageData), { name: fileName }))
+      files.push(new AttachmentBuilder(Buffer.from(entry.image.bytes), { name: fileName }))
       fileNameByPhash.set(entry.phash, fileName)
 
       if (files.length >= 5) {
@@ -93,29 +121,50 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
       }
     }
 
-    // The checked image thumbnail URL — prefer the original attachment URL so Discord can render
-    // it directly without a round-trip; fall back to the resolved normalized URL.
-    const checkedImageUrl = attachment?.url ?? resolved.normalizedUrl
+    // If the url is a media proxy URL, we won't be able to use it as an attachment src for the thumbnail, so we should use the stored image data if available
+    let checkedImageUrl =
+      typeof resolved === 'string' ? null : (resolved.url ?? url ?? attachment?.url ?? null)
+
+    if (checkedImageUrl?.startsWith('https://media.discordapp.net/')) {
+      if (typeof resolved !== 'string' && resolved.image?.bytes) {
+        const extension = contentTypeToExtension(resolved.image.contentType)
+        const fallbackName = `input.${extension}`
+        const fileName = sanitizeFileName(resolved.image.fileName) ?? fallbackName
+
+        files.push(new AttachmentBuilder(Buffer.from(resolved.image.bytes), { name: fileName }))
+        checkedImageUrl = `attachment://${fileName}`
+      }
+    }
 
     const container = new ContainerBuilder()
 
     // Header section: phash of checked image + thumbnail of the checked image
-    container.addSectionComponents(
-      new SectionBuilder({
-        components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: `Phash: \`${bitstringToHex(phash)}\``,
+    if (checkedImageUrl) {
+      container.addSectionComponents(
+        new SectionBuilder({
+          components: [
+            {
+              type: ComponentType.TextDisplay,
+              content: `Phash: \`${bitstringToHex(phash)}\``,
+            },
+          ],
+          accessory: {
+            type: ComponentType.Thumbnail,
+            media: { url: checkedImageUrl },
           },
-        ],
-        accessory: {
-          type: ComponentType.Thumbnail,
-          media: { url: checkedImageUrl },
-        },
+        }),
+      )
+    } else {
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder({ content: `Phash: \`${bitstringToHex(phash)}\`` }),
+      )
+    }
+
+    container.addSeparatorComponents(
+      new SeparatorBuilder({
+        spacing: SeparatorSpacingSize.Large,
       }),
     )
-
-    container.addSeparatorComponents(new SeparatorBuilder())
 
     container.addTextDisplayComponents(new TextDisplayBuilder({ content: '**Closest phashes:**' }))
 
@@ -147,6 +196,8 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
         } else {
           container.addTextDisplayComponents(new TextDisplayBuilder({ content: rowText }))
         }
+
+        container.addSeparatorComponents(new SeparatorBuilder())
       }
     }
 
@@ -171,7 +222,9 @@ function contentTypeToExtension(contentType: string | null): string {
     return 'unknown'
   }
 
-  switch (contentType.split(';')[0]) {
+  const ext = contentType.split(';')[0]
+
+  switch (ext) {
     case 'image/jpeg':
       return 'jpg'
     case 'image/webp':
@@ -183,7 +236,7 @@ function contentTypeToExtension(contentType: string | null): string {
     case 'image/png':
       return 'png'
     default:
-      return contentType
+      return contentType.split('/')[1] || 'unknown'
   }
 }
 
