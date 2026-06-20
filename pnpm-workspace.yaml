@@ -9,3 +9,8 @@ allowBuilds:
   esbuild: true
   prisma: true
   sharp: true
+
+minimumReleaseAgeExclude:
+  - sleetcord@4.3.1
+
+minimumReleaseAgeStrict: true

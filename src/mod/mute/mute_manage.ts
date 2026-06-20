@@ -68,7 +68,8 @@ export const mute_manage = new SleetSlashCommand(
       },
       {
         name: 'starter_message',
-        description: 'The message to send on muted channel creation, supports {mention}/{executor}',
+        description:
+          'The message to send on muted channel creation, supports {mention}/{executor}/{reason}',
         type: ApplicationCommandOptionType.String,
         max_length: 2000,
       },

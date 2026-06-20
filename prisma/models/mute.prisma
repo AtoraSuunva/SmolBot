@@ -17,6 +17,9 @@ model MemberMutes {
   previousRoles String   @map("previous_roles")
   muteChannel   String?  @map("mute_channel")
   executor      String?  @map("executor")
+  reason        String?  @map("reason")
+  // Used when unmuting a user who left the server while muted, so we can unmute them on rejoin
+  removeOnJoin  Boolean  @default(false) @map("remove_on_join")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@id([guildID, userID])

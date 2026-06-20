@@ -28,7 +28,9 @@
     // Discord.js offers formatters using .toString() for multiple types and it was becoming a hassle to allowlist them
     "restrict-template-expressions": "allow",
     // TS checks this better, we have some cases where we really mess with return types and this false-positives
-    "typescript/consistent-return": "allow"
+    "typescript/consistent-return": "allow",
+    "prisma-local/no-unknown-select-field": ["error", { "schemaDir": "prisma/models" }]
   },
-  "ignorePatterns": ["src/generated/**/*", "prisma.config.ts"]
+  "ignorePatterns": ["src/generated/**/*", "prisma.config.ts"],
+  "jsPlugins": ["./oxlint/prisma/index.js"]
 }
