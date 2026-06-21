@@ -356,7 +356,6 @@ async function resolveInputFromImageUrl(
   const resolved = await getImagePhashFromUrl(url, {
     fileName: options?.fileName,
     contentType: options?.contentType,
-    forceFetch: true,
   })
 
   if (!resolved.image) {

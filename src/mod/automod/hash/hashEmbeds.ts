@@ -1,4 +1,4 @@
-import type { EmbedAssetData, Message } from 'discord.js'
+import { LimitedCollection, type EmbedAssetData, type Message } from 'discord.js'
 
 import { normalizeUrl } from '../utils.js'
 import { computeImagePhash } from './phash.js'
@@ -53,53 +53,61 @@ export async function getImagePhashes(message: Message): Promise<HashEntry[]> {
       })),
   ]
 
-  const sourceByUrl = new Map<string, HashImageSource>()
-
-  for (const source of imageSources) {
-    const normalizedUrl = normalizeUrl(source.url)
-    const existing = sourceByUrl.get(normalizedUrl)
-
-    if (!existing) {
-      sourceByUrl.set(normalizedUrl, {
-        ...source,
-        url: normalizedUrl,
-      })
-      continue
-    }
-
-    if (!existing.imageFileName && source.imageFileName) {
-      existing.imageFileName = source.imageFileName
-    }
-
-    if (!existing.imageContentType && source.imageContentType) {
-      existing.imageContentType = source.imageContentType
-    }
-  }
-
   const hashedEntries = await Promise.all(
-    Array.from(sourceByUrl.values()).map(async (source) => {
-      const image = await fetchImageBuffer(source.url).catch(() => null)
-
-      if (!image) {
-        return null
-      }
-
-      const imagePhash = await computeImagePhash(image.imageData).catch(() => null)
-
-      return imagePhash
-        ? {
-            phash: imagePhash,
-            url: source.url,
-            imageData: image.imageData,
-            imageFileName: source.imageFileName,
-            imageContentType: source.imageContentType ?? image.imageContentType,
-            imageSize: image.imageData.length,
-          }
-        : null
-    }),
+    Array.from(imageSources).map((source) =>
+      phashImage(source.url, source.imageFileName).catch(() => null),
+    ),
   )
 
   return hashedEntries.filter((entry): entry is HashEntry => entry !== null)
+}
+
+const phashCache = new LimitedCollection<string, HashEntry>({ maxSize: 100 })
+
+/**
+ * Fetch an image from a URL and compute its phash.
+ *
+ * Caches the latest 100 urls in memory
+ *
+ * @param url The URL of the image to fetch and hash
+ * @param fileName An optional filename to associate with this image (used for attachments, where the URL may not be unique or consistent)
+ * @returns A promise that resolves to a HashEntry containing the phash and related data, or null if the image couldn't be fetched or hashed
+ */
+export async function phashImage(
+  url: string,
+  fileName: string | null = null,
+): Promise<HashEntry | null> {
+  const normalizedUrl = normalizeUrl(url)
+  const cached = phashCache.get(normalizedUrl)
+
+  if (cached) {
+    return cached
+  }
+
+  const image = await fetchImageBuffer(normalizedUrl).catch(() => null)
+
+  if (!image) {
+    return null
+  }
+
+  const imagePhash = await computeImagePhash(image.imageData).catch(() => null)
+
+  if (!imagePhash) {
+    return null
+  }
+
+  const entry: HashEntry = {
+    url: normalizedUrl,
+    imageContentType: image.imageContentType,
+    imageData: image.imageData,
+    imageFileName: fileName ?? null,
+    imageSize: image.imageData.length,
+    phash: imagePhash,
+  }
+
+  phashCache.set(normalizedUrl, entry)
+
+  return entry
 }
 
 /**

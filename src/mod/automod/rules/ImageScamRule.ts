@@ -70,7 +70,9 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
         }),
       ),
     )
-    .catch(() => {})
+    .catch((err) => {
+      console.error('Error adding phash URLs to database:', err)
+    })
 
   if (scamImages.length > 0) {
     if (ruleInstances.some((instance) => instance.params.delete)) {
@@ -134,20 +136,14 @@ function addImagePhashUrl(
 }
 
 /**
- * Clear out phash URLs that are older than the age limit, to prevent it from growing indefinitely
+ * Clear out phash URLs that are older than the age limit and not marked as a scam, to prevent it from growing indefinitely
  */
 function clearOldPhashUrls() {
   const cutoffDate = new Date(
-    Temporal.Now.instant().subtract({ milliseconds: 1 * DAY }).epochMilliseconds,
+    Temporal.Now.instant().subtract({ milliseconds: 3 * DAY }).epochMilliseconds,
   )
 
-  return prisma.phashUrl.deleteMany({
-    where: {
-      createdAt: {
-        lt: cutoffDate,
-      },
-    },
-  })
+  return prisma.$executeRaw`DELETE FROM "PhashUrl" WHERE "created_at" < ${cutoffDate} AND phash NOT IN (SELECT DISTINCT phash FROM "PhashInfo")`
 }
 
 // clear on startup and then once a day after that
