@@ -13,22 +13,19 @@
     "url": "git+https://github.com/AtoraSuunva/smolbot.git"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "scripts": {
-    "start:dev": "tsgo --build && node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
-    "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
-    "start:prod": "prisma migrate deploy && node dist/index.js",
+    "start:dev": "vp pack && node --env-file=.env --enable-source-maps --trace-warnings dist/index.mjs",
+    "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.mjs",
+    "start:prod": "prisma migrate deploy && node dist/index.mjs",
     "generate": "prisma generate",
-    "build": "tsgo --build",
-    "check": "pnpm run '/.*:check/'",
-    "fix": "pnpm run '/.*:fix/'",
-    "lint:check": "oxlint",
-    "format:check": "oxfmt --check",
-    "lint:fix": "oxlint --fix",
-    "format:fix": "oxfmt --write",
+    "build": "vp pack",
+    "check": "vp check",
+    "fix": "vp check --fix && prisma format",
     "prisma:fix": "prisma format",
     "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
-    "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist"
+    "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
@@ -77,11 +74,9 @@
     "@types/node": "~26.0.0",
     "@types/pluralize": "^0.0.33",
     "@typescript/native-preview": "7.0.0-dev.20260619.1",
-    "oxfmt": "^0.55.0",
-    "oxlint": "^1.70.0",
-    "oxlint-tsgolint": "^0.23.0",
     "prisma-json-types-generator": "^5.1.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=26.0.0"

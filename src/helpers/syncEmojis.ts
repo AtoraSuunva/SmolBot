@@ -179,7 +179,9 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
       syncLogger.info(
         `Emoji "${name}" exists on Discord but not in the database, deleting it from Discord and recreating it.`,
       )
-      await deleteEmoji(discordEmoji.id).catch(() => {})
+      await deleteEmoji(discordEmoji.id).catch((e) =>
+        syncLogger.error({ error: e }, `Failed to delete emoji "${name}" from Discord: ${e}`),
+      )
     }
 
     // Emoji does not exist in the database or is not on Discord, create it

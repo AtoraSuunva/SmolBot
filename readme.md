@@ -101,19 +101,19 @@ If you prefer/need to re-build the image (i.e. you've changed the code), you can
 
 ### Installing dependencies yourself
 
-You'll need Node.js (At **least** >=26.0.0), pnpm, and patience.
+You'll need Node.js (At **least** >=26.0.0), Vite+ (`vp`), and patience.
 
-Assuming you have Node.js and pnpm installed and working:
+Assuming you have Vite+ (`vp`) installed and working:
 
 ```sh
 # Install dependencies
-pnpm install
+vp install
 # Generate prisma client
-pnpm run generate
+vp run generate
 
 # Either
-pnpm run build
-pnpm run start:prod
+vp run build
+vp run start:prod
 # Or, doing both steps in 1 command
-pnpm run start:dev
+vp run start:dev
 ```

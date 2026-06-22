@@ -14,11 +14,11 @@ COPY tsconfig.json ./
 COPY prisma.config.ts ./
 COPY /prisma/schema.prisma ./prisma/schema.prisma
 COPY /prisma/models ./prisma/models/
-RUN pnpm run generate
+RUN pnpm exec vp run generate
 COPY src/ ./src/
-RUN pnpm run build
+RUN pnpm exec vp run build
 COPY /resources ./resources/
-RUN pnpm sentry:sourcemaps:inject
+RUN pnpm exec vp run sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
