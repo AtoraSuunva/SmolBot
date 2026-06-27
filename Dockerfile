@@ -26,7 +26,7 @@ RUN pnpm exec vp run sentry:sourcemaps:inject
 FROM dev-build AS prod-build
 ENV CI=true
 COPY /prisma ./prisma/
-RUN pnpm prune --prod
+RUN pnpm prune --prod --ignore-scripts
 
 
 # The actual runtime itself
