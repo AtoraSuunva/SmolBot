@@ -13,6 +13,7 @@ import {
   Message,
   type PartialMessage,
   type ReadonlyCollection,
+  type Role,
 } from 'discord.js'
 import { formatUser, SleetModule } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
@@ -155,14 +156,7 @@ export async function messageDeleteBulkWithAuditLog(
     }
 
     for (const [id, role] of message.mentions.roles) {
-      body.data.roles[id] = {
-        id: role.id,
-        name: role.name,
-        color: role.color,
-        icon: role.icon,
-        unicode_emoji: role.unicodeEmoji,
-        position: role.rawPosition,
-      }
+      body.data.roles[id] = roleToMinimalRole(role)
     }
 
     const rp = message.mentions.repliedUser
@@ -192,14 +186,7 @@ export async function messageDeleteBulkWithAuditLog(
       }
 
       for (const [id, role] of message.member.roles.cache) {
-        body.data.roles[id] = {
-          id: role.id,
-          name: role.name,
-          color: role.color,
-          icon: role.icon,
-          unicode_emoji: role.unicodeEmoji,
-          position: role.rawPosition,
-        }
+        body.data.roles[id] = roleToMinimalRole(role)
       }
     }
 
@@ -296,6 +283,36 @@ export async function messageDeleteBulkWithAuditLog(
   }
 }
 
+function roleToMinimalRole(role: Role): MinimalRole {
+  return {
+    id: role.id,
+    name: role.name,
+    color: role.color,
+    colors: {
+      primary_color: role.colors.primaryColor,
+      secondary_color: role.colors.secondaryColor,
+      tertiary_color: role.colors.tertiaryColor,
+    },
+    icon: role.icon,
+    unicode_emoji: role.unicodeEmoji,
+    position: role.rawPosition,
+    ...(role.tags
+      ? {
+          tags: {
+            ...('botId' in role.tags ? { bot_id: role.tags.botId } : {}),
+            ...(role.tags.premiumSubscriberRole ? { premium_subscriber: null } : {}),
+            ...('integrationId' in role.tags ? { integration_id: role.tags.integrationId } : {}),
+            ...('subscriptionListingId' in role.tags
+              ? { subscription_listing_id: role.tags.subscriptionListingId }
+              : {}),
+            ...(role.tags.availableForPurchase ? { available_for_purchase: null } : {}),
+            ...('guildConnections' in role.tags ? { guild_connections: null } : {}),
+          },
+        }
+      : {}),
+  }
+}
+
 type MinimalGuild = Pick<APIGuild, 'id' | 'name' | 'icon'>
 type MinimalChannel = Pick<APIChannel, 'id' | 'name'> & {
   type: ChannelType
@@ -303,7 +320,7 @@ type MinimalChannel = Pick<APIChannel, 'id' | 'name'> & {
 }
 export type MinimalRole = Pick<
   APIRole,
-  'id' | 'name' | 'color' | 'icon' | 'unicode_emoji' | 'position'
+  'id' | 'name' | 'color' | 'icon' | 'unicode_emoji' | 'position' | 'colors' | 'tags'
 >
 type MinimalUser = Pick<APIUser, 'id' | 'avatar' | 'discriminator' | 'global_name' | 'username'>
 type MinimalGuildMember = Pick<APIGuildMember, 'roles'>
