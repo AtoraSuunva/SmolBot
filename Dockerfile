@@ -1,6 +1,7 @@
 # Step that pulls in everything needed to build the app and builds it
 FROM node:26-alpine AS dev-build
 WORKDIR /home/node/app
+ENV VITE_GIT_HOOKS=0
 RUN npm install -g corepack
 RUN corepack enable
 COPY package.json ./
