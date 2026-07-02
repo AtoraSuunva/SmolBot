@@ -35,6 +35,16 @@ async function main() {
   initLogger.info('Init Sentry')
   initSentry({
     release: GIT_COMMIT_SHA,
+    integrations: [
+      Sentry.localVariablesIntegration({
+        captureAllExceptions: true,
+        maxExceptionsPerSecond: 5,
+      }),
+      Sentry.httpIntegration({
+        spans: true,
+      }),
+      Sentry.pinoIntegration({ error: { levels: ['warn', 'error'] } }),
+    ],
     tracesSampler(samplingContext) {
       const { name } = samplingContext
 
