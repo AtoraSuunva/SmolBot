@@ -73,7 +73,9 @@ if (isMainThread) {
  * @returns true if the regex matches the text within the given timeout, false if the match fails or times out.
  */
 export function workerMatch(regex: RegExp, text: string, timeout = 500): Promise<boolean> {
-  if (!worker) throw new Error('Worker is not initialized')
+  if (!worker) {
+    worker = new Worker(new URL(import.meta.url))
+  }
 
   return new Promise<boolean>((resolve, reject) => {
     const subChannel = new MessageChannel()
