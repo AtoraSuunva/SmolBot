@@ -43,7 +43,7 @@ async function main() {
       Sentry.httpIntegration({
         spans: true,
       }),
-      Sentry.pinoIntegration({ error: { levels: ['warn', 'error'] } }),
+      Sentry.pinoIntegration({ error: { levels: ['error'] } }),
     ],
     tracesSampler(samplingContext) {
       const { name } = samplingContext
