@@ -177,11 +177,43 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
     // Emoji exists on Discord but not in the database
     if (!existingEmoji && discordEmoji) {
       syncLogger.info(
-        `Emoji "${name}" exists on Discord but not in the database, deleting it from Discord and recreating it.`,
+        `Emoji "${name}" exists on Discord but not in the database, checking the hash...`,
       )
-      await deleteEmoji(discordEmoji.id).catch((e) =>
-        syncLogger.error({ error: e }, `Failed to delete emoji "${name}" from Discord: ${e}`),
-      )
+
+      const dbHash = await hashAttachment(attachment)
+      const discordHash = await fetch(
+        rest.cdn.emoji(discordEmoji.id, {
+          animated: discordEmoji.animated,
+          extension: 'webp',
+        }),
+      ).then(async (r) => hashAttachment(Buffer.from(await r.arrayBuffer())))
+
+      if (dbHash === discordHash) {
+        // Emoji is up-to-date, add it to the database
+        syncLogger.info(
+          `Emoji "${name}" is up-to-date, adding it to the database for module "${module}".`,
+        )
+
+        await prisma.applicationEmoji.create({
+          data: {
+            id: discordEmoji.id,
+            name: discordEmoji.name,
+            hash: dbHash,
+            module,
+          },
+        })
+
+        appEmojis[name] = new WrappedApplicationEmoji(discordEmoji)
+        continue
+      } else {
+        // Emoji is outdated, delete it from Discord and recreate it
+        syncLogger.info(
+          `Emoji "${name}" on Discord is outdated, deleting it and recreating it for module "${module}".`,
+        )
+        await deleteEmoji(discordEmoji.id).catch((e) =>
+          syncLogger.error({ error: e }, `Failed to delete emoji "${name}" from Discord: ${e}`),
+        )
+      }
     }
 
     // Emoji does not exist in the database or is not on Discord, create it
