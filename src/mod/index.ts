@@ -15,6 +15,7 @@ import { messageDeleteAuditLog } from './messageDeleteAuditLog.js'
 import { modlogModules } from './modlog/index.js'
 import { modmail } from './modmail/index.js'
 import { muteModules } from './mute/index.js'
+import { poll_votes } from './poll_votes.js'
 import { purge } from './purge.js'
 import { purge_threads } from './purge_threads.js'
 import { report } from './report/report.js'
@@ -30,12 +31,12 @@ export const modModules = [
   ...modlogModules,
   ...muteModules,
   ...warningsModules,
-  automod,
-  automod_rules,
+  // export_users,
   auto_tag,
+  automod_rules,
+  automod,
   dehoist,
   delete_police_config,
-  // export_users,
   find_members,
   lock_thread_config,
   lock_thread,
@@ -48,6 +49,7 @@ export const modModules = [
   mass_unban,
   messageDeleteAuditLog,
   modmail,
+  poll_votes,
   purge_threads,
   purge,
   report,
