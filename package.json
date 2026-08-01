@@ -57,7 +57,7 @@
     "pluralize": "^8.0.0",
     "pretty-ms": "~9.3.0",
     "prisma": "^7.9.1",
-    "sharp": "^0.27.2",
+    "sharp": "^0.35.3",
     "sharp-phash": "^2.2.0",
     "sleetcord": "4.3.1",
     "sleetcord-common": "^16.0.3",
