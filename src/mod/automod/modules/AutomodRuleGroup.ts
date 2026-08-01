@@ -48,11 +48,7 @@ export class AutomodRuleGroup<RequireParams extends boolean> extends SleetSlashC
   ) {
     const { requireParams, ...slashCommandBody } = body
     const { runResult, ...slashCommandGroupHandlers } = handlers
-    super(
-      slashCommandBody as unknown as SleetSlashCommandGroupBody,
-      slashCommandGroupHandlers,
-      options,
-    )
+    super(slashCommandBody, slashCommandGroupHandlers, options)
     // sleet will automatically register handlers for subcommands (the AutomodRules)
     // this ends up duplicating the handlers since we register them for add and edit
     // so we need to disable that autoregistering
