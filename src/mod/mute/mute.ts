@@ -211,6 +211,7 @@ async function handleChatInput(interaction: ChatInputCommandInteraction, action:
 
   const reason = interaction.options.getString('reason')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
+  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
   const channel = interaction.options.getChannel('channel') as NonThreadGuildTextBasedChannel | null
   const separateChannels = interaction.options.getBoolean('separate_channels') ?? false
 

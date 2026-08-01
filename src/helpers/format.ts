@@ -105,9 +105,11 @@ export function formatConfig<Config extends Record<string, Value>>(
 ): string {
   const {
     config,
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
     formatters = {} as NonNullable<FormatConfigOptions<Config>['formatters']>,
     useDefaultFormatters = true,
     guild,
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
     mapKeys = {} as NonNullable<FormatConfigOptions<Config>['mapKeys']>,
     oldConfig,
     omit = ['guildid', 'updatedat', 'createdat'],
@@ -287,9 +289,11 @@ export function tableFormat<T extends Record<string, Value>>(
 ): string {
   const {
     keys = Object.keys(data[0]),
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
     columnNames: columnsNames = {} as NonNullable<TableFormatOptions<T>['columnNames']>,
     showNullish = true,
     characterLimit = Number.POSITIVE_INFINITY,
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
     formatters = {} as NonNullable<TableFormatOptions<T>['formatters']>,
   } = options ?? {}
 
