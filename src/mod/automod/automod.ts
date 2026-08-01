@@ -4,6 +4,7 @@ import {
   InteractionContextType,
   MessageFlags,
 } from 'discord.js'
+import env from 'env-var'
 import { inGuildGuard, SleetSlashCommand } from 'sleetcord'
 
 import { automodMiddleware } from './automodMiddleware.js'
@@ -12,9 +13,10 @@ import { automod_config } from './commands/config.js'
 import { automod_delete, handleDeleteInteraction } from './commands/delete.js'
 import { automod_details, handleDetailsInteraction } from './commands/details.js'
 import { automod_edit, handleEditInteraction } from './commands/edit.js'
-import { automod_phash } from './commands/phash/index.js'
 import { automod_view, handleViewInteraction } from './commands/view.js'
 import { rules } from './rules/index.js'
+
+const ENABLE_PHASH = env.get('ENABLE_PHASH').asBool() ?? true
 
 // TODO for automod:
 // - [ ] Add more rules (pressure, newlines, forbidden, emoji-only, scam, cross-channel)
@@ -33,7 +35,15 @@ export const automod = new SleetSlashCommand(
   {
     name: 'automod',
     description: "Manage the bot's automod",
-    options: [automod_view, automod_details, automod_delete, automod_config, automod_phash],
+    options: [
+      automod_view,
+      automod_details,
+      automod_delete,
+      automod_config,
+      ...(ENABLE_PHASH
+        ? [await import('./commands/phash/index.js').then((module) => module.automod_phash)]
+        : []),
+    ],
     contexts: [InteractionContextType.Guild],
     default_member_permissions: ['ManageGuild'],
     integration_types: [ApplicationIntegrationType.GuildInstall],
