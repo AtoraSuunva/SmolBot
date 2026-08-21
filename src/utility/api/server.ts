@@ -5,6 +5,7 @@ import { rateLimiter } from 'hono-rate-limiter'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { methodNotAllowed } from 'hono/method-not-allowed'
 import { baseLogger, MINUTE } from 'sleetcord-common'
 
 import actionlogApp from '../../mod/actionlog/api.js'
@@ -26,6 +27,7 @@ export function startApiServer() {
       origin: '*',
       allowHeaders: ['Authorization'],
     }),
+    methodNotAllowed({ app }),
     bodyLimit({
       maxSize: 50 * 1024,
       onError: (c) => c.text('Payload too large', 413),

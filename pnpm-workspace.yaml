@@ -17,7 +17,7 @@ minimumReleaseAgeStrict: true
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: 4.1.9
-  vite-plus: latest
+  vite-plus: ^0.2.9
 overrides:
   vite: 'catalog:'
   vitest: 'catalog:'

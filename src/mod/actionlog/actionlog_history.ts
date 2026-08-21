@@ -245,21 +245,19 @@ async function formatPageToFields(guild: Guild, actionLogs: ActionLog[]): Promis
   return Promise.all(
     (
       await Promise.all(
-        actionLogs.map(
-          async (al): Promise<ActionLogEntry> => ({
-            id: al.actionID,
-            version: al.version,
-            action: al.action as ActionLogEntry['action'],
-            user: al.userID ? await guild.client.users.fetch(al.userID) : null,
-            redactUser: al.redactUser,
-            reason: al.reason,
-            reasonBy: al.reasonByID ? await guild.client.users.fetch(al.reasonByID) : null,
-            responsibleModerator: al.moderatorID
-              ? await guild.client.users.fetch(al.moderatorID)
-              : null,
-            createdAt: al.createdAt,
-          }),
-        ),
+        actionLogs.map(async (al): Promise<ActionLogEntry> => ({
+          id: al.actionID,
+          version: al.version,
+          action: al.action as ActionLogEntry['action'],
+          user: al.userID ? await guild.client.users.fetch(al.userID) : null,
+          redactUser: al.redactUser,
+          reason: al.reason,
+          reasonBy: al.reasonByID ? await guild.client.users.fetch(al.reasonByID) : null,
+          responsibleModerator: al.moderatorID
+            ? await guild.client.users.fetch(al.moderatorID)
+            : null,
+          createdAt: al.createdAt,
+        })),
       )
     ).map(async (al) => ({
       name: `Version #${al.version}`,
