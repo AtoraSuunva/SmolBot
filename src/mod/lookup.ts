@@ -534,7 +534,7 @@ async function createUserLookupInfo(user: User, { minimal = false }: { minimal?:
   if (!minimal) {
     const buttonRow = new ActionRowBuilder<ButtonBuilder>()
 
-    if (user.primaryGuild) {
+    if (user.primaryGuild && user.primaryGuild.identityEnabled) {
       // Every single property is defined as optional lol
       const section = new SectionBuilder()
 
@@ -573,15 +573,17 @@ async function createUserLookupInfo(user: User, { minimal = false }: { minimal?:
         )
       }
 
-      container.addSeparatorComponents(new SeparatorBuilder())
-      container.addSectionComponents(section)
-      buttonRow.addComponents(
-        new ButtonBuilder()
-          .setEmoji('🔎')
-          .setLabel('Lookup Guild')
-          .setStyle(ButtonStyle.Secondary)
-          .setCustomId(`${LOOKUP_ID}:${user.primaryGuild.identityGuildId}`),
-      )
+      if (section.components.length > 0) {
+        container.addSeparatorComponents(new SeparatorBuilder())
+        container.addSectionComponents(section)
+        buttonRow.addComponents(
+          new ButtonBuilder()
+            .setEmoji('🔎')
+            .setLabel('Lookup Guild')
+            .setStyle(ButtonStyle.Secondary)
+            .setCustomId(`${LOOKUP_ID}:${user.primaryGuild.identityGuildId}`),
+        )
+      }
     }
 
     if (user.bot) {
