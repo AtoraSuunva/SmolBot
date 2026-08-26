@@ -1,4 +1,7 @@
-import { unlink } from 'node:fs/promises'
+import { createWriteStream } from 'node:fs'
+import { mkdir, unlink } from 'node:fs/promises'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 import { ApplicationCommandOptionType, inlineCode, type Message } from 'discord.js'
 import { baseLogger, DAY } from 'sleetcord-common'
@@ -6,6 +9,7 @@ import { baseLogger, DAY } from 'sleetcord-common'
 import type { PhashUrl } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { plural } from '../../../helpers/format.js'
+import { sleep } from '../../../helpers/functions.js'
 import { getAutomodStore } from '../automodMiddleware.js'
 import { bitstringToHex, getPhashImagePath } from '../commands/phash/utils.js'
 import { getScamMatchesForHashes } from '../hash/checkPhash.js'
@@ -113,11 +117,11 @@ function addImagePhashUrl(phash: string, url: string, filePath: string | null) {
   })
 }
 
-import { mkdir, writeFile } from 'fs/promises'
-
 import env from 'env-var'
 const PHASH_IMAGE_PATH = env.get('PHASH_IMAGE_PATH').asString()
 const phashLogger = baseLogger.child({ module: 'phashMigration' })
+const PHASH_IMAGE_MIGRATION_BATCH_SIZE = 5
+const PHASH_IMAGE_MIGRATION_PAUSE_MS = 25
 
 /**
  * One-time migration from image files stored directly in the database to external files
@@ -133,43 +137,89 @@ async function migrateImageFilesToExternalStorage() {
   // Create the directory for storing phash images if it doesn't exist
   await mkdir(PHASH_IMAGE_PATH, { recursive: true })
 
-  const phashUrls = await prisma.phashUrl.findMany({
-    where: {
-      imageData: {
-        not: null,
-      },
-    },
-  })
+  let cursor: string | undefined
 
-  for (const entry of phashUrls) {
-    if (!entry.imageData || !entry.imageContentType) {
-      phashLogger.warn(`No image data found for phash ${entry.phash}, skipping migration.`)
-      continue
-    }
-
-    const filePath = getPhashImagePath(entry.phash, entry.imageContentType)
-
-    if (!filePath) {
-      phashLogger.warn(`Failed to get file path for phash ${entry.phash}, skipping migration.`)
-      continue
-    }
-
-    phashLogger.info(`Migrating image for phash ${entry.phash} to file at ${filePath}`)
-
-    await writeFile(filePath, entry.imageData)
-
-    await prisma.phashUrl.update({
+  while (true) {
+    const phashUrls = await prisma.phashUrl.findMany({
       where: {
-        url: entry.url,
+        imageData: {
+          not: null,
+        },
       },
-      data: {
-        filePath,
-        imageData: null,
+      select: {
+        url: true,
+        phash: true,
+        imageData: true,
+        imageContentType: true,
       },
+      orderBy: {
+        url: 'asc',
+      },
+      take: PHASH_IMAGE_MIGRATION_BATCH_SIZE,
+      ...(cursor
+        ? {
+            cursor: {
+              url: cursor,
+            },
+            skip: 1,
+          }
+        : {}),
     })
 
-    phashLogger.info(`Successfully migrated image for phash ${entry.phash} to file.`)
+    if (phashUrls.length === 0) {
+      break
+    }
+
+    phashLogger.info(`Migrating ${phashUrls.length} phash images to external storage.`)
+
+    for (const entry of phashUrls) {
+      if (!entry.imageData || !entry.imageContentType) {
+        phashLogger.warn(`No image data found for phash ${entry.phash}, skipping migration.`)
+        continue
+      }
+
+      const filePath = getPhashImagePath(entry.phash, entry.imageContentType)
+
+      if (!filePath) {
+        phashLogger.warn(`Failed to get file path for phash ${entry.phash}, skipping migration.`)
+        continue
+      }
+
+      phashLogger.info(`Migrating image for phash ${entry.phash} to file at ${filePath}`)
+
+      try {
+        await writeBufferToFile(filePath, entry.imageData)
+
+        await prisma.phashUrl.update({
+          where: {
+            url: entry.url,
+          },
+          data: {
+            filePath,
+            imageData: null,
+          },
+        })
+
+        phashLogger.info(`Successfully migrated image for phash ${entry.phash} to file.`)
+      } catch (err) {
+        phashLogger.error(`Failed to migrate image for phash ${entry.phash}: ${String(err)}`)
+      }
+
+      if (PHASH_IMAGE_MIGRATION_PAUSE_MS > 0) {
+        await sleep(PHASH_IMAGE_MIGRATION_PAUSE_MS)
+      }
+    }
+
+    cursor = phashUrls[phashUrls.length - 1]?.url
+
+    if (phashUrls.length < PHASH_IMAGE_MIGRATION_BATCH_SIZE) {
+      break
+    }
   }
+}
+
+async function writeBufferToFile(filePath: string, imageData: Uint8Array) {
+  await pipeline(Readable.from([imageData]), createWriteStream(filePath))
 }
 
 await migrateImageFilesToExternalStorage().catch(() => {})
