@@ -1,13 +1,16 @@
-import { ApplicationCommandOptionType, inlineCode, type Message } from 'discord.js'
-import { DAY } from 'sleetcord-common'
+import { unlink } from 'node:fs/promises'
 
+import { ApplicationCommandOptionType, inlineCode, type Message } from 'discord.js'
+import { baseLogger, DAY } from 'sleetcord-common'
+
+import type { PhashUrl } from '../../../generated/prisma/client.js'
 import { prisma } from '../../../helpers/db.js'
 import { plural } from '../../../helpers/format.js'
 import { getAutomodStore } from '../automodMiddleware.js'
+import { bitstringToHex, getPhashImagePath } from '../commands/phash/utils.js'
 import { getScamMatchesForHashes } from '../hash/checkPhash.js'
 import { getImagePhashes } from '../hash/hashEmbeds.js'
 import { AutomodRule, type AutomodEventResult } from '../modules/AutomodRule.js'
-import { bitstringToHex } from '../utils.js'
 
 export const imageScamRule = new AutomodRule(
   {
@@ -61,14 +64,7 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
   // add all urls we saw so we can mark the phash later without needing to rehash the image if we find out it's a scam
   prisma
     .$transaction(
-      hashEntries.map((entry) =>
-        addImagePhashUrl(entry.phash, entry.url, {
-          imageData: entry.imageData,
-          imageFileName: entry.imageFileName,
-          imageContentType: entry.imageContentType,
-          imageSize: entry.imageSize,
-        }),
-      ),
+      hashEntries.map((entry) => addImagePhashUrl(entry.phash, entry.url, entry.filePath)),
     )
     .catch((err) => {
       console.error('Error adding phash URLs to database:', err)
@@ -100,54 +96,114 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
  * @param image Optional image payload to store for later inspection/re-upload
  * @returns The created or updated ImagePhash entry
  */
-function addImagePhashUrl(
-  phash: string,
-  url: string,
-  image?: {
-    imageData: Uint8Array<ArrayBuffer>
-    imageFileName: string | null
-    imageContentType: string | null
-    imageSize: number
-  },
-) {
-  const imageFields = image
-    ? {
-        imageData: image.imageData,
-        imageFileName: image.imageFileName,
-        imageContentType: image.imageContentType,
-        imageSize: image.imageSize,
-      }
-    : {}
-
+function addImagePhashUrl(phash: string, url: string, filePath: string | null) {
   return prisma.phashUrl.upsert({
     where: {
       url,
     },
     update: {
       phash,
-      ...imageFields,
+      filePath,
     },
     create: {
       phash,
       url,
-      ...imageFields,
+      filePath,
     },
   })
 }
 
+import { mkdir, writeFile } from 'fs/promises'
+
+import env from 'env-var'
+const PHASH_IMAGE_PATH = env.get('PHASH_IMAGE_PATH').asString()
+const phashLogger = baseLogger.child({ module: 'phashMigration' })
+
+/**
+ * One-time migration from image files stored directly in the database to external files
+ */
+async function migrateImageFilesToExternalStorage() {
+  if (!PHASH_IMAGE_PATH) {
+    phashLogger.warn(
+      'PHASH_IMAGE_PATH is not set, skipping migration of image files to external storage.',
+    )
+    return
+  }
+
+  // Create the directory for storing phash images if it doesn't exist
+  await mkdir(PHASH_IMAGE_PATH, { recursive: true })
+
+  const phashUrls = await prisma.phashUrl.findMany({
+    where: {
+      imageData: {
+        not: null,
+      },
+    },
+  })
+
+  for (const entry of phashUrls) {
+    if (!entry.imageData || !entry.imageContentType) {
+      phashLogger.warn(`No image data found for phash ${entry.phash}, skipping migration.`)
+      continue
+    }
+
+    const filePath = getPhashImagePath(entry.phash, entry.imageContentType)
+
+    if (!filePath) {
+      phashLogger.warn(`Failed to get file path for phash ${entry.phash}, skipping migration.`)
+      continue
+    }
+
+    phashLogger.info(`Migrating image for phash ${entry.phash} to file at ${filePath}`)
+
+    await writeFile(filePath, entry.imageData)
+
+    await prisma.phashUrl.update({
+      where: {
+        url: entry.url,
+      },
+      data: {
+        filePath,
+        imageData: null,
+      },
+    })
+
+    phashLogger.info(`Successfully migrated image for phash ${entry.phash} to file.`)
+  }
+}
+
+await migrateImageFilesToExternalStorage().catch(() => {})
+
 /**
  * Clear out phash URLs that are older than the age limit and not marked as a scam, to prevent it from growing indefinitely
+ *
+ * Also deletes the local image files associated with the deleted phash URLs
  */
-function clearOldPhashUrls() {
-  const cutoffDate = new Date(
-    Temporal.Now.instant().subtract({ milliseconds: 3 * DAY }).epochMilliseconds,
-  )
+async function clearOldPhashUrls() {
+  phashLogger.info('Starting clearOldPhashUrls process.')
+  const cutoffDate = Temporal.Now.instant()
+    .subtract({ milliseconds: 3 * DAY })
+    .toZonedDateTimeISO('UTC')
+    .toString({ timeZoneName: 'never' })
 
-  return prisma.$executeRaw`DELETE FROM "PhashUrl" WHERE "created_at" < ${cutoffDate} AND phash NOT IN (SELECT DISTINCT phash FROM "PhashInfo")`
+  const deleted = await prisma.$queryRaw<PhashUrl[]>`
+DELETE FROM "PhashUrl"
+  WHERE "created_at" < ${cutoffDate}
+  AND phash NOT IN (
+    SELECT DISTINCT phash FROM "PhashInfo"
+  )
+  RETURNING *`
+
+  phashLogger.info(`Deleted ${deleted.length} old phash URLs, deleting files on disk`)
+
+  await Promise.all(
+    deleted.map((entry) => (entry.filePath ? unlink(entry.filePath) : Promise.resolve())),
+  )
+  phashLogger.info('Finished clearOldPhashUrls process.')
 }
 
 // clear on startup and then once a day after that
-clearOldPhashUrls().catch(() => {})
+await clearOldPhashUrls().catch(() => {})
 
 setInterval(() => {
   clearOldPhashUrls().catch(() => {})

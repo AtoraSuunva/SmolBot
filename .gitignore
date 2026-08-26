@@ -8,3 +8,4 @@ prisma/**/*.db
 prisma/**/*.sqlite
 src/generated
 *.http
+phash/

@@ -1,6 +1,7 @@
-import path from 'node:path'
+import { writeFile } from 'node:fs/promises'
 
 import { prisma } from '../../../helpers/db.js'
+import { getPhashImagePath } from '../commands/phash/utils.js'
 import { normalizeUrl } from '../utils.js'
 import { fetchImageBuffer } from './hashEmbeds.js'
 import { phashDistance } from './phash.js'
@@ -32,22 +33,12 @@ export interface ComparedPhash extends PhashGuild {
   isGlobal: boolean
 }
 
-/** Binary image metadata attached to a phash URL. */
-export interface PhashImage {
-  /** Raw image bytes, if available. */
-  bytes: Uint8Array<ArrayBuffer> | null
-  /** Original file name, if known. */
-  fileName: string | null
-  /** MIME type, if known. */
-  contentType: string | null
-  /** Image size in bytes, if known. */
-  size: number | null
-}
-
 /** Resolved phash data from a URL lookup/fetch operation. */
 export interface PhashEntry extends Phash {
+  /** Original URL of the image, if available. */
   url: string | null
-  image: PhashImage | null
+  /** Local path to the stored image, if available. */
+  filePath: string | null
 }
 
 type RemoveNullProps<T> = {
@@ -61,28 +52,12 @@ export type NonNullPhashEntry = RemoveNullProps<PhashEntry>
 export interface ComparedPhashWithImage extends ComparedPhash, PhashEntry {}
 
 /**
- * Resolve a filename from URL path when no explicit filename is provided.
- *
- * @param url Input URL string.
- * @returns Filename inferred from URL path, or null when unavailable.
- */
-function inferFileNameFromUrl(url: string): string | null {
-  try {
-    const pathname = new URL(url).pathname
-    const fileName = path.posix.basename(pathname)
-    return fileName && fileName !== '/' ? fileName : null
-  } catch {
-    return null
-  }
-}
-
-/**
  * Get an image phash entry by its phash value, returning associated metadata if available.
  *
  * @param phash The phash bitstring to look up.
  * @returns Resolved phash entry with optional image metadata, or null if not found.
  */
-export async function getImagePhashFromPhash(phash: string): Promise<string | PhashEntry> {
+export async function getImagePhashFromPhash(phash: string): Promise<PhashEntry> {
   const entry = await prisma.phashUrl.findFirst({
     where: {
       phash,
@@ -90,27 +65,19 @@ export async function getImagePhashFromPhash(phash: string): Promise<string | Ph
     select: {
       phash: true,
       url: true,
-      imageData: true,
-      imageFileName: true,
-      imageContentType: true,
-      imageSize: true,
+      filePath: true,
     },
   })
 
   if (!entry) {
-    return phash
+    return {
+      phash,
+      url: null,
+      filePath: null,
+    }
   }
 
-  return {
-    phash: entry.phash,
-    url: entry.url,
-    image: {
-      bytes: entry?.imageData ?? null,
-      fileName: entry?.imageFileName ?? null,
-      contentType: entry?.imageContentType ?? null,
-      size: entry?.imageSize ?? null,
-    },
-  }
+  return entry
 }
 
 export interface GetImagePhashOptions {
@@ -142,40 +109,46 @@ export async function getImagePhashFromUrl(
       },
       select: {
         phash: true,
-        imageData: true,
-        imageFileName: true,
-        imageContentType: true,
-        imageSize: true,
+        url: true,
+        filePath: true,
       },
     })
 
     if (existingEntry) {
-      return {
-        phash: existingEntry.phash,
-        url: normalizedUrl,
-        image: {
-          bytes: existingEntry.imageData,
-          fileName: existingEntry.imageFileName,
-          contentType: existingEntry.imageContentType,
-          size: existingEntry.imageSize,
-        },
-      }
+      return existingEntry
     }
   }
 
   const image = await fetchImageBuffer(url)
+  const phash = await computeImagePhash(image.bytes)
+  const filePath = getPhashImagePath(phash, image.contentType)
 
-  const imageFileName = options?.fileName ?? inferFileNameFromUrl(normalizedUrl)
+  if (filePath) {
+    await writeFile(filePath, image.bytes)
+  }
+
+  // Save the file to the DB
+  await prisma.phashUrl.upsert({
+    where: {
+      url: normalizedUrl,
+    },
+    update: {
+      phash,
+      filePath,
+      imageContentType: image.contentType,
+    },
+    create: {
+      phash,
+      url: normalizedUrl,
+      filePath,
+      imageContentType: image.contentType,
+    },
+  })
 
   return {
-    phash: await computeImagePhash(image.imageData),
+    phash,
     url: normalizedUrl,
-    image: {
-      bytes: image.imageData,
-      fileName: imageFileName,
-      contentType: image.imageContentType,
-      size: image.imageData.length,
-    },
+    filePath,
   }
 }
 
@@ -280,7 +253,7 @@ export async function getClosestScamPhashesWithImages(
       phash: {
         in: uniquePhashes,
       },
-      imageData: {
+      filePath: {
         not: null,
       },
     },
@@ -289,32 +262,25 @@ export async function getClosestScamPhashesWithImages(
     },
     select: {
       phash: true,
-      imageData: true,
-      imageFileName: true,
+      filePath: true,
       imageContentType: true,
-      imageSize: true,
     },
   })
 
-  const imageByPhash = new Map<string, PhashImage>()
+  const imageByPhash = new Map<string, string | null>()
 
   for (const row of imageRows) {
     if (!imageByPhash.has(row.phash)) {
-      imageByPhash.set(row.phash, {
-        bytes: row.imageData,
-        fileName: row.imageFileName,
-        contentType: row.imageContentType,
-        size: row.imageSize,
-      })
+      imageByPhash.set(row.phash, row.filePath)
     }
   }
 
   return closest.map((entry) => {
-    const image = imageByPhash.get(entry.phash)
+    const filePath = imageByPhash.get(entry.phash)
 
     return Object.assign(entry, {
       url: null,
-      image: image ?? null,
+      filePath: filePath ?? null,
     })
   })
 }

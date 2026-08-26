@@ -17,7 +17,7 @@ import {
   getImagePhashFromPhash,
   getImagePhashFromUrl,
 } from '../../hash/checkPhash.js'
-import { bitstringToHex, ensureBitstringPhash } from '../../utils.js'
+import { bitstringToHex, ensureBitstringPhash, getFileName } from './utils.js'
 
 export const automod_phash_check = new SleetSlashSubcommand(
   {
@@ -105,15 +105,13 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
     const fileNameByPhash = new Map<string, string>()
 
     for (const entry of closest) {
-      if (!entry.image?.bytes || fileNameByPhash.has(entry.phash)) {
+      if (!entry.filePath || fileNameByPhash.has(entry.phash)) {
         continue
       }
 
-      const extension = contentTypeToExtension(entry.image.contentType)
-      const fallbackName = `closest-${bitstringToHex(entry.phash)}.${extension}`
-      const fileName = sanitizeFileName(entry.image.fileName) ?? fallbackName
+      const fileName = getFileName(entry.filePath)
 
-      files.push(new AttachmentBuilder(Buffer.from(entry.image.bytes), { name: fileName }))
+      files.push(new AttachmentBuilder(entry.filePath, { name: fileName }))
       fileNameByPhash.set(entry.phash, fileName)
 
       if (files.length >= 5) {
@@ -126,12 +124,10 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
       typeof resolved === 'string' ? null : (resolved.url ?? url ?? attachment?.url ?? null)
 
     if (checkedImageUrl?.startsWith('https://media.discordapp.net/')) {
-      if (typeof resolved !== 'string' && resolved.image?.bytes) {
-        const extension = contentTypeToExtension(resolved.image.contentType)
-        const fallbackName = `input.${extension}`
-        const fileName = sanitizeFileName(resolved.image.fileName) ?? fallbackName
+      if (typeof resolved !== 'string' && resolved.filePath) {
+        const fileName = getFileName(resolved.filePath)
 
-        files.push(new AttachmentBuilder(Buffer.from(resolved.image.bytes), { name: fileName }))
+        files.push(new AttachmentBuilder(resolved.filePath, { name: fileName }))
         checkedImageUrl = `attachment://${fileName}`
       }
     }
@@ -215,36 +211,4 @@ async function runCheckPhash(interaction: ChatInputCommandInteraction) {
       allowedMentions: { parse: [] },
     })
   }
-}
-
-function contentTypeToExtension(contentType: string | null): string {
-  if (!contentType) {
-    return 'unknown'
-  }
-
-  const ext = contentType.split(';')[0]
-
-  switch (ext) {
-    case 'image/jpeg':
-      return 'jpg'
-    case 'image/webp':
-      return 'webp'
-    case 'image/gif':
-      return 'gif'
-    case 'image/bmp':
-      return 'bmp'
-    case 'image/png':
-      return 'png'
-    default:
-      return contentType.split('/')[1] || 'unknown'
-  }
-}
-
-function sanitizeFileName(fileName: string | null): string | null {
-  if (!fileName) {
-    return null
-  }
-
-  const cleaned = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120)
-  return cleaned.length > 0 ? cleaned : null
 }

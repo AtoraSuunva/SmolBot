@@ -4,7 +4,7 @@ import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 import { Prisma } from '../../../../generated/prisma/client.js'
 import { prisma } from '../../../../helpers/db.js'
 import { plural } from '../../../../helpers/format.js'
-import { bitstringToHex } from '../../utils.js'
+import { bitstringToHex } from '../../commands/phash/utils.js'
 import { isAppOwner } from './utils.js'
 
 export const automod_phash_list = new SleetSlashSubcommand(

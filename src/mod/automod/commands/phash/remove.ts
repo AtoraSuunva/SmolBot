@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from '
 import { inGuildGuard, SleetSlashSubcommand } from 'sleetcord'
 
 import { prisma } from '../../../../helpers/db.js'
-import { hexToBitstring } from '../../utils.js'
+import { hexToBitstring } from '../../commands/phash/utils.js'
 import { isAppOwner } from './utils.js'
 
 export const automod_phash_remove = new SleetSlashSubcommand(

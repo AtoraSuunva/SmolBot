@@ -1,5 +1,8 @@
+import { writeFile } from 'node:fs/promises'
+
 import { LimitedCollection, type EmbedAssetData, type Message } from 'discord.js'
 
+import { getPhashImagePath } from '../commands/phash/utils.js'
 import { normalizeUrl } from '../utils.js'
 import { computeImagePhash } from './phash.js'
 
@@ -9,16 +12,8 @@ export const MAX_IMAGE_SIZE = 100 * 1024 * 1024
 interface HashEntry {
   phash: string
   url: string
-  imageData: Uint8Array<ArrayBuffer>
-  imageFileName: string | null
-  imageContentType: string | null
-  imageSize: number
-}
-
-interface HashImageSource {
-  url: string
-  imageFileName: string | null
-  imageContentType: string | null
+  contentType: string | null
+  filePath: string | null
 }
 
 const IGNORED_CONTENT_TYPES = new Set(['image/gif', 'image/svg+xml'])
@@ -30,15 +25,11 @@ const IGNORED_CONTENT_TYPES = new Set(['image/gif', 'image/svg+xml'])
  * @returns A promise that resolves to an array of hashes (or filenames, if that's more efficient or if hashes aren't possible)
  */
 export async function getImagePhashes(message: Message): Promise<HashEntry[]> {
-  const imageSources: HashImageSource[] = [
+  const imageUrls: string[] = [
     ...message.embeds
       .map((embed) => embed.image ?? embed.thumbnail)
       .filter((url): url is EmbedAssetData => Boolean(url))
-      .map((image) => ({
-        url: image.url,
-        imageFileName: null,
-        imageContentType: image.content_type ?? null,
-      })),
+      .map((image) => image.url),
     ...message.attachments
       .filter(
         (attachment) =>
@@ -46,17 +37,11 @@ export async function getImagePhashes(message: Message): Promise<HashEntry[]> {
           attachment.contentType?.startsWith('image/') &&
           !IGNORED_CONTENT_TYPES.has(attachment.contentType),
       )
-      .map((attachment) => ({
-        url: attachment.url,
-        imageFileName: attachment.name,
-        imageContentType: attachment.contentType,
-      })),
+      .map((attachment) => attachment.url),
   ]
 
   const hashedEntries = await Promise.all(
-    Array.from(imageSources).map((source) =>
-      phashImage(source.url, source.imageFileName).catch(() => null),
-    ),
+    Array.from(imageUrls).map((url) => phashImage(url).catch(() => null)),
   )
 
   return hashedEntries.filter((entry): entry is HashEntry => entry !== null)
@@ -73,10 +58,7 @@ const phashCache = new LimitedCollection<string, HashEntry>({ maxSize: 100 })
  * @param fileName An optional filename to associate with this image (used for attachments, where the URL may not be unique or consistent)
  * @returns A promise that resolves to a HashEntry containing the phash and related data, or null if the image couldn't be fetched or hashed
  */
-export async function phashImage(
-  url: string,
-  fileName: string | null = null,
-): Promise<HashEntry | null> {
+export async function phashImage(url: string): Promise<HashEntry | null> {
   const normalizedUrl = normalizeUrl(url)
   const cached = phashCache.get(normalizedUrl)
 
@@ -90,19 +72,23 @@ export async function phashImage(
     return null
   }
 
-  const imagePhash = await computeImagePhash(image.imageData).catch(() => null)
+  const imagePhash = await computeImagePhash(image.bytes).catch(() => null)
 
   if (!imagePhash) {
     return null
   }
 
+  const filePath = getPhashImagePath(imagePhash, image.contentType)
+
+  if (filePath) {
+    await writeFile(filePath, image.bytes)
+  }
+
   const entry: HashEntry = {
-    url: normalizedUrl,
-    imageContentType: image.imageContentType,
-    imageData: image.imageData,
-    imageFileName: fileName ?? null,
-    imageSize: image.imageData.length,
     phash: imagePhash,
+    url: normalizedUrl,
+    contentType: image.contentType,
+    filePath,
   }
 
   phashCache.set(normalizedUrl, entry)
@@ -119,7 +105,7 @@ export async function phashImage(
  */
 export async function fetchImageBuffer(
   url: string,
-): Promise<{ imageData: Uint8Array<ArrayBuffer>; imageContentType: string | null }> {
+): Promise<{ bytes: Uint8Array<ArrayBuffer>; contentType: string }> {
   const response = await fetch(url)
 
   if (!response.ok) {
@@ -134,7 +120,11 @@ export async function fetchImageBuffer(
 
   const contentType = response.headers.get('content-type')?.split(';')[0] ?? null
 
-  if (!contentType?.startsWith('image/') || IGNORED_CONTENT_TYPES.has(contentType)) {
+  if (
+    !contentType ||
+    !contentType?.startsWith('image/') ||
+    IGNORED_CONTENT_TYPES.has(contentType)
+  ) {
     throw new Error(`Invalid image content type: ${contentType}`)
   }
 
@@ -147,7 +137,7 @@ export async function fetchImageBuffer(
   }
 
   return {
-    imageData: imageBytes,
-    imageContentType: contentType,
+    bytes: imageBytes,
+    contentType: contentType,
   }
 }

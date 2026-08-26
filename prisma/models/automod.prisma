@@ -55,6 +55,8 @@ model PhashUrl {
   url              String  @id
   // The phash this URL is associated with
   phash            String
+  // The path to the file on disk, if the image was downloaded and stored for review
+  filePath         String? @map("file_path")
   // Optional binary image payload for review and showing in /automod phash check
   imageData        Bytes?  @map("image_data")
   imageFileName    String? @map("image_file_name")
