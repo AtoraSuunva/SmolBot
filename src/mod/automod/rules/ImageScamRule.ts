@@ -1,5 +1,5 @@
 import { createWriteStream } from 'node:fs'
-import { mkdir, unlink } from 'node:fs/promises'
+import { access, mkdir, unlink } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 
@@ -161,7 +161,6 @@ async function migrateImageFilesToExternalStorage() {
             cursor: {
               url: cursor,
             },
-            skip: 1,
           }
         : {}),
     })
@@ -189,6 +188,8 @@ async function migrateImageFilesToExternalStorage() {
 
       try {
         await writeBufferToFile(filePath, entry.imageData)
+
+        await access(filePath)
 
         await prisma.phashUrl.update({
           where: {
@@ -222,7 +223,9 @@ async function writeBufferToFile(filePath: string, imageData: Uint8Array) {
   await pipeline(Readable.from([imageData]), createWriteStream(filePath))
 }
 
-await migrateImageFilesToExternalStorage().catch(() => {})
+await migrateImageFilesToExternalStorage().catch((err) => {
+  phashLogger.error(`Failed to migrate image files to external storage: ${String(err)}`)
+})
 
 /**
  * Clear out phash URLs that are older than the age limit and not marked as a scam, to prevent it from growing indefinitely
@@ -230,7 +233,7 @@ await migrateImageFilesToExternalStorage().catch(() => {})
  * Also deletes the local image files associated with the deleted phash URLs
  */
 async function clearOldPhashUrls() {
-  phashLogger.info('Starting clearOldPhashUrls process.')
+  phashLogger.info('Clearing phash URLs not marked as scam and older than 3 days.')
   const cutoffDate = Temporal.Now.instant()
     .subtract({ milliseconds: 3 * DAY })
     .toZonedDateTimeISO('UTC')
@@ -244,11 +247,14 @@ DELETE FROM "PhashUrl"
   )
   RETURNING *`
 
-  phashLogger.info(`Deleted ${deleted.length} old phash URLs, deleting files on disk`)
+  if (deleted.length > 0) {
+    phashLogger.info(`Deleted ${deleted.length} old phash URLs, deleting files on disk`)
 
-  await Promise.all(
-    deleted.map((entry) => (entry.filePath ? unlink(entry.filePath) : Promise.resolve())),
-  )
+    await Promise.all(
+      deleted.map((entry) => (entry.filePath ? unlink(entry.filePath) : Promise.resolve())),
+    )
+  }
+
   phashLogger.info('Finished clearOldPhashUrls process.')
 }
 
