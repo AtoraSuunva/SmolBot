@@ -26,7 +26,7 @@ import {
 } from 'sleetcord'
 
 import { plural } from '../helpers/format.js'
-import { workerMatch } from '../helpers/regexWorker.js'
+const { workerMatch } = await import('../helpers/regexWorker.js')
 
 const MAX_FETCH_MESSAGES = 100
 const REGEX_TIMEOUT = 100

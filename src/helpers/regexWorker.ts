@@ -67,6 +67,20 @@ if (isMainThread) {
 
 /**
  * Use a worker thread to perform the regex match to avoid stopping the main thread event loop.
+ *
+ * !!! IMPORTANT !!!
+ * Until this is merged https://github.com/vitejs/vite/pull/21160 you MUST import this function using an import function, like:
+ *
+ * ```ts
+ * const { workerMatch } = await import('../helpers/regexWorker.js')
+ * ```
+ *
+ * Otherwise, Vite does not handle the worker splitting correctly and can put the worker in the same chunk as other code.
+ *
+ * This can lead to the worker thread created containing non-worker code, which can include the entrypoint code itself, effectively running the entire application twice!!!
+ *
+ * Using an import function forces Vite to split the worker into a separate chunk, ensuring that the worker thread only contains worker code.
+ *
  * @param regex The regex to run the match with
  * @param text The text to match against
  * @param timeout The timeout (in ms) before aborting the match. The match will return false.
@@ -93,7 +107,7 @@ export function workerMatch(regex: RegExp, text: string, timeout = 500): Promise
     subChannel.port2.on('error', (error) => {
       subChannel.port2.close()
       // Old worker died, create a new one
-      worker = new Worker(import.meta.url)
+      worker = new Worker(new URL(import.meta.url))
       reject(error)
     })
 

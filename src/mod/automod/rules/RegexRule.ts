@@ -6,9 +6,10 @@ import {
   type OmitPartialGroupDMChannel,
 } from 'discord.js'
 
-import { workerMatch } from '../../../helpers/regexWorker.js'
 import { getAutomodStore, type AutomodStoreReturn } from '../automodMiddleware.js'
 import { AutomodEventResult, AutomodRule } from '../modules/AutomodRule.js'
+
+const { workerMatch } = await import('../../../helpers/regexWorker.js')
 
 export const regexRule = new AutomodRule(
   {

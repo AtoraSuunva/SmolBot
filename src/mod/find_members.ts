@@ -31,7 +31,7 @@ import {
 import { getComponentsOfType } from '../helpers/components.js'
 import { fetchGuildMembers } from '../helpers/fetchGuildMembers.js'
 import { tableFormat } from '../helpers/format.js'
-import { workerMatch } from '../helpers/regexWorker.js'
+const { workerMatch } = await import('../helpers/regexWorker.js')
 
 type MemberMatch = {
   name: string
