@@ -12,7 +12,7 @@ import { plural } from '../../../helpers/format.js'
 import { sleep } from '../../../helpers/functions.js'
 import { getAutomodStore } from '../automodMiddleware.js'
 import { bitstringToHex, getPhashImagePath } from '../commands/phash/utils.js'
-import { getScamMatchesForHashes } from '../hash/checkPhash.js'
+import { getScamMatchesForHashes, PHASH_HAMMING_THRESHOLD } from '../hash/checkPhash.js'
 import { getImagePhashes } from '../hash/hashEmbeds.js'
 import { AutomodRule, type AutomodEventResult } from '../modules/AutomodRule.js'
 
@@ -26,14 +26,23 @@ export const imageScamRule = new AutomodRule(
         description: 'Delete detected scam images',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'distance',
+        description: `Maximum Hamming distance to consider an image a match (default: ${PHASH_HAMMING_THRESHOLD})`,
+        type: ApplicationCommandOptionType.Integer,
+        minValue: 0,
+        maxValue: 64,
+      },
     ] as const,
   },
   {
     async run(interaction, required) {
       const del = interaction.options.getBoolean('delete')
+      const distance = interaction.options.getInteger('distance') ?? PHASH_HAMMING_THRESHOLD
 
       return {
         delete: del ?? (required ? true : null),
+        distance: distance ?? (required ? PHASH_HAMMING_THRESHOLD : null),
       }
     },
 
@@ -59,9 +68,16 @@ async function checkForScam(message: Message): Promise<AutomodEventResult[]> {
   }
 
   const ruleInstances = getAutomodStore<typeof imageScamRule>()
+
+  const largestDistance = ruleInstances.reduce((max, instance) => {
+    const distance = instance.params.distance ?? PHASH_HAMMING_THRESHOLD
+    return distance > max ? distance : max
+  }, 0)
+
   const hashEntries = await getImagePhashes(message)
   const scamImages = await getScamMatchesForHashes(
     hashEntries.map((entry) => entry.phash),
+    largestDistance,
     message.guildId,
   )
 

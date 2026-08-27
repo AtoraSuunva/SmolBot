@@ -295,8 +295,8 @@ export async function getClosestScamPhashesWithImages(
  */
 export async function getScamMatchesForHashes(
   targetPhashes: string[],
+  threshold: number,
   guildID?: string,
-  threshold = PHASH_HAMMING_THRESHOLD,
 ): Promise<ComparedPhash[]> {
   if (targetPhashes.length === 0) {
     return []
