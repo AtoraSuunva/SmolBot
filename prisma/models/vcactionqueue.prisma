@@ -1,0 +1,10 @@
+model VcActionQueue {
+  userID     String
+  guildID    String
+  verb       String
+  executorID String
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@id([userID, guildID, verb])
+}

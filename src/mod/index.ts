@@ -21,6 +21,7 @@ import { purge_threads } from './purge_threads.js'
 import { report } from './report/report.js'
 import { revoke } from './revoke/index.js'
 import { unedit, unedit_message } from './unedit.js'
+import { vc } from './vc.js'
 import { vc_log } from './vc_log.js'
 import { warningsModules } from './warnings/index.js'
 import { welcome } from './welcome/welcome.js'
@@ -56,6 +57,7 @@ export const modModules = [
   revoke,
   unedit_message,
   unedit,
+  vc,
   vc_log,
   welcome,
 ]

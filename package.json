@@ -22,6 +22,7 @@
     "build": "vp pack",
     "check": "vp check",
     "fix": "vp check --fix && prisma format",
+    "prisma": "prisma",
     "prisma:fix": "prisma format",
     "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
     "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist",
