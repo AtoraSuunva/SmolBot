@@ -101,28 +101,46 @@ export const automodMiddleware: SleetModuleMiddleware = async (module, event, ne
     }
   }
 
-  if (member && config.ignoredUsers?.includes(member.id)) {
-    automodMiddlewareLogger.debug(
-      { userId: member.id },
-      `User ${member.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
-    )
-    return
-  }
+  if (member) {
+    if (member.user.id === member.client.user.id) {
+      automodMiddlewareLogger.debug(
+        { userId: member.id },
+        `User ${member.id} is the bot itself, skipping automod processing for event ${event.name}`,
+      )
+      return
+    }
 
-  if (member?.user.bot && config.ignoreBots) {
-    automodMiddlewareLogger.debug(
-      { userId: member.id },
-      `User ${member.id} is a bot and ignoreBots is enabled, skipping automod processing for event ${event.name}`,
-    )
-    return
-  }
+    if (member.user.id === guild?.ownerId) {
+      automodMiddlewareLogger.debug(
+        { userId: member.id },
+        `User ${member.id} is the owner of the guild, skipping automod processing for event ${event.name}`,
+      )
+      return
+    }
 
-  if (member?.permissions.has('Administrator') && config.ignoreAdmins) {
-    automodMiddlewareLogger.debug(
-      { userId: member.id },
-      `User ${member.id} has Administrator permissions and ignoreAdmins is enabled, skipping automod processing for event ${event.name}`,
-    )
-    return
+    if (config.ignoredUsers?.includes(member.id)) {
+      automodMiddlewareLogger.debug(
+        { userId: member.id },
+        `User ${member.id} is configured to be ignored, skipping automod processing for event ${event.name}`,
+      )
+      return
+    }
+
+    if (member.user.bot && config.ignoreBots) {
+      automodMiddlewareLogger.debug(
+        { userId: member.id },
+        `User ${member.id} is a bot and ignoreBots is enabled, skipping automod processing for event ${event.name}`,
+      )
+      return
+    }
+
+    if (member.permissions.has('Administrator') && config.ignoreAdmins) {
+      automodMiddlewareLogger.debug(
+        { userId: member.id },
+        `User ${member.id} has Administrator permissions and ignoreAdmins is enabled, skipping automod processing for event ${event.name}`,
+      )
+      return
+    }
   }
 
   performance.mark(markName('ConfigLoaded'))
