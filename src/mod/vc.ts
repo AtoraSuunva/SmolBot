@@ -3,8 +3,10 @@ import {
   ApplicationIntegrationType,
   codeBlock,
   InteractionContextType,
+  type Awaitable,
   type ChatInputCommandInteraction,
   type GuildMember,
+  type PermissionResolvable,
   type User,
   type VoiceState,
 } from 'discord.js'
@@ -131,7 +133,7 @@ export const vc = new SleetSlashCommand(
 /** Verbs you can do to members */
 type VCVerb = 'mute' | 'unmute' | 'deafen' | 'undeafen'
 /** An action applied to a guild member */
-type VCAction = (member: GuildMember, reason: string) => Promise<unknown>
+type VCAction = (member: GuildMember, reason: string) => Awaitable<unknown>
 
 /** The past tense form of each VC verb, for messages */
 const VerbPast: Record<VCVerb, string> = {
@@ -143,10 +145,17 @@ const VerbPast: Record<VCVerb, string> = {
 
 /** Map a VC verb to its corresponding action */
 const ActionMap: Record<VCVerb, VCAction> = {
-  mute: (m, r) => m.voice.setMute(true, r),
-  unmute: (m, r) => m.voice.setMute(false, r),
-  deafen: (m, r) => m.voice.setDeaf(true, r),
-  undeafen: (m, r) => m.voice.setDeaf(false, r),
+  mute: (m, r) => !m.voice.serverMute && m.voice.setMute(true, r),
+  unmute: (m, r) => m.voice.serverMute && m.voice.setMute(false, r),
+  deafen: (m, r) => !m.voice.serverDeaf && m.voice.setDeaf(true, r),
+  undeafen: (m, r) => m.voice.serverDeaf && m.voice.setDeaf(false, r),
+}
+
+const PermissionMap: Record<VCVerb, PermissionResolvable> = {
+  mute: 'MuteMembers',
+  unmute: 'MuteMembers',
+  deafen: 'DeafenMembers',
+  undeafen: 'DeafenMembers',
 }
 
 /** A map of which VC verbs cancel each other out (e.g., mute will cancel an unmute) */
@@ -244,20 +253,27 @@ async function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState
   })
 
   for (const action of queuedActions) {
-    const executor = await guild.client.users.fetch(action.executorID)
-    const auditLogReason = `By ${formatUser(executor, { markdown: false, mention: false })}${action.reason ? ` for reason: ${action.reason}` : ''}`
+    try {
+      const executor = await guild.client.users.fetch(action.executorID)
+      const auditLogReason = `By ${formatUser(executor, { markdown: false, mention: false })}${action.reason ? ` for reason: ${action.reason}` : ''}`
 
-    await ActionMap[action.verb as VCVerb](member, auditLogReason)
+      const botHasPermission =
+        guild?.members.me?.permissions.has(PermissionMap[action.verb as VCVerb]) ?? false
 
-    await prisma.vcActionQueue.delete({
-      where: {
-        userID_guildID_verb: {
-          userID: member.id,
-          guildID: guild.id,
-          verb: action.verb,
+      if (member.manageable && botHasPermission) {
+        await ActionMap[action.verb as VCVerb](member, auditLogReason)
+      }
+
+      await prisma.vcActionQueue.delete({
+        where: {
+          userID_guildID_verb: {
+            userID: member.id,
+            guildID: guild.id,
+            verb: action.verb,
+          },
         },
-      },
-    })
+      })
+    } catch {}
   }
 }
 
@@ -266,8 +282,27 @@ function makeVCAction(verb: VCVerb) {
     const member = await getMember(interaction, 'user', true)
     const reason = interaction.options.getString('reason')
 
+    if (!member.manageable) {
+      await interaction.reply({
+        content: `I cannot ${verb} ${formatUser(member.user)} because their highest role is above mine.`,
+        allowedMentions: { parse: [] },
+      })
+      return
+    }
+
+    const botHasPermission =
+      interaction.guild?.members.me?.permissions.has(PermissionMap[verb]) ?? false
+
+    if (!botHasPermission) {
+      await interaction.reply({
+        content: `I do not have permission to ${verb} members.`,
+        allowedMentions: { parse: [] },
+      })
+      return
+    }
+
     if (member.voice.channel) {
-      const auditLogReason = `By ${formatUser(interaction.user, { markdown: false, mention: false })}${reason ? ` for reason: ${reason}` : ''}`
+      const auditLogReason = `By ${formatUser(interaction.user, { markdown: false })}${reason ? ` for reason: ${reason}` : ''}`
       await ActionMap[verb](member, auditLogReason)
       await interaction.reply({
         content: `Server ${VerbPast[verb]} ${formatUser(member.user)}${reason ? ` for reason: ${reason}` : ''}`,
