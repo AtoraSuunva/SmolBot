@@ -1,5 +1,6 @@
 import {
   ApplicationCommandOptionType,
+  ApplicationIntegrationType,
   codeBlock,
   InteractionContextType,
   type ChatInputCommandInteraction,
@@ -119,6 +120,7 @@ export const vc = new SleetSlashCommand(
     description: 'Voice channel commands',
     options: [mute, unmute, deafen, undeafen],
     contexts: [InteractionContextType.Guild],
+    integration_types: [ApplicationIntegrationType.GuildInstall],
     default_member_permissions: ['MuteMembers', 'DeafenMembers'],
   },
   {
