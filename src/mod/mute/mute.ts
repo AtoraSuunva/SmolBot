@@ -211,7 +211,6 @@ async function handleChatInput(interaction: ChatInputCommandInteraction, action:
 
   const reason = interaction.options.getString('reason')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
-  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion we need to narrow the type down
   const channel = interaction.options.getChannel('channel') as NonThreadGuildTextBasedChannel | null
   const separateChannels = interaction.options.getBoolean('separate_channels') ?? false
 
@@ -698,6 +697,13 @@ async function handleGuildMemberAdd(member: GuildMember) {
   })
 
   if (channel) {
+    await channel.permissionOverwrites
+      .edit(member, {
+        ViewChannel: true,
+        SendMessages: true,
+      })
+      .catch(() => null)
+
     await channel.send({
       content: `📥 ${formatUser(member)} rejoined while muted.`,
     })
